@@ -1,5 +1,6 @@
 {{- define "mozcloud-service.service" -}}
 {{- $config := merge (default dict (index . "config")) (include "mozcloud-service.defaults.config" . | fromYaml) }}
+---
 apiVersion: v1
 kind: Service
 metadata:
