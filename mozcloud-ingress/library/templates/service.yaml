@@ -1,15 +1,4 @@
-apiVersion: v1
-kind: Service
-metadata:
-  name: {{ include "mozcloud-ingress.fullname" . }}
-  labels:
-    {{- include "mozcloud-ingress.labels" . | nindent 4 }}
-spec:
-  type: {{ .Values.service.type }}
-  ports:
-    - port: {{ .Values.service.port }}
-      targetPort: http
-      protocol: TCP
-      name: http
-  selector:
-    {{- include "mozcloud-ingress.selectorLabels" . | nindent 4 }}
+{{- $services := include "mozcloud-ingress.services" . }}
+{{- range $service := $services }}
+{{- include "mozcloud-service.service" $service }}
+{{- end }}

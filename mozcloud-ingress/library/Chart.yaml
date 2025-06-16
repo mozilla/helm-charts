@@ -16,3 +16,8 @@ type: library
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
 version: 0.0.1
+
+dependencies:
+  - name: mozcloud-service
+    version: 0.0.1
+    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
