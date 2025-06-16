@@ -1,193 +1,211 @@
-mozcloud-ingress:
-  # Global backend configuration. These values can be overridden at the host
-  # level in the ingress definitions: .Values.ingresses[].hosts[].backend
-  backendConfig:
-    # The name of your backend.
+# Global backend configuration. These values can be overridden at the host
+# level in the ingress definitions: .Values.ingresses[].hosts[].backend
+backendConfig:
+  # The name of your backend.
+  #name:
+
+  # Custom labels.
+  #labels: {}
+
+  # Configures Cloud CDN for this ingress.
+  cdn:
+    # See the following link for information about all these configurations.
+    # https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-configuration#cloud_cdn
+    enabled: false
+    cachePolicy:
+      includeHost: true
+      includeProtocol: true
+      includeQueryString: true
+      queryStringBlacklist: []
+      queryStringWhitelist: []
+
+    # Options are: CACHE_ALL_STATIC, USE_ORIGIN_HEADERS, FORCE_CACHE_ALL
+    cacheMode: CACHE_ALL_STATIC
+
+    # More info here: https://cloud.google.com/cdn/docs/using-ttl-overrides
+    clientTtl: 3600
+    defaultTtl: 3600
+    maxTtl: 86400
+
+    # More info here: https://cloud.google.com/cdn/docs/using-negative-caching
+    negativeCaching: false
+    #negativeCachingPolicy:
+    #  code:
+    #  ttl:
+
+    requestCoalescing: true
+    serveWhileStale: 86400
+
+    # More info here: https://cloud.google.com/cdn/docs/using-signed-urls
+    #signedUrlCacheMaxAgeSec:
+    #signedUrlKeys:
+    #  keyname:
+    #  keyValue:
+    #  secretName:
+
+  # Custom request headers the GCLB adds before forwarding requests to
+  # backends.
+  #customRequestHeaders:
+  #  headers:
+  #    - "Header-Name:Header-Value"
+
+  # Custom response headers.
+  #customResponseHeaders:
+  #  headers:
+  #    - "Header-Name:Header-Value"
+
+  connectionDraining:
+    # Ranges from 0 (disabled) to 3600.
+    drainingTimeoutSec: 0
+
+  # This configures a health check at the GCLB level. If specified, a health
+  # check will be created for each backend service. The port will
+  # automatically populated by an ingress' backend service port if specified.
+  healthCheck:
+    checkIntervalSec: 5
+    timeoutSec: 5
+    healthyThreshold: 2
+    unhealthyThreshold: 2
+    type: HTTP
+    requestPath: /
+
+    # The port will be automatically populated by an ingress' backend service
+    # port if this value is not specified.
+    #port: 8080
+
+  iap:
+    # If enabled, Identity-Aware Proxy will be configured for the backend.
+    enabled: false
+
+    # OAuthCredentials should not be specified when using the Google-managed
+    # OAuth client. Configure this if using a custom OAuth client.
+    #
+    # More IAP information here:
+    # https://cloud.google.com/iap/docs/enabling-kubernetes-howto
+    #oauthclientCredentials:
+    #  secretName: my-secret
+
+  # Configures HTTP access logging.
+  logging:
+    enable: true
+
+    # Ranges from 0.0 (0%) to 1.0 (100%).
+    sampleRate: 1.0
+
+  # Security policy to use with the GCLB. This should match the name of a rule
+  # in CloudArmor. Defaults to: {{ $.Values.app_code }}-policy
+  #securityPolicy:
+
+  # Optionally configures generated cookie affinity.
+  #
+  # More info here:
+  # https://cloud.google.com/load-balancing/docs/backend-service#generated_cookie_affinity
+  #sessionAffinity:
+  #  affinityType: GENERATED_COOKIE
+  #
+  #  # affinityCookieTtlSec can range between 0 (default) and 1209600 seconds
+  #  # (inclusive).
+  #  affinityCookieTtlSec: 0
+
+  # Backend service timeout period in seconds.
+  timeoutSec: 30
+
+# Frontend configuration
+frontendConfig:
+  # The name of your frontend.
+  #name:
+
+  # Custom labels
+  #labels: {}
+
+  # Configures HTTP to HTTPS redirects
+  redirectToHttps:
+    enabled: true
+    # responseCodeName Options:
+    #   MOVED_PERMANENTLY_DEFAULT  # HTTP 301
+    #   FOUND                      # HTTP 302
+    #   SEE_OTHER                  # HTTP 303
+    #   TEMPORARY_REDIRECT         # HTTP 307
+    #   PERMANENT_REDIRECT         # HTTP 308
+    responseCodeName: MOVED_PERMANENTLY_DEFAULT
+
+  # SSL policy to use. This configures a set of TLS versions and ciphers that
+  # the load balancer uses to terminate HTTPS traffic from clients.
+  sslPolicy: mozilla-intermediate
+
+# This is a list of dictionaries containing details about each ingress.
+ingresses:
+  - hosts:
+      # The host will be used to match incoming traffic and generate TLS
+      # certs.
+      - domains:
+          - chart.example.local
+          - chart2.example.local
+
+        # If enabled, a certificate will be created for this host. This
+        # overrides the ingress-scoped setting.
+        #createCertificate: true
+
+        paths:
+          - path: /
+
+            # pathType can be Exact, Prefix, or ImplementationSpecific
+            pathType: Prefix
+
+            backend:
+              # This will override the global defaults found in
+              # .Values.mozcloud-ingress.backendConfig. If nothing is
+              # specified here, the global defaults will be used.
+              config: {}
+              service:
+                # The name of your service. By default, the service name will
+                # match the ingress name.
+                #name:
+
+                port: 8080
+
+                # Protocol used for service. Default is TCP. More information
+                # found here:
+                # https://kubernetes.io/docs/reference/networking/service-protocols/
+                #protocol: TCP
+
+                # Port name/number of pods the service should target. Default
+                # is http.
+                #targetPort: http
+
+                # Labels to use for service. Defaults to "application.labels"
+                # global helper function.
+                #labels: {}
+
+                # Selector labels the service should use to match against
+                # pods. Defaults to "application.selectorLabels" global helper
+                # function.
+                #selectorLabels: {}
+
+    # The name of your ingress. By default, the ingress name will match the
+    # service name.
     #name:
 
-    # Custom labels.
+    # Additional annotations.
+    #annotations: {}
+
+    # Custom labels. Default labels are managed in templates/_helpers.tpl.
     #labels: {}
 
-    # Configures Cloud CDN for this ingress.
-    cdn:
-      # See the following link for information about all these configurations.
-      # https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-configuration#cloud_cdn
-      enabled: false
-      cachePolicy:
-        includeHost: true
-        includeProtocol: true
-        includeQueryString: true
-        queryStringBlacklist: []
-        queryStringWhitelist: []
+    # This should match the name of the public IP address created for the
+    # tenant. If multiple IPs were created, enter the one that corresponds to
+    # the intended service/application.
+    #staticIpName:
 
-      # Options are: CACHE_ALL_STATIC, USE_ORIGIN_HEADERS, FORCE_CACHE_ALL
-      cacheMode: CACHE_ALL_STATIC
+    tls:
+      # If enabled, certificates will be created for all hosts. This can be
+      # overridden for each host.
+      createCertificates: true
 
-      # More info here: https://cloud.google.com/cdn/docs/using-ttl-overrides
-      clientTtl: 3600
-      defaultTtl: 3600
-      maxTtl: 86400
+      # Type can be ManagedCertificate, cert-manager, or pre-shared.
+      type: ManagedCertificate
 
-      # More info here: https://cloud.google.com/cdn/docs/using-negative-caching
-      negativeCaching: false
-      #negativeCachingPolicy:
-      #  code: 
-      #  ttl: 
-
-      requestCoalescing: true
-      serveWhileStale: 86400
-
-      # More info here: https://cloud.google.com/cdn/docs/using-signed-urls
-      #signedUrlCacheMaxAgeSec:
-      #signedUrlKeys:
-      #  keyname:
-      #  keyValue:
-      #  secretName:
-
-    # Custom request headers the GCLB adds before forwarding requests to
-    # backends.
-    #customRequestHeaders:
-    #  headers:
-    #    - "Header-Name:Header-Value"
-
-    # Custom response headers.
-    #customResponseHeaders:
-    #  headers:
-    #    - "Header-Name:Header-Value"
-
-    connectionDraining:
-      # Ranges from 0 (disabled) to 3600.
-      drainingTimeoutSec: 0
-
-    # This configures a health check at the GCLB level. If specified, a health
-    # check will be created for each backend service. The port will
-    # automatically populated by an ingress' backend service port if specified.
-    healthCheck:
-      checkIntervalSec: 5
-      timeoutSec: 5
-      healthyThreshold: 2
-      unhealthyThreshold: 2
-      type: HTTP
-      requestPath: /
-
-      # The port will be automatically populated by an ingress' backend service
-      # port if this value is not specified.
-      #port: 8080
-
-    iap:
-      # If enabled, Identity-Aware Proxy will be configured for the backend.
-      enabled: false
-
-      # OAuthCredentials should not be specified when using the Google-managed
-      # OAuth client. Configure this if using a custom OAuth client.
-      #
-      # More IAP information here:
-      # https://cloud.google.com/iap/docs/enabling-kubernetes-howto
-      #oauthclientCredentials:
-      #  secretName: my-secret
-
-    # Configures HTTP access logging.
-    logging:
-      enable: true
-
-      # Ranges from 0.0 (0%) to 1.0 (100%).
-      sampleRate: 1.0
-
-    # Security policy to use with the GCLB. This should match the name of a rule
-    # in CloudArmor. Defaults to: {{ $.Values.app_code }}-policy
-    #securityPolicy:
-
-    # Optionally configures generated cookie affinity.
-    #
-    # More info here:
-    # https://cloud.google.com/load-balancing/docs/backend-service#generated_cookie_affinity
-    #sessionAffinity:
-    #  affinityType: GENERATED_COOKIE
-    #
-    #  # affinityCookieTtlSec can range between 0 (default) and 1209600 seconds
-    #  # (inclusive).
-    #  affinityCookieTtlSec: 0
-
-    # Backend service timeout period in seconds.
-    timeoutSec: 30
-
-  # Frontend configuration
-  frontendConfig:
-    # The name of your frontend.
-    #name:
-
-    # Custom labels
-    #labels: {}
-
-    # Configures HTTP to HTTPS redirects
-    redirectToHttps:
-      enabled: true
-      # responseCodeName Options:
-      #   MOVED_PERMANENTLY_DEFAULT  # HTTP 301
-      #   FOUND                      # HTTP 302
-      #   SEE_OTHER                  # HTTP 303
-      #   TEMPORARY_REDIRECT         # HTTP 307
-      #   PERMANENT_REDIRECT         # HTTP 308
-      responseCodeName: MOVED_PERMANENTLY_DEFAULT
-
-    # SSL policy to use. This configures a set of TLS versions and ciphers that
-    # the load balancer uses to terminate HTTPS traffic from clients.
-    sslPolicy: mozilla-intermediate
-
-  # This is a list of dictionaries containing details about each ingress.
-  ingresses:
-    - hosts:
-        # The host will be used to match incoming traffic and generate TLS
-        # certs.
-        - domains:
-            - chart.example.local
-            - chart2.example.local
-          paths:
-            - path: /
-
-              # pathType can be Exact, Prefix, or ImplementationSpecific
-              pathType: Prefix
-
-              # If enabled, a certificate will be created for this host. This
-              # overrides the ingress-scoped setting.
-              #createCertificate: true
-
-              backend:
-                # This will override the global defaults found in
-                # .Values.mozcloud-ingress.backendConfig. If nothing is
-                # specified here, the global defaults will be used.
-                config: {}
-                service:
-                  # The name of your service. By default, the service name will
-                  # match the ingress name.
-                  #name:
-
-                  port: 8080
-
-      # The name of your ingress. By default, the ingress name will match the
-      # service name.
-      #name:
-
-      # Additional annotations.
-      #annotations: {}
-
-      # Custom labels. Default labels are managed in templates/_helpers.tpl.
-      #labels: {}
-
-      # This should match the name of the public IP address created for the
-      # tenant. If multiple IPs were created, enter the one that corresponds to
-      # the intended service/application.
-      #staticIpName:
-
-      tls:
-        # If enabled, certificates will be created for all hosts. This can be
-        # overridden for each host.
-        createCertificates: true
-
-        # Type can be ManagedCertificate, cert-manager, or pre-shared.
-        type: ManagedCertificate
-
-        # If enabled, all hosts will be listed in the Subject Alternative Name
-        # (SAN) field. If disabled, one certificate will be created for each
-        # host.
-        multipleHosts: true
+      # If enabled, all hosts will be listed in the Subject Alternative Name
+      # (SAN) field. If disabled, one certificate will be created for each
+      # host.
+      multipleHosts: true

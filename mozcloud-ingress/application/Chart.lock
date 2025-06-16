@@ -1,0 +1,6 @@
+dependencies:
+- name: mozcloud-ingress-library
+  repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
+  version: 0.0.1
+digest: sha256:42d2f8835163d8e38a4f7f9a369eb3acf644d7db6f7b9725adddd97a644ae576
+generated: "2025-06-15T20:12:39.063828-06:00"
