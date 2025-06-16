@@ -1,0 +1,12 @@
+{{- $frontendConfig := include "mozcloud-ingress.frontendConfig" . | fromYaml }}
+---
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: {{ $frontendConfig.name }}
+  labels:
+    {{- default (include "mozcloud-ingress.labels" .) ($frontendConfig.labels) | nindent 4 }}
+spec:
+  redirectToHttps:
+    {{ $frontendConfig.redirectToHttps | toYaml | nindent 4 }}
+  sslPolicy: {{ $frontendConfig.sslPolicy }}

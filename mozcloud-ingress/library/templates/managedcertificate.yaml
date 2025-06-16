@@ -1,0 +1,17 @@
+{{- $managedCertificates := include "mozcloud-ingress.managedCertificates" . | fromYaml }}
+{{- range $managedCertificate := $managedCertificates }}
+{{- range $name, $domains := $managedCertificate }}
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "mozcloud-ingress.labels" . | nindent 4 }}
+spec:
+  domains:
+    {{- range $domain := $domains }}
+    - {{ $domain }}
+    {{- end }}
+{{- end }}
+{{- end }}
