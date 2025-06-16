@@ -1,4 +1,5 @@
-{{- $frontendConfig := include "mozcloud-ingress.frontendConfig" . | fromYaml }}
+{{- define "mozcloud-ingress.frontendConfig" -}}
+{{- $frontendConfig := include "mozcloud-ingress.config.frontend" . | fromYaml }}
 ---
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
@@ -10,3 +11,4 @@ spec:
   redirectToHttps:
     {{ $frontendConfig.redirectToHttps | toYaml | nindent 4 }}
   sslPolicy: {{ $frontendConfig.sslPolicy }}
+{{- end -}}
