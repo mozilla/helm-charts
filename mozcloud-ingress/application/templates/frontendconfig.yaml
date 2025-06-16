@@ -1,2 +1,2 @@
 {{- $frontend_config := dict "frontendConfig" .Values.frontendConfig }}
-{{- include "mozcloud-ingress.frontendConfig" $frontend_config }}
+{{- include "mozcloud-ingress-lib.frontendConfig" $frontend_config }}

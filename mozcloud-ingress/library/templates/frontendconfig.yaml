@@ -1,12 +1,12 @@
-{{- define "mozcloud-ingress.frontendConfig" -}}
-{{- $frontendConfig := include "mozcloud-ingress.config.frontend" . | fromYaml }}
+{{- define "mozcloud-ingress-lib.frontendConfig" -}}
+{{- $frontendConfig := include "mozcloud-ingress-lib.config.frontend" . | fromYaml }}
 ---
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:
   name: {{ $frontendConfig.name }}
   labels:
-    {{- default (include "mozcloud-ingress.labels" .) ($frontendConfig.labels) | nindent 4 }}
+    {{- default (include "mozcloud-ingress-lib.labels" .) ($frontendConfig.labels) | nindent 4 }}
 spec:
   redirectToHttps:
     {{ $frontendConfig.redirectToHttps | toYaml | nindent 4 }}
