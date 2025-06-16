@@ -1,0 +1,6 @@
+dependencies:
+- name: mozcloud-service
+  repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
+  version: 0.0.1
+digest: sha256:f8efe9a60d1dc1832654074d99be2720314cce586421622bb27cff7609d4149b
+generated: "2025-06-15T19:28:29.705165-06:00"

@@ -1,4 +1,5 @@
-{{- $managedCertificates := include "mozcloud-ingress.managedCertificates" . | fromYaml }}
+{{- define "mozcloud-ingress.managedCertificates" -}}
+{{- $managedCertificates := include "mozcloud-ingress.config.managedCertificates" . | fromYaml }}
 {{- range $managedCertificate := $managedCertificates }}
 {{- range $name, $domains := $managedCertificate }}
 ---
@@ -13,5 +14,6 @@ spec:
     {{- range $domain := $domains }}
     - {{ $domain }}
     {{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
