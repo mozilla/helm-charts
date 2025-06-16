@@ -120,10 +120,11 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
 {{- end -}}
 
 {{- define "mozcloud-ingress.config.name" -}}
+{{- $name := "" -}}
 {{- if (index . "ingressConfig" "name") -}}
-  {{- $name := (index . "ingressConfig" "name") -}}
+  {{- $name = (index . "ingressConfig" "name") -}}
 {{- else -}}
-  {{- $name := include "mozcloud-ingress.fullname" $ -}}
+  {{- $name = include "mozcloud-ingress.fullname" $ -}}
 {{- end -}}
 {{- if (index . "index") -}}
   {{- $name = printf "%s-%d" $name (index . "index") -}}
@@ -139,19 +140,19 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
 {{- $managed_certs := list -}}
 {{- range $index, $ingress := (include "mozcloud-ingress.config.ingresses" . ) -}}
   {{- range $host := $ingress.hosts -}}
+    {{- $create_cert := false -}}
     {{- if and (eq $ingress.tls.type "ManagedCertificate") (or ($host.createCertificate) (and ($ingress.tls.createCertificate) (not index $host "createCertificate"))) -}}
-      {{- $create_cert := true -}}
-    {{- else -}}
-      {{- $create_cert := false -}}
+      {{- $create_cert = true -}}
     {{- end -}}
     {{- $managed_cert := dict -}}
+    {{- $name := "" -}}
     {{- if (default true $host.tls.multipleHosts) -}}
-      {{- $name := printf "mcrt-%s-%d" (include "mozcloud-ingress.config.name" (dict "ingressConfig" $ingress "index" $index)) $index | replace "." "-" | trunc 63 -}}
+      {{- $name = printf "mcrt-%s-%d" (include "mozcloud-ingress.config.name" (dict "ingressConfig" $ingress "index" $index)) $index | replace "." "-" | trunc 63 -}}
       {{- $_ := set $managed_cert "name" $name "domains" $host.domains "createCertificate" $create_cert -}}
       {{- $managed_certs = append $managed_certs $managed_cert -}}
     {{- else -}}
-      {{- range $domain := $domains -}}
-        {{- $name := $domain | replace "." "-" | trunc 63 -}}
+      {{- range $domain := $host.domains -}}
+        {{- $name = $domain | replace "." "-" | trunc 63 -}}
         {{- $_ := set $managed_cert "name" $name "domains" (list $domain) "createCertificate" $create_cert -}}
         {{- $managed_certs = append $managed_certs $managed_cert -}}
       {{- end -}}
@@ -179,10 +180,10 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
       {{/* Service config */}}
       {{- $config_helper := dict "port" $backend_service.port -}}
       {{- if $backend_service.protocol -}}
-        {{- $_ = set $service_config "protocol" $backend_service.protocol -}}
+        {{- $_ = set $config_helper "protocol" $backend_service.protocol -}}
       {{- end -}}
       {{- if $backend_service.targetPort -}}
-        {{- $_ = set $service_config "targetPort" $backend_service.targetPort -}}
+        {{- $_ = set $config_helper "targetPort" $backend_service.targetPort -}}
       {{- end -}}
       {{- $config := include "mozcloud-ingress.config.service.config" $config_helper -}}
       {{- $_ = set $service "config" $config -}}
