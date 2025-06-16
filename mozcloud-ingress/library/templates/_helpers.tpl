@@ -124,9 +124,9 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
   {{- $name := (index . "ingressConfig" "name") -}}
 {{- else -}}
   {{- $name := include "mozcloud-ingress.fullname" $ -}}
-  {{- if (index . "index") -}}
-    {{- $name = printf "%s-%d" $name (index . "index") -}}
-  {{- end -}}
+{{- end -}}
+{{- if (index . "index") -}}
+  {{- $name = printf "%s-%d" $name (index . "index") -}}
 {{- end -}}
 {{ $name }}
 {{- end -}}
