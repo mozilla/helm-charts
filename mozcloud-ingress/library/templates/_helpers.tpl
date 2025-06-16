@@ -108,7 +108,7 @@ config:
 {{/*
 Ingress template helpers
 */}}
-{{- define "mozcloud-ingress.frontendConfig" -}}
+{{- define "mozcloud-ingress.config.frontend" -}}
 {{- $defaults := include "mozcloud-ingress.defaults.frontendConfig" . | fromYaml -}}
 name: {{ default (include "mozcloud-ingress.fullname" $) (index . "frontendConfig" "name") }}
 {{- if (index . "frontendConfig" "labels") -}}
@@ -119,7 +119,7 @@ redirectToHttps:
 sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy") }}
 {{- end -}}
 
-{{- define "mozcloud-ingress.name" -}}
+{{- define "mozcloud-ingress.config.name" -}}
 {{- if (index . "ingressConfig" "name") -}}
   {{- $name := (index . "ingressConfig" "name") -}}
 {{- else -}}
@@ -131,13 +131,13 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
 {{ $name }}
 {{- end -}}
 
-{{- define "mozcloud-ingress.ingresses" -}}
+{{- define "mozcloud-ingress.config.ingresses" -}}
 {{ merge (default list (index . "ingresses")) (include "mozcloud-ingress.defaults.ingresses" . | fromYaml) | toYaml }}
 {{- end -}}
 
-{{- define "mozcloud-ingress.managedCertificates" -}}
+{{- define "mozcloud-ingress.config.managedCertificates" -}}
 {{- $managed_certs := list -}}
-{{- range $index, $ingress := (include "mozcloud-ingress.ingresses" . ) -}}
+{{- range $index, $ingress := (include "mozcloud-ingress.config.ingresses" . ) -}}
   {{- range $host := $ingress.hosts -}}
     {{- if and (eq $ingress.tls.type "ManagedCertificate") (or ($host.createCertificate) (and ($ingress.tls.createCertificate) (not index $host "createCertificate"))) -}}
       {{- $create_cert := true -}}
@@ -146,7 +146,7 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
     {{- end -}}
     {{- $managed_cert := dict -}}
     {{- if (default true $host.tls.multipleHosts) -}}
-      {{- $name := printf "mcrt-%s-%d" (include "mozcloud-ingress.name" (dict "ingressConfig" $ingress "index" $index)) $index | replace "." "-" | trunc 63 -}}
+      {{- $name := printf "mcrt-%s-%d" (include "mozcloud-ingress.config.name" (dict "ingressConfig" $ingress "index" $index)) $index | replace "." "-" | trunc 63 -}}
       {{- $_ := set $managed_cert "name" $name "domains" $host.domains "createCertificate" $create_cert -}}
       {{- $managed_certs = append $managed_certs $managed_cert -}}
     {{- else -}}
@@ -161,8 +161,8 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
 {{ $managed_certs | toYaml }}
 {{- end -}}
 
-{{- define "mozcloud-ingress.services" -}}
-{{- $ingresses := include "mozcloud-ingress.ingresses" . -}}
+{{- define "mozcloud-ingress.config.services" -}}
+{{- $ingresses := include "mozcloud-ingress.config.ingresses" . -}}
 {{- $services := list -}}
 {{- $service_names := list -}}
 {{- range $ingress := $ingresses -}}
@@ -174,7 +174,7 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
     {{- if not (has $backend_name $service_names) -}}
       {{/* Configure args for library chart */}}
       {{/* Service annotations */}}
-      {{- $annotations := include "mozcloud-ingress.service.annotations" (dict "backendName" $backend_name) -}}
+      {{- $annotations := include "mozcloud-ingress.config.service.annotations" (dict "backendName" $backend_name) -}}
       {{- $_ := set $service "annotations" $annotations -}}
       {{/* Service config */}}
       {{- $config_helper := dict "port" $backend_service.port -}}
@@ -184,7 +184,7 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
       {{- if $backend_service.targetPort -}}
         {{- $_ = set $service_config "targetPort" $backend_service.targetPort -}}
       {{- end -}}
-      {{- $config := include "mozcloud-ingress.service.config" $config_helper -}}
+      {{- $config := include "mozcloud-ingress.config.service.config" $config_helper -}}
       {{- $_ = set $service "config" $config -}}
       {{/* Service fullnameOverride */}}
       {{- $_ = set $service "fullnameOverride" $backend_name -}}
@@ -206,7 +206,7 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
 {{/*
 Service template helpers
 */}}
-{{- define "mozcloud-ingress.service.annotations" -}}
+{{- define "mozcloud-ingress.config.service.annotations" -}}
 {{- if (index . "annotations") -}}
 {{ index . "annotations" | toYaml }}
 {{- end }}
@@ -214,7 +214,7 @@ cloud.google.com/neg: '{"ingress": true}'
 cloud.google.com/backend-config: '{"default": "{{ index . "backendName" }}"}'
 {{- end }}
 
-{{- define "mozcloud-ingress.service.config" -}}
+{{- define "mozcloud-ingress.config.service.config" -}}
 ports:
   - port: {{ index . "port" }}
     targetPort: {{ default "http" (index . "targetPort") }}
