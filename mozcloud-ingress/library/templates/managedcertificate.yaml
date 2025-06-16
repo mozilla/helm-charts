@@ -1,5 +1,5 @@
-{{- define "mozcloud-ingress.managedCertificates" -}}
-{{- $managedCertificates := include "mozcloud-ingress.config.managedCertificates" . | fromYaml }}
+{{- define "mozcloud-ingress-lib.managedCertificates" -}}
+{{- $managedCertificates := include "mozcloud-ingress-lib.config.managedCertificates" . | fromYaml }}
 {{- range $managedCertificate := $managedCertificates }}
 {{- range $name, $domains := $managedCertificate }}
 ---
@@ -8,7 +8,7 @@ kind: ManagedCertificate
 metadata:
   name: {{ $name }}
   labels:
-    {{- include "mozcloud-ingress.labels" . | nindent 4 }}
+    {{- include "mozcloud-ingress-lib.labels" . | nindent 4 }}
 spec:
   domains:
     {{- range $domain := $domains }}

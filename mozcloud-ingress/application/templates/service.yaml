@@ -1,2 +1,2 @@
 {{- $ingresses := dict "ingresses" .Values.ingresses }}
-{{- include "mozcloud-ingress.service" $ingresses }}
+{{- include "mozcloud-ingress-lib.service" $ingresses }}

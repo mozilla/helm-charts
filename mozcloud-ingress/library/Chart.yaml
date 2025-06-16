@@ -1,5 +1,5 @@
 apiVersion: v2
-name: mozcloud-ingress-library
+name: mozcloud-ingress-lib
 description: A library chart that creates ingress and supporting resources
 
 # A chart can be either an 'application' or a 'library' chart.
@@ -18,6 +18,6 @@ type: library
 version: 0.0.1
 
 dependencies:
-  - name: mozcloud-service
-    version: 0.0.1
+  - name: mozcloud-service-lib
+    version: 0.1.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts

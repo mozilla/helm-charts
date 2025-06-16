@@ -1,12 +1,12 @@
-{{- define "mozcloud-service.service" -}}
-{{- $config := merge (default dict (index . "config")) (include "mozcloud-service.defaults.config" . | fromYaml) }}
+{{- define "mozcloud-service-lib.service" -}}
+{{- $config := merge (default dict (index . "config")) (include "mozcloud-service-lib.defaults.config" . | fromYaml) }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "mozcloud-service.fullname" . }}
+  name: {{ include "mozcloud-service-lib.fullname" . }}
   labels:
-    {{- include "mozcloud-service.labels" . | nindent 4 }}
+    {{- include "mozcloud-service-lib.labels" . | nindent 4 }}
   {{- if (index . "annotations") }}
   annotations:
     {{ index . "annotations" | toYaml | nindent 4 }}
@@ -16,5 +16,5 @@ spec:
   ports:
     {{- $config.ports | toYaml | nindent 4 }}
   selector:
-    {{- include "mozcloud-service.selectorLabels" . | nindent 4 }}
+    {{- include "mozcloud-service-lib.selectorLabels" . | nindent 4 }}
 {{- end -}}

@@ -1,6 +1,6 @@
-{{- define "mozcloud-ingress.service" -}}
-{{- $services := include "mozcloud-ingress.config.services" . | fromYaml }}
+{{- define "mozcloud-ingress-lib.service" -}}
+{{- $services := include "mozcloud-ingress-lib.config.services" . | fromYaml }}
 {{- range $service := $services }}
-{{- include "mozcloud-service.service" $service }}
+{{- include "mozcloud-service-lib.service" $service }}
 {{- end }}
 {{- end }}
