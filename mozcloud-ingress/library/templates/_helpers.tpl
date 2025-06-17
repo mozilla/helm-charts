@@ -2,9 +2,8 @@
 Expand the name of the chart.
 */}}
 {{- define "mozcloud-ingress-lib.name" -}}
-{{- default .Chart.Name (index . "name") | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
+mozcloud-ingress-lib
+{{- end -}}
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
@@ -14,12 +13,7 @@ If release name contains chart name it will be used as a full name.
 {{- if (index . "fullnameOverride") }}
 {{- index . "fullnameOverride" | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := default .Chart.Name (index . "name") }}
-  {{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-  {{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-  {{- end }}
+{{- include "mozcloud-ingress-lib.name" . -}}
 {{- end }}
 {{- end }}
 
@@ -37,9 +31,9 @@ Common labels
 {{- if (index . "labels") -}}
 {{- index . "labels" | toYaml }}
 {{- else -}}
-helm.sh/chart: {{ include "mozcloud-ingress-lib.chart" . }}
+helm.sh/chart: {{ default "mozcloud-ingress" (.Chart).Name }}
 {{ include "mozcloud-ingress-lib.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
+{{- if (.Chart).AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/component: ingress
@@ -53,8 +47,8 @@ Selector labels
 {{- if (index . "selectorLabels") -}}
 {{- index . "selectorLabels" | toYaml }}
 {{- else -}}
-app.kubernetes.io/name: {{ include "mozcloud-ingress-lib.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/name: mozcloud-webservice
+app.kubernetes.io/instance: {{ default "mozcloud-deployment" (.Release).Name }}
 {{- end }}
 {{- end }}
 
@@ -78,31 +72,30 @@ sslPolicy: mozilla-intermediate
 {{- end -}}
 
 {{- define "mozcloud-ingress-lib.defaults.ingresses" -}}
-- hosts:
-    - domains: ["chart.example.local"]
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              port: 8080
-  tls:
-    createCertificates: true
-    type: ManagedCertificate
-    multipleHosts: true
+ingresses:
+  - hosts:
+      - domains: ["chart.example.local"]
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                port: 8080
+    tls:
+      createCertificates: true
+      type: ManagedCertificate
+      multipleHosts: true
 {{- end -}}
 
 {{- define "mozcloud-ingress-lib.defaults.service.config" -}}
 # Default configurables for service
-config:
-  # See https://kubernetes.io/docs/concepts/services-networking/service/ for
-  # information on how to configure a service
-  ports:
-    - port: 8080
-      targetPort: http
-      protocol: TCP
-      name: http
-  type: ClusterIP
+# See https://kubernetes.io/docs/concepts/services-networking/service/ for
+# information on how to configure a service
+port: 8080
+targetPort: http
+protocol: TCP
+name: http
+type: ClusterIP
 {{- end }}
 
 {{/*
@@ -121,19 +114,32 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
 
 {{- define "mozcloud-ingress-lib.config.name" -}}
 {{- $name := "" -}}
-{{- if (index . "ingressConfig" "name") -}}
-  {{- $name = (index . "ingressConfig" "name") -}}
+{{- $context := (index .) -}}
+{{- if $context.name -}}
+  {{- $name = $context.name -}}
+{{- else if ($context.backendConfig).name -}}
+  {{- $name = $context.backendConfig.name -}}
+{{- else if ($context.ingressConfig).name -}}
+  {{- $name = $context.ingressConfig.name -}}
 {{- else -}}
   {{- $name = include "mozcloud-ingress-lib.fullname" $ -}}
 {{- end -}}
-{{- if (index . "index") -}}
-  {{- $name = printf "%s-%d" $name (index . "index") -}}
+{{- if  $context.index -}}
+  {{- $length = $context.index | len | add1 -}}
+  {{- $name = printf "%s-%d" ($name | sub 63 $length) $context.index -}}
 {{- end -}}
-{{ $name }}
+{{ $name | trunc 63 | trimSuffix "-" }}
 {{- end -}}
 
 {{- define "mozcloud-ingress-lib.config.ingresses" -}}
-{{ merge (default list (index . "ingresses")) (include "mozcloud-ingress-lib.defaults.ingresses" . | fromYaml) | toYaml }}
+{{- $defaults := include "mozcloud-ingress-lib.defaults.ingresses" . | fromYaml -}}
+{{- $ingresses := $defaults -}}
+{{/*
+{{- if (index . "ingresses") -}}
+  {{- $ingresses = merge (dict "ingresses" (index . "ingresses")) $defaults -}}
+{{- end -}}
+*/}}
+{{ $ingresses | toYaml }}
 {{- end -}}
 
 {{- define "mozcloud-ingress-lib.config.managedCertificates" -}}
@@ -163,41 +169,46 @@ sslPolicy: {{ default $defaults.sslPolicy (index . "frontendConfig" "sslPolicy")
 {{- end -}}
 
 {{- define "mozcloud-ingress-lib.config.services" -}}
-{{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . -}}
+{{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml -}}
 {{- $services := list -}}
 {{- $service_names := list -}}
-{{- range $ingress := $ingresses -}}
-  {{- range $path := $ingress.paths -}}
-    {{- $service := dict -}}
-    {{- $backend_service := $path.backend.service -}}
-    {{- $backend_name := default (include "application.fullname" $) ($backend_service.name) -}}
-    {{/* Check if service was already included. If so, skip to avoid duplicates. */}}
-    {{- if not (has $backend_name $service_names) -}}
-      {{/* Configure args for library chart */}}
-      {{/* Service annotations */}}
-      {{- $annotations := include "mozcloud-ingress-lib.config.service.annotations" (dict "backendName" $backend_name) -}}
-      {{- $_ := set $service "annotations" $annotations -}}
-      {{/* Service config */}}
-      {{- $config_helper := dict "port" $backend_service.port -}}
-      {{- if $backend_service.protocol -}}
-        {{- $_ = set $config_helper "protocol" $backend_service.protocol -}}
+{{- range $ingress := $ingresses.ingresses -}}
+  {{- range $host := $ingress.hosts -}}
+    {{- range $path := $host.paths -}}
+      {{- $service := dict -}}
+      {{- $backend_service := $path.backend.service -}}
+      {{- $backend_name := default (include "mozcloud-ingress-lib.fullname" (dict "ingressConfig" $ingress "backendConfig" $backend_service)) ($backend_service.name) -}}
+      {{/* Check if service was already included. If so, skip to avoid duplicates. */}}
+      {{- if not (has $backend_name $service_names) -}}
+        {{/* Configure args for library chart */}}
+        {{/* Service annotations */}}
+        {{- $annotations := include "mozcloud-ingress-lib.config.service.annotations" (dict "backendName" $backend_name) -}}
+        {{- $_ := set $service "annotations" $annotations -}}
+        {{/* Service config */}}
+        {{- $port_config := dict -}}
+        {{- if $backend_service.port -}}
+          {{- $_ = set $port_config "port" $backend_service.port -}}
+        {{- end -}}
+        {{- if $backend_service.protocol -}}
+          {{- $_ = set $port_config "protocol" $backend_service.protocol -}}
+        {{- end -}}
+        {{- if $backend_service.targetPort -}}
+          {{- $_ = set $port_config "target_port" $backend_service.targetPort -}}
+        {{- end -}}
+        {{- $config := (include "mozcloud-ingress-lib.config.service.config" $port_config | fromYaml) -}}
+        {{- $_ = set $service "config" $config -}}
+        {{/* Service fullnameOverride */}}
+        {{- $fullname_override := $backend_name -}}
+        {{/* Service labels */}}
+        {{- $labels := default (include "mozcloud-ingress-lib.labels" $ | fromYaml) $backend_service.labels -}}
+        {{- $_ = set $service "labels" $labels -}}
+        {{/* Service selectorLabels */}}
+        {{- $selector_labels := default (include "mozcloud-ingress-lib.selectorLabels" $ | fromYaml) $backend_service.selectorLabels -}}
+        {{- $_ = set $service "selectorLabels" $selector_labels -}}
+        {{/* Append to services list */}}
+        {{- $services = append $services $service -}}
+        {{- $service_names = append $service_names $backend_name -}}
       {{- end -}}
-      {{- if $backend_service.targetPort -}}
-        {{- $_ = set $config_helper "targetPort" $backend_service.targetPort -}}
-      {{- end -}}
-      {{- $config := include "mozcloud-ingress-lib.config.service.config" $config_helper -}}
-      {{- $_ = set $service "config" $config -}}
-      {{/* Service fullnameOverride */}}
-      {{- $_ = set $service "fullnameOverride" $backend_name -}}
-      {{/* Service labels */}}
-      {{- $labels := default (include "application.labels" $ | fromYaml) $backend_service.labels -}}
-      {{- $_ = set $service "labels" $labels -}}
-      {{/* Service selectorLabels */}}
-      {{- $selector_labels := default (include "application.selectorLabels" $ | fromYaml) $backend_service.selectorLabels -}}
-      {{- $_ = set $service "selectorLabels" $selector_labels -}}
-      {{/* Append to services list */}}
-      {{- $services = append $services $service -}}
-      {{- $service_names = append $service_names $backend_name -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
@@ -216,10 +227,11 @@ cloud.google.com/backend-config: '{"default": "{{ index . "backendName" }}"}'
 {{- end }}
 
 {{- define "mozcloud-ingress-lib.config.service.config" -}}
+{{- $defaults := (include "mozcloud-ingress-lib.defaults.service.config" . | fromYaml) -}}
 ports:
-  - port: {{ index . "port" }}
-    targetPort: {{ default "http" (index . "targetPort") }}
-    protocol: {{ default "TCP" (index . "protocol") }}
-    name: http
-type: ClusterIP
+  - port: {{ default $defaults.port (index . "port") }}
+    targetPort: {{ default $defaults.targetPort (index . "targetPort") }}
+    protocol: {{ default $defaults.protocol (index . "protocol") }}
+    name: {{ $defaults.name }}
+type: {{ $defaults.type }}
 {{- end -}}
