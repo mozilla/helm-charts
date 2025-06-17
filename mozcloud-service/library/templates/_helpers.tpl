@@ -2,7 +2,7 @@
 Expand the name of the chart.
 */}}
 {{- define "mozcloud-service-lib.name" -}}
-{{- default .Chart.Name (index . "name") | trunc 63 | trimSuffix "-" }}
+{{- default "mozcloud-service-lib" (index . "name") | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -14,12 +14,7 @@ If release name contains chart name it will be used as a full name.
 {{- if (index . "fullnameOverride") }}
 {{- index . "fullnameOverride" | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := default .Chart.Name (index . "name") }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
+{{- include "mozcloud-service-lib.name" . }}
 {{- end }}
 {{- end }}
 
@@ -27,7 +22,9 @@ If release name contains chart name it will be used as a full name.
 Create chart name and version as used by the chart label.
 */}}
 {{- define "mozcloud-service-lib.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- $name := default (include "mozcloud-service-lib.name" .) (.Chart).Name }}
+{{- $version := default "0.0.1" (.Chart).Version }}
+{{- printf "%s-%s" $name $version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -39,7 +36,7 @@ Common labels
 {{- else -}}
 helm.sh/chart: {{ include "mozcloud-service-lib.chart" . }}
 {{ include "mozcloud-service-lib.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
+{{- if (.Chart).AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/component: service
@@ -54,7 +51,7 @@ Selector labels
 {{- index . "selectorLabels" | toYaml }}
 {{- else -}}
 app.kubernetes.io/name: {{ include "mozcloud-service-lib.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/instance: {{ default (include "mozcloud-service-lib.name" .) (.Release).Name }}
 {{- end }}
 {{- end }}
 
