@@ -37,7 +37,7 @@ Common labels
 helm.sh/chart: {{ include "mozcloud-service-lib.chart" . }}
 {{ include "mozcloud-service-lib.selectorLabels" . }}
 {{- if (.Chart).AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/version: {{ .Chart.AppVersion }}
 {{- end }}
 app.kubernetes.io/component: service
 {{- end }}

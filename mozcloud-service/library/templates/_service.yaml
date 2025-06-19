@@ -9,7 +9,7 @@ metadata:
     {{- include "mozcloud-service-lib.labels" . | nindent 4 }}
   {{- if (index . "annotations") }}
   annotations:
-    {{ index . "annotations" | toYaml | nindent 4 }}
+    {{- index . "annotations" | toYaml | nindent 4 }}
   {{- end }}
 spec:
   type: {{ $config.type }}
