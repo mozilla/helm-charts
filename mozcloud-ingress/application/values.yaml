@@ -159,7 +159,7 @@ ingresses:
               service:
                 # The name of your service. By default, the service name will
                 # match the ingress name.
-                name: service1
+                #name:
 
                 port: 8080
 
