@@ -1,0 +1,2 @@
+{{- $params := dict "ingresses" .Values.ingresses "Chart" .Chart "Release" .Release }}
+{{- include "mozcloud-ingress-lib.managedCertificates" $params }}

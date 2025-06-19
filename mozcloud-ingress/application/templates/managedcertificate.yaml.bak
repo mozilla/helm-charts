@@ -1,2 +1,0 @@
-{{- $ingresses := dict "ingresses" .Values.ingresses }}
-{{- include "mozcloud-ingress-lib.managedCertificates" $ingresses }}

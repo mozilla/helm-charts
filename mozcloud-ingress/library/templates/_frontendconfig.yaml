@@ -9,6 +9,6 @@ metadata:
     {{- default (include "mozcloud-ingress-lib.labels" .) ($frontendConfig.labels) | nindent 4 }}
 spec:
   redirectToHttps:
-    {{ $frontendConfig.redirectToHttps | toYaml | nindent 4 }}
+    {{- $frontendConfig.redirectToHttps | toYaml | nindent 4 }}
   sslPolicy: {{ $frontendConfig.sslPolicy }}
 {{- end -}}
