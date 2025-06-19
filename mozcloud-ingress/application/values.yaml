@@ -142,9 +142,6 @@ ingresses:
           - chart.example.local
           - chart2.example.local
 
-        # Overrides the ingress-scoped TLS settings.
-        #tls: {}
-
         paths:
           - path: /
 
@@ -180,6 +177,9 @@ ingresses:
                 # pods. Defaults to "application.selectorLabels" global helper
                 # function.
                 #selectorLabels: {}
+
+        # Host-scoped TLS settings. Overrides the ingress-scoped TLS settings.
+        #tls: {}
 
     # The name of your ingress. By default, the ingress name will match the
     # service name.
