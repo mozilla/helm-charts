@@ -1,4 +1,4 @@
-{{- define "mozcloud-ingress-lib.managedCertificates" -}}
+{{- define "mozcloud-ingress-lib.managedCertificate" -}}
 {{- $dot := . }}
 {{- $managed_certificates := include "mozcloud-ingress-lib.config.managedCertificates" . | fromYamlArray }}
 {{- range $managed_certificate := $managed_certificates }}

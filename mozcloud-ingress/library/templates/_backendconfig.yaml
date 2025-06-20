@@ -1,0 +1,18 @@
+{{- define "mozcloud-ingress-lib.backendConfig" -}}
+{{- $backend_config := include "mozcloud-ingress-lib.config.backends" . | fromYaml }}
+{{- $backends := list }}
+{{- range $backend := $backend_config.backends -}}
+{{- if not (has $backend.name $backends) }}
+---
+apiVersion: cloud.google.com/v1
+kind: BackendConfig
+metadata:
+  name: {{ $backend.name }}
+  labels:
+    {{- default (include "mozcloud-ingress-lib.labels" $) (default $backend.ingressConfig.labels $backend.labels) | nindent 4 }}
+spec:
+  {{- omit $backend "name" "ingressConfig" | toYaml | nindent 2 }}
+{{- $backends = append $backends $backend.name }}
+{{- end }}
+{{- end }}
+{{- end }}
