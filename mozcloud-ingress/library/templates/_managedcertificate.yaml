@@ -1,0 +1,20 @@
+{{- define "mozcloud-ingress-lib.managedCertificate" -}}
+{{- $dot := . }}
+{{- $managed_certificates := include "mozcloud-ingress-lib.config.managedCertificates" . | fromYamlArray }}
+{{- range $managed_certificate := $managed_certificates }}
+{{- if $managed_certificate.createCertificate }}
+---
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: {{ $managed_certificate.name }}
+  labels:
+    {{- include "mozcloud-ingress-lib.labels" $dot | nindent 4 }}
+spec:
+  domains:
+    {{- range $domain := $managed_certificate.domains }}
+    - {{ $domain }}
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
