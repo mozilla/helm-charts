@@ -1,0 +1,2 @@
+{{- $params := dict "backend_defaults" .Values.backendConfig "ingresses" .Values.ingresses "Chart" .Chart "Release" .Release }}
+{{- include "mozcloud-ingress-lib.ingress" $params }}

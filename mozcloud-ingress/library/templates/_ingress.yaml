@@ -1,0 +1,61 @@
+{{- define "mozcloud-ingress-lib.ingress" -}}
+{{- $backend_defaults := include "mozcloud-ingress-lib.defaults.backendConfig" . | fromYaml }}
+{{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml }}
+{{- $frontend_config := include "mozcloud-ingress-lib.config.frontend" . | fromYaml }}
+{{- $managed_certificates := include "mozcloud-ingress-lib.config.managedCertificates" . | fromYamlArray }}
+{{- range $ingress := $ingresses.ingresses -}}
+{{- $ingress_name := include "mozcloud-ingress-lib.config.name" (dict "ingressConfig" $ingress) }}
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $ingress_name }}
+  labels:
+    {{- default (include "mozcloud-ingress-lib.labels" $) $ingress.labels | nindent 4 }}
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: {{ default "mozcloud-ingress-dev-ip-v4" $ingress.staticIpName }}
+    {{- $certs := list }}
+    {{- range $managed_certificate := $managed_certificates }}
+    {{- if eq $managed_certificate.ingressName $ingress_name }}
+    {{- $certs = append $certs $managed_certificate.name }}
+    {{- end }}
+    {{- end }}
+    networking.gke.io/managed-certificates: {{ join "," (uniq $certs | sortAlpha) }}
+    networking.gke.io/v1beta1.FrontendConfig: {{ $frontend_config.name }}
+spec:
+  {{- if and (eq (len $ingress.hosts) 1) (eq (len (first $ingress.hosts).paths) 1) }}
+  {{- range $host := $ingress.hosts }}
+  {{- range $path := $host.paths }}
+  {{- $backend := mergeOverwrite $backend_defaults (default (dict) $path.backend.config) -}}
+  {{- $backend_service := $path.backend.service }}
+  defaultBackend:
+    service:
+      name: {{ include "mozcloud-ingress-lib.config.backend.name" (dict "backendConfig" $backend "backendService" $backend_service "ingressConfig" $ingress) }}
+      port:
+        number: {{ $backend_service.port }}
+  {{- end }}
+  {{- end }}
+  {{- else }}
+    rules:
+      {{- range $host := $ingress.hosts }}
+      {{- $domains := list }}
+      {{- range $domain := $host.domains }}
+      - host: {{ $domain }}
+        http:
+          paths:
+          {{- range $path := $host.paths }}
+          {{- $backend_service := $path.backend.service }}
+            - path: {{ $path.path }}
+              pathType: {{ $path.pathType }}
+              backend:
+                service:
+                  name: {{ include "mozcloud-ingress-lib.config.service.name" (dict "ingressConfig" $ingress "backendService" $backend_service) }}
+                  port:
+                    number: {{ $backend_service.port }}
+          {{- end }}
+      {{- end }}
+      {{- end }}
+  {{- end }}
+{{- end }}
+{{- end }}
