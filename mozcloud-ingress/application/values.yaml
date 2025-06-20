@@ -1,3 +1,6 @@
+# If enabled, all mozcloud-ingress templates will be included
+enabled: true
+
 # Global backend configuration. These values can be overridden at the host
 # level in the ingress definitions: .Values.ingresses[].hosts[].backend
 backendConfig:
