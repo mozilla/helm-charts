@@ -140,7 +140,7 @@ BackendConfig template helpers
       {{- $backend := mergeOverwrite $defaults (default (dict) $path.backend.config) -}}
       {{/* If a backend name is not specified, use the service name for the backend */}}
       {{- $backend_name := include "mozcloud-ingress-lib.config.backend.name" (dict "backendConfig" $backend "ingressConfig" $ingress "backendService" $path.backend.service) -}}
-      {{- $_ := set $backend "name" $backend_name -}} 
+      {{- $_ := set $backend "name" $backend_name -}}
       {{- $_ := set $backend "ingressConfig" (omit $ingress "hosts") -}}
       {{- $backends = append $backends $backend -}}
     {{- end -}}
