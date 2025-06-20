@@ -36,7 +36,11 @@ spec:
   {{- $backend_service := $path.backend.service }}
   defaultBackend:
     service:
-      name: {{ include "mozcloud-ingress-lib.config.backend.name" (dict "backendConfig" $backend "backendService" $backend_service "ingressConfig" $ingress) }}
+      {{- $params := dict "backendConfig" $backend "backendService" $backend_service "ingressConfig" $ingress -}}
+      {{- if $name_override -}}
+      {{- $_ = set $params "nameOverride" $name_override -}}
+      {{- end -}}
+      name: {{ include "mozcloud-ingress-lib.config.backend.name" $params }}
       port:
         number: {{ $backend_service.port }}
   {{- end }}
@@ -50,12 +54,17 @@ spec:
         http:
           paths:
           {{- range $path := $host.paths }}
+          {{- $backend := mergeOverwrite $backend_defaults (default (dict) $path.backend.config) -}}
           {{- $backend_service := $path.backend.service }}
             - path: {{ $path.path }}
               pathType: {{ $path.pathType }}
               backend:
                 service:
-                  name: {{ include "mozcloud-ingress-lib.config.service.name" (dict "ingressConfig" $ingress "backendService" $backend_service) }}
+                  {{- $params := dict "backendConfig" $backend "backendService" $backend_service "ingressConfig" -}}
+                  {{- if $name_override -}}
+                  {{- $_ = set $params "nameOverride" $name_override -}}
+                  {{- end -}}
+                  name: {{ include "mozcloud-ingress-lib.config.service.name" $params }}
                   port:
                     number: {{ $backend_service.port }}
           {{- end }}
