@@ -2,18 +2,22 @@
 Expand the name of the chart.
 */}}
 {{- define "mozcloud-ingress-lib.name" -}}
-mozcloud-ingress-lib
+{{- if .nameOverride -}}
+{{- .nameOverride }}
+{{- else -}}
+mozcloud-ingress
 {{- end -}}
-{{/*
+{{- end -}}
+{{- /*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "mozcloud-ingress-lib.fullname" -}}
-{{- if .fullnameOverride }}
+{{- if .fullnameOverride -}}
 {{- .fullnameOverride | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- include "mozcloud-ingress-lib.name" . -}}
+{{- else -}}
+{{- include "mozcloud-ingress-lib.name" . }}
 {{- end }}
 {{- end }}
 
@@ -47,56 +51,9 @@ Selector labels
 {{- if .selectorLabels -}}
 {{- .selectorLabels | toYaml }}
 {{- else -}}
-app.kubernetes.io/name: mozcloud-webservice
+app.kubernetes.io/name: {{ default "mozcloud-webservice" .nameOverride }}
 app.kubernetes.io/instance: {{ default "mozcloud-deployment" (.Release).Name }}
 {{- end }}
-{{- end }}
-
-{{/*
-Ingress defaults
-*/}}
-{{- define "mozcloud-ingress-lib.defaults.backendConfig" -}}
-{{- if .defaults -}}
-{{ .defaults | toYaml }}
-{{- else -}}
-logging:
-  enable: true
-  sampleRate: 1.0
-{{- end -}}
-{{- end -}}
-
-{{- define "mozcloud-ingress-lib.defaults.frontendConfig" -}}
-redirectToHttps:
-  enabled: true
-  responseCodeName: MOVED_PERMANENTLY_DEFAULT
-sslPolicy: mozilla-intermediate
-{{- end -}}
-
-{{- define "mozcloud-ingress-lib.defaults.ingresses" -}}
-ingresses:
-  - hosts:
-      - domains: ["chart.example.local"]
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                port: 8080
-    tls:
-      createCertificates: true
-      type: ManagedCertificate
-      multipleHosts: true
-{{- end -}}
-
-{{- define "mozcloud-ingress-lib.defaults.service.config" -}}
-# Default configurables for service
-# See https://kubernetes.io/docs/concepts/services-networking/service/ for
-# information on how to configure a service
-port: 8080
-targetPort: http
-protocol: TCP
-name: http
-type: ClusterIP
 {{- end }}
 
 {{/*
@@ -110,8 +67,14 @@ Template helpers
 {{- if and (.backendConfig).name (not $name) -}}
   {{- $name = .backendConfig.name -}}
 {{- end -}}
+{{- if and (.frontendConfig).name (not $name) -}}
+  {{- $name = .frontendConfig.name -}}
+{{- end -}}
 {{- if and (.ingressConfig).name (not $name) -}}
   {{- $name = .ingressConfig.name -}}
+{{- end -}}
+{{- if and (.nameOverride) (not $name) -}}
+  {{- $name = .nameOverride -}}
 {{- end -}}
 {{- if not $name -}}
   {{- $name = include "mozcloud-ingress-lib.fullname" $ -}}
@@ -131,6 +94,7 @@ Template helpers
 BackendConfig template helpers
 */}}
 {{- define "mozcloud-ingress-lib.config.backends" -}}
+{{- $name_override := default "" .nameOverride -}}
 {{- $defaults := include "mozcloud-ingress-lib.defaults.backendConfig" . | fromYaml -}}
 {{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml -}}
 {{- $backends := list -}}
@@ -139,9 +103,14 @@ BackendConfig template helpers
     {{- range $path := $host.paths -}}
       {{- $backend := mergeOverwrite $defaults (default (dict) $path.backend.config) -}}
       {{/* If a backend name is not specified, use the service name for the backend */}}
-      {{- $backend_name := include "mozcloud-ingress-lib.config.backend.name" (dict "backendConfig" $backend "ingressConfig" $ingress "backendService" $path.backend.service) -}}
-      {{- $_ := set $backend "name" $backend_name -}}
-      {{- $_ := set $backend "ingressConfig" (omit $ingress "hosts") -}}
+      {{- $params := (dict "backendConfig" $backend "ingressConfig" $ingress "backendService" $path.backend.service) -}}
+      {{- $_ := "" -}}
+      {{- if $name_override -}}
+        {{- $_ = set $params "nameOverride" $name_override -}}
+      {{- end -}}
+      {{- $backend_name := include "mozcloud-ingress-lib.config.backend.name" $params -}}
+      {{- $_ = set $backend "name" $backend_name -}}
+      {{- $_ = set $backend "ingressConfig" (omit $ingress "hosts") -}}
       {{- $backends = append $backends $backend -}}
     {{- end -}}
   {{- end -}}
@@ -151,10 +120,10 @@ backends:
 {{- end -}}
 
 {{- define "mozcloud-ingress-lib.config.backend.name" -}}
-{{- if .backendService.name -}}
-{{ include "mozcloud-ingress-lib.fullname" (dict "name" .backendService.name) }}
+{{- if (.backendService).name -}}
+{{- include "mozcloud-ingress-lib.config.name" (dict "name" .backendService.name) }}
 {{- else -}}
-{{ include "mozcloud-ingress-lib.fullname" (dict "backendConfig" .backendConfig "ingressConfig" .ingressConfig) }}
+{{- include "mozcloud-ingress-lib.config.name" . }}
 {{- end -}}
 {{- end -}}
 
@@ -163,7 +132,12 @@ FrontendConfig template helpers
 */}}
 {{- define "mozcloud-ingress-lib.config.frontend" -}}
 {{- $defaults := include "mozcloud-ingress-lib.defaults.frontendConfig" . | fromYaml -}}
-name: {{ default (include "mozcloud-ingress-lib.fullname" $) (.frontendConfig).name }}
+{{- $name_override := default "" .nameOverride -}}
+{{- $params := dict "frontendConfig" .frontendConfig -}}
+{{- if $name_override -}}
+  {{- $_ := set $params "nameOverride" $name_override -}}
+{{- end -}}
+name: {{ include "mozcloud-ingress-lib.config.name" $params }}
 redirectToHttps:
   enabled: {{ default $defaults.redirectToHttps.enabled ((.frontendConfig).redirectToHttps).enabled }}
 sslPolicy: {{ default $defaults.sslPolicy (.frontendConfig).sslPolicy }}
@@ -175,8 +149,8 @@ Ingress template helpers
 {{- define "mozcloud-ingress-lib.config.ingresses" -}}
 {{- $defaults := include "mozcloud-ingress-lib.defaults.ingresses" . | fromYaml -}}
 {{- $ingresses := $defaults -}}
-{{- if .ingresses -}}
-  {{- $ingresses = mergeOverwrite $defaults (dict "ingresses" .ingresses) -}}
+{{- if .ingressConfig -}}
+  {{- $ingresses = mergeOverwrite $defaults (dict "ingresses" .ingressConfig) -}}
 {{- end -}}
 {{ $ingresses | toYaml }}
 {{- end -}}
@@ -185,6 +159,7 @@ Ingress template helpers
 ManagedCertificate template helpers
 */}}
 {{- define "mozcloud-ingress-lib.config.managedCertificates" -}}
+{{- $name_override := default "" .nameOverride -}}
 {{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml -}}
 {{- $managed_certs := list -}}
 {{- $tls_defaults := (index (include "mozcloud-ingress-lib.defaults.ingresses" . | fromYaml) "ingresses" 0).tls -}}
@@ -195,7 +170,11 @@ ManagedCertificate template helpers
     {{- if and (eq $tls.type "ManagedCertificate") $tls.createCertificates -}}
       {{- $create_cert = true -}}
     {{- end -}}
-    {{- $ingress_name := include "mozcloud-ingress-lib.config.name" (dict "ingressConfig" $ingress) -}}
+    {{- $params := dict "ingressConfig" $ingress -}}
+    {{- if $name_override -}}
+      {{- $_ := set $params "nameOverride" $name_override -}}
+    {{- end -}}
+    {{- $ingress_name := include "mozcloud-ingress-lib.config.name" $params -}}
     {{- $managed_cert := dict -}}
     {{- $name := "" -}}
     {{- $prefix := "mcrt" -}}
@@ -205,7 +184,11 @@ ManagedCertificate template helpers
         {{- $suffixes = append $suffixes ($iindex | toString) -}}
       {{- end -}}
         {{- $suffixes = append $suffixes $hindex -}}
-        {{- $name = include "mozcloud-ingress-lib.config.name" (dict "ingressConfig" $ingress "prefix" $prefix "suffixes" $suffixes) | replace "." "-" | trunc 63 -}}
+        {{- $params = dict "ingressConfig" $ingress "prefix" $prefix "suffixes" $suffixes -}}
+        {{- if $name_override -}}
+          {{- $_ := set $params "nameOverride" $name_override -}}
+        {{- end -}}
+        {{- $name = include "mozcloud-ingress-lib.config.name" $params | replace "." "-" | trunc 63 -}}
       {{- $managed_cert = dict "name" $name "domains" $host.domains "createCertificate" $create_cert -}}
     {{- else -}}
       {{- range $domain := $host.domains -}}
@@ -224,7 +207,8 @@ ManagedCertificate template helpers
 Service template helpers
 */}}
 {{- define "mozcloud-ingress-lib.config.services" -}}
-{{- $backend_defaults := include "mozcloud-ingress-lib.defaults.backendConfig" . | fromYaml }}
+{{- $name_override := default "" .nameOverride -}}
+{{- $backend_defaults := include "mozcloud-ingress-lib.defaults.backendConfig" . | fromYaml -}}
 {{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml -}}
 {{- $services := list -}}
 {{- range $ingress := $ingresses.ingresses -}}
@@ -233,7 +217,11 @@ Service template helpers
       {{- $service := dict -}}
       {{- $backend := mergeOverwrite $backend_defaults (default (dict) $path.backend.config) -}}
       {{- $backend_service := $path.backend.service -}}
-      {{- $service_name := include "mozcloud-ingress-lib.config.backend.name" (dict "backendConfig" $backend "backendService" $backend_service "ingressConfig" $ingress) }}
+      {{- $params := dict "backendConfig" $backend "backendService" $backend_service "ingressConfig" $ingress -}}
+      {{- if $name_override -}}
+        {{- $_ := set $params "nameOverride" $name_override -}}
+      {{- end -}}
+      {{- $service_name := include "mozcloud-ingress-lib.config.backend.name" $params -}}
       {{- /* Check if service was already included. If so, skip to avoid duplicates. */}}
       {{- /* Configure args for library chart */}}
       {{- $_ := dict -}}
@@ -290,6 +278,53 @@ ports:
     name: {{ $defaults.name }}
 type: {{ $defaults.type }}
 {{- end -}}
+
+{{/*
+Defaults
+*/}}
+{{- define "mozcloud-ingress-lib.defaults.backendConfig" -}}
+{{- if .defaults -}}
+{{ .defaults | toYaml }}
+{{- else -}}
+logging:
+  enable: true
+  sampleRate: 1.0
+{{- end -}}
+{{- end -}}
+
+{{- define "mozcloud-ingress-lib.defaults.frontendConfig" -}}
+redirectToHttps:
+  enabled: true
+  responseCodeName: MOVED_PERMANENTLY_DEFAULT
+sslPolicy: mozilla-intermediate
+{{- end -}}
+
+{{- define "mozcloud-ingress-lib.defaults.ingresses" -}}
+ingresses:
+  - hosts:
+      - domains: ["chart.example.local"]
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                port: 8080
+    tls:
+      createCertificates: true
+      type: ManagedCertificate
+      multipleHosts: true
+{{- end -}}
+
+{{- define "mozcloud-ingress-lib.defaults.service.config" -}}
+# Default configurables for service
+# See https://kubernetes.io/docs/concepts/services-networking/service/ for
+# information on how to configure a service
+port: 8080
+targetPort: http
+protocol: TCP
+name: http
+type: ClusterIP
+{{- end }}
 
 {{/*
 Debug helper
