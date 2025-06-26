@@ -146,12 +146,42 @@ sslPolicy: {{ default $defaults.sslPolicy (.frontendConfig).sslPolicy }}
 {{/*
 Ingress template helpers
 */}}
+{{- define "mozcloud-ingress-lib.config.ingress.preSharedCerts" -}}
+{{- $name_override := default "" .nameOverride -}}
+{{- $pre_shared_certs := dict "preSharedCerts" (dict) -}}
+{{- $tls_defaults := (index (include "mozcloud-ingress-lib.defaults.ingresses" . | fromYaml) "ingresses" 0).tls -}}
+{{- range $ingress := .ingresses -}}
+  {{- range $host := $ingress.hosts -}}
+    {{- $tls := mergeOverwrite (mergeOverwrite $tls_defaults (default (dict) $ingress.tls)) (default (dict) ($host.tls)) -}}
+    {{- if and (eq $tls.type "pre-shared") (gt (len (default "" $tls.preSharedCerts)) 0) -}}
+      {{- $params := (dict "ingressConfig" $ingress) -}}
+      {{- if $name_override -}}
+        {{- $_ := set $params "nameOverride" $name_override -}}
+      {{- end -}}
+      {{- $ingress_name := include "mozcloud-ingress-lib.config.name" $params -}}
+      {{- if and (not (index $pre_shared_certs "preSharedCerts" $ingress_name)) $tls.createCertificates -}}
+        {{- $cert_list := $tls.preSharedCerts | toString -}}
+        {{- $_ := set $pre_shared_certs.preSharedCerts $ingress_name $cert_list -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{ $pre_shared_certs | toYaml }}
+{{- end -}}
+
 {{- define "mozcloud-ingress-lib.config.ingresses" -}}
 {{- $defaults := include "mozcloud-ingress-lib.defaults.ingresses" . | fromYaml -}}
 {{- $ingresses := $defaults -}}
 {{- if .ingressConfig -}}
   {{- $ingresses = mergeOverwrite $defaults (dict "ingresses" .ingressConfig) -}}
 {{- end -}}
+{{- $params := (dict "ingresses" $ingresses.ingresses) }}
+{{- $name_override := default "" .nameOverride }}
+{{- if $name_override }}
+  {{- $_ := set $params "nameOverride" $name_override }}
+{{- end -}}
+{{- $pre_shared_certs := include "mozcloud-ingress-lib.config.ingress.preSharedCerts" $params | fromYaml -}}
+{{- $_ := set $ingresses "preSharedCerts" $pre_shared_certs.preSharedCerts -}}
 {{ $ingresses | toYaml }}
 {{- end -}}
 
@@ -166,7 +196,7 @@ ManagedCertificate template helpers
 {{- range $iindex, $ingress := $ingresses.ingresses -}}
   {{- range $hindex, $host := $ingress.hosts -}}
     {{- $create_cert := false -}}
-    {{- $tls := mergeOverwrite (default $tls_defaults $ingress.tls) (default (dict) ($host.tls)) -}}
+    {{- $tls := mergeOverwrite (mergeOverwrite $tls_defaults (default (dict) $ingress.tls)) (default (dict) ($host.tls)) -}}
     {{- if and (eq $tls.type "ManagedCertificate") $tls.createCertificates -}}
       {{- $create_cert = true -}}
     {{- end -}}
@@ -177,7 +207,7 @@ ManagedCertificate template helpers
     {{- $ingress_name := include "mozcloud-ingress-lib.config.name" $params -}}
     {{- $managed_cert := dict -}}
     {{- $name := "" -}}
-    {{- $prefix := "mcrt" -}}
+    {{- $prefix := default "mcrt" $tls.prefix -}}
     {{- $suffixes := list -}}
     {{- if $tls.multipleHosts -}}
       {{- if gt (len $ingresses.ingresses) 1 -}}
@@ -192,7 +222,11 @@ ManagedCertificate template helpers
       {{- $managed_cert = dict "name" $name "domains" $host.domains "createCertificate" $create_cert -}}
     {{- else -}}
       {{- range $domain := $host.domains -}}
-        {{- $name = printf "mcrt-%s" $domain | replace "." "-" | trunc 63 -}}
+        {{- if $prefix -}}
+          {{- $name = printf "%s-%s" $prefix $domain | replace "." "-" | trunc 63 -}}
+        {{- else -}}
+          {{- $name = $domain | replace "." "-" | trunc 63 -}}
+        {{- end -}}
         {{- $managed_cert = dict "name" $name "domains" (list $domain) "createCertificate" $create_cert -}}
       {{- end -}}
     {{- end -}}
@@ -224,14 +258,18 @@ Service template helpers
       {{- $service_name := include "mozcloud-ingress-lib.config.backend.name" $params -}}
       {{- /* Check if service was already included. If so, skip to avoid duplicates. */}}
       {{- /* Configure args for library chart */}}
-      {{- $_ := dict -}}
       {{- /* Service annotations */}}
-      {{- $annotation_params := dict "backendName" $service_name -}}
-      {{- if $ingress.annotations -}}
-        {{- $_ = set $annotation_params "annotations" $ingress.annotations -}}
+      {{- /* This allows users to explicitly specify "false" without overriding with "true" from defaults */}}
+      {{- $create_neg := (include "mozcloud-ingress-lib.defaults.service.config" . | fromYaml).createNeg -}}
+      {{- if hasKey $backend_service "createNeg" -}}
+        {{- $create_neg = $backend_service.createNeg -}}
       {{- end -}}
-      {{- $annotations := (include "mozcloud-ingress-lib.config.service.annotations" $annotation_params | fromYaml) -}}
-      {{- $_ = set $service "annotations" $annotations -}}
+      {{- $annotation_params := dict "backendName" $service_name "createNeg" $create_neg -}}
+      {{- if $ingress.annotations -}}
+        {{- $_ := set $annotation_params "annotations" $ingress.annotations -}}
+      {{- end -}}
+      {{- $annotations := include "mozcloud-ingress-lib.config.service.annotations" $annotation_params | fromYaml -}}
+      {{- $_ := set $service "annotations" $annotations -}}
       {{- /* Service config */}}
       {{- $port_config := dict -}}
       {{- if $backend_service.port -}}
@@ -243,7 +281,7 @@ Service template helpers
       {{- if $backend_service.targetPort -}}
         {{- $_ = set $port_config "target_port" $backend_service.targetPort -}}
       {{- end -}}
-      {{- $config := (include "mozcloud-ingress-lib.config.service.config" $port_config | fromYaml) -}}
+      {{- $config := include "mozcloud-ingress-lib.config.service.config" $port_config | fromYaml -}}
       {{- $_ = set $service "config" $config -}}
       {{- /* Service fullnameOverride */}}
       {{- $_ = set $service "fullnameOverride" $service_name -}}
@@ -264,8 +302,10 @@ Service template helpers
 {{- define "mozcloud-ingress-lib.config.service.annotations" -}}
 {{- if .annotations -}}
 {{ .annotations | toYaml }}
-{{- end -}}
+{{- end }}
+{{- if .createNeg -}}
 cloud.google.com/neg: '{"ingress": true}'
+{{- end }}
 cloud.google.com/backend-config: '{"default": "{{ .backendName }}"}'
 {{- end -}}
 
@@ -319,6 +359,7 @@ ingresses:
 # Default configurables for service
 # See https://kubernetes.io/docs/concepts/services-networking/service/ for
 # information on how to configure a service
+createNeg: true
 port: 8080
 targetPort: http
 protocol: TCP

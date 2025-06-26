@@ -164,6 +164,10 @@ ingresses:
                 # match the ingress name.
                 #name:
 
+                # If enabled, a Network Endpoint Group (NEG) will be created
+                # as part of the service. This is set to true by default.
+                #createNeg: true
+
                 port: 8080
 
                 # Protocol used for service. Default is TCP. More information
@@ -188,7 +192,8 @@ ingresses:
         #tls: {}
 
     # The name of your ingress. By default, the ingress name will match the
-    # service name.
+    # service name. If you have multiple ingresses, you should specify a name
+    # for each, otherwise all ingresses will be assigned the same name.
     #name:
 
     # Additional annotations.
@@ -214,3 +219,13 @@ ingresses:
       # (SAN) field. If disabled, one certificate will be created for each
       # host.
       multipleHosts: true
+
+      # Prefix to use for ManagedCertificate names. This setting is ignored if
+      # certificate type is cert-manager or pre-shared.
+      #
+      # Default is "mcrt". Set to empty string ("") for no prefix.
+      #prefix: mcrt
+
+      # A comma-separated string containing pre-shared certificate names. This
+      # is required if certificate type is pre-shared.
+      #preSharedCerts: "preshared-cert-1,preshared-cert-2"
