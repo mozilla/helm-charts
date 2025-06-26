@@ -1,9 +1,0 @@
-dependencies:
-- name: mozcloud-service-lib
-  repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
-  version: 0.1.0
-- name: mozcloud-ingress-lib
-  repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
-  version: 0.0.1
-digest: sha256:36d634ddc5d2eb88cd8511fb2a8fba8965d9a22245e0195d2d7616910b6c2cf5
-generated: "2025-06-16T16:00:32.372843-06:00"
