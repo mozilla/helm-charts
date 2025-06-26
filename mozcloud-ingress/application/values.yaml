@@ -96,7 +96,7 @@ backendConfig:
     enable: true
 
     # Ranges from 0.0 (0%) to 1.0 (100%).
-    sampleRate: 1.0
+    sampleRate: 0.1
 
   # Security policy to use with the GCLB. This should match the name of a rule
   # in CloudArmor. Defaults to: {{ $.Values.app_code }}-policy
