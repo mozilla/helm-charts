@@ -48,7 +48,6 @@ spec:
   {{- else }}
     rules:
       {{- range $host := $ingress.hosts }}
-      {{- $domains := list }}
       {{- range $domain := $host.domains }}
       - host: {{ $domain }}
         http:

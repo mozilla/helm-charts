@@ -183,12 +183,12 @@ ManagedCertificate template helpers
       {{- if gt (len $ingresses.ingresses) 1 -}}
         {{- $suffixes = append $suffixes ($iindex | toString) -}}
       {{- end -}}
-        {{- $suffixes = append $suffixes $hindex -}}
-        {{- $params = dict "ingressConfig" $ingress "prefix" $prefix "suffixes" $suffixes -}}
-        {{- if $name_override -}}
-          {{- $_ := set $params "nameOverride" $name_override -}}
-        {{- end -}}
-        {{- $name = include "mozcloud-ingress-lib.config.name" $params | replace "." "-" | trunc 63 -}}
+      {{- $suffixes = append $suffixes $hindex -}}
+      {{- $params = dict "ingressConfig" $ingress "prefix" $prefix "suffixes" $suffixes -}}
+      {{- if $name_override -}}
+        {{- $_ := set $params "nameOverride" $name_override -}}
+      {{- end -}}
+      {{- $name = include "mozcloud-ingress-lib.config.name" $params | replace "." "-" | trunc 63 -}}
       {{- $managed_cert = dict "name" $name "domains" $host.domains "createCertificate" $create_cert -}}
     {{- else -}}
       {{- range $domain := $host.domains -}}
