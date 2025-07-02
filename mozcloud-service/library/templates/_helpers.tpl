@@ -1,8 +1,8 @@
 {{/*
 Expand the name of the chart.
 */}}
-{{- define "mozcloud-service.name" -}}
-{{- default .Chart.Name (index . "name") | trunc 63 | trimSuffix "-" }}
+{{- define "mozcloud-service-lib.name" -}}
+{{- default "mozcloud-service-lib" (index . "name") | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
@@ -10,37 +10,34 @@ Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 If release name contains chart name it will be used as a full name.
 */}}
-{{- define "mozcloud-service.fullname" -}}
+{{- define "mozcloud-service-lib.fullname" -}}
 {{- if (index . "fullnameOverride") }}
 {{- index . "fullnameOverride" | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := default .Chart.Name (index . "name") }}
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
+{{- include "mozcloud-service-lib.name" . }}
 {{- end }}
 {{- end }}
 
 {{/*
 Create chart name and version as used by the chart label.
 */}}
-{{- define "mozcloud-service.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+{{- define "mozcloud-service-lib.chart" -}}
+{{- $name := default (include "mozcloud-service-lib.name" .) (.Chart).Name }}
+{{- $version := default "0.0.1" (.Chart).Version }}
+{{- printf "%s-%s" $name $version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{/*
 Common labels
 */}}
-{{- define "mozcloud-service.labels" -}}
+{{- define "mozcloud-service-lib.labels" -}}
 {{- if (index . "labels") -}}
 {{- index . "labels" | toYaml }}
 {{- else -}}
-helm.sh/chart: {{ include "mozcloud-service.chart" . }}
-{{ include "mozcloud-service.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+helm.sh/chart: {{ include "mozcloud-service-lib.chart" . }}
+{{ include "mozcloud-service-lib.selectorLabels" . }}
+{{- if (.Chart).AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion }}
 {{- end }}
 app.kubernetes.io/component: service
 {{- end }}
@@ -49,19 +46,19 @@ app.kubernetes.io/component: service
 {{/*
 Selector labels
 */}}
-{{- define "mozcloud-service.selectorLabels" -}}
+{{- define "mozcloud-service-lib.selectorLabels" -}}
 {{- if (index . "selectorLabels") -}}
 {{- index . "selectorLabels" | toYaml }}
 {{- else -}}
-app.kubernetes.io/name: {{ include "mozcloud-service.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+app.kubernetes.io/name: {{ include "mozcloud-service-lib.name" . }}
+app.kubernetes.io/instance: {{ default (include "mozcloud-service-lib.name" .) (.Release).Name }}
 {{- end }}
 {{- end }}
 
 {{/*
 Defaults
 */}}
-{{- define "mozcloud-service.defaults.config" -}}
+{{- define "mozcloud-service-lib.defaults.config" -}}
 # Configurables for service
 config:
   # See https://kubernetes.io/docs/concepts/services-networking/service/ for

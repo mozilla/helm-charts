@@ -1,6 +1,6 @@
 apiVersion: v2
-name: mozcloud-service
-description: A library chart for Kubernetes services
+name: mozcloud-ingress-lib
+description: A library chart that creates ingress and supporting resources
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -15,4 +15,9 @@ type: library
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.0.1
+version: 0.1.0
+
+dependencies:
+  - name: mozcloud-service-lib
+    version: 0.1.0
+    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
