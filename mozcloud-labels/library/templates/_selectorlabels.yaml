@@ -1,4 +1,4 @@
-{{- define "mozcloud-labels.selectorLabels" -}}
+{{- define "mozcloud-labels-lib.selectorLabels" -}}
 app.kubernetes.io/name: {{ .appCode }}
 app.kubernetes.io/component: {{ .componentCode }}
 env_code: {{ .environment }}

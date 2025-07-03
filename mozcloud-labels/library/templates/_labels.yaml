@@ -1,6 +1,6 @@
-{{- define "mozcloud-labels.labels" -}}
+{{- define "mozcloud-labels-lib.labels" -}}
 helm.sh/chart: {{ .chartName }}
-{{ include "mozcloud-labels.selectorLabels" . }}
+{{ include "mozcloud-labels-lib.selectorLabels" . }}
 {{- if .appVersion }}
 app.kubernetes.io/version: {{ .appVersion | quote }}
 {{- end }}
