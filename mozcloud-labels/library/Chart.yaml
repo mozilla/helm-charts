@@ -1,5 +1,5 @@
 apiVersion: v2
-name: mozcloud-labels
+name: mozcloud-labels-lib
 description: Standardized labels for MozCloud Helm charts
 
 # A chart can be either an 'application' or a 'library' chart.
