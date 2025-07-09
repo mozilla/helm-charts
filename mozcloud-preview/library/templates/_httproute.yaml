@@ -1,0 +1,40 @@
+{{- define "mozcloud-preview-lib.httproute" -}}
+{{- $routes := (include "mozcloud-preview-lib.config.httproutes" . | fromYamlArray) }}
+{{- $rendered := list }}
+{{- range $route := $routes }}
+  {{- if not (has $route.fullnameOverride $rendered) }}
+    {{- include "mozcloud-preview-lib.httproute.render" $route }}
+    {{- $rendered = append $rendered $route.fullnameOverride }}
+  {{- end }}
+{{- end }}
+{{- end }}
+---
+{{- define "mozcloud-preview-lib.httproute.render" -}}
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: {{ .fullnameOverride }}
+  labels:
+    {{- .labels | toYaml | nindent 4 }}
+spec:
+  parentRefs:
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ .gateway.name | default "sandbox-high-preview-gateway" }}
+      namespace: {{ .gateway.namespace | default "preview-shared-infrastructure" }}
+      sectionName: {{ .gateway.sectionName | default "https" }}
+  hostnames:
+    - {{ .hostname }}
+  rules:
+    - backendRefs:
+        - group: ""
+          kind: Service
+          name: {{ .backend.name }}
+          port: {{ .backend.port }}
+          weight: 1
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+{{- end }}
