@@ -25,7 +25,9 @@ spec:
       namespace: {{ .gateway.namespace | default "preview-shared-infrastructure" }}
       sectionName: {{ .gateway.sectionName | default "https" }}
   hostnames:
-    - {{ .hostname }}
+    {{- range .hostnames }}
+    - {{ . }}
+    {{- end }}
   rules:
     - backendRefs:
         - group: ""

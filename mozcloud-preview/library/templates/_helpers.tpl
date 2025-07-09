@@ -219,7 +219,6 @@ type: {{ $defaults.type }}
 {{/*
 HTTPRoute Render
 */}}
-
 {{- define "mozcloud-preview-lib.config.httproutes" -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $ingresses := include "mozcloud-preview-lib.config.ingresses" . | fromYaml -}}
@@ -244,7 +243,7 @@ HTTPRoute Render
       {{- /* Assign fields */ -}}
       {{- $_ := set $route "fullnameOverride" $route_name }}
       {{- $_ := set $route "labels" (include "mozcloud-preview-lib.labels" . | fromYaml) }}
-      {{- $_ := set $route "hostname" (first $host.domains) }}
+      {{- $_ := set $route "hostnames" $host.domains }}
       {{- $_ := set $route "gateway" (default dict $.gateway) }}
       {{- $_ := set $route "backend" (dict "name" $svc.name "port" $svc.port) }}
 
