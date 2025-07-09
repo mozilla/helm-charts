@@ -232,7 +232,13 @@ HTTPRoute Render
       {{- $route := dict -}}
 
       {{- /* Name construction */ -}}
-      {{- $name_params := dict "ingressConfig" $ingress "nameOverride" $name_override "prefix" $.previewPr "suffixes" (list "httproute") }}
+      {{- $service_suffix := $svc.name | replace "." "-" | replace "_" "-" }}
+      {{- $name_params := dict
+          "ingressConfig" $ingress
+          "nameOverride" $name_override
+          "prefix" $.previewPr
+          "suffixes" (list "httproute" $service_suffix)
+      }}
       {{- $route_name := include "mozcloud-preview-lib.config.name" $name_params }}
 
       {{- /* Assign fields */ -}}
