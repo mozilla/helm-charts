@@ -1,0 +1,10 @@
+{{- define "mozcloud-preview-lib.service" -}}
+{{- $service_config := (include "mozcloud-preview-lib.config.services" . | fromYamlArray) }}
+{{- $services := list }}
+{{- range $service := $service_config }}
+  {{- if not (has $service.fullnameOverride $services) }}
+    {{- include "mozcloud-service-lib.service" $service }}
+    {{- $services = append $services $service.fullnameOverride }}
+  {{- end }}
+{{- end }}
+{{- end }}
