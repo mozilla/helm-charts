@@ -32,28 +32,22 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "mozcloud-ingress-lib.labels" -}}
+{{- $labels := include "mozcloud-labels-lib.labels" . | fromYaml -}}
 {{- if .labels -}}
-{{- .labels | toYaml }}
-{{- else -}}
-helm.sh/chart: {{ default "mozcloud-ingress" (.Chart).Name }}
-{{- if (.Chart).AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion }}
+  {{- $labels = mergeOverwrite $labels .labels -}}
 {{- end }}
-app.kubernetes.io/component: {{ default "ingress" .component }}
-{{ include "mozcloud-ingress-lib.selectorLabels" . }}
-{{- end }}
+{{- $labels | toYaml }}
 {{- end }}
 
 {{/*
 Selector labels
 */}}
 {{- define "mozcloud-ingress-lib.selectorLabels" -}}
+{{- $selector_labels := include "mozcloud-labels-lib.selectorLabels" . | fromYaml -}}
 {{- if .selectorLabels -}}
-{{- .selectorLabels | toYaml }}
-{{- else -}}
-app.kubernetes.io/name: {{ default "mozcloud-webservice" .nameOverride }}
-app.kubernetes.io/instance: {{ default "mozcloud-deployment" (.Release).Name }}
+  {{- $selector_labels = mergeOverwrite $selector_labels .selector_labels -}}
 {{- end }}
+{{- $selector_labels | toYaml }}
 {{- end }}
 
 {{/*
@@ -286,7 +280,8 @@ Service template helpers
       {{- /* Service fullnameOverride */}}
       {{- $_ = set $service "fullnameOverride" $service_name -}}
       {{- /* Service labels */}}
-      {{- $labels := default (include "mozcloud-ingress-lib.labels" $ | fromYaml) $backend_service.labels -}}
+      {{- $label_params := dict "labels" (default (dict) $backend_service.labels) -}}
+      {{- $labels := include "mozcloud-ingress-lib.labels" (mergeOverwrite $ $label_params) | fromYaml -}}
       {{- $_ = set $service "labels" $labels -}}
       {{- /* Service selectorLabels */}}
       {{- $selector_labels := default (include "mozcloud-ingress-lib.selectorLabels" $ | fromYaml) $backend_service.selectorLabels -}}
