@@ -31,28 +31,22 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "mozcloud-service-lib.labels" -}}
-{{- if (index . "labels") -}}
-{{- index . "labels" | toYaml }}
-{{- else -}}
-helm.sh/chart: {{ include "mozcloud-service-lib.chart" . }}
-{{ include "mozcloud-service-lib.selectorLabels" . }}
-{{- if (.Chart).AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion }}
-{{- end }}
-app.kubernetes.io/component: service
-{{- end }}
+{{- $labels := include "mozcloud-labels-lib.labels" . | fromYaml -}}
+{{- if .labels -}}
+  {{- $labels = mergeOverwrite $labels .labels -}}
+{{- end -}}
+{{- $labels | toYaml }}
 {{- end }}
 
 {{/*
 Selector labels
 */}}
 {{- define "mozcloud-service-lib.selectorLabels" -}}
-{{- if (index . "selectorLabels") -}}
-{{- index . "selectorLabels" | toYaml }}
-{{- else -}}
-app.kubernetes.io/name: {{ include "mozcloud-service-lib.name" . }}
-app.kubernetes.io/instance: {{ default (include "mozcloud-service-lib.name" .) (.Release).Name }}
+{{- $selector_labels := include "mozcloud-labels-lib.selectorLabels" . | fromYaml -}}
+{{- if .selectorLabels -}}
+  {{- $selector_labels = mergeOverwrite $selector_labels .selectorLabels -}}
 {{- end }}
+{{- $selector_labels | toYaml }}
 {{- end }}
 
 {{/*
