@@ -22,9 +22,9 @@ spec:
             - /bin/sh
             - -c
             - |
-              echo "Checking endpoint availability: {{ $config.url }}/{{ $config.checkPath }}"
+              echo "Checking endpoint availability: https://{{ $config.url }}/{{ $config.checkPath }}"
               for i in $(seq 1 {{ $config.maxAttempts }}); do
-                if curl -sSf --max-time {{ $config.maxTimePerAttempt }} {{ $config.url }}/{{ $config.checkPath }}; then
+                if curl -sSf --max-time {{ $config.maxTimePerAttempt }} https://{{ $config.url }}/{{ $config.checkPath }}; then
                   echo "Endpoint check succeeded."
                   exit 0
                 fi
