@@ -244,6 +244,7 @@ HTTPRoute Render
       {{- $_ := set $route "fullnameOverride" $route_name }}
       {{- $_ := set $route "labels" (include "mozcloud-preview-lib.labels" . | fromYaml) }}
       {{- $_ := set $route "hostnames" $host.domains }}
+      {{- $_ := set $route "previewHost" $.previewHost -}}
       {{- $_ := set $route "gateway" (default dict $.gateway) }}
       {{- $_ := set $route "backend" (dict "name" $svc.name "port" $svc.port) }}
 
@@ -253,6 +254,22 @@ HTTPRoute Render
 {{- end }}
 
 {{ $routes | toYaml }}
+{{- end }}
+
+{{/*
+EndpointCheck Render
+*/}}
+{{- define "mozcloud-preview-lib.defaults.endpointcheck" -}}
+url: {{ $.previewHost | quote }}
+checkPath: {{ .checkPath | default "__heartbeat__" }}
+image: {{ .image | default "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/curlimages/curl:8.14.1" | quote }}
+maxAttempts: {{ .maxAttempts | default 15 }}
+maxTimePerAttempt: {{ .maxTimePerAttempt | default 2 }}
+sleepSeconds: {{ .sleepSeconds | default 5 }}
+backoffLimit: {{ .backoffLimit | default 1 }}
+labels:
+  app.kubernetes.io/component: endpoint-check
+  {{- .labels | toYaml | nindent 4 }}
 {{- end }}
 
 {{/*
