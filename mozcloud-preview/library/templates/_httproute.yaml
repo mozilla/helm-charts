@@ -25,9 +25,15 @@ spec:
       namespace: {{ .gateway.namespace | default "preview-shared-infrastructure" }}
       sectionName: {{ .gateway.sectionName | default "https" }}
   hostnames:
-    {{- range .hostnames }}
-    - {{ . }}
+  {{- if eq (len .hostnames) 1 }}
+    - {{ .previewHost }}
+  {{- else }}
+    {{- range $hostname := .hostnames }}
+      {{- $hostStr := print $hostname }}
+      {{- $prefix := first (splitList "." $hostStr) }}
+    - {{ printf "%s-%s" $prefix $.previewHost }}
     {{- end }}
+  {{- end }}
   rules:
     - backendRefs:
         - group: ""
