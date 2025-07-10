@@ -31,32 +31,15 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Common labels
+Create label parameters to be used in library chart if defined as values.
 */}}
-{{- define "mozcloud-ingress.labels" -}}
-helm.sh/chart: {{ include "mozcloud-ingress.chart" . }}
-{{ include "mozcloud-ingress.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- define "mozcloud-ingress.labelParams" -}}
+{{- $params := dict "chartName" (include "mozcloud-ingress.name" .) -}}
+{{- $label_params := list "appCode" "component" "environment" -}}
+{{- range $label_param := $label_params -}}
+  {{- if index $.Values $label_param -}}
+    {{- $_ := set $params $label_param (index $.Values $label_param) -}}
+  {{- end }}
 {{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Selector labels
-*/}}
-{{- define "mozcloud-ingress.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "mozcloud-ingress.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "mozcloud-ingress.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "mozcloud-ingress.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
+{{- $params | toYaml }}
 {{- end }}

@@ -4,6 +4,18 @@ enabled: true
 # Name to be used for all resources if not specified at the resource level.
 #nameOverride:
 
+# Application code. This should match the `app_code` value in your tenant's
+# values.yaml file.
+#appCode:
+
+# Component. This should match the `component` value in your tenant's
+# values.yaml file.
+#component:
+
+# Environment. This should match the `environment` value in your tenant's
+# values.yaml file.
+#environment:
+
 # Global backend configuration. These values can be overridden at the host
 # level in the ingress definitions: .Values.ingresses[].hosts[].backend
 backendConfig:
