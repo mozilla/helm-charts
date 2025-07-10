@@ -6,7 +6,9 @@ kind: FrontendConfig
 metadata:
   name: {{ $frontend_config.name }}
   labels:
-    {{- default (include "mozcloud-ingress-lib.labels" .) ($frontend_config.labels) | nindent 4 }}
+    {{- $label_params := dict "labels" (default (dict) $frontend_config.labels) }}
+    {{- $labels := include "mozcloud-ingress-lib.labels" (mergeOverwrite . $label_params) | fromYaml }}
+    {{- $labels | toYaml | nindent 4 }}
 spec:
   redirectToHttps:
     {{- $frontend_config.redirectToHttps | toYaml | nindent 4 }}

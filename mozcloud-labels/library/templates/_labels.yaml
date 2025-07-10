@@ -1,0 +1,18 @@
+{{- define "mozcloud-labels-lib.labels" -}}
+{{- $chart_name := "" }}
+{{- if .chartName }}
+  {{- $chart_name = .chartName }}
+{{- else if (.Chart).Name }}
+  {{- $chart_name = .Chart.Name }}
+{{- else if (.Chart).name }}
+  {{- $chart_name = .Chart.name }}
+{{- end }}
+{{- if $chart_name }}
+helm.sh/chart: {{ $chart_name }}
+{{- end }}
+{{ include "mozcloud-labels-lib.selectorLabels" . }}
+{{- if .appVersion }}
+app.kubernetes.io/version: {{ .appVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: Helm
+{{- end -}}

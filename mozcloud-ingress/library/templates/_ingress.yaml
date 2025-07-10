@@ -16,7 +16,9 @@ kind: Ingress
 metadata:
   name: {{ $ingress_name }}
   labels:
-    {{- default (include "mozcloud-ingress-lib.labels" $) $ingress.labels | nindent 4 }}
+    {{- $label_params := dict "labels" (default (dict) $ingress.labels) }}
+    {{- $labels := include "mozcloud-ingress-lib.labels" (mergeOverwrite $ $label_params) | fromYaml }}
+    {{- $labels | toYaml | nindent 4 }}
   annotations:
     kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: {{ default "mozcloud-ingress-dev-ip-v4" $ingress.staticIpName }}
