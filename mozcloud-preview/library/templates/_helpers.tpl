@@ -263,9 +263,9 @@ EndpointCheck Render
 url: {{ $.previewHost | quote }}
 checkPath: {{ .checkPath | default "__heartbeat__" }}
 image: {{ .image | default "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/curlimages/curl:8.14.1" | quote }}
-maxAttempts: {{ .maxAttempts | default 15 }}
-maxTimePerAttempt: {{ .maxTimePerAttempt | default 2 }}
-sleepSeconds: {{ .sleepSeconds | default 5 }}
+maxAttempts: {{ .maxAttempts | default 60 }}
+maxTimePerAttempt: {{ .maxTimePerAttempt | default 5 }}
+sleepSeconds: {{ .sleepSeconds | default 15 }}
 backoffLimit: {{ .backoffLimit | default 1 }}
 labels:
   app.kubernetes.io/component: endpoint-check
