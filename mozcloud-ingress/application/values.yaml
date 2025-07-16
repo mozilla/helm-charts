@@ -13,7 +13,7 @@ enabled: true
 #component:
 
 # Environment. This should match the `environment` value in your tenant's
-# values.yaml file.
+# values-<env>.yaml file.
 #environment:
 
 # Global backend configuration. These values can be overridden at the host
