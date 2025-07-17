@@ -17,15 +17,105 @@ enabled: true
 # values-<env>.yaml file.
 #environment:
 
-# TODO: Create backend policies
 # Defines how the backend services of the load balancer should distribute the
 # traffic to the endpoints. This policy is similar to a BackendConfig for an
-# Ingress resource.
-backendPolicies: []
+# Ingress resource. These are default values that can be overridden for each
+# backend service in backendServices.
+backendPolicy:
+  # Configures connection draining.
+  #connectionDraining:
+  #  # Ranges from 0 (disabled) to 3600.
+  #  drainingTimeoutSec:
+
+  # Configures Identity-Aware Proxy for the backend. This is not necessary for
+  # most services.
+  #iap:
+  #  enabled: false
+
+  #  # The OAuth2 client ID.
+  #  oauth2ClientId:
+
+  #  # Name of the Kubernetes secret containing the OAuth2 client secret.
+  #  oauth2ClientSecret:
+
+  # Configures HTTP access logging.
+  logging:
+    enable: true
+
+    # Ranges from 0.0 (0%) to 1.0 (100%).
+    sampleRate: 0.1
+
+  #sessionAffinity:
+  #  # Options: CLIENT_IP, GENERATED_COOKIE, NONE
+  #  type: CLIENT_IP
+
+  #  # If "type" is set to "GENERATED_COOKIE", configure the lifetime of cookies
+  #  # in seconds. Min: 0, max: 1209600.
+  #  #cookieTtlSec:
+
+  # Backend service timeout period in seconds.
+  #timeoutSec: 30
 
 # TODO: Create backend services
 # Defines the backend services to create and their configurations.
-backendServices: []
+backendServices:
+  - name: mozcloud-gateway
+    # Definitions for the Kubernetes service.
+    backend:
+      port: 8080
+
+      # Protocol used for service. Default is TCP. More information found
+      # here:
+      # https://kubernetes.io/docs/reference/networking/service-protocols/
+      #protocol: TCP
+
+      # Port name/number of pods the service should target. Default is "http".
+      targetPort: http
+
+      # Labels to use for the service.
+      #labels: {}
+
+      # Selector labels the service should use to match against pods.
+      #selectorLabels: {}
+
+    # Backend policy to apply to this specific backend service. Overrides the
+    # defaults from .Values.backendPolicy
+    #backendPolicy: {}
+
+    # Health check configurations for the load balancer to perform against the
+    # backend service.
+    #
+    # By default, Kubernetes services will perform health checks against pods
+    # using readinessProbes and livenessProbes. This section allows users to
+    # specify health check configurations at the load balancer level, which
+    # provides more fine-grained control over how health checks are performed.
+    healthCheck:
+      # The request path to use for the health check. Default is
+      # "/__lbheartbeat__".
+      path: /__lbheartbeat__
+
+      # The protocol to use for health checks. Options are "http" or "tcp".
+      # Default is "http".
+      protocol: http
+
+      # The port to use for the health check, if different from the service
+      # port. This port must be specified as a number, not a named port.
+      #port:
+
+      # The interval (in seconds) in which the endpoint is probed for a health
+      # check.
+      #checkIntervalSec:
+
+      # The timeout (in seconds) for the health check probe.
+      #timeoutSec:
+
+      # Number of sequential connection attempts that must succeed for a backend
+      # to be considered healthy.
+      #healthyThreshold:
+
+      # Number of sequential connection attempts that must succeed for a backend
+      # to be considered unhealthy.
+      #unhealthyThreshold:
 
 # Defines the Gateways to create and their configurations.
 gateway:
@@ -96,15 +186,12 @@ gateway:
           protocol: HTTPS
           port: 443
 
-# TODO: Create gateway policies
 # Defines specific parameters of the frontend of the Google Cloud load
 # balancer. This policy is similar to a FrontendConfig for an Ingress resource.
-gatewayPolicies: []
-
-# TODO: Create health check policies
-# Defines the parameters and behavior of the health check used to check the
-# health status of the backend Pods.
-healthCheckPolicies: []
+gatewayPolicy:
+  # SSL policy to use. This configures a set of TLS versions and ciphers that
+  # the load balancer uses to terminate HTTPS traffic from clients.
+  sslPolicy: mozilla-intermediate
 
 # TODO: Create HTTP Routes
 # Defines how HTTP and HTTPS requests received by a Gateway are directed to
@@ -228,8 +315,8 @@ httpRoute:
           #  #  # Example: /path/to/endpoint -> /newpath/to/endpoint
           #  #  type: ReplaceFullPath
 
-# TODO: Create traffic distribution policies
+# TODO: Create default traffic distribution policy, add support in backend
 # Defines how traffic is distributed across endpoints within a backend. This
 # policy is similar to how you would configure specific traffic balancing
 # algorithms for the backend service that are referenced by an Ingress resource.
-trafficDistributionPolicies: []
+trafficDistributionPolicy: []
