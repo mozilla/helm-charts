@@ -2,6 +2,7 @@
 enabled: true
 
 # Name to be used for all resources if not specified at the resource level.
+# This should match the name of the parent Helm chart.
 #nameOverride:
 
 # Application code. This should match the `app_code` value in your tenant's
