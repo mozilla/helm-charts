@@ -111,16 +111,6 @@ Gateway template helpers
     {{- $class_name := include "mozcloud-gateway-lib.config.gateway.className" $gateway_config -}}
     {{- $_ = set $gateway_config "className" $class_name -}}
   {{- end -}}
-  {{- /* Set certificate details */ -}}
-  {{- $listeners := list -}}
-  {{- range $listener := $gateway_config.listeners -}}
-    {{- $listener_certs := default (dict) $listener.certificates -}}
-    {{- $global_certs := default (dict) $gateway_config.certificates -}}
-    {{- $certificates := mergeOverwrite $global_certs $listener_certs -}}
-    {{- $_ = set $listener "certificates" $certificates -}}
-    {{- $listeners = append $listeners $listener -}}
-  {{- end -}}
-  {{- $_ = set $gateway_config "listeners" $listeners -}}
   {{- /* Generate labels */ -}}
   {{- $label_params := dict "labels" (default (dict) $gateway_config.labels) -}}
   {{- $labels := (include "mozcloud-gateway-lib.labels" (mergeOverwrite $ $label_params) | fromYaml) -}}
@@ -139,10 +129,6 @@ type: external
 scope: global
 addresses:
   - mozcloud-gateway-dev-ip-v4
-certificates:
-  names:
-    - my-certmap
-  type: certmap
 listeners:
   - name: http
     protocol: HTTP
@@ -150,6 +136,10 @@ listeners:
   - name: https
     protocol: HTTPS
     port: 443
+tls:
+  certs:
+    - mozcloud-gateway-certmap
+  type: certmap
 {{- end -}}
 
 {{- define "mozcloud-gateway-lib.defaults.gateway.classes" -}}
