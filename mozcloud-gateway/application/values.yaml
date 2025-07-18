@@ -56,7 +56,6 @@ backendPolicy:
   # Backend service timeout period in seconds.
   #timeoutSec: 30
 
-# TODO: Create backend services
 # Defines the backend services to create and their configurations.
 backendServices:
   - name: mozcloud-gateway
@@ -156,23 +155,6 @@ gateway:
       addresses:
         - mozcloud-gateway-dev-ip-v4
 
-      certificates:
-        # A list of the certmap, pre-shared cert, or secret names to use on the
-        # gateway.
-        #
-        # Certificate maps and pre-shared certificates are created
-        # outside of Kubernetes either by tenant Terraform modules (certmaps)
-        # or manually (pre-shared).
-        #
-        # Secrets can be created via Certificate resources provisioned by
-        # cert-manager.
-        names:
-          - my-certmap
-
-        # Can be "certmap", "pre-shared", or "secret". Default (and preferred)
-        # is "certmap".
-        type: certmap
-
       listeners:
         # The http listener will be created by default to handle HTTP to HTTPS
         # redirects.
@@ -186,6 +168,32 @@ gateway:
           protocol: HTTPS
           port: 443
 
+          # Certificate details for external gateways. This section is only
+          # necessary for listeners using the HTTPS protocol.
+          certificates:
+            # A list of the certmap, pre-shared cert, or secret names to use on the
+            # gateway. Only the first entry is used if "type" is "certmap".
+            #
+            # Certificate maps and pre-shared certificates are created
+            # outside of Kubernetes either by tenant Terraform modules (certmaps)
+            # or manually (pre-shared).
+            #
+            # Secrets can be created via Certificate resources provisioned by
+            # cert-manager.
+            names:
+              - my-certmap
+
+            # Can be "certmap", "pre-shared", or "secret". Default (and preferred)
+            # is "certmap".
+            type: certmap
+
+
+      # Additional annotations
+      #annotations: {}
+
+      # Custom labels. Additional labels are generated in templates/_helpers.tpl.
+      #labels: {}
+
 # Defines specific parameters of the frontend of the Google Cloud load
 # balancer. This policy is similar to a FrontendConfig for an Ingress resource.
 gatewayPolicy:
@@ -193,7 +201,6 @@ gatewayPolicy:
   # the load balancer uses to terminate HTTPS traffic from clients.
   sslPolicy: mozilla-intermediate
 
-# TODO: Create HTTP Routes
 # Defines how HTTP and HTTPS requests received by a Gateway are directed to
 # Services.
 httpRoute:

@@ -1,0 +1,42 @@
+{{- define "mozcloud-gateway-lib.gateway" -}}
+{{- $gateways := include "mozcloud-gateway-lib.config.gateways" . | fromYaml }}
+{{- range $gateway := $gateways }}
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ $gateway.name }}
+  labels:
+    {{- $gateway.labels | toYaml | nindent 4 }}
+  {{- if $gateway.annotations }}
+  annotations:
+    {{- $gateway.annotations | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+  gatewayClassName: {{ $gateway.className }}
+  addresses:
+    {{- $gateway.addresses | toYaml | nindent 4 }}
+  listeners:
+    {{- range $listener := $gateway.listeners }}
+    - name: {{ $listener.name }}
+      protocol: {{ $listener.protocol }}
+      port: {{ $listener.port }}
+      {{- if $listener.certificates }}
+      tls:
+        mode: Terminate
+        {{- if eq $listener.certificates.type "certmap" }}
+        options:
+          networking.gke.io/certificate-map: {{ $listener.certificates.names | first | quote }}
+        {{- else if eq $listener.certificates.type "pre-shared" }}
+        options:
+          networking.gke.io/pre-shared-certs: {{ join "," (uniq $listener.certificates.names | sortAlpha) | quote }}
+        {{- else if eq $listener.certificates.type "secret" }}
+        certificateRefs:
+          {{- range $cert_name := $listener.certificates.names }}
+          - name: {{ $cert_name | quote }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end -}}
+{{- end }}
+{{- end -}}

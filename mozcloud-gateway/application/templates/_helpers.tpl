@@ -60,3 +60,17 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create label parameters to be used in library chart if defined as values.
+*/}}
+{{- define "mozcloud-gateway.labelParams" -}}
+{{- $params := dict "chartName" (include "mozcloud-gateway.name" .) -}}
+{{- $label_params := list "appCode" "component" "environment" -}}
+{{- range $label_param := $label_params -}}
+  {{- if index $.Values $label_param -}}
+    {{- $_ := set $params $label_param (index $.Values $label_param) -}}
+  {{- end }}
+{{- end }}
+{{- $params | toYaml }}
+{{- end }}
