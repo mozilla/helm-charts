@@ -155,6 +155,27 @@ gateway:
       addresses:
         - mozcloud-gateway-dev-ip-v4
 
+      # Global certificate details for external gateways. Certificates are only
+      # necessary if one or more listeners use the HTTP procotol.
+      #
+      # This section is overridden by certificates defined at the listener level.
+      certificates:
+        # A list of the certmap, pre-shared cert, or secret names to use on the
+        # gateway. Only the first entry is used if "type" is "certmap".
+        #
+        # Certificate maps and pre-shared certificates are created
+        # outside of Kubernetes either by tenant Terraform modules (certmaps)
+        # or manually (pre-shared).
+        #
+        # Secrets can be created via Certificate resources provisioned by
+        # cert-manager.
+        names:
+          - my-certmap
+
+        # Can be "certmap", "pre-shared", or "secret". Default (and preferred)
+        # is "certmap".
+        type: certmap
+
       listeners:
         # The http listener will be created by default to handle HTTP to HTTPS
         # redirects.
@@ -168,24 +189,12 @@ gateway:
           protocol: HTTPS
           port: 443
 
-          # Certificate details for external gateways. This section is only
-          # necessary for listeners using the HTTPS protocol.
-          certificates:
-            # A list of the certmap, pre-shared cert, or secret names to use on the
-            # gateway. Only the first entry is used if "type" is "certmap".
-            #
-            # Certificate maps and pre-shared certificates are created
-            # outside of Kubernetes either by tenant Terraform modules (certmaps)
-            # or manually (pre-shared).
-            #
-            # Secrets can be created via Certificate resources provisioned by
-            # cert-manager.
-            names:
-              - my-certmap
-
-            # Can be "certmap", "pre-shared", or "secret". Default (and preferred)
-            # is "certmap".
-            type: certmap
+          # Configures certificate details at the listener level. This
+          # overrides global certificate configurations at the gateway level.
+          #certificates:
+          #  names:
+          #    - my-certmap
+          #  type: certmap
 
 
       # Additional annotations

@@ -1,6 +1,6 @@
 {{- define "mozcloud-gateway-lib.gateway" -}}
 {{- $gateways := include "mozcloud-gateway-lib.config.gateways" . | fromYaml }}
-{{- range $gateway := $gateways }}
+{{- range $gateway := $gateways.gateways }}
 ---
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: Gateway
@@ -21,7 +21,7 @@ spec:
     - name: {{ $listener.name }}
       protocol: {{ $listener.protocol }}
       port: {{ $listener.port }}
-      {{- if $listener.certificates }}
+      {{- if and (eq $listener.protocol "HTTPS") ($listener.certificates) }}
       tls:
         mode: Terminate
         {{- if eq $listener.certificates.type "certmap" }}

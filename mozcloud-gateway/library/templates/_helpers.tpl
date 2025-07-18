@@ -54,7 +54,7 @@ Selector labels
 {{/*
 Template helpers
 */}}
-{{- define "mozcloud-ingress-lib.config.name" -}}
+{{- define "mozcloud-gateway-lib.config.name" -}}
 {{- $name := "" -}}
 {{- if .name -}}
   {{- $name = .name -}}
@@ -93,10 +93,11 @@ Gateway template helpers
 
 {{- define "mozcloud-gateway-lib.config.gateways" -}}
 {{- $defaults := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
-{{- $gateways := default (list $defaults) .gatewayConfig -}}
+{{- $gateways := default (list $defaults) (.gatewayConfig).gateways -}}
 {{- $output := list -}}
-{{- range $gateway := $gateway_config -}}
-  {{- $gateway_config := mergeOverwrite $defaults $gateway -}}
+{{- range $gateway := $gateways -}}
+  {{- $default_config := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
+  {{- $gateway_config := mergeOverwrite $default_config $gateway -}}
   {{- /* Use name helper function to populate name using rules hierarchy */ -}}
   {{- $params := dict "gatewayConfig" $gateway_config -}}
   {{- $name_override := default "" $.nameOverride -}}
@@ -107,16 +108,27 @@ Gateway template helpers
   {{- $_ := set $gateway_config "name" $name -}}
   {{- /* Use helper function to determine className if not defined */ -}}
   {{- if not $gateway_config.className -}}
-    {{- $class_name := (include "mozcloud-gateway-lib.config.gateway.className" | fromYaml) -}}
+    {{- $class_name := include "mozcloud-gateway-lib.config.gateway.className" $gateway_config -}}
     {{- $_ = set $gateway_config "className" $class_name -}}
   {{- end -}}
+  {{- /* Set certificate details */ -}}
+  {{- $listeners := list -}}
+  {{- range $listener := $gateway_config.listeners -}}
+    {{- $listener_certs := default (dict) $listener.certificates -}}
+    {{- $global_certs := default (dict) $gateway_config.certificates -}}
+    {{- $certificates := mergeOverwrite $global_certs $listener_certs -}}
+    {{- $_ = set $listener "certificates" $certificates -}}
+    {{- $listeners = append $listeners $listener -}}
+  {{- end -}}
+  {{- $_ = set $gateway_config "listeners" $listeners -}}
   {{- /* Generate labels */ -}}
   {{- $label_params := dict "labels" (default (dict) $gateway_config.labels) -}}
   {{- $labels := (include "mozcloud-gateway-lib.labels" (mergeOverwrite $ $label_params) | fromYaml) -}}
   {{- $_ = set $gateway_config "labels" $labels -}}
-  {{- $_ = append $output $gateway_config -}}
+  {{- $output = append $output $gateway_config -}}
 {{- end -}}
-{{ $output | toYaml }}
+{{- $gateways = dict "gateways" $output -}}
+{{ $gateways | toYaml }}
 {{- end -}}
 
 {{/*
@@ -127,6 +139,10 @@ type: external
 scope: global
 addresses:
   - mozcloud-gateway-dev-ip-v4
+certificates:
+  names:
+    - my-certmap
+  type: certmap
 listeners:
   - name: http
     protocol: HTTP
@@ -134,10 +150,6 @@ listeners:
   - name: https
     protocol: HTTPS
     port: 443
-    certificates:
-      names:
-        - my-certmap
-      type: certmap
 {{- end -}}
 
 {{- define "mozcloud-gateway-lib.defaults.gateway.classes" -}}
