@@ -1,0 +1,2 @@
+{{- if and .Values.enabled (.Values.gateway).enabled }}
+{{- end }}
