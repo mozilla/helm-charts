@@ -1,0 +1,57 @@
+{{- define "mozcloud-gateway-lib.gateway" -}}
+{{- $gateways := include "mozcloud-gateway-lib.config.gateways" . | fromYaml }}
+{{- range $gateway := $gateways.gateways }}
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: {{ $gateway.name }}
+  labels:
+    {{- $gateway.labels | toYaml | nindent 4 }}
+  {{- /* Only include certmap annotations if there are >= 1 HTTPS listeners */}}
+  {{- $https_listeners := 0 }}
+  {{- range $listener := $gateway.listeners }}
+  {{- if eq (upper $listener.protocol) "HTTPS" }}
+  {{- $https_listeners = add1 $https_listeners }}
+  {{- end }}
+  {{- end }}
+  {{- if or $gateway.annotations (and (eq ($gateway.tls).type "certmap") (gt $https_listeners 0)) }}
+  annotations:
+    {{- if $gateway.annotations }}
+    {{- $gateway.annotations | toYaml | nindent 4 }}
+    {{- end }}
+    {{- if eq ($gateway.tls).type "certmap" }}
+    networking.gke.io/certmap: {{ $gateway.tls.certs | first }}
+    {{- end }}
+  {{- end }}
+spec:
+  gatewayClassName: {{ $gateway.className }}
+  addresses:
+    {{- range $address := $gateway.addresses }}
+    - type: NamedAddress
+      value: {{ $address }}
+    {{- end }}
+  listeners:
+    {{- range $listener := $gateway.listeners }}
+    - allowedRoutes:
+        namespaces:
+          from: Same
+      name: {{ $listener.name }}
+      protocol: {{ $listener.protocol }}
+      port: {{ $listener.port }}
+      {{- if and (eq $listener.protocol "HTTPS") (ne ($gateway.tls).type "certmap") }}
+      tls:
+        mode: Terminate
+        {{- if eq $gateway.tls.type "secret" }}
+        certificateRefs:
+          {{- range $cert_name := $gateway.tls.certs }}
+          - name: {{ $cert_name | quote }}
+          {{- end }}
+        {{- else if eq $gateway.tls.type "pre-shared" }}
+        options:
+          networking.gke.io/pre-shared-certs: {{ join "," (uniq $gateway.tls.certs | sortAlpha) | quote }}
+        {{- end }}
+      {{- end }}
+    {{- end -}}
+{{- end }}
+{{- end -}}
