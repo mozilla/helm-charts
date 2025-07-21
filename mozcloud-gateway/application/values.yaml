@@ -1,0 +1,331 @@
+# If disabled, no resources in the chart will be created.
+enabled: true
+
+# Name to be used for all resources if not specified at the resource level.
+# This should match the name of the parent Helm chart.
+#nameOverride:
+
+# Application code. This should match the `app_code` value in your tenant's
+# values.yaml file.
+#appCode:
+
+# Component. This should match the `component` value in your tenant's
+# values.yaml file.
+#component:
+
+# Environment. This should match the `environment` value in your tenant's
+# values-<env>.yaml file.
+#environment:
+
+# Defines how the backend services of the load balancer should distribute the
+# traffic to the endpoints. This policy is similar to a BackendConfig for an
+# Ingress resource. These are default values that can be overridden for each
+# backend service in backendServices.
+backendPolicy:
+  # Configures connection draining.
+  #connectionDraining:
+  #  # Ranges from 0 (disabled) to 3600.
+  #  drainingTimeoutSec:
+
+  # Configures Identity-Aware Proxy for the backend. This is not necessary for
+  # most services.
+  #iap:
+  #  enabled: false
+
+  #  # The OAuth2 client ID.
+  #  oauth2ClientId:
+
+  #  # Name of the Kubernetes secret containing the OAuth2 client secret.
+  #  oauth2ClientSecret:
+
+  # Configures HTTP access logging.
+  logging:
+    enable: true
+
+    # Ranges from 0.0 (0%) to 1.0 (100%).
+    sampleRate: 0.1
+
+  #sessionAffinity:
+  #  # Options: CLIENT_IP, GENERATED_COOKIE, NONE
+  #  type: CLIENT_IP
+
+  #  # If "type" is set to "GENERATED_COOKIE", configure the lifetime of cookies
+  #  # in seconds. Min: 0, max: 1209600.
+  #  #cookieTtlSec:
+
+  # Backend service timeout period in seconds.
+  #timeoutSec: 30
+
+# Defines the backend services to create and their configurations.
+backendServices:
+  - name: mozcloud-gateway
+    # Definitions for the Kubernetes service.
+    backend:
+      port: 8080
+
+      # Protocol used for service. Default is TCP. More information found
+      # here:
+      # https://kubernetes.io/docs/reference/networking/service-protocols/
+      #protocol: TCP
+
+      # Port name/number of pods the service should target. Default is "http".
+      targetPort: http
+
+      # Labels to use for the service.
+      #labels: {}
+
+      # Selector labels the service should use to match against pods.
+      #selectorLabels: {}
+
+    # Backend policy to apply to this specific backend service. Overrides the
+    # defaults from .Values.backendPolicy
+    #backendPolicy: {}
+
+    # Health check configurations for the load balancer to perform against the
+    # backend service.
+    #
+    # By default, Kubernetes services will perform health checks against pods
+    # using readinessProbes and livenessProbes. This section allows users to
+    # specify health check configurations at the load balancer level, which
+    # provides more fine-grained control over how health checks are performed.
+    healthCheck:
+      # The request path to use for the health check. Default is
+      # "/__lbheartbeat__".
+      path: /__lbheartbeat__
+
+      # The protocol to use for health checks. Options are "http" or "tcp".
+      # Default is "http".
+      protocol: http
+
+      # The port to use for the health check, if different from the service
+      # port. This port must be specified as a number, not a named port.
+      #port:
+
+      # The interval (in seconds) in which the endpoint is probed for a health
+      # check.
+      #checkIntervalSec:
+
+      # The timeout (in seconds) for the health check probe.
+      #timeoutSec:
+
+      # Number of sequential connection attempts that must succeed for a backend
+      # to be considered healthy.
+      #healthyThreshold:
+
+      # Number of sequential connection attempts that must succeed for a backend
+      # to be considered unhealthy.
+      #unhealthyThreshold:
+
+# Defines the Gateways to create and their configurations.
+gateway:
+  # If disabled, Gateway resources will not be created in the K8s namespace.
+  enabled: false
+
+  gateways:
+    - name: mozcloud-gateway
+
+      # Type can be "internal" or "external". The library chart will
+      # automatically assign the preferred className if not defined here.
+      # Overridden by "className", if defined.
+      #
+      # Read more: https://cloud.google.com/kubernetes-engine/docs/concepts/gateway-api#gatewayclass
+      #
+      # Note: Internal and external gateways MUST be created separately.
+      type: external
+
+      # Sets the load balancer scope. Options are "global" or "regional".
+      #
+      # External gateways can be either "global" (default) or "regional".
+      # Internal gateways can only be "regional".
+      #
+      # Overridden by "className", if defined.
+      #scope: global
+
+      # Manually define a className, if desired. By default, the following
+      # classNames will be assigned for each respective gateway type:
+      #
+      #   internal: gke-l7-rilb
+      #   external: gke-l7-global-external-managed
+      #
+      # This will override "type" and "scope" configurations.
+      #className: gke-l7-global-external-managed
+
+      # A list of the named addresses to use on the Gateway. These should match
+      # the named addresses created for the tenant in GCP.
+      addresses:
+        - mozcloud-gateway-dev-ip-v4
+
+      listeners:
+        # The http listener will be created by default to handle HTTP to HTTPS
+        # redirects.
+        - name: http
+          protocol: HTTP
+          port: 80
+
+        # The https listener is used to handle inbound traffic to the service.
+        # Inbound gateways do not need https listeners.
+        - name: https
+          protocol: HTTPS
+          port: 443
+
+      # Global certificate details for external gateways. Certificates MUST be
+      # specified if one or more listener(s) uses the HTTPS procotol.
+      tls:
+        # A list of the certmap, pre-shared cert, or secret names to use on the
+        # gateway. Only the first entry is used if "type" is "certmap".
+        #
+        # Certificate maps and pre-shared certificates are created
+        # outside of Kubernetes either by tenant Terraform modules (certmaps)
+        # or manually (pre-shared).
+        #
+        # Secrets can be created via Certificate resources provisioned by
+        # cert-manager.
+        #
+        # Note: The certs listed below will be applied to ALL listeners in this
+        # gateway.
+        certs:
+          - mozcloud-gateway-certmap
+
+        # Can be "certmap", "pre-shared", or "secret" (cert-manager). Default
+        # (and preferred) is "certmap".
+        type: certmap
+
+      # Additional annotations
+      #annotations: {}
+
+      # Custom labels. Additional labels are generated in templates/_helpers.tpl.
+      #labels: {}
+
+# Defines specific parameters of the frontend of the Google Cloud load
+# balancer. This policy is similar to a FrontendConfig for an Ingress resource.
+gatewayPolicy:
+  # SSL policy to use. This configures a set of TLS versions and ciphers that
+  # the load balancer uses to terminate HTTPS traffic from clients.
+  sslPolicy: mozilla-intermediate
+
+# Defines how HTTP and HTTPS requests received by a Gateway are directed to
+# Services.
+httpRoute:
+  # If disabled, HTTPRoute resources will not be created in the K8s namespace.
+  enabled: false
+
+  httpRoutes:
+    - name: mozcloud-gateway
+
+      # Hostnames to match against. Hostnames are matched before any other
+      # matches (path, headers) occur.
+      hostnames:
+        - chart.example.local
+        - chart2.example.local
+
+      # If enabled, create an HTTP-to-HTTPS redirect.
+      #httpToHttpsRedirect: true
+
+      # Define parent Gateway resource the HTTPRoute should attach to.
+      parentRefs:
+        - kind: Gateway
+          name: mozcloud-gateway
+
+          # This refers to the name of the listener to use on the gateway. See
+          # gateway.gateways[].listeners[].name for Gateways created using this
+          # chart.
+          section: https
+
+      rules:
+          # A list of the backend services to receive traffic.
+        - backendRefs:
+              # The name of the backend service
+            - name: mozcloud-gateway
+              port: 8080
+
+              # The amount of inbound traffic you want send to this backend
+              # service. This value creates a percentage of the total weights
+              # specified across all backend services in this rule.
+              #
+              # For example, say you have the following backend services
+              # specified:
+              #
+              #   - name: service1
+              #     port: 8080
+              #     weight: 3
+              #   - name: service2
+              #     port: 8080
+              #     weight: 1
+              #
+              # In this example, "service1" would receive roughly 75% of
+              # requests and "service2" would receive roughly 25%.
+              #
+              # If unspecified, each backend service will be assigned a weight
+              # of 1.
+              #
+              # If set to 0, no traffic will be sent to that backend service.
+              #weight:
+
+          # Configures paths or headers to match against when sending traffic to
+          # abackend service. Matches are independent, meaning the rule will
+          # be matched if any matches below are true.
+          #
+          # If no matches are specified, all traffic will be sent to the "/"
+          # path on the backend service pods by default.
+          #matches:
+          #  # Matches path "/path"
+          #  - path: /path
+          #
+          #  # Header match. Contains a list of headers against which to match.
+          #  - headers:
+          #      - X-My-Header
+          #      - X-Another-Header
+          #
+          #  # If a path and header specified in an entry, the rule will be
+          #  # matched if BOTH the path and headers match.
+          #  - path: /foo
+          #    headers:
+          #      - X-My-Header
+          #      - X-Another-Header
+
+          # Configures a path redirect. Overridden by "rewrite".
+          #
+          # Note: Enable or disable HTTP-to-HTTPS redirects using
+          # "httpToHttpsRedirect" parameter in httpRoute definition above.
+          #redirect:
+          #  # Target path for redirect.
+          #  path: /newpath
+          #
+          #  # Type can be "ReplaceFullPath" or "ReplacePrefixMatch".
+          #  #
+          #  # "ReplaceFullPath" will replace full paths specified in the
+          #  # "matches" section with the one specified above.
+          #  # Example: /path/to/endpoint -> /newpath
+          #  #
+          #  # "ReplacePrefixMatch" will replace the prefix specified in the
+          #  # "matches" section with the one specified above.
+          #  # Example: /path/to/endpoint -> /newpath/to/endpoint
+          #  type: ReplaceFullPath
+          #
+          #  # HTTP status code to return. Default is 302.
+          #  #statusCode: 302
+
+          # Configures a rewrite. Overrides "redirect".
+          #rewrite:
+          #  hostname: chart.example2.local
+          #
+          #  # Optionally configure a path redirect when rewriting.
+          #  #path:
+          #  #  name: /newpath
+          #  #
+          #  #  # Type can be "ReplaceFullPath" or "ReplacePrefixMatch".
+          #  #  #
+          #  #  # "ReplaceFullPath" will replace full paths specified in the
+          #  #  # "matches" section with the one specified above.
+          #  #  # Example: /path/to/endpoint -> /newpath
+          #  #  #
+          #  #  # "ReplacePrefixMatch" will replace the prefix specified in the
+          #  #  # "matches" section with the one specified above.
+          #  #  # Example: /path/to/endpoint -> /newpath/to/endpoint
+          #  #  type: ReplaceFullPath
+
+# TODO: Create default traffic distribution policy, add support in backend
+# Defines how traffic is distributed across endpoints within a backend. This
+# policy is similar to how you would configure specific traffic balancing
+# algorithms for the backend service that are referenced by an Ingress resource.
+trafficDistributionPolicy: []

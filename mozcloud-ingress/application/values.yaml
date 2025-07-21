@@ -2,6 +2,7 @@
 enabled: true
 
 # Name to be used for all resources if not specified at the resource level.
+# This should match the name of the parent Helm chart.
 #nameOverride:
 
 # Application code. This should match the `app_code` value in your tenant's
@@ -13,7 +14,7 @@ enabled: true
 #component:
 
 # Environment. This should match the `environment` value in your tenant's
-# values.yaml file.
+# values-<env>.yaml file.
 #environment:
 
 # Global backend configuration. These values can be overridden at the host
