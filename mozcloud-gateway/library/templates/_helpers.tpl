@@ -59,6 +59,9 @@ Template helpers
 {{- if .name -}}
   {{- $name = .name -}}
 {{- end -}}
+{{- if and (.httpRouteConfig).name (not $name) -}}
+  {{- $name = .httpRouteConfig.name -}}
+{{- end -}}
 {{- if and (.gatewayConfig).name (not $name) -}}
   {{- $name = .gatewayConfig.name -}}
 {{- end -}}
@@ -96,8 +99,8 @@ Gateway template helpers
 {{- $gateways := default (list $defaults) (.gatewayConfig).gateways -}}
 {{- $output := list -}}
 {{- range $gateway := $gateways -}}
-  {{- $default_config := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
-  {{- $gateway_config := mergeOverwrite $default_config $gateway -}}
+  {{- $gateway_defaults := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
+  {{- $gateway_config := mergeOverwrite $gateway_defaults ($gateway | deepCopy) -}}
   {{- /* Use name helper function to populate name using rules hierarchy */ -}}
   {{- $params := dict "gatewayConfig" $gateway_config -}}
   {{- $name_override := default "" $.nameOverride -}}
@@ -113,12 +116,72 @@ Gateway template helpers
   {{- end -}}
   {{- /* Generate labels */ -}}
   {{- $label_params := dict "labels" (default (dict) $gateway_config.labels) -}}
-  {{- $labels := (include "mozcloud-gateway-lib.labels" (mergeOverwrite $ $label_params) | fromYaml) -}}
+  {{- $labels := (include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml) -}}
   {{- $_ = set $gateway_config "labels" $labels -}}
   {{- $output = append $output $gateway_config -}}
 {{- end -}}
 {{- $gateways = dict "gateways" $output -}}
 {{ $gateways | toYaml }}
+{{- end -}}
+
+{{/*
+HTTPRoute template helpers
+*/}}
+{{- define "mozcloud-gateway-lib.config.httpRoutes" -}}
+{{- $defaults := include "mozcloud-gateway-lib.defaults.httpRoute.config" . | fromYaml -}}
+{{- $http_routes := default (list $defaults) (.httpRouteConfig).httpRoutes }}
+{{- $output := list -}}
+{{- range $http_route := $http_routes -}}
+  {{- $http_route_defaults := include "mozcloud-gateway-lib.defaults.httpRoute.config" . | fromYaml -}}
+  {{- $http_route_config := mergeOverwrite $http_route_defaults ($http_route | deepCopy) -}}
+  {{- /* Use name helper function to populate name using rules hierarchy */ -}}
+  {{- $params := dict "httpRouteConfig" $http_route_config -}}
+  {{- $name_override := default "" $.nameOverride -}}
+  {{- if $name_override -}}
+    {{- $_ := set $params "nameOverride" $name_override -}}
+  {{- end -}}
+  {{- $name := include "mozcloud-gateway-lib.config.name" $params -}}
+  {{- $_ := set $http_route_config "name" $name -}}
+  {{- /* Generate labels */ -}}
+  {{- $label_params := dict "labels" (default (dict) $http_route_config.labels) -}}
+  {{- $labels := (include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml) -}}
+  {{- $_ = set $http_route_config "labels" $labels -}}
+  {{- /* Set defaults for matches, redirects and rewrites, if defined */ -}}
+  {{- $rules := list -}}
+  {{- range $rule := $http_route_config.rules -}}
+    {{- $rule_defaults := include "mozcloud-gateway-lib.defaults.httpRoute.config" . | fromYaml -}}
+    {{- $rule_config := mergeOverwrite ($rule_defaults.rules | first) ($rule | deepCopy) -}}
+    {{- if $rule_config.matches -}}
+      {{- $matches := list -}}
+      {{- range $match := $rule_config.matches -}}
+        {{- $match_config := $match | deepCopy -}}
+        {{- if $match.path -}}
+          {{- $type := default ($rule_defaults.match.path.type | deepCopy) $match_config.path.type -}}
+          {{- $_ := set $match_config.path "type" $type -}}
+        {{- end -}}
+        {{- $matches = append $matches $match_config -}}
+      {{- end -}}
+      {{- $_ := set $rule_config "matches" $matches -}}
+    {{- end -}}
+    {{- if $rule_config.redirect -}}
+      {{- $redirect_config := mergeOverwrite $rule_defaults.redirect $rule_config.redirect -}}
+      {{- $_ := set $rule_config "redirect" $redirect_config -}}
+    {{- end -}}
+    {{- if $rule_config.rewrite -}}
+      {{- $rewrite_config := $rule_config.rewrite | deepCopy -}}
+      {{- if $rule_config.rewrite.path -}}
+        {{- $rewrite_path_type := default $rule_defaults.rewrite.path.type $rule_config.rewrite.path.type -}}
+        {{- $_ := set $rewrite_config.path "type" $rewrite_path_type -}}
+      {{- end -}}
+      {{- $_ := set $rule_config "rewrite" $rewrite_config -}}
+    {{- end -}}
+    {{- $rules = append $rules $rule_config -}}
+  {{- end -}}
+  {{- $_ = set $http_route_config "rules" $rules -}}
+  {{- $output = append $output $http_route_config -}}
+{{- end -}}
+{{- $http_routes = dict "httpRoutes" $output -}}
+{{ $http_routes | toYaml }}
 {{- end -}}
 
 {{/*
@@ -148,6 +211,28 @@ external:
   regional: gke-l7-regional-external-managed
 internal:
   regional: gke-l7-rilb
+{{- end -}}
+
+{{- define "mozcloud-gateway-lib.defaults.httpRoute.config" -}}
+gatewayRefs:
+  - name: mozcloud-gateway
+    section: https
+hostnames:
+  - chart.example.local
+httpToHttpsRedirect: true
+match:
+  path:
+    type: PathPrefix
+redirect:
+  statusCode: 302
+  type: ReplaceFullPath
+rewrite:
+  path:
+    type: ReplaceFullPath
+rules:
+  - backendRefs:
+      - name: {{ include "mozcloud-gateway-lib.config.name" . }}
+        port: 8080
 {{- end -}}
 
 {{/*
