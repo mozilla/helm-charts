@@ -56,12 +56,17 @@ backendPolicy:
   # Backend service timeout period in seconds.
   #timeoutSec: 30
 
-# Defines the backend services to create and their configurations.
-backendServices:
-  - name: mozcloud-gateway
+# Defines the backend services to create, backend policies, and healthchecks.
+backends:
     # Definitions for the Kubernetes service.
-    backend:
+  - service:
+      # If disabled, a new Kubernetes will not be created.
+      #create: true
+
       port: 8080
+
+      # Name of the port to create. Default is "http".
+      #portName: http
 
       # Protocol used for service. Default is TCP. More information found
       # here:
@@ -71,11 +76,17 @@ backendServices:
       # Port name/number of pods the service should target. Default is "http".
       targetPort: http
 
+      # Annotations to use for this service.
+      #annotations: {}
+
       # Labels to use for the service.
       #labels: {}
 
       # Selector labels the service should use to match against pods.
       #selectorLabels: {}
+
+    # Set a name for the backend to use for all related components.
+    #name:
 
     # Backend policy to apply to this specific backend service. Overrides the
     # defaults from .Values.backendPolicy

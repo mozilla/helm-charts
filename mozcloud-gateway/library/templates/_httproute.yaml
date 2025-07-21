@@ -95,7 +95,7 @@ spec:
     {{- range $gateway_ref := $http_route.gatewayRefs }}
     - kind: Gateway
       name: {{ $gateway_ref.name }}
-      sectionName: {{ $gateway_ref.section }}
+      sectionName: http
     {{- end }}
   hostnames:
     {{- range $hostname := $http_route.hostnames }}
