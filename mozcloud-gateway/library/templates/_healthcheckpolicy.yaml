@@ -26,10 +26,10 @@ spec:
     config:
       type: {{ $config.protocol }}
       {{ $config.protocolProperty }}:
-        path: {{ $config.path }}
         {{- if $config.port }}
         port: {{ $config.port }}
         {{- end }}
+        requestPath: {{ $config.path }}
   targetRef:
     group: ""
     kind: Service

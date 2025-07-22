@@ -10,7 +10,30 @@ metadata:
     {{- $backend_policy.labels | toYaml | nindent 4 }}
 spec:
   default:
-    {{- $backend_policy.config | toYaml | nindent 4 }}
+    {{- $config := $backend_policy.config }}
+    {{- if ($config.connectionDraining).drainingTimeoutSec }}
+    connectionDraining:
+      drainingTimeoutSec: {{ $config.connectionDraining.drainingTimeoutSec }}
+    {{- end }}
+    {{- if $config.iap }}
+    iap:
+      enabled: {{ $config.iap.enabled }}
+      oauth2ClientId: {{ $config.iap.oauth2ClientId }}
+      oauth2ClientSecret: {{ $config.iap.oauth2ClientSecret }}
+    {{- end }}
+    logging:
+      enabled: {{ $config.logging.enabled }}
+      sampleRate: {{ $config.logging.sampleRate }}
+    {{- if $config.sessionAffinity }}
+    sessionAffinity:
+      type: {{ $config.sessionAffinity.type }}
+      {{- if $config.sessionAffinity.cookieTtlSec }}
+      cookieTtlSec: {{ $config.sessionAffinity.cookieTtlSec }}
+      {{- end }}
+    {{- end }}
+    {{- if $config.timeoutSec }}
+    timeoutSec: {{ $config.timeoutSec }}
+    {{- end }}
   targetRef:
     group: ""
     kind: Service
