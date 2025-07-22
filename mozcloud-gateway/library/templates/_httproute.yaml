@@ -1,0 +1,111 @@
+{{- define "mozcloud-gateway-lib.httpRoute" -}}
+{{- $http_routes := include "mozcloud-gateway-lib.config.httpRoutes" . | fromYaml }}
+{{- range $http_route := $http_routes.httpRoutes }}
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: {{ $http_route.name }}
+  labels:
+    {{- $http_route.labels | toYaml | nindent 4 }}
+spec:
+  parentRefs:
+    {{- range $gateway_ref := $http_route.gatewayRefs }}
+    - kind: Gateway
+      name: {{ $gateway_ref.name }}
+      sectionName: {{ $gateway_ref.section }}
+    {{- end }}
+  hostnames:
+    {{- range $hostname := $http_route.hostnames }}
+    - {{ $hostname }}
+    {{- end }}
+  rules:
+    {{- range $rule := $http_route.rules }}
+    - backendRefs:
+      {{- range $backend_ref := $rule.backendRefs }}
+      - name: {{ $backend_ref.name }}
+        port: {{ $backend_ref.port }}
+        {{- if $backend_ref.weight }}
+        weight: {{ $backend_ref.weight }}
+        {{- end }}
+      {{- end }}
+      {{- if $rule.matches }}
+      matches:
+        {{- range $match := $rule.matches }}
+        {{- if and $match.path $match.headers }}
+        - path:
+            type: {{ $match.path.type }}
+            value: {{ $match.path.value }}
+          headers:
+            {{- range $header := $match.headers }}
+            - name: {{ $header.name }}
+              value: {{ $header.value }}
+            {{- end }}
+        {{- else if $match.path }}
+        - path:
+            type: {{ $match.path.type }}
+            value: {{ $match.path.value }}
+        {{- else if $match.headers }}
+        - headers:
+            {{- range $header := $match.headers }}
+            - name: {{ $header.name }}
+              value: {{ $header.value }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- if $rule.rewrite }}
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            hostname: {{ $rule.rewrite.hostname }}
+            {{- if $rule.rewrite.path }}
+            path:
+              type: {{ $rule.rewrite.path.type }}
+              {{- if eq $rule.rewrite.path.type "ReplaceFullPath" }}
+              replaceFullPath: {{ $rule.rewrite.path.name }}
+              {{- else if eq $rule.rewrite.path.type "ReplacePrefixMatch" }}
+              replacePrefixMatch: {{ $rule.rewrite.path.name }}
+              {{- end }}
+            {{- end }}
+      {{- else if $rule.redirect }}
+      filters:
+        - type: RequestRedirect
+          requestRedirect:
+            path:
+              type: {{ $rule.redirect.type }}
+              {{- if eq $rule.redirect.type "ReplaceFullPath" }}
+              replaceFullPath: {{ $rule.redirect.path }}
+              {{- else if eq $rule.redirect.type "ReplacePrefixMatch" }}
+              replacePrefixMatch: {{ $rule.redirect.path }}
+              {{- end }}
+              statusCode: {{ $rule.redirect.statusCode }}
+      {{- end }}
+    {{- end }}
+{{- if $http_route.httpToHttpsRedirect }}
+---
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: {{ $http_route.name }}-http-redirect
+  labels:
+    {{- $http_route.labels | toYaml | nindent 4 }}
+spec:
+  parentRefs:
+    {{- range $gateway_ref := $http_route.gatewayRefs }}
+    - kind: Gateway
+      name: {{ $gateway_ref.name }}
+      sectionName: http
+    {{- end }}
+  hostnames:
+    {{- range $hostname := $http_route.hostnames }}
+    - {{ $hostname }}
+    {{- end }}
+  rules:
+    - filters:
+      - type: RequestRedirect
+        requestRedirect:
+          scheme: https
+{{- end }}
+{{- end }}
+{{- end -}}

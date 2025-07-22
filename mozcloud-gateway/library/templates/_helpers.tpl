@@ -46,7 +46,7 @@ Selector labels
 {{- define "mozcloud-gateway-lib.selectorLabels" -}}
 {{- $selector_labels := include "mozcloud-labels-lib.selectorLabels" . | fromYaml -}}
 {{- if .selectorLabels -}}
-  {{- $selector_labels = mergeOverwrite $selector_labels .selector_labels -}}
+  {{- $selector_labels = mergeOverwrite $selector_labels .selectorLabels -}}
 {{- end }}
 {{- $selector_labels | toYaml }}
 {{- end }}
@@ -58,6 +58,9 @@ Template helpers
 {{- $name := "" -}}
 {{- if .name -}}
   {{- $name = .name -}}
+{{- end -}}
+{{- if and (.httpRouteConfig).name (not $name) -}}
+  {{- $name = .httpRouteConfig.name -}}
 {{- end -}}
 {{- if and (.gatewayConfig).name (not $name) -}}
   {{- $name = .gatewayConfig.name -}}
@@ -96,8 +99,8 @@ Gateway template helpers
 {{- $gateways := default (list $defaults) (.gatewayConfig).gateways -}}
 {{- $output := list -}}
 {{- range $gateway := $gateways -}}
-  {{- $default_config := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
-  {{- $gateway_config := mergeOverwrite $default_config $gateway -}}
+  {{- $gateway_defaults := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
+  {{- $gateway_config := mergeOverwrite $gateway_defaults ($gateway | deepCopy) -}}
   {{- /* Use name helper function to populate name using rules hierarchy */ -}}
   {{- $params := dict "gatewayConfig" $gateway_config -}}
   {{- $name_override := default "" $.nameOverride -}}
@@ -113,12 +116,138 @@ Gateway template helpers
   {{- end -}}
   {{- /* Generate labels */ -}}
   {{- $label_params := dict "labels" (default (dict) $gateway_config.labels) -}}
-  {{- $labels := (include "mozcloud-gateway-lib.labels" (mergeOverwrite $ $label_params) | fromYaml) -}}
+  {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
   {{- $_ = set $gateway_config "labels" $labels -}}
   {{- $output = append $output $gateway_config -}}
 {{- end -}}
 {{- $gateways = dict "gateways" $output -}}
 {{ $gateways | toYaml }}
+{{- end -}}
+
+{{/*
+HTTPRoute template helpers
+*/}}
+{{- define "mozcloud-gateway-lib.config.httpRoutes" -}}
+{{- $defaults := include "mozcloud-gateway-lib.defaults.httpRoute.config" . | fromYaml -}}
+{{- $http_routes := default (list $defaults) (.httpRouteConfig).httpRoutes }}
+{{- $output := list -}}
+{{- range $http_route := $http_routes -}}
+  {{- $http_route_defaults := include "mozcloud-gateway-lib.defaults.httpRoute.config" . | fromYaml -}}
+  {{- $http_route_config := mergeOverwrite $http_route_defaults ($http_route | deepCopy) -}}
+  {{- /* Use name helper function to populate name using rules hierarchy */ -}}
+  {{- $params := dict "httpRouteConfig" $http_route_config -}}
+  {{- $name_override := default "" $.nameOverride -}}
+  {{- if $name_override -}}
+    {{- $_ := set $params "nameOverride" $name_override -}}
+  {{- end -}}
+  {{- $name := include "mozcloud-gateway-lib.config.name" $params -}}
+  {{- $_ := set $http_route_config "name" $name -}}
+  {{- /* Generate labels */ -}}
+  {{- $label_params := dict "labels" (default (dict) $http_route_config.labels) -}}
+  {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
+  {{- $_ = set $http_route_config "labels" $labels -}}
+  {{- /* 
+  Set defaults for matches, redirects and rewrites, if defined.
+  We will need to recreate the rule list as some items in child lists have
+  optional values and defaults.
+  */ -}}
+  {{- $rules := list -}}
+  {{- range $rule := $http_route_config.rules -}}
+    {{- $rule_defaults := include "mozcloud-gateway-lib.defaults.httpRoute.config" . | fromYaml -}}
+    {{- $rule_config := mergeOverwrite ($rule_defaults.rules | first) ($rule | deepCopy) -}}
+    {{- /* Matches */ -}}
+    {{- if $rule_config.matches -}}
+      {{- $matches := list -}}
+      {{- range $match := $rule_config.matches -}}
+        {{- $match_config := $match | deepCopy -}}
+        {{- if $match.path -}}
+          {{- $type := default ($rule_defaults.match.path.type | deepCopy) $match_config.path.type -}}
+          {{- $_ := set $match_config.path "type" $type -}}
+        {{- end -}}
+        {{- $matches = append $matches $match_config -}}
+      {{- end -}}
+      {{- $_ := set $rule_config "matches" $matches -}}
+    {{- end -}}
+    {{- /* Redirects */ -}}
+    {{- if $rule_config.redirect -}}
+      {{- $redirect_config := mergeOverwrite $rule_defaults.redirect $rule_config.redirect -}}
+      {{- $_ := set $rule_config "redirect" $redirect_config -}}
+    {{- end -}}
+    {{- /* Rewrites */ -}}
+    {{- if $rule_config.rewrite -}}
+      {{- $rewrite_config := $rule_config.rewrite | deepCopy -}}
+      {{- if $rule_config.rewrite.path -}}
+        {{- $rewrite_path_type := default $rule_defaults.rewrite.path.type $rule_config.rewrite.path.type -}}
+        {{- $_ := set $rewrite_config.path "type" $rewrite_path_type -}}
+      {{- end -}}
+      {{- $_ := set $rule_config "rewrite" $rewrite_config -}}
+    {{- end -}}
+    {{- $rules = append $rules $rule_config -}}
+  {{- end -}}
+  {{- $_ = set $http_route_config "rules" $rules -}}
+  {{- $output = append $output $http_route_config -}}
+{{- end -}}
+{{- $http_routes = dict "httpRoutes" $output -}}
+{{ $http_routes | toYaml }}
+{{- end -}}
+
+{{/*
+Service template helpers
+*/}}
+{{- define "mozcloud-gateway-lib.config.service" -}}
+{{- $name_override := default "" .nameOverride -}}
+{{- $backends := default (list) (.backendConfig).backends -}}
+{{- $output := list -}}
+{{- range $backend := $backends -}}
+  {{- $defaults := include "mozcloud-gateway-lib.defaults.service.config" . | fromYaml -}}
+  {{- $service_config := dict -}}
+  {{- $backend_service := $backend.service | deepCopy -}}
+  {{- /* Only create the service if "create" is not "false" */ -}}
+  {{- $create_service := (include "mozcloud-gateway-lib.defaults.service.config" . | fromYaml).create -}}
+  {{- if hasKey $backend_service "create" -}}
+    {{- $create_service = $backend_service.create -}}
+  {{- end -}}
+  {{- $_ := set $service_config "create" $create_service -}}
+  {{- /* Use name helper function to populate name using rules hierarchy */ -}}
+  {{- $params := dict -}}
+  {{- if $backend.name -}}
+    {{- $_ := set $params "name" $backend.name -}}
+  {{- end -}}
+  {{- if $name_override -}}
+    {{- $_ := set $params "nameOverride" $name_override -}}
+  {{- end -}}
+  {{- $name := include "mozcloud-gateway-lib.config.name" $params -}}
+  {{- $_ = set $service_config "fullnameOverride" $name -}}
+  {{- /* Include annotations, if specified */ -}}
+  {{- if $backend_service.annotations -}}
+    {{- $_ := set $service_config "annotations" $backend_service.annotations -}}
+  {{- end -}}
+  {{- /* Generate labels */ -}}
+  {{- $label_params := dict "labels" (default (dict) $backend_service.labels) -}}
+  {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
+  {{- $_ = set $service_config "labels" $labels -}}
+  {{- /* Generate selectorLabels */ -}}
+  {{- $selector_label_params := dict "selectorLabels" (default (dict) $backend_service.selectorLabels) -}}
+  {{- $selector_labels := include "mozcloud-gateway-lib.selectorLabels" (mergeOverwrite ($ | deepCopy) $selector_label_params) | fromYaml -}}
+  {{- $_ = set $service_config "selectorLabels" $selector_labels -}}
+  {{- /* Service config */ -}}
+  {{- $config := include "mozcloud-gateway-lib.config.service.config" $backend_service | fromYaml -}}
+  {{- $_ = set $service_config "config" $config -}}
+  {{- $output = append $output $service_config -}}
+{{- end -}}
+{{- $services := dict "services" $output -}}
+{{ $services | toYaml }}
+{{- end -}}
+
+
+{{- define "mozcloud-gateway-lib.config.service.config" -}}
+{{- $defaults := (include "mozcloud-gateway-lib.defaults.service.config" . | fromYaml) -}}
+ports:
+  - port: {{ default $defaults.port .port }}
+    targetPort: {{ default $defaults.targetPort .targetPort }}
+    protocol: {{ default $defaults.protocol .protocol }}
+    name: {{ default $defaults.portName .portName }}
+type: {{ $defaults.type }}
 {{- end -}}
 
 {{/*
@@ -148,6 +277,36 @@ external:
   regional: gke-l7-regional-external-managed
 internal:
   regional: gke-l7-rilb
+{{- end -}}
+
+{{- define "mozcloud-gateway-lib.defaults.httpRoute.config" -}}
+gatewayRefs:
+  - name: {{ include "mozcloud-gateway-lib.config.name" . }}
+    section: https
+hostnames:
+  - chart.example.local
+httpToHttpsRedirect: true
+match:
+  path:
+    type: PathPrefix
+redirect:
+  statusCode: 302
+  type: ReplaceFullPath
+rewrite:
+  path:
+    type: ReplaceFullPath
+rules:
+  - backendRefs:
+      - name: {{ include "mozcloud-gateway-lib.config.name" . }}
+        port: 8080
+{{- end -}}
+
+{{- define "mozcloud-gateway-lib.defaults.service.config" -}}
+create: true
+port: 8080
+portName: http
+protocol: TCP
+targetPort: http
 {{- end -}}
 
 {{/*
