@@ -380,7 +380,7 @@ Defaults
 {{- define "mozcloud-gateway-lib.defaults.backendPolicy.config" -}}
 logging:
   enabled: true
-  sampleRate: 0.1
+  sampleRate: 100000
 {{- end -}}
 
 {{- define "mozcloud-gateway-lib.defaults.gateway.config" -}}
