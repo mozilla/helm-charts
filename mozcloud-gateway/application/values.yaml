@@ -44,6 +44,7 @@ backendPolicy:
 
     # Ranges from 0 (0%) to 1,000,000 (100%). GCP divides this number by
     # 1,000,000.
+    # Default is 100,000 (10%). 
     sampleRate: 100000
 
   #sessionAffinity:
