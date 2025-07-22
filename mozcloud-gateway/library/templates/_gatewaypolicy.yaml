@@ -1,0 +1,19 @@
+{{- define "mozcloud-gateway-lib.gatewayPolicy" -}}
+{{- $gateway_policies := include "mozcloud-gateway-lib.config.gatewayPolicies" . | fromYaml }}
+{{- range $gateway_policy := $gateway_policies.gatewayPolicies }}
+---
+apiVersion: networking.gke.io/v1
+kind: GCPGatewayPolicy
+metadata:
+  name: {{ $gateway_policy.name }}
+  labels:
+    {{- $gateway_policy.labels | toYaml | nindent 4 }}
+spec:
+  default:
+    {{- $gateway_policy.config | toYaml | nindent 4 }}
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: {{ $gateway_policy.gatewayName }}
+{{- end }}
+{{- end -}}
