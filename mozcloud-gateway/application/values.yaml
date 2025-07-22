@@ -56,12 +56,17 @@ backendPolicy:
   # Backend service timeout period in seconds.
   #timeoutSec: 30
 
-# Defines the backend services to create and their configurations.
-backendServices:
-  - name: mozcloud-gateway
+# Defines the backend services to create, backend policies, and healthchecks.
+backends:
     # Definitions for the Kubernetes service.
-    backend:
+  - service:
+      # If disabled, a new Kubernetes will not be created.
+      #create: true
+
       port: 8080
+
+      # Name of the port to create. Default is "http".
+      #portName: http
 
       # Protocol used for service. Default is TCP. More information found
       # here:
@@ -71,11 +76,17 @@ backendServices:
       # Port name/number of pods the service should target. Default is "http".
       targetPort: http
 
+      # Annotations to use for this service.
+      #annotations: {}
+
       # Labels to use for the service.
       #labels: {}
 
       # Selector labels the service should use to match against pods.
       #selectorLabels: {}
+
+    # Set a name for the backend to use for all related components.
+    #name:
 
     # Backend policy to apply to this specific backend service. Overrides the
     # defaults from .Values.backendPolicy
@@ -119,7 +130,7 @@ backendServices:
 # Defines the Gateways to create and their configurations.
 gateway:
   # If disabled, Gateway resources will not be created in the K8s namespace.
-  enabled: false
+  enabled: true
 
   gateways:
     - name: mozcloud-gateway
@@ -207,29 +218,28 @@ gatewayPolicy:
 # Services.
 httpRoute:
   # If disabled, HTTPRoute resources will not be created in the K8s namespace.
-  enabled: false
+  enabled: true
 
   httpRoutes:
     - name: mozcloud-gateway
 
-      # Hostnames to match against. Hostnames are matched before any other
-      # matches (path, headers) occur.
-      hostnames:
-        - chart.example.local
-        - chart2.example.local
-
-      # If enabled, create an HTTP-to-HTTPS redirect.
-      #httpToHttpsRedirect: true
-
       # Define parent Gateway resource the HTTPRoute should attach to.
-      parentRefs:
-        - kind: Gateway
-          name: mozcloud-gateway
+      gatewayRefs:
+        - name: mozcloud-gateway
 
           # This refers to the name of the listener to use on the gateway. See
           # gateway.gateways[].listeners[].name for Gateways created using this
           # chart.
           section: https
+
+      # Hostnames to match against. Hostnames are matched before any other
+      # matches (path, headers) occur.
+      hostnames:
+        - chart.example.local
+
+      # If enabled, create an HTTP-to-HTTPS redirect. This is enabled by
+      # default.
+      #httpToHttpsRedirect: true
 
       rules:
           # A list of the backend services to receive traffic.
@@ -262,26 +272,38 @@ httpRoute:
               #weight:
 
           # Configures paths or headers to match against when sending traffic to
-          # abackend service. Matches are independent, meaning the rule will
+          # a backend service. Matches are independent, meaning the rule will
           # be matched if any matches below are true.
           #
           # If no matches are specified, all traffic will be sent to the "/"
           # path on the backend service pods by default.
           #matches:
           #  # Matches path "/path"
-          #  - path: /path
+          #  - path:
+          #      value: /path
+          #
+          #      # How to match against the path. Options are "Exact",
+          #      # "PathPrefix", and "RegularExpression". Default is
+          #      # "PathPrefix".
+          #      #type: PathPrefix
+          #
           #
           #  # Header match. Contains a list of headers against which to match.
           #  - headers:
-          #      - X-My-Header
+          #      - name: X-My-Header
+          #        value: header-value-1
           #      - X-Another-Header
+          #        value: header-value-2
           #
-          #  # If a path and header specified in an entry, the rule will be
+          #  # If a path and header are specified in an entry, the rule will be
           #  # matched if BOTH the path and headers match.
-          #  - path: /foo
+          #  - path:
+          #      value: /foo
           #    headers:
-          #      - X-My-Header
+          #      - name: X-My-Header
+          #        value: header-value-1
           #      - X-Another-Header
+          #        value: header-value-1
 
           # Configures a path redirect. Overridden by "rewrite".
           #
@@ -323,6 +345,9 @@ httpRoute:
           #  #  # "matches" section with the one specified above.
           #  #  # Example: /path/to/endpoint -> /newpath/to/endpoint
           #  #  type: ReplaceFullPath
+
+      # Custom labels. Additional labels are generated in templates/_helpers.tpl.
+      #labels: {}
 
 # TODO: Create default traffic distribution policy, add support in backend
 # Defines how traffic is distributed across endpoints within a backend. This
