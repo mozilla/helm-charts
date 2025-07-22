@@ -1,2 +1,0 @@
-{{- if and .Values.enabled (.Values.httpRoute).enabled }}
-{{- end }}

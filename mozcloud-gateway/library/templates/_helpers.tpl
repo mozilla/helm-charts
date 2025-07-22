@@ -83,6 +83,46 @@ Template helpers
 {{- end -}}
 
 {{/*
+BackendPolicy template helpers
+*/}}
+{{- define "mozcloud-gateway-lib.config.backendPolicies" -}}
+{{- $defaults := include "mozcloud-gateway-lib.defaults.backendPolicy.config" . | fromYaml -}}
+{{- $backend_policy := default (dict) .backendPolicyConfig -}}
+{{- $backends := default (list) (.backendConfig).backends -}}
+{{- $name_override := default "" .nameOverride -}}
+{{- $output := list -}}
+{{- range $backend := $backends -}}
+  {{- $backend_policy_config := dict -}}
+  {{- /* Merge service backend policy, default backend policy, and library defaults */ -}}
+  {{- $default_policy := mergeOverwrite ($defaults | deepCopy) $backend_policy -}}
+  {{- $service_policy := default (dict) $backend.backendPolicy -}}
+  {{- $merged_policy := mergeOverwrite $default_policy $service_policy -}}
+  {{- if and (($merged_policy).sessionAffinity).type (ne (($merged_policy).sessionAffinity).type "GENERATED_COOKIE") -}}
+    {{- $_ := unset $merged_policy.sessionAffinity "cookieTtlSec" -}}
+  {{- end -}}
+  {{- $_ := set $backend_policy_config "config" $merged_policy -}}
+  {{- /* Use name helper function to populate name and targetService using rules hierarchy */ -}}
+  {{- $params := dict -}}
+  {{- if $backend.name -}}
+    {{- $_ := set $params "name" $backend.name -}}
+  {{- end -}}
+  {{- if $name_override -}}
+    {{- $_ := set $params "nameOverride" $name_override -}}
+  {{- end -}}
+  {{- $name := include "mozcloud-gateway-lib.config.name" $params -}}
+  {{- $_ = set $backend_policy_config "name" $name -}}
+  {{- $_ = set $backend_policy_config "targetService" $name -}}
+  {{- /* Generate labels */ -}}
+  {{- $label_params := dict "labels" (default (dict) $backend.labels) -}}
+  {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
+  {{- $_ = set $backend_policy_config "labels" $labels -}}
+  {{- $output = append $output $backend_policy_config -}}
+{{- end -}}
+{{- $all_policies := dict "backendPolicies" $output -}}
+{{ $all_policies | toYaml }}
+{{- end -}}
+
+{{/*
 Gateway template helpers
 */}}
 {{- define "mozcloud-gateway-lib.config.gateway.className" -}}
@@ -100,7 +140,7 @@ Gateway template helpers
 {{- $output := list -}}
 {{- range $gateway := $gateways -}}
   {{- $gateway_defaults := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
-  {{- $gateway_config := mergeOverwrite $gateway_defaults ($gateway | deepCopy) -}}
+  {{- $gateway_config := mergeOverwrite $gateway_defaults $gateway -}}
   {{- /* Use name helper function to populate name using rules hierarchy */ -}}
   {{- $params := dict "gatewayConfig" $gateway_config -}}
   {{- $name_override := default "" $.nameOverride -}}
@@ -122,6 +162,88 @@ Gateway template helpers
 {{- end -}}
 {{- $gateways = dict "gateways" $output -}}
 {{ $gateways | toYaml }}
+{{- end -}}
+
+{{/*
+GatewayPolicy template helpers
+*/}}
+{{- define "mozcloud-gateway-lib.config.gatewayPolicies" -}}
+{{- $defaults := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
+{{- $gateway_policy := default (dict) .gatewayPolicyConfig -}}
+{{- $gateways := default (list $defaults) (.gatewayConfig).gateways -}}
+{{- $output := list -}}
+{{- range $gateway := $gateways -}}
+  {{- $gateway_defaults := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
+  {{- $gateway_config := mergeOverwrite $gateway_defaults $gateway -}}
+  {{- $policy_config := dict -}}
+  {{- /* Check if any listeners use HTTPS protocol before proceeding */ -}}
+  {{- $https_listener := false -}}
+  {{- range $listener := $gateway_config.listeners -}}
+    {{- if eq (upper $listener.protocol) "HTTPS" -}}
+      {{- $https_listener = true -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $https_listener -}}
+    {{- /* Use name helper function to populate name using rules hierarchy */ -}}
+    {{- $params := dict "gatewayConfig" $gateway_config -}}
+    {{- $name_override := default "" $.nameOverride -}}
+    {{- if $name_override -}}
+      {{- $_ := set $params "nameOverride" $name_override -}}
+    {{- end -}}
+    {{- $name := include "mozcloud-gateway-lib.config.name" $params -}}
+    {{- $_ := set $policy_config "name" $name -}}
+    {{- $_ = set $policy_config "gatewayName" $name -}}
+    {{- /* Generate labels */ -}}
+    {{- $label_params := dict "labels" (default (dict) $gateway_config.labels) -}}
+    {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
+    {{- $_ = set $policy_config "labels" $labels -}}
+    {{- /* Merge config */ -}}
+    {{- $policy_defaults := include "mozcloud-gateway-lib.defaults.gatewayPolicy.config" . | fromYaml -}}
+    {{- $merged_policy := mergeOverwrite $policy_defaults $gateway_policy -}}
+    {{- $_ = set $policy_config "config" $merged_policy -}}
+    {{- $output = append $output $policy_config -}}
+  {{- end -}}
+{{- end -}}
+{{- $gateway_policies := dict "gatewayPolicies" $output -}}
+{{ $gateway_policies | toYaml }}
+{{- end -}}
+
+{{/*
+HealthCheckPolicy template helpers
+*/}}
+{{- define "mozcloud-gateway-lib.config.healthCheckPolicies" -}}
+{{- $defaults := include "mozcloud-gateway-lib.defaults.healthCheckPolicy.config" . | fromYaml -}}
+{{- $backends := default (list) (.backendConfig).backends -}}
+{{- $name_override := default "" .nameOverride -}}
+{{- $output := list -}}
+{{- range $backend := $backends -}}
+  {{- $health_check_policy_config := dict -}}
+  {{- /* Configure health check spec */ -}}
+  {{- $backend_health_check_policy := default (dict) $backend.healthCheck -}}
+  {{- $config := mergeOverwrite ($defaults | deepCopy) $backend_health_check_policy -}}
+  {{- $_ := set $config "protocol" (upper $config.protocol) -}}
+  {{- $protocol_property := include "mozcloud-gateway-lib.defaults.healthCheckPolicy.protocolProperty" . | fromYaml -}}
+  {{- $_ = set $config "protocolProperty" (index $protocol_property $config.protocol) -}}
+  {{- $_ = set $health_check_policy_config "config" $config -}}
+  {{- /* Use name helper function to populate name and targetService using rules hierarchy */ -}}
+  {{- $params := dict -}}
+  {{- if $backend.name -}}
+    {{- $_ := set $params "name" $backend.name -}}
+  {{- end -}}
+  {{- if $name_override -}}
+    {{- $_ := set $params "nameOverride" $name_override -}}
+  {{- end -}}
+  {{- $name := include "mozcloud-gateway-lib.config.name" $params -}}
+  {{- $_ = set $health_check_policy_config "name" $name -}}
+  {{- $_ = set $health_check_policy_config "targetService" $name -}}
+  {{- /* Generate labels */ -}}
+  {{- $label_params := dict "labels" (default (dict) $backend.labels) -}}
+  {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
+  {{- $_ = set $health_check_policy_config "labels" $labels -}}
+  {{- $output = append $output $health_check_policy_config -}}
+{{- end -}}
+{{- $all_policies := dict "healthCheckPolicies" $output -}}
+{{ $all_policies | toYaml }}
 {{- end -}}
 
 {{/*
@@ -223,7 +345,9 @@ Service template helpers
     {{- $_ := set $service_config "annotations" $backend_service.annotations -}}
   {{- end -}}
   {{- /* Generate labels */ -}}
-  {{- $label_params := dict "labels" (default (dict) $backend_service.labels) -}}
+  {{- $backend_labels := dict "labels" (default (dict) $backend.labels) -}}
+  {{- $backend_service_labels := dict "labels" (default (dict) $backend_service.labels) -}}
+  {{- $label_params := dict "labels" (mergeOverwrite $backend_labels.labels $backend_service_labels.labels) -}}
   {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
   {{- $_ = set $service_config "labels" $labels -}}
   {{- /* Generate selectorLabels */ -}}
@@ -253,6 +377,12 @@ type: {{ $defaults.type }}
 {{/*
 Defaults
 */}}
+{{- define "mozcloud-gateway-lib.defaults.backendPolicy.config" -}}
+logging:
+  enabled: true
+  sampleRate: 0.1
+{{- end -}}
+
 {{- define "mozcloud-gateway-lib.defaults.gateway.config" -}}
 type: external
 scope: global
@@ -277,6 +407,20 @@ external:
   regional: gke-l7-regional-external-managed
 internal:
   regional: gke-l7-rilb
+{{- end -}}
+
+{{- define "mozcloud-gateway-lib.defaults.gatewayPolicy.config" -}}
+sslPolicy: mozilla-intermediate
+{{- end -}}
+
+{{- define "mozcloud-gateway-lib.defaults.healthCheckPolicy.config" -}}
+path: /__lbheartbeat__
+protocol: http
+{{- end -}}
+
+{{- define "mozcloud-gateway-lib.defaults.healthCheckPolicy.protocolProperty" -}}
+HTTP: httpHealthCheck
+TCP: tcpHealthCheck
 {{- end -}}
 
 {{- define "mozcloud-gateway-lib.defaults.httpRoute.config" -}}

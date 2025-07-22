@@ -1,0 +1,19 @@
+{{- define "mozcloud-gateway-lib.backendPolicy" -}}
+{{- $backend_policies := include "mozcloud-gateway-lib.config.backendPolicies" . | fromYaml }}
+{{- range $backend_policy := $backend_policies.backendPolicies }}
+---
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: {{ $backend_policy.name }}
+  labels:
+    {{- $backend_policy.labels | toYaml | nindent 4 }}
+spec:
+  default:
+    {{- $backend_policy.config | toYaml | nindent 4 }}
+  targetRef:
+    group: ""
+    kind: Service
+    name: {{ $backend_policy.targetService }}
+{{- end }}
+{{- end -}}
