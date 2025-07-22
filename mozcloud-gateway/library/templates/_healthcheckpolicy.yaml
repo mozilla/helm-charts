@@ -1,0 +1,38 @@
+{{- define "mozcloud-gateway-lib.healthCheckPolicy" -}}
+{{- $health_check_policies := include "mozcloud-gateway-lib.config.healthCheckPolicies" . | fromYaml }}
+{{- range $health_check_policy := $health_check_policies.healthCheckPolicies }}
+{{- $config := $health_check_policy.config }}
+---
+apiVersion: networking.gke.io/v1
+kind: HealthCheckPolicy
+metadata:
+  name: {{ $health_check_policy.name }}
+  labels:
+    {{- $health_check_policy.labels | toYaml | nindent 4 }}
+spec:
+  default:
+    {{- if $config.checkIntervalSec }}
+    checkIntervalSec: {{ $config.checkIntervalSec }}
+    {{- end }}
+    {{- if $config.timeoutSec }}
+    timeoutSec: {{ $config.timeoutSec }}
+    {{- end }}
+    {{- if $config.healthyThreshold }}
+    healthyThreshold: {{ $config.healthyThreshold }}
+    {{- end }}
+    {{- if $config.unhealthyThreshold }}
+    unhealthyThreshold: {{ $config.unhealthyThreshold }}
+    {{- end }}
+    config:
+      type: {{ $config.protocol }}
+      {{ $config.protocolProperty }}:
+        {{- if $config.port }}
+        port: {{ $config.port }}
+        {{- end }}
+        requestPath: {{ $config.path }}
+  targetRef:
+    group: ""
+    kind: Service
+    name: {{ $health_check_policy.targetService }}
+{{- end }}
+{{- end -}}

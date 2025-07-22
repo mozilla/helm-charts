@@ -40,10 +40,12 @@ backendPolicy:
 
   # Configures HTTP access logging.
   logging:
-    enable: true
+    enabled: true
 
-    # Ranges from 0.0 (0%) to 1.0 (100%).
-    sampleRate: 0.1
+    # Ranges from 0 (0%) to 1,000,000 (100%). GCP divides this number by
+    # 1,000,000.
+    # Default is 100,000 (10%). 
+    sampleRate: 100000
 
   #sessionAffinity:
   #  # Options: CLIENT_IP, GENERATED_COOKIE, NONE
@@ -104,9 +106,9 @@ backends:
       # "/__lbheartbeat__".
       path: /__lbheartbeat__
 
-      # The protocol to use for health checks. Options are "http" or "tcp".
-      # Default is "http".
-      protocol: http
+      # The protocol to use for health checks. Options are "HTTP" or "TCP".
+      # Default is "HTTP".
+      protocol: HTTP
 
       # The port to use for the health check, if different from the service
       # port. This port must be specified as a number, not a named port.
@@ -126,6 +128,10 @@ backends:
       # Number of sequential connection attempts that must succeed for a backend
       # to be considered unhealthy.
       #unhealthyThreshold:
+
+    # Labels for the backend resources. Overridden for services by
+    # "service.labels".
+    #labels: {}
 
 # Defines the Gateways to create and their configurations.
 gateway:

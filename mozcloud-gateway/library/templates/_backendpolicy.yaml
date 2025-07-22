@@ -1,0 +1,42 @@
+{{- define "mozcloud-gateway-lib.backendPolicy" -}}
+{{- $backend_policies := include "mozcloud-gateway-lib.config.backendPolicies" . | fromYaml }}
+{{- range $backend_policy := $backend_policies.backendPolicies }}
+---
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: {{ $backend_policy.name }}
+  labels:
+    {{- $backend_policy.labels | toYaml | nindent 4 }}
+spec:
+  default:
+    {{- $config := $backend_policy.config }}
+    {{- if ($config.connectionDraining).drainingTimeoutSec }}
+    connectionDraining:
+      drainingTimeoutSec: {{ $config.connectionDraining.drainingTimeoutSec }}
+    {{- end }}
+    {{- if $config.iap }}
+    iap:
+      enabled: {{ $config.iap.enabled }}
+      oauth2ClientId: {{ $config.iap.oauth2ClientId }}
+      oauth2ClientSecret: {{ $config.iap.oauth2ClientSecret }}
+    {{- end }}
+    logging:
+      enabled: {{ $config.logging.enabled }}
+      sampleRate: {{ $config.logging.sampleRate }}
+    {{- if $config.sessionAffinity }}
+    sessionAffinity:
+      type: {{ $config.sessionAffinity.type }}
+      {{- if $config.sessionAffinity.cookieTtlSec }}
+      cookieTtlSec: {{ $config.sessionAffinity.cookieTtlSec }}
+      {{- end }}
+    {{- end }}
+    {{- if $config.timeoutSec }}
+    timeoutSec: {{ $config.timeoutSec }}
+    {{- end }}
+  targetRef:
+    group: ""
+    kind: Service
+    name: {{ $backend_policy.targetService }}
+{{- end }}
+{{- end -}}
