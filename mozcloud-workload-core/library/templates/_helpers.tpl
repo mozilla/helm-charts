@@ -108,7 +108,7 @@ ConfigMap template helpers
   {{- $params := dict "config" $config_map_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-workload-core-lib.config.common" $params | fromYaml -}}
   {{- $config_map_config = mergeOverwrite $config_map_config $common -}}
-  {{- /* Create configMaps[].data if it doesn't exist */ -}}
+  {{- /* Create configMaps[].data if it does not exist */ -}}
   {{- $config_map_data := default (dict) $config_map_config.data -}}
   {{- $_ := set $config_map_config "data" $config_map_data -}}
   {{- $output = append $output $config_map_config -}}
