@@ -11,6 +11,23 @@ environment: dev
 
 # If you set this, it will be the default name for all resources if not
 # specified at the resource level.
+#
+# Ideally, resources would be named in a way that follows this hierarchy:
+#
+#    1. Name set at the subcomponent/most specific level (eg. backend service
+#       name), if applicable.
+#    2. Name set at the component/parent level (eg. HTTPRoute).
+#    3. Name of the chart (equivalent to "application.fullname"). <- we are here
+#    4. Default name of the library chart (eg. mozcloud-gateway).
+#
+# Subcharts cannot pull metadata or values from parent charts unless the parent
+# chart passes them in as parameters. Rather than asking users to specify their
+# chart name as part of their values files, I went with the approach of
+# allowing users to specify a name that would be used if component/subcomponent
+# names were not set.
+#
+# If no names are set at all in this chart, the default library chart name will
+# be used: mozcloud-workload-core.
 nameOverride: name-to-use-for-everything
 
 configMaps:
