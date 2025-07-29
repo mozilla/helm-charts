@@ -1,0 +1,69 @@
+# Example values showing a visual representation of the parameters accepted by
+# this library chart.
+
+# This is used to populate the default value for "target" for ExternalSecret
+# resources.
+appCode: tenant-name
+
+# This is used to populate the default value for "gsm.secret" for ExternalSecret
+# resources.
+environment: dev
+
+# If you set this, it will be the default name for all resources if not
+# specified at the resource level.
+nameOverride: name-to-use-for-everything
+
+configMaps:
+  - name: config-map1
+
+    # The "data" section contains your environment variables in KEY:VALUE
+    # format.
+    data:
+      KEY: value
+      KEY2: value2
+  - name: config-map2
+    data:
+      KEY: value
+
+externalSecrets:
+  - name: external-secret1
+
+    # Defaults to 5m.
+    #refreshInterval: 10m
+
+    # Name of the K8s secret where the external secret is synced to. Optional
+    # if you specify "appCode".
+    target: my-k8s-secret
+
+    # This section is optional if you specify "environment" and are fine with
+    # "version" being "latest".
+    gsm:
+      secret: dev-gke-custom-secrets
+      version: latest
+
+serviceAccounts:
+  - name: mozcloud-workload-core
+
+    # If this service account should authenticate with GCP using Workload
+    # Identity, some of these details will need to be filled out.
+    #
+    # There are 2 approaches you can take here:
+    #
+    #   1. fullName: Use this if you want to specify the full email address of
+    #                the GCP service account.
+    #
+    #   2. name & projectId: Use these together to automatically construct the
+    #                        GCP service account email address.
+    gcpServiceAccount:
+      #fullName:
+
+      # The name of the GCP service account (everything before "@" in the email
+      # address.
+      name: my-gcp-service-account
+
+      # GCP project ID.
+      projectId: moz-fx-tenant-name-nonprod
+
+# Specifying labels here will apply them to all resources created in this
+# library chart.
+labels: {}
