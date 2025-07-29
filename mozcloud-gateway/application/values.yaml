@@ -44,7 +44,7 @@ backendPolicy:
 
     # Ranges from 0 (0%) to 1,000,000 (100%). GCP divides this number by
     # 1,000,000.
-    # Default is 100,000 (10%). 
+    # Default is 100,000 (10%).
     sampleRate: 100000
 
   #sessionAffinity:
@@ -232,6 +232,10 @@ httpRoute:
       # Define parent Gateway resource the HTTPRoute should attach to.
       gatewayRefs:
         - name: mozcloud-gateway
+
+          # Optional: Set this field if referring to a Gateway in a different namespace
+          # (e.g., a shared infrastructure Gateway). Leave unset for same-namespace Gateways.
+          #namespace: shared-infrastructure
 
           # This refers to the name of the listener to use on the gateway. See
           # gateway.gateways[].listeners[].name for Gateways created using this
