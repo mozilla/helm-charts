@@ -98,104 +98,119 @@ Template helpers
 {{- end -}}
 
 {{/*
-Ingress template helpers
+HTTPRoute template helpers
 */}}
-{{- define "mozcloud-preview-lib.config.ingress.preSharedCerts" -}}
-{{- $name_override := default "" .nameOverride -}}
-{{- $pre_shared_certs := dict "preSharedCerts" (dict) -}}
-{{- $tls_defaults := (index (include "mozcloud-preview-lib.defaults.ingresses" . | fromYaml) "ingresses" 0).tls -}}
-{{- range $ingress := .ingresses -}}
-  {{- range $host := $ingress.hosts -}}
-    {{- $tls := mergeOverwrite (mergeOverwrite $tls_defaults (default (dict) $ingress.tls)) (default (dict) ($host.tls)) -}}
-    {{- if and (eq $tls.type "pre-shared") (gt (len (default "" $tls.preSharedCerts)) 0) -}}
-      {{- $params := (dict "ingressConfig" $ingress) -}}
-      {{- if $name_override -}}
-        {{- $_ := set $params "nameOverride" $name_override -}}
-      {{- end -}}
-      {{- $ingress_name := include "mozcloud-preview-lib.config.name" $params -}}
-      {{- if and (not (index $pre_shared_certs "preSharedCerts" $ingress_name)) $tls.createCertificates -}}
-        {{- $cert_list := $tls.preSharedCerts | toString -}}
-        {{- $_ := set $pre_shared_certs.preSharedCerts $ingress_name $cert_list -}}
-      {{- end -}}
-    {{- end -}}
+{{- define "mozcloud-preview-lib.config.httpRoutes" -}}
+{{- $defaults := include "mozcloud-preview-lib.defaults.httpRoute.config" . | fromYaml -}}
+{{- $http_routes := default (list $defaults) (.httpRouteConfig).httpRoutes }}
+{{- $output := list -}}
+{{- range $http_route := $http_routes -}}
+  {{- $http_route_defaults := include "mozcloud-preview-lib.defaults.httpRoute.config" . | fromYaml -}}
+  {{- $http_route_config := mergeOverwrite $http_route_defaults ($http_route | deepCopy) -}}
+  {{- /* Use name helper function to populate name using rules hierarchy */ -}}
+  {{- $params := dict "httpRouteConfig" $http_route_config -}}
+  {{- $name_override := default "" $.nameOverride -}}
+  {{- if $name_override -}}
+    {{- $_ := set $params "nameOverride" $name_override -}}
   {{- end -}}
+  {{- $name := include "mozcloud-preview-lib.config.name" $params -}}
+  {{- $_ := set $http_route_config "name" $name -}}
+  {{- /* Generate labels */ -}}
+  {{- $label_params := dict "labels" (default (dict) $http_route_config.labels) -}}
+  {{- $labels := include "mozcloud-preview-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
+  {{- $_ = set $http_route_config "labels" $labels -}}
+  {{- /*
+  Set defaults for matches, redirects and rewrites, if defined.
+  We will need to recreate the rule list as some items in child lists have
+  optional values and defaults.
+  */ -}}
+  {{- $rules := list -}}
+  {{- range $rule := $http_route_config.rules -}}
+    {{- $rule_defaults := include "mozcloud-preview-lib.defaults.httpRoute.config" . | fromYaml -}}
+    {{- $rule_config := mergeOverwrite ($rule_defaults.rules | first) ($rule | deepCopy) -}}
+    {{- /* Matches */ -}}
+    {{- if $rule_config.matches -}}
+      {{- $matches := list -}}
+      {{- range $match := $rule_config.matches -}}
+        {{- $match_config := $match | deepCopy -}}
+        {{- if $match.path -}}
+          {{- $type := default ($rule_defaults.match.path.type | deepCopy) $match_config.path.type -}}
+          {{- $_ := set $match_config.path "type" $type -}}
+        {{- end -}}
+        {{- $matches = append $matches $match_config -}}
+      {{- end -}}
+      {{- $_ := set $rule_config "matches" $matches -}}
+    {{- end -}}
+    {{- /* Redirects */ -}}
+    {{- if $rule_config.redirect -}}
+      {{- $redirect_config := mergeOverwrite $rule_defaults.redirect $rule_config.redirect -}}
+      {{- $_ := set $rule_config "redirect" $redirect_config -}}
+    {{- end -}}
+    {{- /* Rewrites */ -}}
+    {{- if $rule_config.rewrite -}}
+      {{- $rewrite_config := $rule_config.rewrite | deepCopy -}}
+      {{- if $rule_config.rewrite.path -}}
+        {{- $rewrite_path_type := default $rule_defaults.rewrite.path.type $rule_config.rewrite.path.type -}}
+        {{- $_ := set $rewrite_config.path "type" $rewrite_path_type -}}
+      {{- end -}}
+      {{- $_ := set $rule_config "rewrite" $rewrite_config -}}
+    {{- end -}}
+    {{- $rules = append $rules $rule_config -}}
+  {{- end -}}
+  {{- $_ = set $http_route_config "rules" $rules -}}
+  {{- $output = append $output $http_route_config -}}
 {{- end -}}
-{{ $pre_shared_certs | toYaml }}
-{{- end -}}
-
-
-{{- define "mozcloud-preview-lib.config.ingresses" -}}
-{{- $defaults := include "mozcloud-preview-lib.defaults.ingresses" . | fromYaml -}}
-{{- $ingresses := $defaults -}}
-{{- if .ingressConfig -}}
-  {{- $ingresses = mergeOverwrite $defaults (dict "ingresses" .ingressConfig) -}}
-{{- end -}}
-{{- $params := (dict "ingresses" $ingresses.ingresses) }}
-{{- $name_override := default "" .nameOverride }}
-{{- if $name_override }}
-  {{- $_ := set $params "nameOverride" $name_override }}
-{{- end -}}
-{{- $pre_shared_certs := include "mozcloud-preview-lib.config.ingress.preSharedCerts" $params | fromYaml -}}
-{{- $_ := set $ingresses "preSharedCerts" $pre_shared_certs.preSharedCerts -}}
-{{ $ingresses | toYaml }}
+{{- $http_routes = dict "httpRoutes" $output -}}
+{{ $http_routes | toYaml }}
 {{- end -}}
 
 {{/*
 Service template helpers
 */}}
-{{- define "mozcloud-preview-lib.config.services" -}}
+{{- define "mozcloud-preview-lib.config.service" -}}
 {{- $name_override := default "" .nameOverride -}}
-{{- $backend_defaults := include "mozcloud-preview-lib.defaults.backendConfig" . | fromYaml -}}
-{{- $ingresses := include "mozcloud-preview-lib.config.ingresses" . | fromYaml -}}
-{{- $services := list -}}
-{{- range $ingress := $ingresses.ingresses -}}
-  {{- range $host := $ingress.hosts -}}
-    {{- range $path := $host.paths -}}
-      {{- $service := dict -}}
-      {{- $backend := mergeOverwrite $backend_defaults (default (dict) $path.backend.config) -}}
-      {{- $backend_service := $path.backend.service -}}
-      {{- $params := dict "backendConfig" $backend "backendService" $backend_service "ingressConfig" $ingress -}}
-      {{- if $name_override -}}
-        {{- $_ := set $params "nameOverride" $name_override -}}
-      {{- end -}}
-      {{- $service_name := include "mozcloud-preview-lib.config.backend.name" $params -}}
-      {{- /* Check if service was already included. If so, skip to avoid duplicates. */}}
-      {{- /* Configure args for library chart */}}
-      {{- /* Service annotations */}}
-      {{- /* This allows users to explicitly specify "false" without overriding with "true" from defaults */}}
-      {{- $create_neg := false -}}
-      {{- $annotation_params := dict "backendName" $service_name "createNeg" $create_neg -}}
-      {{- if $ingress.annotations -}}
-        {{- $_ := set $annotation_params "annotations" $ingress.annotations -}}
-      {{- end -}}
-      {{- $annotations := include "mozcloud-preview-lib.config.service.annotations" $annotation_params | fromYaml -}}
-      {{- $_ := set $service "annotations" $annotations -}}
-      {{- /* Service config */}}
-      {{- $port_config := dict -}}
-      {{- if $backend_service.port -}}
-        {{- $_ = set $port_config "port" $backend_service.port -}}
-      {{- end -}}
-      {{- if $backend_service.protocol -}}
-        {{- $_ = set $port_config "protocol" $backend_service.protocol -}}
-      {{- end -}}
-      {{- if $backend_service.targetPort -}}
-        {{- $_ = set $port_config "target_port" $backend_service.targetPort -}}
-      {{- end -}}
-      {{- $config := include "mozcloud-preview-lib.config.service.config" $port_config | fromYaml -}}
-      {{- $_ = set $service "config" $config -}}
-      {{- /* Service fullnameOverride */}}
-      {{- $_ = set $service "fullnameOverride" $service_name -}}
-      {{- /* Service labels */}}
-      {{- $labels := default (include "mozcloud-preview-lib.labels" $ | fromYaml) $backend_service.labels -}}
-      {{- $_ = set $service "labels" $labels -}}
-      {{- /* Service selectorLabels */}}
-      {{- $selector_labels := default (include "mozcloud-preview-lib.selectorLabels" $ | fromYaml) $backend_service.selectorLabels -}}
-      {{- $_ = set $service "selectorLabels" $selector_labels -}}
-      {{- /* Append to services list */}}
-      {{- $services = append $services $service -}}
-    {{- end -}}
+{{- $backends := default (list) (.backendConfig).backends -}}
+{{- $output := list -}}
+{{- range $backend := $backends -}}
+  {{- $defaults := include "mozcloud-preview-lib.defaults.service.config" . | fromYaml -}}
+  {{- $service_config := dict -}}
+  {{- $backend_service := $backend.service | deepCopy -}}
+  {{- /* Only create the service if "create" is not "false" */ -}}
+  {{- $create_service := (include "mozcloud-gateway-lib.defaults.service.config" . | fromYaml).create -}}
+  {{- if hasKey $backend_service "create" -}}
+    {{- $create_service = $backend_service.create -}}
   {{- end -}}
+  {{- $_ := set $service_config "create" $create_service -}}
+  {{- /* Use name helper function to populate name using rules hierarchy */ -}}
+  {{- $params := dict -}}
+  {{- if $backend.name -}}
+    {{- $_ := set $params "name" $backend.name -}}
+  {{- end -}}
+  {{- if $name_override -}}
+    {{- $_ := set $params "nameOverride" $name_override -}}
+  {{- end -}}
+  {{- $name := include "mozcloud-preview-lib.config.name" $params -}}
+  {{- $_ = set $service_config "fullnameOverride" $name -}}
+  {{- /* Include annotations, if specified */ -}}
+  {{- if $backend_service.annotations -}}
+    {{- $_ := set $service_config "annotations" $backend_service.annotations -}}
+  {{- end -}}
+  {{- /* Generate labels */ -}}
+  {{- $backend_labels := dict "labels" (default (dict) $backend.labels) -}}
+  {{- $backend_service_labels := dict "labels" (default (dict) $backend_service.labels) -}}
+  {{- $label_params := dict "labels" (mergeOverwrite $backend_labels.labels $backend_service_labels.labels) -}}
+  {{- $labels := include "mozcloud-preview-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
+  {{- $_ = set $service_config "labels" $labels -}}
+  {{- /* Generate selectorLabels */ -}}
+  {{- $selector_label_params := dict "selectorLabels" (default (dict) $backend_service.selectorLabels) -}}
+  {{- $selector_labels := include "mozcloud-preview-lib.selectorLabels" (mergeOverwrite ($ | deepCopy) $selector_label_params) | fromYaml -}}
+  {{- $_ = set $service_config "selectorLabels" $selector_labels -}}
+  {{- /* Service config */ -}}
+  {{- $config := include "mozcloud-preview-lib.config.service.config" $backend_service | fromYaml -}}
+  {{- $_ = set $service_config "config" $config -}}
+  {{- $output = append $output $service_config -}}
 {{- end -}}
+{{- $services := dict "services" $output -}}
 {{ $services | toYaml }}
 {{- end -}}
 
@@ -214,47 +229,6 @@ ports:
     name: {{ $defaults.name }}
 type: {{ $defaults.type }}
 {{- end -}}
-
-
-{{/*
-HTTPRoute Render
-*/}}
-{{- define "mozcloud-preview-lib.config.httproutes" -}}
-{{- $name_override := default "" .nameOverride -}}
-{{- $ingresses := include "mozcloud-preview-lib.config.ingresses" . | fromYaml -}}
-{{- $routes := list -}}
-
-{{- range $ingress := $ingresses.ingresses -}}
-  {{- range $host := $ingress.hosts -}}
-    {{- range $path := $host.paths -}}
-      {{- $svc := $path.backend.service -}}
-      {{- $route := dict -}}
-
-      {{- /* Name construction */ -}}
-      {{- $service_suffix := $svc.name | replace "." "-" | replace "_" "-" }}
-      {{- $name_params := dict
-          "ingressConfig" $ingress
-          "nameOverride" $name_override
-          "prefix" $.previewPr
-          "suffixes" (list "httproute" $service_suffix)
-      }}
-      {{- $route_name := include "mozcloud-preview-lib.config.name" $name_params }}
-
-      {{- /* Assign fields */ -}}
-      {{- $_ := set $route "fullnameOverride" $route_name }}
-      {{- $_ := set $route "labels" (include "mozcloud-preview-lib.labels" . | fromYaml) }}
-      {{- $_ := set $route "hostnames" $host.domains }}
-      {{- $_ := set $route "previewHost" $.previewHost -}}
-      {{- $_ := set $route "gateway" (default dict $.gateway) }}
-      {{- $_ := set $route "backend" (dict "name" $svc.name "port" $svc.port) }}
-
-      {{- $routes = append $routes $route }}
-    {{- end }}
-  {{- end }}
-{{- end }}
-
-{{ $routes | toYaml }}
-{{- end }}
 
 {{/*
 EndpointCheck Render
@@ -292,21 +266,29 @@ redirectToHttps:
 sslPolicy: mozilla-intermediate
 {{- end -}}
 
-{{- define "mozcloud-preview-lib.defaults.ingresses" -}}
-ingresses:
-  - hosts:
-      - domains: ["chart.example.local"]
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                port: 8080
-    tls:
-      createCertificates: true
-      type: ManagedCertificate
-      multipleHosts: true
+{{- define "mozcloud-preview-lib.defaults.httpRoute.config" -}}
+gatewayRefs:
+  - name: {{ "sandbox-high-preview-gateway" }}
+    namespace: {{ "preview-shared-infrastructure" }}
+    section: https
+hostnames:
+  - chart.example.local
+httpToHttpsRedirect: true
+match:
+  path:
+    type: PathPrefix
+redirect:
+  statusCode: 302
+  type: ReplaceFullPath
+rewrite:
+  path:
+    type: ReplaceFullPath
+rules:
+  - backendRefs:
+      - name: {{ include "mozcloud-preview-lib.config.name" . }}
+        port: 8080
 {{- end -}}
+
 
 {{- define "mozcloud-preview-lib.defaults.service.config" -}}
 # Default configurables for service
