@@ -10,7 +10,7 @@ image:
 
 preview:
   pr: 17
-  host: pr16-cicd-demos.preview.mozilla.cloud
+  host: pr17-cicd-demos.preview.mozilla.cloud
 
 backends:
  - service:

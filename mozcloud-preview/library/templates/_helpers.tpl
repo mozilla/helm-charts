@@ -67,12 +67,6 @@ Template helpers
 {{- if and (.backendConfig).name (not $name) -}}
   {{- $name = .backendConfig.name -}}
 {{- end -}}
-{{- if and (.frontendConfig).name (not $name) -}}
-  {{- $name = .frontendConfig.name -}}
-{{- end -}}
-{{- if and (.ingressConfig).name (not $name) -}}
-  {{- $name = .ingressConfig.name -}}
-{{- end -}}
 {{- if and (.nameOverride) (not $name) -}}
   {{- $name = .nameOverride -}}
 {{- end -}}
@@ -98,6 +92,14 @@ Template helpers
 {{- end -}}
 
 {{/*
+Config override for preview httpRoutes, we want to use our transformed hostname
+values to include the preview domain
+*/}}
+{{- define "mozcloud-gateway-lib.config.httpRoutes" -}}
+{{- include "mozcloud-preview-lib.config.httpRoutes" . }}
+{{- end }}
+
+{{/*
 HTTPRoute template helpers
 */}}
 {{- define "mozcloud-preview-lib.config.httpRoutes" -}}
@@ -107,6 +109,18 @@ HTTPRoute template helpers
 {{- range $http_route := $http_routes -}}
   {{- $http_route_defaults := include "mozcloud-preview-lib.defaults.httpRoute.config" . | fromYaml -}}
   {{- $http_route_config := mergeOverwrite $http_route_defaults ($http_route | deepCopy) -}}
+  {{- /* Hostname rewrite for preview */ -}}
+  {{- $hostnames := list }}
+  {{- if eq (len $http_route_config.hostnames) 1 }}
+    {{- $hostnames = list $.previewHost }}
+  {{- else }}
+    {{- range $hostname := $http_route_config.hostnames }}
+      {{- $prefix := first (splitList "." (print $hostname)) }}
+      {{- $prefixed := printf "%s-%s" $prefix $.previewHost }}
+      {{- $hostnames = append $hostnames $prefixed }}
+    {{- end }}
+  {{- end }}
+  {{- $_ := set $http_route_config "hostnames" $hostnames }}
   {{- /* Use name helper function to populate name using rules hierarchy */ -}}
   {{- $params := dict "httpRouteConfig" $http_route_config -}}
   {{- $name_override := default "" $.nameOverride -}}
@@ -234,6 +248,7 @@ type: {{ $defaults.type }}
 EndpointCheck Render
 */}}
 {{- define "mozcloud-preview-lib.defaults.endpointcheck" -}}
+pr: {{ $.previewPr | quote }}
 url: {{ $.previewHost | quote }}
 checkPath: {{ .checkPath | default "__heartbeat__" }}
 image: {{ .image | default "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/curlimages/curl:8.14.1" | quote }}
@@ -257,13 +272,6 @@ logging:
   enable: true
   sampleRate: 1.0
 {{- end -}}
-{{- end -}}
-
-{{- define "mozcloud-preview-lib.defaults.frontendConfig" -}}
-redirectToHttps:
-  enabled: true
-  responseCodeName: MOVED_PERMANENTLY_DEFAULT
-sslPolicy: mozilla-intermediate
 {{- end -}}
 
 {{- define "mozcloud-preview-lib.defaults.httpRoute.config" -}}

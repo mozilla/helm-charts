@@ -4,7 +4,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: endpoint-check-{{ randAlphaNum 7 | lower }}
+  name: pr{{ $config.pr -}}-endpoint-check-{{ randAlphaNum 7 | lower }}
   labels:
     {{- $config.labels | toYaml | nindent 4 }}
   annotations:
