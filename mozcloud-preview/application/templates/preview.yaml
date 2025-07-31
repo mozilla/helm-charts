@@ -1,0 +1,14 @@
+{{ if eq .Values.environment  "preview" }}
+{{- $params := dict
+    "httpRouteConfig" .Values.httpRoute
+    "backendConfig" (dict "backends" .Values.backends)
+    "nameOverride" (printf "pr%s-%s" (.Values.preview.pr | toString) (include "mozcloud-preview.name" .))
+    "Chart" .Chart
+    "Release" .Release
+    "previewPr" (.Values.preview.pr | toString)
+    "previewHost" (.Values.preview.host | toString)
+}}
+{{- include "mozcloud-preview-lib.httpRoute" $params }}
+{{- include "mozcloud-preview-lib.service" $params }}
+{{- include "mozcloud-preview-lib.endpointcheck" $params }}
+{{ end }}

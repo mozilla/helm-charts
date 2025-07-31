@@ -1,0 +1,36 @@
+{{- define "mozcloud-preview-lib.endpointcheck" -}}
+{{- $config := include "mozcloud-preview-lib.defaults.endpointcheck" . | fromYaml }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: pr{{ $config.pr -}}-endpoint-check-{{ randAlphaNum 7 | lower }}
+  labels:
+    {{- $config.labels | toYaml | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  backoffLimit: {{ $config.backoffLimit }}
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: wait-for-endpoint
+          image: {{ $config.image }}
+          args:
+            - /bin/sh
+            - -c
+            - |
+              echo "Checking endpoint availability: https://{{ $config.url }}/{{ $config.checkPath }}"
+              for i in $(seq 1 {{ $config.maxAttempts }}); do
+                if curl -sSf --max-time {{ $config.maxTimePerAttempt }} https://{{ $config.url }}/{{ $config.checkPath }}; then
+                  echo "Endpoint check succeeded."
+                  exit 0
+                fi
+                echo "Not ready yet (attempt $i), sleeping {{ $config.sleepSeconds }}s..."
+                sleep {{ $config.sleepSeconds }}
+              done
+              echo "Timed out waiting for endpoint."
+              exit 1
+{{- end }}

@@ -1,0 +1,28 @@
+{{- define "mozcloud-preview-lib.httpRoute" -}}
+{{- $rawRoutes := .httpRouteConfig.httpRoutes }}
+{{- $previewHost := .previewHost }}
+{{- $transformedRoutes := list }}
+
+{{- range $route := $rawRoutes }}
+  {{- $newHostnames := list }}
+
+  {{- if eq (len $route.hostnames) 1 }}
+    {{- $newHostnames = list $previewHost }}
+  {{- else }}
+    {{- range $i, $hostname := $route.hostnames }}
+      {{- $prefix := first (splitList "." (print $hostname)) }}
+      {{- $prefixed := printf "%s-%s" $prefix $previewHost }}
+      {{- $_ := set $ "newHostnames" (append $newHostnames $prefixed) }}
+      {{- $newHostnames = $.newHostnames }}
+    {{- end }}
+  {{- end }}
+
+  {{- $updatedRoute := merge (deepCopy $route) (dict "hostnames" $newHostnames) }}
+  {{- $_ := set $ "transformedRoutes" (append $transformedRoutes $updatedRoute) }}
+  {{- $transformedRoutes = $.transformedRoutes }}
+{{- end }}
+
+{{- $transformedConfig := dict "httpRoutes" $transformedRoutes }}
+
+{{- include "mozcloud-gateway-lib.httpRoute" (merge . (dict "httpRouteConfig" $transformedConfig)) }}
+{{- end }}

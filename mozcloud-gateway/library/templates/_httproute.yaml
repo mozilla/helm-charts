@@ -13,7 +13,7 @@ spec:
     {{- range $gateway_ref := $http_route.gatewayRefs }}
     - kind: Gateway
       name: {{ $gateway_ref.name }}
-      {{- if $gateway_ref.namespace -}}
+      {{- if $gateway_ref.namespace }}
       namespace: {{ $gateway_ref.namespace }}
       {{- end }}
       sectionName: {{ $gateway_ref.section }}
@@ -98,7 +98,7 @@ spec:
     {{- range $gateway_ref := $http_route.gatewayRefs }}
     - kind: Gateway
       name: {{ $gateway_ref.name }}
-      {{- if $gateway_ref.namespace -}}
+      {{- if $gateway_ref.namespace }}
       namespace: {{ $gateway_ref.namespace }}
       {{- end }}
       sectionName: http
