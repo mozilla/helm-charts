@@ -1,0 +1,37 @@
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+environment: preview
+realm: nonprod
+projectId: "moz-fx-cicd-demos-nonprod"
+image:
+  tag: 'latest@sha256:74675038bcdf884faa73487802cef335261983d6c29f2086171c65fd85ef2469' # pragma: allowlist secret
+  name: 'us-docker.pkg.dev/moz-fx-cicd-demos-nonprod/cicd-demos-nonprod/go-demo'
+
+preview:
+  pr: 17
+  host: pr17-cicd-demos.preview.mozilla.cloud
+
+backends:
+ - service:
+     name: cicd-demos
+     port: 8080
+
+httpRoute:
+  enabled: true
+  httpRoutes:
+    - name: cicd-demos
+      hostnames:
+        - dev.cicd-demos.nonprod.sandbox.mozgcp.net
+      rules:
+        - backendRefs:
+            - name: cicd-demos
+              port: 8080
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

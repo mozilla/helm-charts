@@ -1,0 +1,45 @@
+# Default values for cicd-demos.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+app_code: cicd-demos
+component_code: cicd-demos-web
+projectId: ""
+ghaRunId: ""
+externalsecrets:
+  version: latest #pragma: allowlist secret
+  refresh_interval: 5m #pragma: allowlist secret
+labels:
+  app: cicd-demos
+image:
+  repository: us-docker.pkg.dev/moz-fx-cicd-demos-nonprod/cicd-demos-nonprod/go-demo
+  pullPolicy: Always
+  tag: "latest"
+nginxImage:
+  repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged
+  tag: "1.22"
+  pullPolicy: IfNotPresent
+ingress:
+  staticIpName: cicd-demos-ip-v4
+  managedCertificates: managed-certificate
+  hosts:
+    - host: cicd-demos.local
+      backend:
+        name: cicd-demos
+        port: 8080
+frontendConfig:
+  sslPolicy: "mozilla-intermediate"
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+autoscaling:
+  minReplicas: 2
+  maxReplicas: 4
+  cpu:
+    averageUtilization: 80
+  memory:
+    averageValue: 1Gi
