@@ -1,4 +1,4 @@
-{{ if eq .Values.environment  "preview" }}
+{{ if .Values.enabled }}
 {{- $params := dict
     "httpRouteConfig" .Values.httpRoute
     "backendConfig" (dict "backends" .Values.backends)
@@ -9,6 +9,6 @@
     "previewHost" (.Values.preview.host | toString)
 }}
 {{- include "mozcloud-preview-lib.httpRoute" $params }}
-{{- include "mozcloud-preview-lib.service" $params }}
 {{- include "mozcloud-preview-lib.endpointcheck" $params }}
+{{- include "mozcloud-gateway-lib.service" $params -}}
 {{ end }}

@@ -92,72 +92,6 @@ Template helpers
 {{- end -}}
 
 {{/*
-Service template helpers
-*/}}
-{{- define "mozcloud-preview-lib.config.service" -}}
-{{- $name_override := default "" .nameOverride -}}
-{{- $backends := default (list) (.backendConfig).backends -}}
-{{- $output := list -}}
-{{- range $backend := $backends -}}
-  {{- $defaults := include "mozcloud-preview-lib.defaults.service.config" . | fromYaml -}}
-  {{- $service_config := dict -}}
-  {{- $backend_service := $backend.service | deepCopy -}}
-  {{- /* Only create the service if "create" is not "false" */ -}}
-  {{- $create_service := (include "mozcloud-gateway-lib.defaults.service.config" . | fromYaml).create -}}
-  {{- if hasKey $backend_service "create" -}}
-    {{- $create_service = $backend_service.create -}}
-  {{- end -}}
-  {{- $_ := set $service_config "create" $create_service -}}
-  {{- /* Use name helper function to populate name using rules hierarchy */ -}}
-  {{- $params := dict -}}
-  {{- if $backend.name -}}
-    {{- $_ := set $params "name" $backend.name -}}
-  {{- end -}}
-  {{- if $name_override -}}
-    {{- $_ := set $params "nameOverride" $name_override -}}
-  {{- end -}}
-  {{- $name := include "mozcloud-preview-lib.config.name" $params -}}
-  {{- $_ = set $service_config "fullnameOverride" $name -}}
-  {{- /* Include annotations, if specified */ -}}
-  {{- if $backend_service.annotations -}}
-    {{- $_ := set $service_config "annotations" $backend_service.annotations -}}
-  {{- end -}}
-  {{- /* Generate labels */ -}}
-  {{- $backend_labels := dict "labels" (default (dict) $backend.labels) -}}
-  {{- $backend_service_labels := dict "labels" (default (dict) $backend_service.labels) -}}
-  {{- $label_params := dict "labels" (mergeOverwrite $backend_labels.labels $backend_service_labels.labels) -}}
-  {{- $labels := include "mozcloud-preview-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
-  {{- $_ = set $service_config "labels" $labels -}}
-  {{- /* Generate selectorLabels */ -}}
-  {{- $selector_label_params := dict "selectorLabels" (default (dict) $backend_service.selectorLabels) -}}
-  {{- $selector_labels := include "mozcloud-preview-lib.selectorLabels" (mergeOverwrite ($ | deepCopy) $selector_label_params) | fromYaml -}}
-  {{- $_ = set $service_config "selectorLabels" $selector_labels -}}
-  {{- /* Service config */ -}}
-  {{- $config := include "mozcloud-preview-lib.config.service.config" $backend_service | fromYaml -}}
-  {{- $_ = set $service_config "config" $config -}}
-  {{- $output = append $output $service_config -}}
-{{- end -}}
-{{- $services := dict "services" $output -}}
-{{ $services | toYaml }}
-{{- end -}}
-
-{{- define "mozcloud-preview-lib.config.service.annotations" -}}
-{{- if .annotations -}}
-{{ .annotations | toYaml }}
-{{- end }}
-{{- end -}}
-
-{{- define "mozcloud-preview-lib.config.service.config" -}}
-{{- $defaults := (include "mozcloud-preview-lib.defaults.service.config" . | fromYaml) -}}
-ports:
-  - port: {{ default $defaults.port .port }}
-    targetPort: {{ default $defaults.targetPort .targetPort }}
-    protocol: {{ default $defaults.protocol .protocol }}
-    name: {{ $defaults.name }}
-type: {{ $defaults.type }}
-{{- end -}}
-
-{{/*
 EndpointCheck Render
 */}}
 {{- define "mozcloud-preview-lib.defaults.endpointcheck" -}}
@@ -172,55 +106,6 @@ backoffLimit: {{ .backoffLimit | default 1 }}
 labels:
   app.kubernetes.io/component: endpoint-check
   {{- .labels | toYaml | nindent 4 }}
-{{- end }}
-
-{{/*
-Defaults
-*/}}
-{{- define "mozcloud-preview-lib.defaults.backendConfig" -}}
-{{- if .defaults -}}
-{{ .defaults | toYaml }}
-{{- else -}}
-logging:
-  enable: true
-  sampleRate: 1.0
-{{- end -}}
-{{- end -}}
-
-{{- define "mozcloud-preview-lib.defaults.httpRoute.config" -}}
-gatewayRefs:
-  - name: {{ "sandbox-high-preview-gateway" }}
-    namespace: {{ "preview-shared-infrastructure" }}
-    section: https
-hostnames:
-  - chart.example.local
-httpToHttpsRedirect: true
-match:
-  path:
-    type: PathPrefix
-redirect:
-  statusCode: 302
-  type: ReplaceFullPath
-rewrite:
-  path:
-    type: ReplaceFullPath
-rules:
-  - backendRefs:
-      - name: {{ include "mozcloud-preview-lib.config.name" . }}
-        port: 8080
-{{- end -}}
-
-
-{{- define "mozcloud-preview-lib.defaults.service.config" -}}
-# Default configurables for service
-# See https://kubernetes.io/docs/concepts/services-networking/service/ for
-# information on how to configure a service
-createNeg: false
-port: 8080
-targetPort: http
-protocol: TCP
-name: http
-type: ClusterIP
 {{- end }}
 
 {{/*
