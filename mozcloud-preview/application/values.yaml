@@ -1,45 +1,106 @@
-# Default values for cicd-demos.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
+# If disabled, no resources in the chart will be created
+enabled: true
 
-app_code: cicd-demos
-component_code: cicd-demos-web
-projectId: ""
-ghaRunId: ""
-externalsecrets:
-  version: latest #pragma: allowlist secret
-  refresh_interval: 5m #pragma: allowlist secret
-labels:
-  app: cicd-demos
-image:
-  repository: us-docker.pkg.dev/moz-fx-cicd-demos-nonprod/cicd-demos-nonprod/go-demo
-  pullPolicy: Always
-  tag: "latest"
-nginxImage:
-  repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged
-  tag: "1.22"
-  pullPolicy: IfNotPresent
-ingress:
-  staticIpName: cicd-demos-ip-v4
-  managedCertificates: managed-certificate
-  hosts:
-    - host: cicd-demos.local
-      backend:
-        name: cicd-demos
-        port: 8080
-frontendConfig:
-  sslPolicy: "mozilla-intermediate"
-resources:
-  limits:
-    cpu: 100m
-    memory: 128Mi
-  requests:
-    cpu: 100m
-    memory: 128Mi
-autoscaling:
-  minReplicas: 2
-  maxReplicas: 4
-  cpu:
-    averageUtilization: 80
-  memory:
-    averageValue: 1Gi
+# Preview, these values are provided by the ArgoCD Pull Request Generator and should not be populated unless testing
+preview:
+  pr: 17
+  host: pr17-chart.preview.mozilla.cloud
+
+# Defines the backend services to create, backend policies, and healthchecks.
+backends:
+    # Definitions for the Kubernetes service.
+  - service:
+      # If disabled, a new Kubernetes will not be created.
+      #create: true
+
+      port: 8080
+
+      # Name of the port to create. Default is "http".
+      #portName: http
+
+      # Protocol used for service. Default is TCP. More information found
+      # here:
+      # https://kubernetes.io/docs/reference/networking/service-protocols/
+      #protocol: TCP
+
+      # Port name/number of pods the service should target. Default is "http".
+      targetPort: http
+
+      # Annotations to use for this service.
+      #annotations: {}
+
+      # Labels to use for the service.
+      #labels: {}
+
+      # Selector labels the service should use to match against pods.
+      #selectorLabels: {}
+
+    # Set a name for the backend to use for all related components.
+    #name:
+
+    # Backend policy to apply to this specific backend service. Overrides the
+    # defaults from .Values.backendPolicy
+    #backendPolicy: {}
+
+    # Health check configurations for the load balancer to perform against the
+    # backend service.
+    #
+    # By default, Kubernetes services will perform health checks against pods
+    # using readinessProbes and livenessProbes. This section allows users to
+    # specify health check configurations at the load balancer level, which
+    # provides more fine-grained control over how health checks are performed.
+    healthCheck:
+      # The request path to use for the health check. Default is
+      # "/__lbheartbeat__".
+      path: /__lbheartbeat__
+
+      # The protocol to use for health checks. Options are "HTTP" or "TCP".
+      # Default is "HTTP".
+      protocol: HTTP
+
+      # The port to use for the health check, if different from the service
+      # port. This port must be specified as a number, not a named port.
+      #port:
+
+      # The interval (in seconds) in which the endpoint is probed for a health
+      # check.
+      #checkIntervalSec:
+
+      # The timeout (in seconds) for the health check probe.
+      #timeoutSec:
+
+      # Number of sequential connection attempts that must succeed for a backend
+      # to be considered healthy.
+      #healthyThreshold:
+
+      # Number of sequential connection attempts that must succeed for a backend
+      # to be considered unhealthy.
+      #unhealthyThreshold:
+
+    # Labels for the backend resources. Overridden for services by
+    # "service.labels".
+    #labels: {}
+
+# Defines how HTTP and HTTPS requests received by a Gateway are directed to
+# Services.
+httpRoute:
+  # If disabled, HTTPRoute resources will not be created in the K8s namespace.
+  enabled: true
+
+  httpRoutes:
+    - name: mozcloud-gateway
+      # Hostnames to match against. Hostnames are matched before any other
+      # matches (path, headers) occur.
+      hostnames:
+        - chart.example.local
+
+      # If enabled, create an HTTP-to-HTTPS redirect. This is enabled by
+      # default.
+      #httpToHttpsRedirect: true
+
+      rules:
+          # A list of the backend services to receive traffic.
+        - backendRefs:
+              # The name of the backend service
+            - name: mozcloud-gateway
+              port: 8080
