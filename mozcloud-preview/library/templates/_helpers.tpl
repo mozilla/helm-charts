@@ -220,7 +220,7 @@ port: 8080
 targetPort: http
 protocol: TCP
 name: http
-dev-pr17-cicd-demos.preview.mozilla.cloudtype: ClusterIP
+type: ClusterIP
 {{- end }}
 
 {{/*
