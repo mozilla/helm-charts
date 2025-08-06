@@ -81,13 +81,6 @@ backends:
     # "service.labels".
     #labels: {}
 
-# Defines specific parameters of the frontend of the Google Cloud load
-# balancer. This policy is similar to a FrontendConfig for an Ingress resource.
-gatewayPolicy:
-  # SSL policy to use. This configures a set of TLS versions and ciphers that
-  # the load balancer uses to terminate HTTPS traffic from clients.
-  sslPolicy: mozilla-intermediate
-
 # Defines how HTTP and HTTPS requests received by a Gateway are directed to
 # Services.
 httpRoute:
