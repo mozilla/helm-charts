@@ -6,23 +6,17 @@
 {{- range $route := $rawRoutes }}
   {{- $newHostnames := list }}
 
-  {{- if eq (len $route.hostnames) 1 }}
-    {{- $newHostnames = list $previewHost }}
-  {{- else }}
-    {{- range $i, $hostname := $route.hostnames }}
-      {{- $prefix := first (splitList "." (print $hostname)) }}
-      {{- $prefixed := printf "%s-%s" $prefix $previewHost }}
-      {{- $_ := set $ "newHostnames" (append $newHostnames $prefixed) }}
-      {{- $newHostnames = $.newHostnames }}
-    {{- end }}
+  {{- range $i, $hostname := $route.hostnames }}
+    {{- $prefix := first (splitList "." (print $hostname)) }}
+    {{- $prefixed := printf "%s-%s" $prefix $previewHost }}
+    {{- $newHostnames = append $newHostnames $prefixed }}
   {{- end }}
 
-  {{- $updatedRoute := merge (deepCopy $route) (dict "hostnames" $newHostnames) }}
-  {{- $_ := set $ "transformedRoutes" (append $transformedRoutes $updatedRoute) }}
-  {{- $transformedRoutes = $.transformedRoutes }}
+  {{- $updatedRoute := mergeOverwrite (deepCopy $route) (dict "hostnames" $newHostnames) }}
+  {{- $transformedRoutes = append $transformedRoutes $updatedRoute }}
 {{- end }}
 
 {{- $transformedConfig := dict "httpRoutes" $transformedRoutes }}
 
-{{- include "mozcloud-gateway-lib.httpRoute" (merge . (dict "httpRouteConfig" $transformedConfig)) }}
+{{- include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite . (dict "httpRouteConfig" $transformedConfig)) }}
 {{- end }}

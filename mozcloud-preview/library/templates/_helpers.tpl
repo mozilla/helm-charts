@@ -92,93 +92,6 @@ Template helpers
 {{- end -}}
 
 {{/*
-Config override for preview httpRoutes, we want to use our transformed hostname
-values to include the preview domain
-*/}}
-{{- define "mozcloud-gateway-lib.config.httpRoutes" -}}
-{{- include "mozcloud-preview-lib.config.httpRoutes" . }}
-{{- end }}
-
-{{/*
-HTTPRoute template helpers
-*/}}
-{{- define "mozcloud-preview-lib.config.httpRoutes" -}}
-{{- $defaults := include "mozcloud-preview-lib.defaults.httpRoute.config" . | fromYaml -}}
-{{- $http_routes := default (list $defaults) (.httpRouteConfig).httpRoutes }}
-{{- $output := list -}}
-{{- range $http_route := $http_routes -}}
-  {{- $http_route_defaults := include "mozcloud-preview-lib.defaults.httpRoute.config" . | fromYaml -}}
-  {{- $http_route_config := mergeOverwrite $http_route_defaults ($http_route | deepCopy) -}}
-  {{- /* Hostname rewrite for preview */ -}}
-  {{- $hostnames := list }}
-  {{- if eq (len $http_route_config.hostnames) 1 }}
-    {{- $hostnames = list $.previewHost }}
-  {{- else }}
-    {{- range $hostname := $http_route_config.hostnames }}
-      {{- $prefix := first (splitList "." (print $hostname)) }}
-      {{- $prefixed := printf "%s-%s" $prefix $.previewHost }}
-      {{- $hostnames = append $hostnames $prefixed }}
-    {{- end }}
-  {{- end }}
-  {{- $_ := set $http_route_config "hostnames" $hostnames }}
-  {{- /* Use name helper function to populate name using rules hierarchy */ -}}
-  {{- $params := dict "httpRouteConfig" $http_route_config -}}
-  {{- $name_override := default "" $.nameOverride -}}
-  {{- if $name_override -}}
-    {{- $_ := set $params "nameOverride" $name_override -}}
-  {{- end -}}
-  {{- $name := include "mozcloud-preview-lib.config.name" $params -}}
-  {{- $_ := set $http_route_config "name" $name -}}
-  {{- /* Generate labels */ -}}
-  {{- $label_params := dict "labels" (default (dict) $http_route_config.labels) -}}
-  {{- $labels := include "mozcloud-preview-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
-  {{- $_ = set $http_route_config "labels" $labels -}}
-  {{- /*
-  Set defaults for matches, redirects and rewrites, if defined.
-  We will need to recreate the rule list as some items in child lists have
-  optional values and defaults.
-  */ -}}
-  {{- $rules := list -}}
-  {{- range $rule := $http_route_config.rules -}}
-    {{- $rule_defaults := include "mozcloud-preview-lib.defaults.httpRoute.config" . | fromYaml -}}
-    {{- $rule_config := mergeOverwrite ($rule_defaults.rules | first) ($rule | deepCopy) -}}
-    {{- /* Matches */ -}}
-    {{- if $rule_config.matches -}}
-      {{- $matches := list -}}
-      {{- range $match := $rule_config.matches -}}
-        {{- $match_config := $match | deepCopy -}}
-        {{- if $match.path -}}
-          {{- $type := default ($rule_defaults.match.path.type | deepCopy) $match_config.path.type -}}
-          {{- $_ := set $match_config.path "type" $type -}}
-        {{- end -}}
-        {{- $matches = append $matches $match_config -}}
-      {{- end -}}
-      {{- $_ := set $rule_config "matches" $matches -}}
-    {{- end -}}
-    {{- /* Redirects */ -}}
-    {{- if $rule_config.redirect -}}
-      {{- $redirect_config := mergeOverwrite $rule_defaults.redirect $rule_config.redirect -}}
-      {{- $_ := set $rule_config "redirect" $redirect_config -}}
-    {{- end -}}
-    {{- /* Rewrites */ -}}
-    {{- if $rule_config.rewrite -}}
-      {{- $rewrite_config := $rule_config.rewrite | deepCopy -}}
-      {{- if $rule_config.rewrite.path -}}
-        {{- $rewrite_path_type := default $rule_defaults.rewrite.path.type $rule_config.rewrite.path.type -}}
-        {{- $_ := set $rewrite_config.path "type" $rewrite_path_type -}}
-      {{- end -}}
-      {{- $_ := set $rule_config "rewrite" $rewrite_config -}}
-    {{- end -}}
-    {{- $rules = append $rules $rule_config -}}
-  {{- end -}}
-  {{- $_ = set $http_route_config "rules" $rules -}}
-  {{- $output = append $output $http_route_config -}}
-{{- end -}}
-{{- $http_routes = dict "httpRoutes" $output -}}
-{{ $http_routes | toYaml }}
-{{- end -}}
-
-{{/*
 Service template helpers
 */}}
 {{- define "mozcloud-preview-lib.config.service" -}}
@@ -307,7 +220,7 @@ port: 8080
 targetPort: http
 protocol: TCP
 name: http
-type: ClusterIP
+dev-pr17-cicd-demos.preview.mozilla.cloudtype: ClusterIP
 {{- end }}
 
 {{/*
