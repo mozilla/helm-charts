@@ -1,0 +1,5 @@
+{{- if gt (len .Values.cronJobs) 0 }}
+{{- $params := dict "cronJobConfig" (dict "cronJobs" .Values.cronJobs) "nameOverride" (include "mozcloud-gateway.name" .) "Chart" .Chart "Release" .Release }}
+{{- $label_params := include "mozcloud-job.labelParams" . | fromYaml }}
+{{- include "mozcloud-job-lib.cronJob" (mergeOverwrite $params $label_params) }}
+{{- end }}
