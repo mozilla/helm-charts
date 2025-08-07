@@ -71,9 +71,12 @@ jobs: []
   #  containers:
   #    - name: ""
   #
-  #      # The image should be specified in the "repo/image:tag" format. This is
+  #      # The image should be specified in the "repo/image" format. This is
   #      # a required field.
   #      image: ""
+  #
+  #      # The tag to use for this image. The default is "latest".
+  #      tag: latest
 
   #      # A command in the form of an array/list that serves as an entrypoint
   #      # to the container. This command is the default command that runs once

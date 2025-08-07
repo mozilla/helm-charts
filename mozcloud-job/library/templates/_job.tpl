@@ -51,7 +51,8 @@ spec:
       containers:
         {{- range $container := $job.containers }}
         - name: {{ required "A container name is required!" $container.name }}
-          image: {{ required "A container image is required!" $container.image }}
+          {{- $tag := default "latest" $container.tag }}
+          image: {{ required "A container image is required!" $container.image }}:{{ $tag }}
           {{- if $container.command }}
           command:
             {{- $container.command | toYaml | nindent 12 }}
