@@ -44,6 +44,9 @@ spec:
   {{- if $config.parallelism }}
   parallelism: {{ $config.parallelism }}
   {{- end }}
+  {{- if $config.suspend }}
+  suspend: {{ $config.suspend }}
+  {{- end }}
   {{- if $config.ttlSecondsAfterFinished }}
   ttlSecondsAfterFinished: {{ $config.ttlSecondsAfterFinished }}
   {{- end }}

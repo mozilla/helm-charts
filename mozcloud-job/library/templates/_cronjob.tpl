@@ -15,6 +15,9 @@ spec:
   successfulJobsHistoryLimit: {{ $config.jobHistory.successful }}
   failedJobsHistoryLimit: {{ $config.jobHistory.failed }}
   schedule: '{{ required (printf "%sSchedule (schedule) is required!" $failed_message) $config.schedule }}'
+  {{- if $config.suspend }}
+  suspend: {{ $config.suspend }}
+  {{- end }}
   jobTemplate:
     spec:
       {{- $job_config := ($cron_job.jobConfig) }}
