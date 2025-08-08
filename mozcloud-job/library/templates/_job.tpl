@@ -69,7 +69,12 @@ spec:
             {{- end }}
           {{- end }}
           resources:
-            {{- $container.resources | toYaml | nindent 12 }}
+            requests:
+              cpu: {{ $container.resources.requests.cpu | quote }}
+              memory: {{ $container.resources.requests.memory | quote }}
+            limits:
+              cpu: {{ $container.resources.limits.cpu | quote }}
+              memory: {{ $container.resources.limits.memory | quote }}
         {{- end }}
       {{- if $config.restartPolicy }}
       restartPolicy: {{ $config.restartPolicy }}

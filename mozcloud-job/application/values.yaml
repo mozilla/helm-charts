@@ -118,8 +118,21 @@ jobs: []
   #      # Requests are required, however, if they are no specified, defaults
   #      # of "10m" (cpu) and "64Mi" (memory) will be used.
   #      #
+  #      # For both CPU and memory, limits must be greater than or equal to
+  #      # requests.
+  #      #
   #      # If no limits are specified, they will be set to double the requests
   #      # values.
+  #      #
+  #      # CPU requests and limits must be positive numbers and use one of the
+  #      # following formats:
+  #      #
+  #      #   int               (eg. 1)
+  #      #   float             (eg. 1.0)
+  #      #   millicpu notation (eg. 1000m)
+  #      #
+  #      # Memory requests and limits must be positive numbers and use any of
+  #      # the following unit types: K, Ki, M, Mi, G, Gi.
   #      resources:
   #        cpu:
   #          requests: 10m
