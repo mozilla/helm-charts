@@ -58,11 +58,20 @@ cronJobs: []
   #    #            Schedules using macros must be single quoted. Single quotes
   #    #            are recommended in general as a best practice.
   #    schedule: ''
+  #
+  #    # When Kubernetes creates CronJob resources, the Job controller will
+  #    # immediately enforce the cron job in the schedule you define. If
+  #    # "suspend" is enabled, Kubernetes will suspend future executions of the
+  #    # cron job, effectively disabling it.
+  #    #
+  #    # This is unset/disabled by default.
+  #    #suspend: false
 
   #  # This section follows the same format as jobs[].containers below.
   #  containers: []
 
-  #  # This section follows the same format as jobs[].config below.
+  #  # This section follows the same format as jobs[].config below, with the
+  #  # exception of "suspend", which is up above in "config".
   #  jobConfig: {}
 
   #  # Labels to use for this cron job.
@@ -125,28 +134,36 @@ jobs: []
   #    # The maximum amount of time, in seconds, that a job can run before being
   #    # forcefully terminated. If unset, no deadline will be enforced.
   #    #
-  #    # activeDeadlineSeconds takes precedence over backoffLimit. If set and job
-  #    # reaches the configured threshold, the job will be immediately marked with
-  #    # a status of "Failed" regardless of any backoffLimit that may be
-  #    # configured.
+  #    # activeDeadlineSeconds takes precedence over backoffLimit. If set and
+  #    # job reaches the configured threshold, the job will be immediately
+  #    # marked with a status of "Failed" regardless of any backoffLimit that
+  #    # may be configured.
   #    #activeDeadlineSeconds:
 
-  #    # The number of times a failed job will be re-run before it will be marked
-  #    # with a status of "Failed". Certain jobs (eg. smoke tests) may benefit
-  #    # from lower values. The default value is 6.
+  #    # The number of times a failed job will be re-run before it will be
+  #    # marked with a status of "Failed". Certain jobs (eg. smoke tests) may
+  #    # benefit from lower values. The default value is 6.
   #    #backoffLimit: 6
 
-  #    # This is the number of instances of this job that can run in parallel. The
-  #    # default value is 1, meaning only a single instance of the job can run at
-  #    # a time.
+  #    # This is the number of instances of this job that can run in parallel.
+  #    # The default value is 1, meaning only a single instance of the job can
+  #    # run at a time.
   #    #parallelism: 1
   #
   #    # This determines if the job should be restarted if the job fails.
   #    # Options are "Never" and "OnFailure". Default is "Never".
   #    #restartPolicy: Never
+  #
+  #    # When Kubernetes creates Job resources, the Job controller will
+  #    # immediately begin executing the job by creating pods. If "suspend" is
+  #    # enabled, the job will be suspended from execution, effectively
+  #    # disabling the job.
+  #    #
+  #    # This is unset/disabled by default.
+  #    #suspend: false
 
-  #    # The time, in seconds, that a job will be kept after completing or failing
-  #    # before Kubernetes cleans it up. 
+  #    # The time, in seconds, that a job will be kept after completing or
+  #    # failing before Kubernetes cleans it up.
   #    #ttlSecondsAfterFinished:
 
   #  # Argo CD settings.
@@ -174,7 +191,8 @@ jobs: []
   #    # should execute relative to the application's sync operation in Argo CD.
   #    # Hooks should be specified as a comma-separated string. Possible values:
   #    #
-  #    #     PreSync*: Job executes before the other manifests in the Helm chart.
+  #    #     PreSync*: Job executes before the other manifests in the Helm
+  #    #               chart.
   #    #
   #    #        Sync*: Job executes at the same time as the other manifests in
   #    #               the Helm chart.
@@ -186,20 +204,20 @@ jobs: []
   #    #
   #    #     SyncFail: Job executes after a failed sync operation.
   #    #
-  #    #   PostDelete: Job executes after all resources in an Argo CD application
-  #    #               are deleted.
+  #    #   PostDelete: Job executes after all resources in an Argo CD
+  #    #               application are deleted.
   #    #
   #    #   * The 3 sync phases commonly used when creating resource hooks.
   #    #
   #    # For example: to create a job that runs after every sync operation,
   #    # regardless of success, set "hooks" to "PostSync,SyncFail".
-  #    #hooks: 
+  #    #hooks:
 
   #    # Sync waves are used to define an order in which resources are applied
   #    # within a sync phase. Sync waves are configured using integers in
-  #    # ascending order, where resources with lower-value sync waves are applied
-  #    # first and resources with higher-value sync waves are applied last. The
-  #    # default sync wave used for all resources is "0".
+  #    # ascending order, where resources with lower-value sync waves are
+  #    # applied first and resources with higher-value sync waves are applied
+  #    # last. The default sync wave used for all resources is "0".
   #    #
   #    # Here is an example illustrating ordering resources with sync waves:
   #    #
