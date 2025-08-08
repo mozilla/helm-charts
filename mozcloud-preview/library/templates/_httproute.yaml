@@ -17,7 +17,7 @@
     "gatewayRefs" (list (dict
       "name" "sandbox-high-preview-gateway"
       "namespace" "preview-shared-infrastructure"
-      "sectionName" "https"
+      "section" "https"
     )))
    }}
   {{- $transformedRoutes = append $transformedRoutes $updatedRoute }}

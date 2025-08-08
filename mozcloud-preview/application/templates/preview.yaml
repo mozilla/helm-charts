@@ -1,14 +1,28 @@
-{{ if .Values.enabled }}
+{{- if .Values.enabled }}
+{{- $previewPr := .Values.preview.pr | toString }}
+{{- $httpRoutes := list }}
+{{- range .Values.httpRoute.httpRoutes }}
+  {{- $route := deepCopy . }}
+  {{- $_ := set $route "name" (printf "pr%s-%s" $previewPr .name) }}
+  {{- $httpRoutes = append $httpRoutes $route }}
+{{- end }}
+
+{{- $httpRouteConfig := dict
+    "enabled" .Values.httpRoute.enabled
+    "httpRoutes" $httpRoutes
+}}
+
 {{- $params := dict
-    "httpRouteConfig" .Values.httpRoute
+    "httpRouteConfig" $httpRouteConfig
     "backendConfig" (dict "backends" .Values.backends)
-    "nameOverride" (printf "pr%s-%s" (.Values.preview.pr | toString) (include "mozcloud-preview.name" .))
+    "nameOverride" (printf "pr%s-%s" $previewPr (include "mozcloud-preview.name" .))
     "Chart" .Chart
     "Release" .Release
-    "previewPr" (.Values.preview.pr | toString)
+    "previewPr" $previewPr
     "previewHost" (.Values.preview.host | toString)
 }}
+
 {{- include "mozcloud-preview-lib.httpRoute" $params }}
 {{- include "mozcloud-preview-lib.endpointcheck" $params }}
-{{- include "mozcloud-gateway-lib.service" $params -}}
-{{ end }}
+{{- include "mozcloud-gateway-lib.service" $params }}
+{{- end }}
