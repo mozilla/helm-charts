@@ -2,6 +2,7 @@
 {{- if gt (len ((.cronJobConfig).cronJobs)) 0 }}
 {{- $cron_jobs := include "mozcloud-job-lib.config.cronJobs" . | fromYaml }}
 {{- range $cron_job := $cron_jobs.cronJobs }}
+{{- $failed_message := printf "Failed to create cron job \"%s\": " $cron_job.name }}
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -10,40 +11,48 @@ metadata:
   labels:
     {{- $cron_job.labels | toYaml | nindent 4 }}
 spec:
-  schedule: {{ $cron_job.schedule }}
+  {{- $config := $cron_job.config }}
+  successfulJobsHistoryLimit: {{ $config.jobHistory.successful }}
+  failedJobsHistoryLimit: {{ $config.jobHistory.failed }}
+  schedule: '{{ required (printf "%sSchedule (schedule) is required!" $failed_message) $config.schedule }}'
   jobTemplate:
     spec:
-      {{- $config := ($cron_job.config) }}
-      {{- if $config.activeDeadlineSeconds }}
-      activeDeadlineSeconds: {{ $config.activeDeadlineSeconds }}
+      {{- $job_config := ($cron_job.jobConfig) }}
+      {{- if $job_config.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ $job_config.activeDeadlineSeconds }}
       {{- end }}
-      {{- if $config.backoffLimit }}
-      backoffLimit: {{ $config.backoffLimit }}
+      {{- if $job_config.backoffLimit }}
+      backoffLimit: {{ $job_config.backoffLimit }}
       {{- end }}
-      {{- if $config.parallelism }}
-      parallelism: {{ $config.parallelism }}
+      {{- if $job_config.parallelism }}
+      parallelism: {{ $job_config.parallelism }}
       {{- end }}
-      {{- if $config.ttlSecondsAfterFinished }}
-      ttlSecondsAfterFinished: {{ $config.ttlSecondsAfterFinished }}
+      {{- if $job_config.ttlSecondsAfterFinished }}
+      ttlSecondsAfterFinished: {{ $job_config.ttlSecondsAfterFinished }}
       {{- end }}
       template:
         spec:
           containers:
             {{- range $container := $cron_job.containers }}
-            - name: {{ required "A container name is required!" $container.name }}
-              {{- $tag := default "latest" $container.tag }}
-              image: {{ required "A container image is required!" $container.image }}:{{ $tag }}
+            - name: {{ required (printf "%sContainer name (cronJobs[].containers[].name) is required!" $failed_message) $container.name }}
+              image: {{ required (printf "%sContainer image (cronJobs[].containers[].image) is required!" $failed_message) $container.image }}:{{ $container.tag }}
               {{- if $container.command }}
               command:
-                {{- $container.command | toYaml | nindent 12 }}
+                {{- range $line := $container.command }}
+                - {{ $line | quote }}
+                {{- end }}
               {{- end }}
               {{- if $container.args }}
               args:
-                {{- $container.args | toYaml | nindent 12 }}
+                {{- range $line := $container.args }}
+                - {{ $line | quote }}
+                {{- end }}
               {{- end }}
+              resources:
+                {{- $container.resources | toYaml | nindent 16 }}
             {{- end }}
-          {{- if $config.restartPolicy }}
-          restartPolicy: {{ $config.restartPolicy }}
+          {{- if $job_config.restartPolicy }}
+          restartPolicy: {{ $job_config.restartPolicy }}
           {{- end }}
 {{- end }}
 {{- end }}

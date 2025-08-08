@@ -18,37 +18,52 @@
 cronJobs: []
   #- name: my-cronjob
 
-  #  # The schedule for the cron job. The value typically follows the cron or
-  #  # Vixie cron formats. This is a required field.
-  #  #
-  #  # Cron syntax:
-  #  #   ┌───────────── minute (0 - 59)
-  #  #   │ ┌───────────── hour (0 - 23)
-  #  #   │ │ ┌───────────── day of the month (1 - 31)
-  #  #   │ │ │ ┌───────────── month (1 - 12)
-  #  #   │ │ │ │ ┌───────────── day of the week (0 - 6) (Sunday to Saturday)
-  #  #   │ │ │ │ │              OR sun, mon, tue, wed, thu, fri, sat
-  #  #   │ │ │ │ │
-  #  #   │ │ │ │ │
-  #  #   * * * * *
-  #  #
-  #  # Vixie cron examples:
-  #  #   * 0-23/2 * * ──── every other hour
-  #  #   * */2 * *    ──── also every other hour
-  #  #
-  #  # You can also use the following macros:
-  #  #   @yearly (or @annually) ──── equivalent to 0 0 1 1 *
-  #  #   @monthly               ──── equivalent to 0 0 1 * *
-  #  #   @weekly                ──── equivalent to 0 0 * * 0
-  #  #   @daily (or @midnight)  ──── equivalent to 0 0 * * *
-  #  #   @hourly                ──── equivalent to 0 * * * *
-  #  schedule: ""
+  #  # Configuration settings for cron jobs.
+  #  config:
+  #    # Configures the total number of jobs keep after cron jobs run. Default
+  #    # values are:
+  #    #
+  #    #   successful: 1
+  #    #   failed: 1
+  #    #jobHistory:
+  #    #  #successful: 1
+  #    #  #failed: 1
+  #
+  #    # The schedule for the cron job. The value typically follows the cron or
+  #    # Vixie cron formats. This is a required field.
+  #    #
+  #    # Cron syntax:
+  #    #   ┌───────────── minute (0 - 59)
+  #    #   │ ┌───────────── hour (0 - 23)
+  #    #   │ │ ┌───────────── day of the month (1 - 31)
+  #    #   │ │ │ ┌───────────── month (1 - 12)
+  #    #   │ │ │ │ ┌───────────── day of the week (0 - 6) (Sunday to Saturday)
+  #    #   │ │ │ │ │              OR sun, mon, tue, wed, thu, fri, sat
+  #    #   │ │ │ │ │
+  #    #   │ │ │ │ │
+  #    #   * * * * *
+  #    #
+  #    # Vixie cron examples:
+  #    #   * 0-23/2 * * *  ──── every other hour
+  #    #   * */2 * * *     ──── also every other hour
+  #    #
+  #    # You can also use the following macros:
+  #    #   @yearly (or @annually) ──── equivalent to 0 0 1 1 *
+  #    #   @monthly               ──── equivalent to 0 0 1 * *
+  #    #   @weekly                ──── equivalent to 0 0 * * 0
+  #    #   @daily (or @midnight)  ──── equivalent to 0 0 * * *
+  #    #   @hourly                ──── equivalent to 0 * * * *
+  #    #
+  #    # Important: Schedules in cron or Vixie cron format must be quoted.
+  #    #            Schedules using macros must be single quoted. Single quotes
+  #    #            are recommended in general as a best practice.
+  #    schedule: ''
 
   #  # This section follows the same format as jobs[].containers below.
   #  containers: []
 
   #  # This section follows the same format as jobs[].config below.
-  #  config: {}
+  #  jobConfig: {}
 
   #  # Labels to use for this cron job.
   #  #labels: {}
@@ -88,6 +103,21 @@ jobs: []
   #      # command/entrypoint. This is not necessary if the full command is
   #      # specified via your entrypoint or in "command" above.
   #      #args:
+  #
+  #      # Resource allocation for job container.
+  #      #
+  #      # Requests are required, however, if they are no specified, defaults
+  #      # of "10m" (cpu) and "64Mi" (memory) will be used.
+  #      #
+  #      # If no limits are specified, they will be set to double the requests
+  #      # values.
+  #      resources:
+  #        cpu:
+  #          requests: 10m
+  #          #limits: 20m
+  #        memory:
+  #          requests: 64Mi
+  #          #limits: 128Mi
 
 
   #  # Configuration settings for jobs.
@@ -136,7 +166,8 @@ jobs: []
   #    #
   #    # This should be configured as a comma-separated string (eg.
   #    # "BeforeHookCreation,HookSucceeded"). The default is
-  #    # "BeforeHookCreation,HookSucceeded".
+  #    # "BeforeHookCreation,HookSucceeded". Set to an empty string ("") to
+  #    # prevent the chart from creating any hook deletion policies.
   #    hookDeletionPolicy: BeforeHookCreation,HookSucceeded
 
   #    # Hooks (or resource hooks) allow you to specify at what point the job

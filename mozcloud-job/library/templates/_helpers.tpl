@@ -102,13 +102,31 @@ CronJob template helpers
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $cron_job := $cron_jobs -}}
-  {{- $defaults := include "mozcloud-job-lib.defaults.job.config" . -}}
-  {{- $cron_job_config := mergeOverwrite (omit $defaults "generateName") $cron_job -}}
+  {{- $cron_job_defaults := include "mozcloud-job-lib.defaults.cronJob.config" . | fromYaml -}}
+  {{- $cron_job_config := mergeOverwrite $cron_job_defaults $cron_job -}}
   {{- /* Configure name and labels */ -}}
   {{- $labels := default (dict) $cron_job_config.labels -}}
   {{- $params := dict "config" $cron_job_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-job-lib.config.common" $params | fromYaml -}}
   {{- $cron_job_config = mergeOverwrite $cron_job_config $common -}}
+  {{- /* Configure job defaults */ -}}
+  {{- $job_defaults := include "mozcloud-job-lib.defaults.job.config" . | fromYaml -}}
+  {{- $job_config := mergeOverwrite $job_defaults.config (default (dict) $cron_job.jobConfig) -}}
+  {{- $_ := set $cron_job_config "jobConfig" $job_config -}}
+  {{- /*
+  Configure default tag and resource limits, if not specified.
+  */ -}}
+  {{- $containers := default (list) $cron_job_config.containers -}}
+  {{- $container_output := list -}}
+  {{- range $container := $containers -}}
+    {{- $container_defaults := include "mozcloud-job-lib.defaults.job.container.config" . | fromYaml -}}
+    {{- $container_config := mergeOverwrite $container_defaults $container -}}
+    {{- $resource_params := $container_config.resources -}}
+    {{- $resources := include "mozcloud-job-lib.defaults.job.container.resources" $resource_params | fromYaml -}}
+    {{- $_ := set $container_config "resources" $resources -}}
+    {{- $container_output = append $container_output $container_config -}}
+  {{- end -}}
+  {{- $_ := set $cron_job_config "containers" $container_output -}}
   {{- $output = append $output $cron_job_config -}}
 {{- end -}}
 {{- $cron_jobs = dict "cronJobs" $output -}}
@@ -123,13 +141,27 @@ Job template helpers
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $job := $jobs -}}
-  {{- $defaults := include "mozcloud-job-lib.defaults.job.config" . -}}
+  {{- $defaults := include "mozcloud-job-lib.defaults.job.config" . | fromYaml -}}
   {{- $job_config := mergeOverwrite $defaults $job -}}
   {{- /* Configure name and labels */ -}}
   {{- $labels := default (dict) $job_config.labels -}}
   {{- $params := dict "config" $job_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-job-lib.config.common" $params | fromYaml -}}
   {{- $job_config = mergeOverwrite $job_config $common -}}
+  {{- /*
+  Configure default tag and resource limits, if not specified.
+  */ -}}
+  {{- $containers := default (list) $job_config.containers -}}
+  {{- $container_output := list -}}
+  {{- range $container := $containers -}}
+    {{- $container_defaults := include "mozcloud-job-lib.defaults.job.container.config" . | fromYaml -}}
+    {{- $container_config := mergeOverwrite $container_defaults $container -}}
+    {{- $resource_params := $container_config.resources -}}
+    {{- $resources := include "mozcloud-job-lib.defaults.job.container.resources" $resource_params | fromYaml -}}
+    {{- $_ := set $container_config "resources" $resources -}}
+    {{- $container_output = append $container_output $container_config -}}
+  {{- end -}}
+  {{- $_ := set $job_config "containers" $container_output -}}
   {{- $output = append $output $job_config -}}
 {{- end -}}
 {{- $jobs = dict "jobs" $output -}}
@@ -139,10 +171,66 @@ Job template helpers
 {{/*
 Defaults
 */}}
+{{- define "mozcloud-job-lib.defaults.cronJob.config" -}}
+config:
+  jobHistory:
+    successful: 1
+    failed: 1
+{{- end -}}
+
 {{- define "mozcloud-job-lib.defaults.job.config" -}}
-generateName: false
+argo:
+  hookDeletionPolicy: BeforeHookCreation,HookSucceeded
 config:
   backoffLimit: 6
   parallelism: 1
   restartPolicy: Never
+generateName: false
+{{- end -}}
+
+{{- define "mozcloud-job-lib.defaults.job.container.config" -}}
+resources:
+  requests:
+    cpu: 10m
+    memory: 64Mi
+tag: latest
+{{- end -}}
+
+{{- define "mozcloud-job-lib.defaults.job.container.resources" -}}
+{{- $limits := default (dict) .limits -}}
+{{- $resources := dict "requests" .requests "limits" $limits -}}
+{{- /* Configure CPU limits, if not set */}}
+{{- if not $limits.cpu -}}
+  {{- $suffix := "" -}}
+  {{- $request := $resources.requests.cpu | toString -}}
+  {{- if hasSuffix "m" $request -}}
+    {{- $suffix = "m" }}
+    {{- $request = trimSuffix "m" $request -}}
+  {{- end -}}
+  {{- $limit := printf "%f%s" (mulf 2 (float64 $request)) $suffix -}}
+  {{- $_ := set $resources.limits "cpu" $limit -}}
+{{- end -}}
+{{- /* Configure memory limits, if not set */}}
+{{- if not $limits.memory -}}
+  {{- $suffix := "" -}}
+  {{- $request := $resources.requests.memory | toString -}}
+  {{- if hasSuffix "Mi" $request -}}
+    {{- $suffix = "Mi" }}
+    {{- $request = trimSuffix $suffix $request -}}
+  {{- else if hasSuffix "Gi" $request -}}
+    {{- $suffix = "Gi" }}
+    {{- $request = trimSuffix $suffix $request -}}
+  {{- end -}}
+  {{- $limit := printf "%f%s" (mulf 2 (float64 $request)) $suffix -}}
+  {{- $_ := set $resources.limits "memory" $limit -}}
+{{- end -}}
+{{- /* Return resources */}}
+{{ $resources | toYaml }}
+{{- end -}}
+
+{{/*
+Debug helper
+*/}}
+{{- define "mozcloud-job-lib.debug" -}}
+{{- . | mustToPrettyJson | printf "\nThe JSON output of the dumped var is: \n%s" | fail }}
 {{- end -}}

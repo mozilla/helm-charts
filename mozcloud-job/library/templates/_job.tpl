@@ -2,13 +2,14 @@
 {{- if gt (len ((.jobConfig).jobs)) 0 }}
 {{- $jobs := include "mozcloud-job-lib.config.jobs" . | fromYaml }}
 {{- range $job := $jobs.jobs }}
+{{- $failed_message := printf "Failed to create job \"%s\": " $job.name }}
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
   {{- $name := $job.name }}
   {{- if $job.generateName }}
-  {{- if not hasSuffix "-" $name }}
+  {{- if not (hasSuffix "-" $name) }}
   {{- $name = printf "%s-" $name }}
   {{- end }}
   generateName: {{ $name }}
@@ -29,7 +30,7 @@ metadata:
     argocd.argoproj.io/hook-delete-policy: {{ $argo.hookDeletionPolicy }}
     {{- end }}
     {{- if $argo.syncWave }}
-    argocd.argoproj.io/sync-wave: {{ $argo.syncWave }}
+    argocd.argoproj.io/sync-wave: {{ $argo.syncWave | quote }}
     {{- end }}
   {{- end }}
 spec:
@@ -50,17 +51,22 @@ spec:
     spec:
       containers:
         {{- range $container := $job.containers }}
-        - name: {{ required "A container name is required!" $container.name }}
-          {{- $tag := default "latest" $container.tag }}
-          image: {{ required "A container image is required!" $container.image }}:{{ $tag }}
+        - name: {{ required (printf "%sContainer name (containers[].name) is required!" $failed_message) $container.name }}
+          image: {{ required (printf "%sContainer image (containers[].image) is required!" $failed_message) $container.image }}:{{ $container.tag }}
           {{- if $container.command }}
           command:
-            {{- $container.command | toYaml | nindent 12 }}
+            {{- range $line := $container.command }}
+            - {{ $line | quote }}
+            {{- end }}
           {{- end }}
           {{- if $container.args }}
           args:
-            {{- $container.args | toYaml | nindent 12 }}
+            {{- range $line := $container.args }}
+            - {{ $line | quote }}
+            {{- end }}
           {{- end }}
+          resources:
+            {{- $container.resources | toYaml | nindent 12 }}
         {{- end }}
       {{- if $config.restartPolicy }}
       restartPolicy: {{ $config.restartPolicy }}
