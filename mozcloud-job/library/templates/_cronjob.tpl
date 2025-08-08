@@ -52,7 +52,12 @@ spec:
                 {{- end }}
               {{- end }}
               resources:
-                {{- $container.resources | toYaml | nindent 16 }}
+                requests:
+                  cpu: {{ $container.resources.requests.cpu | quote }}
+                  memory: {{ $container.resources.requests.memory | quote }}
+                limits:
+                  cpu: {{ $container.resources.limits.cpu | quote }}
+                  memory: {{ $container.resources.limits.memory | quote }}
             {{- end }}
           {{- if $job_config.restartPolicy }}
           restartPolicy: {{ $job_config.restartPolicy }}

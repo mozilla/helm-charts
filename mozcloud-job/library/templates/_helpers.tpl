@@ -197,31 +197,97 @@ tag: latest
 {{- end -}}
 
 {{- define "mozcloud-job-lib.defaults.job.container.resources" -}}
+{{- $requests := .requests -}}
 {{- $limits := default (dict) .limits -}}
 {{- $resources := dict "requests" .requests "limits" $limits -}}
+{{- /* Validate CPU requests and limits */ -}}
+{{- $request_suffix := "" -}}
+{{- $request := $requests.cpu | toString -}}
+{{- /*
+CPU resources can only be integers/floats for an entire CPU or millicpu (m)
+*/ -}}
+{{- if hasSuffix "m" $request -}}
+  {{- $request_suffix = "m" }}
+  {{- $request = trimSuffix "m" $request -}}
+{{- end -}}
+{{- if and (not $request_suffix) (or (regexFind "[a-zA-Z]$" $request) (le (float64 $request) 0.0)) -}}
+  {{- fail (printf "CPU requests must be positive and use one of the following formats: int, float, or millicpu notation (eg. 100m)") -}}
+{{- end -}}
+{{- if $limits.cpu -}}
+  {{- $limit_suffix := "" -}}
+  {{- $limit := $limits.cpu | toString -}}
+  {{- /*
+  CPU resources can only be integers/floats for an entire CPU or millicpu (m)
+  */ -}}
+  {{- if hasSuffix "m" $limit -}}
+    {{- $limit_suffix = "m" }}
+    {{- $limit = trimSuffix "m" $limit -}}
+  {{- end -}}
+  {{- if and (not $limit_suffix) (or (regexFind "[a-zA-Z]$" $limit) (le (float64 $limit) 0.0)) -}}
+    {{- fail (printf "CPU limits must be positive and use one of the following formats: int, float, or millicpu notation (eg. 100m)") -}}
+  {{- end -}}
+  {{- if or $limit_suffix (eq (float64 $limit) (floor (float64 $limit))) -}}
+    {{- /*
+    Using "ceil" function here to round up any limits using millicpu
+    notations with decimals. For example, "1.5m" becomes "2m".
+    */ -}}
+    {{- $limit = ceil (float64 $limit) -}}
+    {{- $_ := set $resources.limits "cpu" (printf "%d%s" (int $limit) $limit_suffix) -}}
+  {{- end -}}
+{{- end -}}
 {{- /* Configure CPU limits, if not set */}}
 {{- if not $limits.cpu -}}
-  {{- $suffix := "" -}}
-  {{- $request := $resources.requests.cpu | toString -}}
-  {{- if hasSuffix "m" $request -}}
-    {{- $suffix = "m" }}
-    {{- $request = trimSuffix "m" $request -}}
+  {{- $limit := "" -}}
+  {{- /* Keep ints as ints to create cleaner output */ -}}
+  {{- if or $request_suffix (eq (float64 $request) (floor (float64 $request))) -}}
+    {{- /*
+    Using "ceil" function here to round up any requests using millicpu
+    notations with decimals. For example, "1.5m" becomes "2m".
+    */ -}}
+    {{- $request = ceil (float64 $request) -}}
+    {{- $_ := set $resources.requests "cpu" (printf "%d%s" (int $request) $request_suffix) -}}
+    {{- $limit = printf "%d%s" (mul 2 (int $request)) $request_suffix -}}
+  {{- else -}}
+    {{- $limit = printf "%.3f" (mulf 2 (float64 $request)) -}}
   {{- end -}}
-  {{- $limit := printf "%f%s" (mulf 2 (float64 $request)) $suffix -}}
   {{- $_ := set $resources.limits "cpu" $limit -}}
 {{- end -}}
-{{- /* Configure memory limits, if not set */}}
-{{- if not $limits.memory -}}
-  {{- $suffix := "" -}}
-  {{- $request := $resources.requests.memory | toString -}}
-  {{- if hasSuffix "Mi" $request -}}
-    {{- $suffix = "Mi" }}
-    {{- $request = trimSuffix $suffix $request -}}
-  {{- else if hasSuffix "Gi" $request -}}
-    {{- $suffix = "Gi" }}
-    {{- $request = trimSuffix $suffix $request -}}
+{{- /* Validate memory requests and limits */ -}}
+{{- $request_suffix = "" -}}
+{{- /* Only allow the following unit types: K, Ki, M, Mi, G, Gi */ -}}
+{{- $memory_suffixes := list "K" "Ki" "M" "Mi" "G" "Gi" -}}
+{{- $request = $requests.memory | toString -}}
+{{- range $memory_suffix := $memory_suffixes -}}
+  {{- if hasSuffix $memory_suffix $request -}}
+    {{- $request_suffix = $memory_suffix }}
+    {{- $request = trimSuffix $request_suffix $request -}}
   {{- end -}}
-  {{- $limit := printf "%f%s" (mulf 2 (float64 $request)) $suffix -}}
+{{- end -}}
+{{- if or (not $request_suffix) (le (float64 $request) 0.0) -}}
+  {{- fail (printf "Memory requests must be positive and use one of the following unit types: %s" (join ", " $memory_suffixes)) -}}
+{{- end -}}
+{{- if $limits.memory -}}
+  {{- $limit_suffix := "" -}}
+  {{- $limit := $limits.memory | toString -}}
+  {{- range $memory_suffix := $memory_suffixes -}}
+    {{- if hasSuffix $memory_suffix $limit -}}
+      {{- $limit_suffix = $memory_suffix }}
+      {{- $limit = trimSuffix $limit_suffix $limit -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if or (not $limit_suffix) (le (float64 $limit) 0.0) -}}
+    {{- fail (printf "Memory limits must be positive and use one of the following unit types: %s" (join ", " $memory_suffixes)) -}}
+  {{- end -}}
+{{- end -}}
+{{- /* Configure memory limits, if not set */ -}}
+{{- if not $limits.memory -}}
+  {{- $limit := "" -}}
+  {{- /* Keep ints as ints to create cleaner output */ -}}
+  {{- if eq (float64 $request) (floor (float64 $request)) -}}
+    {{- $limit = printf "%d%s" (mul 2 (int $request)) $request_suffix -}}
+  {{- else -}}
+    {{- $limit = printf "%.3f%s" (mulf 2 (float64 $request)) $request_suffix -}}
+  {{- end -}}
   {{- $_ := set $resources.limits "memory" $limit -}}
 {{- end -}}
 {{- /* Return resources */}}
