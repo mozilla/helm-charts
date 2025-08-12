@@ -12,10 +12,9 @@ metadata:
   {{- if not (hasSuffix "-" $name) }}
   {{- $name = printf "%s-" $name }}
   {{- end }}
-  generateName: {{ $name }}
-  {{- else }}
-  name: {{ $job.name }}
+  {{- $name = printf "%s%s" $name (randAlphaNum 12 | lower) }}
   {{- end }}
+  name: {{ $name }}
   labels:
     {{- $job.labels | toYaml | nindent 4 }}
   {{- $argo := ($job.argo) }}
