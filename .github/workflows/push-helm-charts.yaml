@@ -1,0 +1,145 @@
+---
+name: push helm charts
+on:
+  pull_request:
+    types:
+      - opened
+      - closed
+      - synchronize
+      - reopened
+
+env:
+  GAR_PROJECT_ID: moz-fx-platform-artifacts
+
+jobs:
+  detect:
+    runs-on:
+      - ubuntu-latest
+
+    steps:
+      - name: Checkout Commit
+        id: checkout
+        uses: actions/checkout@v5
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        with:
+          matrix: true
+
+      - id: get-modified-charts
+        name: Get modified Charts
+        uses: actions/github-script@v7
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+
+        with:
+          script: |
+            const all_changed_files = JSON.parse(process.env.ALL_CHANGED_FILES)
+
+            const unique = new Set(all_changed_files
+              .filter(path => path.toLowerCase().startsWith("mozcloud"))
+              .map(path => {
+                parts = path.split("/");
+
+                return `${parts[1]}/${parts[2]}`;
+              })
+            );
+
+            const charts = Array.from(unique)
+              .map(path => {
+              parts = path.split("/");
+
+              return {name: parts[0], type: parts[1]};
+              });
+
+            if (!charts.length) return {};
+
+            return {include: charts};
+
+    outputs:
+      modified-charts: ${{ steps.get-modified-charts.outputs.result }}
+      is-merge-event: >-
+        ${{ github.event_name == 'pull_request'
+          && github.event.action == 'closed'
+          && github.event.pull_request.merged == true }}
+
+  push:
+    permissions:
+      contents: write
+      id-token: write
+
+    runs-on:
+      - ubuntu-latest
+
+    needs:
+      - detect
+
+    if: needs.detect.outputs.is-merge-event == 'true' && needs.detect.outputs.modified-charts != '{}'
+
+    strategy:
+      matrix: "${{ fromJson(needs.detect.outputs.modified-charts) }}"
+
+    steps:
+      - id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          service_account: artifact-writer@${{ env.GAR_PROJECT_ID }}.iam.gserviceaccount.com
+          workload_identity_provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - id: docker-login
+        uses: docker/login-action@v3
+        with:
+          registry: us-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.gcp-auth.outputs.access_token }}
+
+      - name: package and push
+        id: package_and_push
+        env:
+          CHART_NAME: matrix.name
+          CHART_TYPE: matrix.type
+
+        run: |-
+          CHART_PATH=charts/${CHART_NAME}/${CHART_TYPE}
+
+          pushd ${CHART_PATH}
+
+          helm dependency update
+
+          popd
+
+          helm package ${CHART_PATH}
+
+          while read $PACKAGE; do
+            VERSION=${PACKAGE%.tgz}
+            VERSION=${VERSION##*-}
+
+            echo "VERSION=${VERSION}" |tee -a $GITHUB_OUTPUT
+
+            helm push ${PACKAGE} oci://us-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
+
+          done <<< $(ls -rt *.tgz)
+
+      - name: create tag
+        uses: actions/github-script@v7
+        env:
+          CHART_NAME: matrix.name
+          CHART_VERSION: steps.package_and_push.outputs.VERSION
+
+        with:
+          script: |
+            const version = process.env.CHART_VERSION;
+            const chart_name = process.env.CHART_NAME;
+
+            const tagName = `${chart_name}-${version}`;
+
+            console.log(`creating tag "${tagName}" in repo "${context.repo.owner}/${context.repo.repo}"`);
+
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${tagName}`,
+              sha: context.sha
+            });
