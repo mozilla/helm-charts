@@ -19,19 +19,9 @@ metadata:
   labels:
     {{- $job.labels | toYaml | nindent 4 }}
   {{- $argo := ($job.argo) }}
-  {{- if or $argo.hookDeletionPolicy $argo.hooks $argo.syncWave }}
+  {{- if $job.annotations }}
   annotations:
-    {{- if $argo.hooks }}
-    argocd.argoproj.io/hook: {{ $argo.hooks }}
-    {{- else if and $argo.hookDeletionPolicy $argo.syncWave }}
-    argocd.argoproj.io/hook: Sync
-    {{- end }}
-    {{- if $argo.hookDeletionPolicy }}
-    argocd.argoproj.io/hook-delete-policy: {{ $argo.hookDeletionPolicy }}
-    {{- end }}
-    {{- if $argo.syncWave }}
-    argocd.argoproj.io/sync-wave: {{ $argo.syncWave | quote }}
-    {{- end }}
+    {{- $job.annotations | toYaml | nindent 4 }}
   {{- end }}
 spec:
   {{- $config := ($job.config) }}
