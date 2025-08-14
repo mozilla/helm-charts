@@ -126,7 +126,7 @@ jobs:
 
             echo "VERSION=${VERSION}" |tee -a $GITHUB_OUTPUT
 
-            helm push ${PACKAGE} oci://us-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
+            helm push ${PACKAGE} oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
 
           done <<< $(ls -rt *.tgz)
 

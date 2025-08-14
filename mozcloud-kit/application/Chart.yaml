@@ -1,0 +1,17 @@
+#
+# !!BETA Chart!!
+#
+# This chart only serves demonstration purposes right now .. it is supposed to serve as a dependency
+# to the acme tenant in sandbox-infra. We're showcasing our future helm-charts structure here.
+#
+# Don't use it just yet.
+#
+apiVersion: v2
+name: mozcloud-kit
+description: mozcloud opinionated bundle of helm charts
+version: 0.1.0
+type: application
+dependencies:
+  - name: mozcloud-deployment
+    version: 0.1.0
+    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
