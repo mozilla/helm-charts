@@ -15,12 +15,12 @@ type: library
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.2.0
+version: 0.2.1
 
 dependencies:
   - name: mozcloud-labels-lib
     version: 0.1.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
   - name: mozcloud-workload-core-lib
-    version: 0.2.0
+    version: 0.3.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
