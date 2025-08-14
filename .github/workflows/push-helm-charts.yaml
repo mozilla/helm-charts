@@ -121,27 +121,24 @@ jobs:
           helm package ${CHART_PATH}
 
           while read PACKAGE; do
-            VERSION=${PACKAGE%.tgz}
-            VERSION=${VERSION##*-}
+            CHART_TAG=${PACKAGE%.tgz}
+            CHART_VERSION=${CHART_TAG##*-}
 
-            echo "VERSION=${VERSION}" |tee -a $GITHUB_OUTPUT
+            echo "CHART_VERSION=${CHART_VERSION}" |tee -a $GITHUB_OUTPUT
+            echo "CHART_TAG=${CHART_TAG}" |tee -a $GITHUB_OUTPUT
 
-            helm push ${PACKAGE} oci://us-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
+            helm push ${PACKAGE} oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
 
           done <<< $(ls -rt *.tgz)
 
       - name: create tag
         uses: actions/github-script@v7
         env:
-          CHART_NAME: ${{ matrix.name }}
-          CHART_VERSION: ${{ steps.package_and_push.outputs.VERSION }}
+          CHART_TAG: ${{ steps.package_and_push.outputs.CHART_TAG }}
 
         with:
           script: |
-            const version = process.env.CHART_VERSION;
-            const chart_name = process.env.CHART_NAME;
-
-            const tagName = `${chart_name}-${version}`;
+            const tagName = process.env.CHART_TAG;
 
             console.log(`creating tag "${tagName}" in repo "${context.repo.owner}/${context.repo.repo}"`);
 
