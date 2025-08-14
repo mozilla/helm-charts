@@ -198,10 +198,62 @@ Job template helpers
     {{- $container_output = append $container_output $container_config -}}
   {{- end -}}
   {{- $_ := set $job_config "containers" $container_output -}}
+  {{- /*
+  Configure Argo CD annotations for the job and serviceAccount, if applicable.
+  Job annotations should always be determined before service account annotations
+  as the service account annotations will potentially reference a job
+  annotation.
+  */ -}}
+  {{- $annotations := dict -}}
+  {{- $argo := ($job_config.argo) -}}
+  {{- /* Start with job annotations */ -}}
+  {{- if or $argo.hookDeletionPolicy $argo.hooks $argo.syncWave -}}
+    {{- $annotations = (include "mozcloud-job-lib.config.jobs.annotations" (dict "type" "job" "jobConfig" $job_config) | fromYaml) -}}
+    {{- if gt (len $annotations) 0 -}}
+      {{- $_ := set $job_config "annotations" $annotations -}}
+    {{- end -}}
+  {{- end -}}
+  {{- /* Then do service account annotations */ -}}
+  {{- $annotations = (include "mozcloud-job-lib.config.jobs.annotations" (dict "type" "serviceAccount" "jobConfig" $job_config) | fromYaml) -}}
+  {{- $_ = set $job_config.config.serviceAccount "annotations" $annotations -}}
   {{- $output = append $output $job_config -}}
 {{- end -}}
 {{- $jobs = dict "jobs" $output -}}
 {{ $jobs | toYaml }}
+{{- end -}}
+
+{{- define "mozcloud-job-lib.config.jobs.annotations" -}}
+{{- $job_config := .jobConfig -}}
+{{- $argo := ($job_config.argo) -}}
+{{- if eq .type "job" -}}
+  {{- if $argo.hooks }}
+argocd.argoproj.io/hook: {{ $argo.hooks }}
+  {{- else if and $argo.hookDeletionPolicy $argo.syncWave }}
+argocd.argoproj.io/hook: Sync
+  {{- end -}}
+  {{- if $argo.hookDeletionPolicy }}
+argocd.argoproj.io/hook-delete-policy: {{ $argo.hookDeletionPolicy }}
+  {{- end -}}
+  {{- if $argo.syncWave }}
+argocd.argoproj.io/sync-wave: {{ $argo.syncWave | quote }}
+  {{- end -}}
+{{- else if eq .type "serviceAccount" -}}
+  {{- if $argo.hooks }}
+argocd.argoproj.io/hook: {{ $argo.hooks }}
+  {{- else if (index $job_config.annotations "argocd.argoproj.io/hook") }}
+argocd.argoproj.io/hook: {{ index $job_config.annotations "argocd.argoproj.io/hook" }}
+  {{- end -}}
+  {{- /*
+  The service account should always be created before the job so the job does
+  not fail. We will assign the service account sync wave a value of
+  (job_sync_wave_value - 1) with a default value of -1.
+  */ -}}
+  {{- $sync_wave := -1 -}}
+  {{- if $argo.syncWave -}}
+    {{- $sync_wave = sub (int $argo.syncWave) 1 -}}
+  {{- end }}
+argocd.argoproj.io/sync-wave: {{ $sync_wave | quote }}
+{{- end -}}
 {{- end -}}
 
 {{/*
