@@ -120,7 +120,7 @@ jobs:
 
           helm package ${CHART_PATH}
 
-          while read $PACKAGE; do
+          while read PACKAGE; do
             VERSION=${PACKAGE%.tgz}
             VERSION=${VERSION##*-}
 
