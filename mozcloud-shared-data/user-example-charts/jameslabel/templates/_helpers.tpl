@@ -40,6 +40,7 @@ helm.sh/chart: {{ include "jameslabel.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- include "mozcloud-shared-data-lib.smartMergeData" (dict "context" . "appCode" "jameslabel" "dataKey" "labels" "customData" .Values.labels) }}
 {{- end }}
 
 {{/*

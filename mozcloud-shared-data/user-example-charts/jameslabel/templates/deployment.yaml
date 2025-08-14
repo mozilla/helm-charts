@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: {{ include "jameslabel.fullname" . }}
   labels:
-    {{- include "mozcloud-shared-data-lib.smartMergeData" (dict "context" . "appCode" "jameslabel" "dataKey" "labels" "chartDataTemplate" "jameslabel.labels" "customData" .Values.labels) | nindent 4 }}
+    {{- include "jameslabel.labels" . | nindent 4 }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -19,7 +19,7 @@ spec:
       {{- end }}
       labels:
         # Smart merge (new generic function)
-        {{- include "mozcloud-shared-data-lib.smartMergeData" (dict "context" . "appCode" "jameslabel" "dataKey" "labels" "chartDataTemplate" "jameslabel.labels" "customData" .Values.labels) | nindent 8 }}
+        {{- include "jameslabel.labels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:

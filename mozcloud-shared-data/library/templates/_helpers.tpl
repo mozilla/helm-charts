@@ -44,49 +44,38 @@ Usage:
 
 {{/*
 mozcloud-shared-data-lib.smartMergeData
-A convenience function that automatically merges the three standard data sources:
+A convenience function that automatically merges the two standard data sources:
 1. Dynamic data from mozcloud-shared-data-lib
-2. Chart-specific data  
-3. Custom data from values
+2. Custom data from values
 
 The precedence parameter controls which data takes priority:
-- "shared": Shared/global data takes precedence (default)
-- "local": Local/custom data takes precedence
+- "local": Local/custom data takes precedence (default)  - uses data from the values.yaml files
+- "shared": Shared/global data takes precedence  - uses data from the chart itself or from the data helm library - ignores local variable values
 
 Parameters:
 - . (context): The template context
 - appCode: The application code to look up in common-data.yaml
 - dataKey: The key within the app_code section to retrieve (e.g., "labels", "notifications")
-- chartDataTemplate: The name of the chart's data template (e.g., "jameslabel.labels")
 - customData: Custom data to merge (typically .Values.podLabels or similar)
-- precedence: "shared" (default) or "local" - determines which data takes priority
+- precedence: "shared" or "local" (default) - determines which data takes priority
 
 Usage:
-  {{- include "mozcloud-shared-data-lib.smartMergeData" (dict "context" . "appCode" "jameslabel" "dataKey" "labels" "chartDataTemplate" "jameslabel.labels" "customData" .Values.labels) | nindent 8 }}
-  {{- include "mozcloud-shared-data-lib.smartMergeData" (dict "context" . "appCode" "jameslabel" "dataKey" "labels" "chartDataTemplate" "jameslabel.labels" "customData" .Values.labels "precedence" "local") | nindent 8 }}
+  {{- include "mozcloud-shared-data-lib.smartMergeData" (dict "context" . "appCode" "jameslabel" "dataKey" "labels" "customData" .Values.labels) | nindent 8 }}
+  {{- include "mozcloud-shared-data-lib.smartMergeData" (dict "context" . "appCode" "jameslabel" "dataKey" "labels" "customData" .Values.labels "precedence" "shared") | nindent 8 }}
 */}}
 {{- define "mozcloud-shared-data-lib.smartMergeData" -}}
 {{-   $dynamicDataYaml := include "mozcloud-shared-data-lib.getDynamicData" (dict "context" .context "appCode" .appCode "dataKey" .dataKey) -}}
-{{-   $chartDataYaml := "" -}}
-{{-   if .chartDataTemplate -}}
-{{-     $chartDataYaml = include .chartDataTemplate .context -}}
-{{-   end -}}
 {{-   $dynamicData := dict -}}
 {{-   if $dynamicDataYaml -}}
 {{-     $dynamicData = $dynamicDataYaml | fromYaml -}}
 {{-   end -}}
-{{-   $chartData := dict -}}
-{{-   if $chartDataYaml -}}
-{{-     $chartData = $chartDataYaml | fromYaml -}}
-{{-   end -}}
 {{-   $customData := .customData | default dict -}}
-{{-   $precedence := .precedence | default "shared" -}}
-{{-   $sharedData := mergeOverwrite $dynamicData $chartData -}}
+{{-   $precedence := .precedence | default "local" -}}
 {{-   $mergedYaml := "" -}}
 {{-   if eq $precedence "local" -}}
-{{-     $mergedYaml = include "mozcloud-shared-data-lib.mergeDataPreferLocal" (dict "globalData" $sharedData "localData" $customData) -}}
+{{-     $mergedYaml = include "mozcloud-shared-data-lib.mergeDataPreferLocal" (dict "globalData" $dynamicData "localData" $customData) -}}
 {{-   else -}}
-{{-     $mergedYaml = include "mozcloud-shared-data-lib.mergeDataPreferShared" (dict "globalData" $sharedData "localData" $customData) -}}
+{{-     $mergedYaml = include "mozcloud-shared-data-lib.mergeDataPreferShared" (dict "globalData" $dynamicData "localData" $customData) -}}
 {{-   end -}}
 {{-   $merged := $mergedYaml | fromYaml -}}
 {{-   range $key, $value := $merged }}
