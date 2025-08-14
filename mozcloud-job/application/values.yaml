@@ -140,6 +140,13 @@ jobs: []
   #        memory:
   #          requests: 64Mi
   #          #limits: 128Mi
+  #
+  #       # User and/or group to use for the container SecurityContext, if
+  #       # applicable. Defaults to 10001 for both user and group. Only change
+  #       # this if you know what you are doing.
+  #       #securityContext:
+  #       #  user:
+  #       #  group:
 
 
   #  # Configuration settings for jobs.
@@ -166,6 +173,38 @@ jobs: []
   #    # This determines if the job should be restarted if the job fails.
   #    # Options are "Never" and "OnFailure". Default is "Never".
   #    #restartPolicy: Never
+  #
+  #    # User and/or group to use for the pod SecurityContext, if applicable.
+  #    # Defaults to 10001 for both user and group. Only change this if you
+  #    # know what you are doing.
+  #    #securityContext:
+  #    #  #user:
+  #    #  #group:
+  #
+  #    # The service account to use for the job, if applicable.
+  #    #serviceAccount:
+  #    #  # The name of the service account.
+  #    #  name:
+  #    #
+  #    #  # If enabled, the service account will be created.
+  #    #  create: false
+  #    #
+  #    #  # If create is "true", we can also populate the details necessary to
+  #    #  # configure GCP service account authentication via Workload Identity.
+  #    #  #gcpServiceAccount:
+  #    #  #  # Use this if you want to specify the full email address of the
+  #    #  #  # GCP service account.
+  #    #  #  #fullName:
+  #    #  #
+  #    #  #  # Use "name" and "projectId" instead of "fullName" to
+  #    #  #  # automatically construct the GCP service account email address.
+  #    #  #
+  #    #  #  # The name of the GCP service account (everything before "@" in
+  #    #  #  # the email address.
+  #    #  #  #name:
+  #    #  #
+  #    #  #  # GCP project ID.
+  #    #  #  #projectId
   #
   #    # When Kubernetes creates Job resources, the Job controller will
   #    # immediately begin executing the job by creating pods. If "suspend" is

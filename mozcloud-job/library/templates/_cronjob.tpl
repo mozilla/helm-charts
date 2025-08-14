@@ -1,6 +1,7 @@
 {{- define "mozcloud-job-lib.cronJob" -}}
 {{- if gt (len ((.cronJobConfig).cronJobs)) 0 }}
 {{- $cron_jobs := include "mozcloud-job-lib.config.cronJobs" . | fromYaml }}
+{{- $service_accounts := list }}
 {{- range $cron_job := $cron_jobs.cronJobs }}
 {{- $failed_message := printf "Failed to create cron job \"%s\": " $cron_job.name }}
 ---
@@ -58,10 +59,23 @@ spec:
                 limits:
                   cpu: {{ $container.resources.limits.cpu | quote }}
                   memory: {{ $container.resources.limits.memory | quote }}
+              securityContext:
+                {{- $container.securityContext | toYaml | nindent 16 }}
             {{- end }}
           {{- if $job_config.restartPolicy }}
           restartPolicy: {{ $job_config.restartPolicy }}
           {{- end }}
+          securityContext:
+            {{- $job_config.securityContext | toYaml | nindent 12 }}
+          {{- if ($job_config.serviceAccount).name }}
+          serviceAccountName: {{ $job_config.serviceAccount.name }}
+          {{- end }}
+{{- if ($job_config.serviceAccount).create }}
+{{- $service_accounts = append $service_accounts (omit $job_config.serviceAccount "create") }}
+{{- end }}
+{{- end }}
+{{- if gt (len $service_accounts) 0 }}
+{{ include "mozcloud-workload-core-lib.serviceAccount" (dict "serviceAccounts" $service_accounts) }}
 {{- end }}
 {{- end }}
 {{- end -}}

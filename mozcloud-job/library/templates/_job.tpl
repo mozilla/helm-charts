@@ -1,6 +1,7 @@
 {{- define "mozcloud-job-lib.job" -}}
 {{- if gt (len ((.jobConfig).jobs)) 0 }}
 {{- $jobs := include "mozcloud-job-lib.config.jobs" . | fromYaml }}
+{{- $service_accounts := list }}
 {{- range $job := $jobs.jobs }}
 {{- $failed_message := printf "Failed to create job \"%s\": " $job.name }}
 ---
@@ -74,10 +75,23 @@ spec:
             limits:
               cpu: {{ $container.resources.limits.cpu | quote }}
               memory: {{ $container.resources.limits.memory | quote }}
+          securityContext:
+            {{- $container.securityContext | toYaml | nindent 12 }}
         {{- end }}
       {{- if $config.restartPolicy }}
       restartPolicy: {{ $config.restartPolicy }}
       {{- end }}
+      securityContext:
+        {{- $config.securityContext | toYaml | nindent 8 }}
+      {{- if ($config.serviceAccount).name }}
+      serviceAccountName: {{ $config.serviceAccount.name }}
+      {{- end }}
+{{- if ($config.serviceAccount).create }}
+{{- $service_accounts = append $service_accounts (omit $config.serviceAccount "create") }}
+{{- end }}
+{{- end }}
+{{- if gt (len $service_accounts) 0 }}
+{{ include "mozcloud-workload-core-lib.serviceAccount" (dict "serviceAccounts" $service_accounts) }}
 {{- end }}
 {{- end }}
 {{- end -}}
