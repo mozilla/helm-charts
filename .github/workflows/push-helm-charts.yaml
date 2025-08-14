@@ -40,20 +40,24 @@ jobs:
             const unique = new Set(all_changed_files
               .filter(path => path.toLowerCase().startsWith("mozcloud"))
               .map(path => {
-                parts = path.split("/");
+                const parts = path.split("/");
 
-                return `${parts[1]}/${parts[2]}`;
+                return `${parts[0]}/${parts[1]}`;
               })
             );
 
             const charts = Array.from(unique)
               .map(path => {
-              parts = path.split("/");
+              const parts = path.split("/");
 
               return {name: parts[0], type: parts[1]};
               });
 
             if (!charts.length) return {};
+
+            for (const chart of charts) {
+              console.log(`.. found modified chart: ${chart.name}`);
+            }
 
             return {include: charts};
 
@@ -98,8 +102,8 @@ jobs:
       - name: package and push
         id: package_and_push
         env:
-          CHART_NAME: matrix.name
-          CHART_TYPE: matrix.type
+          CHART_NAME: ${{ matrix.name }}
+          CHART_TYPE: ${{ matrix.type }}
 
         run: |-
           CHART_PATH=charts/${CHART_NAME}/${CHART_TYPE}
@@ -125,8 +129,8 @@ jobs:
       - name: create tag
         uses: actions/github-script@v7
         env:
-          CHART_NAME: matrix.name
-          CHART_VERSION: steps.package_and_push.outputs.VERSION
+          CHART_NAME: ${{ matrix.name }}
+          CHART_VERSION: ${{ steps.package_and_push.outputs.VERSION }}
 
         with:
           script: |
