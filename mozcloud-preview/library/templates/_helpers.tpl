@@ -105,7 +105,9 @@ sleepSeconds: {{ .sleepSeconds | default 15 }}
 backoffLimit: {{ .backoffLimit | default 1 }}
 labels:
   app.kubernetes.io/component: endpoint-check
+  {{- if .labels -}}
   {{- .labels | toYaml | nindent 4 }}
+  {{- end }}
 {{- end }}
 
 {{/*
