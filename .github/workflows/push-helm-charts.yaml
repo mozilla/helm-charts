@@ -85,6 +85,10 @@ jobs:
       matrix: "${{ fromJson(needs.detect.outputs.modified-charts) }}"
 
     steps:
+      - name: Checkout Commit
+        id: checkout
+        uses: actions/checkout@v5
+
       - id: gcp-auth
         uses: google-github-actions/auth@v2
         with:
