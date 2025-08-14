@@ -10,6 +10,10 @@ metadata:
   name: {{ $config_map.name }}
   labels:
     {{- $config_map.labels | toYaml | nindent 4 }}
+  {{- if $config_map.annotations }}
+  annotations:
+    {{- $config_map.annotations | toYaml | nindent 4 }}
+  {{- end }}
 data:
   {{- range $key, $value := $config_map.data }}
   {{ $key }}: {{ $value | quote }}
