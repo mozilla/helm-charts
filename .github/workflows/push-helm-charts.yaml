@@ -99,7 +99,7 @@ jobs:
       - id: docker-login
         uses: docker/login-action@v3
         with:
-          registry: us-docker.pkg.dev
+          registry: us-west1-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.gcp-auth.outputs.access_token }}
 
