@@ -25,4 +25,5 @@ spec:
         - name: {{ .Values.global.labels.app_code }}-deployment-app
           {{- with .Values.global.mozcloud_deployment  }}
           image: {{ printf "%s:%s" .image .tag | quote }}
+          imagePullPolicy: IfNotPresent
           {{- end }}
