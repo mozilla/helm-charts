@@ -106,7 +106,7 @@ jobs:
           CHART_TYPE: ${{ matrix.type }}
 
         run: |-
-          CHART_PATH=charts/${CHART_NAME}/${CHART_TYPE}
+          CHART_PATH=${CHART_NAME}/${CHART_TYPE}
 
           pushd ${CHART_PATH}
 
