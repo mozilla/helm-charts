@@ -1,7 +1,10 @@
 {{- define "mozcloud-preview-lib.httpRoute" -}}
 {{- $rawRoutes := .httpRouteConfig.httpRoutes }}
 {{- $previewHost := .previewHost }}
+{{- $previewPr := .previewPr }}
 {{- $transformedRoutes := list }}
+
+{{- $svcName := printf "pr%s-%s" $previewPr .Chart.Name -}}
 
 {{- range $route := $rawRoutes }}
   {{- $newHostnames := list }}
@@ -12,14 +15,25 @@
     {{- $newHostnames = append $newHostnames $prefixed }}
   {{- end }}
 
+  {{- $transformedRules := list -}}
+  {{- range $r := $route.rules }}
+    {{- $newBackendRefs := list -}}
+    {{- range $br := $r.backendRefs }}
+      {{- $newBackendRefs = append $newBackendRefs (mergeOverwrite (deepCopy $br) (dict "name" $svcName)) -}}
+    {{- end }}
+    {{- $transformedRule := mergeOverwrite (deepCopy $r) (dict "backendRefs" $newBackendRefs) -}}
+    {{- $transformedRules = append $transformedRules $transformedRule -}}
+  {{- end }}
+
   {{- $updatedRoute := mergeOverwrite (deepCopy $route) (dict
     "hostnames" $newHostnames
     "gatewayRefs" (list (dict
       "name" "sandbox-high-preview-gateway"
       "namespace" "preview-shared-infrastructure"
-      "section" "https"
-    )))
-   }}
+      "section"   "https"
+    ))
+    "rules" $transformedRules
+  ) }}
   {{- $transformedRoutes = append $transformedRoutes $updatedRoute }}
 {{- end }}
 
