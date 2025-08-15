@@ -2,9 +2,10 @@
 enabled: true
 
 # Preview, these values are provided by the ArgoCD Pull Request Generator and should not be populated unless testing
-preview:
-  pr: 17
-  host: pr17-chart.preview.mozilla.cloud
+global:
+  preview:
+    pr: 1
+    host: pr1-chart.preview.mozilla.cloud
 
 # Defines the backend services to create, backend policies, and healthchecks.
 backends:

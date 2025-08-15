@@ -1,5 +1,5 @@
 {{- if .Values.enabled }}
-{{- $previewPr := .Values.preview.pr | toString }}
+{{- $previewPr := .Values.global.preview.pr | toString }}
 {{- $httpRoutes := list }}
 {{- range .Values.httpRoute.httpRoutes }}
   {{- $route := deepCopy . }}
@@ -19,7 +19,7 @@
     "Chart" .Chart
     "Release" .Release
     "previewPr" $previewPr
-    "previewHost" (.Values.preview.host | toString)
+    "previewHost" (.Values.global.preview.host | toString)
 }}
 
 {{- include "mozcloud-preview-lib.httpRoute" $params }}
