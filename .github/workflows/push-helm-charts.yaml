@@ -127,7 +127,7 @@ jobs:
             echo "CHART_VERSION=${CHART_VERSION}" |tee -a $GITHUB_OUTPUT
             echo "CHART_TAG=${CHART_TAG}" |tee -a $GITHUB_OUTPUT
 
-            helm push ${PACKAGE} oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-charts
+            helm push ${PACKAGE} oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 
           done <<< $(ls -rt *.tgz)
 
