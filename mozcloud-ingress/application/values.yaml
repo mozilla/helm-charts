@@ -1,21 +1,25 @@
 # If enabled, all mozcloud-ingress templates will be included.
 enabled: true
 
-# Name to be used for all resources if not specified at the resource level.
-# This should match the name of the parent Helm chart.
-#nameOverride:
-
-# Application code. This should match the `app_code` value in your tenant's
-# values.yaml file.
-#appCode:
-
-# Component. This should match the `component` value in your tenant's
-# values.yaml file.
-#component:
-
-# Environment. This should match the `environment` value in your tenant's
-# values-<env>.yaml file.
-#environment:
+# app_code, chart, component_code, and environment should all be defined as
+# global values in the parent Helm chart's values file(s) outside the scope of
+# this Helm chart.
+#
+# For example:
+#
+#   # my-app/values.yaml
+#   global:
+#     mozcloud:
+#       app_code: my-app    # should match app_code in tenant file
+#       chart: my-chart     # the name of the chart
+#       component_code: web # should match component_code in tenant file
+#
+#   # my-app/values-dev.yaml
+#   global:
+#     mozcloud:
+#       environment: dev    # should match .Values.environment
+#
+# These are used to populate labels and metadata in MozCloud charts.
 
 # Global backend configuration. These values can be overridden at the host
 # level in the ingress definitions: .Values.ingresses[].hosts[].backend
