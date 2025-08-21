@@ -99,12 +99,12 @@ ConfigMap template helpers
 */}}
 {{- define "mozcloud-workload-core-lib.config.configMaps" -}}
 {{- $config_maps := .configMaps -}}
-{{- $labels := default (dict) .labels -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $config_map := $config_maps -}}
   {{- $config_map_config := $config_map | deepCopy -}}
   {{- /* Configure name and labels */ -}}
+  {{- $labels := default (dict) $config_map_config.labels -}}
   {{- $params := dict "config" $config_map_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-workload-core-lib.config.common" $params | fromYaml -}}
   {{- $config_map_config = mergeOverwrite $config_map_config $common -}}
@@ -124,13 +124,13 @@ ExternalSecret template helpers
 {{- $app_code := default "" .appCode -}}
 {{- $environment := default "" .environment -}}
 {{- $external_secrets := .externalSecrets -}}
-{{- $labels := default (dict) .labels -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $external_secret := $external_secrets -}}
   {{- $defaults := include "mozcloud-workload-core-lib.defaults.externalSecret.config" $ | fromYaml -}}
   {{- $external_secret_config := mergeOverwrite $defaults $external_secret -}}
   {{- /* Configure name and labels */ -}}
+  {{- $labels := default (dict) $external_secret_config.labels -}}
   {{- $params := dict "config" $external_secret_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-workload-core-lib.config.common" $params | fromYaml -}}
   {{- $external_secret_config = mergeOverwrite $external_secret_config $common -}}
@@ -165,7 +165,6 @@ ServiceAccount template helpers
 {{- end -}}
 
 {{- define "mozcloud-workload-core-lib.config.serviceAccounts" -}}
-{{- $labels := default (dict) .labels -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $service_accounts := .serviceAccounts -}}
 {{- $output := list -}}
@@ -173,6 +172,7 @@ ServiceAccount template helpers
   {{- $defaults := include "mozcloud-workload-core-lib.defaults.serviceAccount.config" $ | fromYaml -}}
   {{- $service_account_config := mergeOverwrite $defaults $service_account -}}
   {{- /* Configure name and labels */ -}}
+  {{- $labels := default (dict) $service_account_config.labels -}}
   {{- $params := dict "config" $service_account_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-workload-core-lib.config.common" $params | fromYaml -}}
   {{- $service_account_config = mergeOverwrite $service_account_config $common -}}
@@ -204,4 +204,11 @@ gsm:
 
 {{- define "mozcloud-workload-core-lib.defaults.serviceAccount.config" -}}
 name: {{ include "mozcloud-workload-core-lib.config.name" . }}
+{{- end -}}
+
+{{/*
+Debug helper
+*/}}
+{{- define "mozcloud-workload-core-lib.debug" -}}
+{{- . | mustToPrettyJson | printf "\nThe JSON output of the dumped var is: \n%s" | fail }}
 {{- end -}}
