@@ -33,6 +33,10 @@ configMaps:
     # Any annotations that should be added, if applicable. One common use case
     # would be annotations for Argo CD, such as sync waves.
     #annotations: {}
+
+    # Any labels that should be added.
+    #labels: {}
+
   - name: config-map2
     data:
       KEY: value
@@ -44,7 +48,7 @@ externalSecrets:
     #refreshInterval: 10m
 
     # Name of the K8s secret where the external secret is synced to. Optional
-    # if you specify ".Values.global.appCode" in your parent chart.
+    # if you specify ".Values.global.mozcloud.appCode" in your parent chart.
     target: my-k8s-secret
 
     # This section is optional if you specify "environment" and are fine with
@@ -56,6 +60,9 @@ externalSecrets:
     # Any annotations that should be added, if applicable. One common use case
     # would be annotations for Argo CD, such as sync waves.
     #annotations: {}
+
+    # Any labels that should be added.
+    #labels: {}
 
 serviceAccounts:
   - name: mozcloud-workload-core
@@ -84,6 +91,5 @@ serviceAccounts:
     # would be annotations for Argo CD, such as sync waves.
     #annotations: {}
 
-# Specifying labels here will apply them to all resources created in this
-# library chart.
-labels: {}
+    # Any labels that should be added.
+    #labels: {}
