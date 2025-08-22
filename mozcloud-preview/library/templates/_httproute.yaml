@@ -6,12 +6,21 @@
 
 {{- $svcName := printf "pr%s-%s" $previewPr .Chart.Name -}}
 
+
+
 {{- range $route := $rawRoutes }}
   {{- $newHostnames := list }}
 
   {{- range $i, $hostname := $route.hostnames }}
     {{- $prefix := first (splitList "." (print $hostname)) }}
-    {{- $prefixed := printf "%s-%s" $prefix $previewHost }}
+
+    {{- $prefixed := "" -}}
+    {{- if gt (len $rawRoutes) 1 }}
+      {{- $prefixed = printf "%s-%s" $prefix $previewHost }}
+    {{- else }}
+      {{- $prefixed = printf "%s" $previewHost }}
+    {{- end }}
+
     {{- $newHostnames = append $newHostnames $prefixed }}
   {{- end }}
 

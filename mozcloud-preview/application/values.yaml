@@ -105,3 +105,8 @@ httpRoute:
               # The name of the backend service
             - name: mozcloud-gateway
               port: 8080
+              weight: 1
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
