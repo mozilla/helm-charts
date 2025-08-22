@@ -6,8 +6,6 @@
 
 {{- $svcName := printf "pr%s-%s" $previewPr .Chart.Name -}}
 
-
-
 {{- range $route := $rawRoutes }}
   {{- $newHostnames := list }}
 
