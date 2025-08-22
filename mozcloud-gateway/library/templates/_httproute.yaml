@@ -11,7 +11,8 @@ metadata:
 spec:
   parentRefs:
     {{- range $gateway_ref := $http_route.gatewayRefs }}
-    - kind: Gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
       name: {{ $gateway_ref.name }}
       {{- if $gateway_ref.namespace }}
       namespace: {{ $gateway_ref.namespace }}
@@ -26,7 +27,9 @@ spec:
     {{- range $rule := $http_route.rules }}
     - backendRefs:
       {{- range $backend_ref := $rule.backendRefs }}
-      - name: {{ $backend_ref.name }}
+      - group: ''
+        kind: Service
+        name: {{ $backend_ref.name }}
         port: {{ $backend_ref.port }}
         {{- if $backend_ref.weight }}
         weight: {{ $backend_ref.weight }}
@@ -96,7 +99,8 @@ metadata:
 spec:
   parentRefs:
     {{- range $gateway_ref := $http_route.gatewayRefs }}
-    - kind: Gateway
+    - group: gateway.networking.k8s.io
+      kind: Gateway
       name: {{ $gateway_ref.name }}
       {{- if $gateway_ref.namespace }}
       namespace: {{ $gateway_ref.namespace }}
@@ -112,6 +116,11 @@ spec:
       - type: RequestRedirect
         requestRedirect:
           scheme: https
+          statusCode: 302
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
 {{- end }}
 {{- end }}
 {{- end -}}
