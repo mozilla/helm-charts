@@ -4,12 +4,12 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: pr{{ $config.pr -}}-endpoint-check-{{ randAlphaNum 7 | lower }}
+  name: pr{{ $config.pr -}}-endpoint-check
   labels:
     {{- $config.labels | toYaml | nindent 4 }}
   annotations:
     argocd.argoproj.io/hook: PostSync
-    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
 spec:
   backoffLimit: {{ $config.backoffLimit }}
   template:
