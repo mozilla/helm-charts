@@ -1,0 +1,27 @@
+{{- define "mozcloud-workload-stateless-lib.podMonitoring" -}}
+{{- if .podMonitorings }}
+{{- $pod_monitorings := include "mozcloud-workload-stateless-lib.config.podMonitorings" . | fromYaml }}
+{{- range $pod_monitoring := $pod_monitorings.podMonitorings }}
+{{- if gt ($pod_monitoring.endpoints | len) 0 }}
+---
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: {{ $pod_monitoring.name }}
+  labels:
+    {{- $pod_monitoring.labels | toYaml | nindent 4 }}
+spec:
+  endpoints:
+    {{- range $endpoint := $pod_monitoring.endpoints }}
+    - port: {{ $endpoint.port }}
+      scheme: {{ $endpoint.scheme }}
+      interval: {{ $endpoint.interval }}
+      path: {{ $endpoint.path }}
+    {{- end }}
+  selector:
+    matchLabels:
+      {{- include "mozcloud-workload-core-lib.selectorLabels" $ | nindent 6 }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
