@@ -1,0 +1,5 @@
+{{- if .Values.enabled }}
+{{- $params := dict "deployments" .Values.deployments }}
+{{- $label_params := include "mozcloud-workload-stateless.labelParams" . | fromYaml }}
+{{- include "mozcloud-workload-stateless-lib.deployment" (mergeOverwrite $params $label_params) }}
+{{- end }}
