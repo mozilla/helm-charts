@@ -34,10 +34,10 @@ spec:
               exit 1
           resources:
             limits:
-              cpu: 200
+              cpu: 200m
               memory: 256Mi
             requests:
-              cpu: 50
+              cpu: 50m
               memory: 128Mi
           securityContext:
             runAsUser: 1000
