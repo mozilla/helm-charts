@@ -12,6 +12,16 @@
     "httpRoutes" $httpRoutes
 }}
 
+{{- $transformedBackends := list }}
+{{- range .Values.backends }}
+  {{- $be := deepCopy . }}
+  {{- $base := default (dict) $be.service.selectorLabels -}}
+  {{- $labels := merge (dict) $base -}}
+  {{- $_ := set $labels "app.preview/pr" $previewPr -}}
+  {{- $_ := set $be.service "selectorLabels" $labels -}}
+  {{- $transformedBackends = append $transformedBackends $be -}}
+{{- end }}
+
 {{- $params := dict
     "httpRouteConfig" $httpRouteConfig
     "backendConfig" (dict "backends" .Values.backends)
@@ -21,6 +31,8 @@
     "previewPr" $previewPr
     "previewHost" (.Values.global.preview.host | toString)
 }}
+
+{{- include "mozcloud-preview-lib.debug" $transformedBackends  -}}
 
 {{- include "mozcloud-preview-lib.httpRoute" $params }}
 {{- include "mozcloud-preview-lib.endpointcheck" $params }}
