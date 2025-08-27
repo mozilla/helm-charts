@@ -32,6 +32,8 @@
     "previewHost" (.Values.global.preview.host | toString)
 }}
 
+{{- include "mozcloud-preview-lib.debug" $transformedBackends  -}}
+
 {{- include "mozcloud-preview-lib.httpRoute" $params }}
 {{- include "mozcloud-preview-lib.endpointcheck" $params }}
 {{- include "mozcloud-gateway-lib.service" $params }}
