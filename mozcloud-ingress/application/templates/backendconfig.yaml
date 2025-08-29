@@ -1,5 +1,8 @@
 {{- if .Values.enabled }}
-{{- $params := dict "ingressConfig" .Values.ingresses "defaults" .Values.backendConfig "nameOverride" (include "mozcloud-ingress.name" .) "Chart" .Chart "Release" .Release }}
+{{- $params := dict "ingressConfig" .Values.ingresses "defaults" .Values.backendConfig "Chart" .Chart "Release" .Release }}
+{{- if .Values.nameOverride }}
+  {{- $_ := set $params "nameOverride" .Values.nameOverride }}
+{{- end }}
 {{- $label_params := include "mozcloud-ingress.labelParams" .  | fromYaml }}
 {{- include "mozcloud-ingress-lib.backendConfig" (mergeOverwrite $params $label_params) }}
 {{- end }}

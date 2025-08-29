@@ -21,6 +21,11 @@
 #
 # These are used to populate labels and metadata in MozCloud charts.
 
+# Name to be used for all resources if not specified at the resource level.
+# This overrides the chart name set in .Values.global.mozcloud.chart but is
+# overridden by names defined at the resource level.
+#nameOverride:
+
 configMaps:
   - name: config-map1
 

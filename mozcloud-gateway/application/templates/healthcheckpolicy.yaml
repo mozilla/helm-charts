@@ -1,5 +1,8 @@
 {{- if and .Values.enabled (.Values.httpRoute).enabled }}
-{{- $params := dict "backendConfig" (dict "backends" .Values.backends) "nameOverride" (include "mozcloud-gateway.name" .) "Chart" .Chart "Release" .Release }}
+{{- $params := dict "backendConfig" (dict "backends" .Values.backends) "Chart" .Chart "Release" .Release }}
+{{- if .Values.nameOverride }}
+  {{- $_ := set $params "nameOverride" .Values.nameOverride }}
+{{- end }}
 {{- $label_params := include "mozcloud-gateway.labelParams" . | fromYaml }}
 {{- include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $label_params) }}
 {{- end }}
