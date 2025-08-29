@@ -71,6 +71,9 @@ Template helpers
 {{- if and (.nameOverride) (not $name) -}}
   {{- $name = .nameOverride -}}
 {{- end -}}
+{{- if and (.chart) (not $name) -}}
+  {{- $name = .chart -}}
+{{- end -}}
 {{- if not $name -}}
   {{- $name = include "mozcloud-ingress-lib.fullname" $ -}}
 {{- end -}}
@@ -93,18 +96,18 @@ BackendConfig template helpers
 {{- $defaults := include "mozcloud-ingress-lib.defaults.backendConfig" . | fromYaml -}}
 {{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml -}}
 {{- $backends := list -}}
+{{- $context := omit (. | deepCopy) "ingressConfig" -}}
 {{- range $ingress := $ingresses.ingresses -}}
   {{- range $host := $ingress.hosts -}}
     {{- range $path := $host.paths -}}
       {{- $backend := mergeOverwrite $defaults (default (dict) $path.backend.config) -}}
       {{/* If a backend name is not specified, use the service name for the backend */}}
-      {{- $params := (dict "backendConfig" $backend "ingressConfig" $ingress "backendService" $path.backend.service) -}}
-      {{- $_ := "" -}}
+      {{- $params := mergeOverwrite $context (dict "backendConfig" $backend "ingressConfig" $ingress "backendService" $path.backend.service) -}}
       {{- if $name_override -}}
-        {{- $_ = set $params "nameOverride" $name_override -}}
+        {{- $_ := set $params "nameOverride" $name_override -}}
       {{- end -}}
       {{- $backend_name := include "mozcloud-ingress-lib.config.backend.name" $params -}}
-      {{- $_ = set $backend "name" $backend_name -}}
+      {{- $_ := set $backend "name" $backend_name -}}
       {{- $_ = set $backend "ingressConfig" (omit $ingress "hosts") -}}
       {{- $backends = append $backends $backend -}}
     {{- end -}}
@@ -240,6 +243,7 @@ Service template helpers
 {{- $backend_defaults := include "mozcloud-ingress-lib.defaults.backendConfig" . | fromYaml -}}
 {{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml -}}
 {{- $services := list -}}
+{{- $context := omit (. | deepCopy) "ingressConfig" -}}
 {{- range $ingress := $ingresses.ingresses -}}
   {{- range $host := $ingress.hosts -}}
     {{- range $path := $host.paths -}}
@@ -281,7 +285,7 @@ Service template helpers
       {{- /* Service fullnameOverride */}}
       {{- $_ = set $service "fullnameOverride" $service_name -}}
       {{- /* Service labels */}}
-      {{- $label_params := dict "labels" (default (dict) $backend_service.labels) -}}
+      {{- $label_params := mergeOverwrite $context (dict "labels" (default (dict) $backend_service.labels)) -}}
       {{- $labels := include "mozcloud-ingress-lib.labels" (mergeOverwrite $ $label_params) | fromYaml -}}
       {{- $_ = set $service "labels" $labels -}}
       {{- /* Service selectorLabels */}}

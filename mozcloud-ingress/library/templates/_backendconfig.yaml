@@ -1,6 +1,7 @@
 {{- define "mozcloud-ingress-lib.backendConfig" -}}
 {{- $backend_config := include "mozcloud-ingress-lib.config.backends" . | fromYaml }}
 {{- $backends := list }}
+{{- $context := . | deepCopy }}
 {{- range $backend := $backend_config.backends -}}
 {{- if not (has $backend.name $backends) }}
 ---
@@ -9,7 +10,7 @@ kind: BackendConfig
 metadata:
   name: {{ $backend.name }}
   labels:
-    {{- $label_params := dict "labels" (default (default (dict) $backend.ingressConfig.labels) $backend.labels) }}
+    {{- $label_params := mergeOverwrite $context (dict "labels" (default (default (dict) $backend.ingressConfig.labels) $backend.labels)) }}
     {{- $labels := include "mozcloud-ingress-lib.labels" (mergeOverwrite $ $label_params) | fromYaml }}
     {{- $labels | toYaml | nindent 4 }}
 spec:

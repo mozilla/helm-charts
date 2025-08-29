@@ -21,6 +21,11 @@ enabled: true
 #
 # These are used to populate labels and metadata in MozCloud charts.
 
+# Name to be used for all resources if not specified at the resource level.
+# This overrides the chart name set in .Values.global.mozcloud.chart but is
+# overridden by names defined at the resource level.
+#nameOverride:
+
 # Global backend configuration. These values can be overridden at the host
 # level in the ingress definitions: .Values.ingresses[].hosts[].backend
 backendConfig:

@@ -21,6 +21,11 @@ enabled: true
 #
 # These are used to populate labels and metadata in MozCloud charts.
 
+# Name to be used for all resources if not specified at the resource level.
+# This overrides the chart name set in .Values.global.mozcloud.chart but is
+# overridden by names defined at the resource level.
+#nameOverride:
+
 # Defines how the backend services of the load balancer should distribute the
 # traffic to the endpoints. This policy is similar to a BackendConfig for an
 # Ingress resource. These are default values that can be overridden for each
