@@ -1,34 +1,30 @@
 # Example values showing a visual representation of the parameters accepted by
 # this library chart.
 
-# This is used to populate the default value for "target" for ExternalSecret
-# resources.
-appCode: tenant-name
+# app_code, chart, component_code, and environment should all be defined as
+# global values in the parent Helm chart's values file(s) outside the scope of
+# this Helm chart.
+#
+# For example:
+#
+#   # my-app/values.yaml
+#   global:
+#     mozcloud:
+#       app_code: my-app    # should match app_code in tenant file
+#       chart: my-chart     # the name of the chart
+#       component_code: web # should match component_code in tenant file
+#
+#   # my-app/values-dev.yaml
+#   global:
+#     mozcloud:
+#       environment: dev    # should match .Values.environment
+#
+# These are used to populate labels and metadata in MozCloud charts.
 
-# This is used to populate the default value for "gsm.secret" for ExternalSecret
-# resources.
-environment: dev
-
-# If you set this, it will be the default name for all resources if not
-# specified at the resource level.
-#
-# Ideally, resources would be named in a way that follows this hierarchy:
-#
-#    1. Name set at the subcomponent/most specific level (eg. backend service
-#       name), if applicable.
-#    2. Name set at the component/parent level (eg. HTTPRoute).
-#    3. Name of the chart (equivalent to "application.fullname"). <- we are here
-#    4. Default name of the library chart (eg. mozcloud-gateway).
-#
-# Subcharts cannot pull metadata or values from parent charts unless the parent
-# chart passes them in as parameters. Rather than asking users to specify their
-# chart name as part of their values files, I went with the approach of
-# allowing users to specify a name that would be used if component/subcomponent
-# names were not set.
-#
-# If no names are set at all in this chart, the default library chart name will
-# be used: mozcloud-workload-core.
-nameOverride: name-to-use-for-everything
+# Name to be used for all resources if not specified at the resource level.
+# This overrides the chart name set in .Values.global.mozcloud.chart but is
+# overridden by names defined at the resource level.
+#nameOverride:
 
 configMaps:
   - name: config-map1
@@ -42,6 +38,10 @@ configMaps:
     # Any annotations that should be added, if applicable. One common use case
     # would be annotations for Argo CD, such as sync waves.
     #annotations: {}
+
+    # Any labels that should be added.
+    #labels: {}
+
   - name: config-map2
     data:
       KEY: value
@@ -53,7 +53,7 @@ externalSecrets:
     #refreshInterval: 10m
 
     # Name of the K8s secret where the external secret is synced to. Optional
-    # if you specify "appCode".
+    # if you specify ".Values.global.mozcloud.appCode" in your parent chart.
     target: my-k8s-secret
 
     # This section is optional if you specify "environment" and are fine with
@@ -65,6 +65,9 @@ externalSecrets:
     # Any annotations that should be added, if applicable. One common use case
     # would be annotations for Argo CD, such as sync waves.
     #annotations: {}
+
+    # Any labels that should be added.
+    #labels: {}
 
 serviceAccounts:
   - name: mozcloud-workload-core
@@ -93,6 +96,5 @@ serviceAccounts:
     # would be annotations for Argo CD, such as sync waves.
     #annotations: {}
 
-# Specifying labels here will apply them to all resources created in this
-# library chart.
-labels: {}
+    # Any labels that should be added.
+    #labels: {}

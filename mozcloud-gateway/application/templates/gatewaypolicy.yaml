@@ -1,5 +1,8 @@
 {{- if and .Values.enabled (.Values.gateway).enabled }}
-{{- $params := dict "gatewayConfig" .Values.gateway "gatewayPolicyConfig" .Values.gatewayPolicy "nameOverride" (include "mozcloud-gateway.name" .) "Chart" .Chart "Release" .Release }}
+{{- $params := dict "gatewayConfig" .Values.gateway "gatewayPolicyConfig" .Values.gatewayPolicy "Chart" .Chart "Release" .Release }}
+{{- if .Values.nameOverride }}
+  {{- $_ := set $params "nameOverride" .Values.nameOverride }}
+{{- end }}
 {{- $label_params := include "mozcloud-gateway.labelParams" .  | fromYaml }}
 {{ include "mozcloud-gateway-lib.gatewayPolicy" (mergeOverwrite $params $label_params) }}
 {{- end }}
