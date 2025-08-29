@@ -92,8 +92,8 @@ CPU resources can only be integers/floats for an entire CPU or millicpu (m)
   {{- end -}}
   {{- $_ := set $resources.limits "memory" $limit -}}
 {{- end -}}
-{{- /* Return resources */}}
-{{ $resources | toYaml }}
+{{- /* Return resources */ -}}
+{{- $resources | toYaml }}
 {{- end -}}
 
 {{- define "mozcloud-workload-core-lib.pod.container.securityContext" -}}
