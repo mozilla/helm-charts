@@ -274,7 +274,7 @@ Service template helpers
         {{- $_ = set $port_config "protocol" $backend_service.protocol -}}
       {{- end -}}
       {{- if $backend_service.targetPort -}}
-        {{- $_ = set $port_config "target_port" $backend_service.targetPort -}}
+        {{- $_ = set $port_config "targetPort" $backend_service.targetPort -}}
       {{- end -}}
       {{- $config := include "mozcloud-ingress-lib.config.service.config" $port_config | fromYaml -}}
       {{- $_ = set $service "config" $config -}}
