@@ -1,5 +1,5 @@
 ---
-name: push helm charts
+name: auto push and tag helm charts
 on:
   pull_request:
     types:
