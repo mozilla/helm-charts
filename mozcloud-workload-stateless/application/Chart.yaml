@@ -1,0 +1,14 @@
+---
+apiVersion: v2
+name: mozcloud-workload-stateless
+description: helm chart for building stateless workloads
+version: 0.1.0
+type: application
+dependencies:
+  - name: mozcloud-workload-stateless-lib
+    version: 0.1.0
+    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+
+  - name: mozcloud-ingress
+    version: 0.2.2
+    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
