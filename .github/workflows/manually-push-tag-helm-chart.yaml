@@ -128,6 +128,8 @@ jobs:
             fi
           done
 
+          echo "success=${SUCCESS}" >> $GITHUB_OUTPUT
+
           if [[ "${SUCCESS}" == "false" ]]; then
             exit 1
           fi
@@ -136,6 +138,8 @@ jobs:
         uses: actions/github-script@v7
         env:
           CHART_TAG: ${{ steps.package_and_push.outputs.CHART_TAG }}
+
+        if: ${{ steps.package_and_push.outputs.success == 'true' }}
 
         with:
           script: |
