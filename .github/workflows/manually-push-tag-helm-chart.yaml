@@ -1,0 +1,155 @@
+---
+name: manually push and tag helm charts
+on:
+  workflow_dispatch:
+    inputs:
+      charts:
+        description: Helm charts to build (comma-separated)
+        required: true
+        type: string
+      type:
+        description: The type of chart (application, library, both)
+        required: true
+        default: both
+        type: choice
+        options:
+          - application
+          - library
+          - both
+
+env:
+  GAR_PROJECT_ID: moz-fx-platform-artifacts
+
+jobs:
+  detect:
+    runs-on:
+      - ubuntu-latest
+
+    steps:
+      - name: Checkout Commit
+        id: checkout
+        uses: actions/checkout@v5
+
+      - id: get-charts
+        name: Get charts
+        uses: actions/github-script@v7
+        env:
+          CHARTS: ${{ inputs.charts }}
+          TYPE: ${{ inputs.type }}
+
+        with:
+          script: |
+            const charts = process.env.CHARTS.split(',');
+            const type = process.env.TYPE;
+
+            const output = charts.map(item => {
+              return { name: item, type: type }
+            });
+
+            return output;
+
+    outputs:
+      charts: ${{ steps.get-charts.outputs.result }}
+
+  push:
+    permissions:
+      contents: write
+      id-token: write
+
+    runs-on:
+      - ubuntu-latest
+
+    needs:
+      - detect
+
+    if: needs.detect.outputs.charts != '[]'
+
+    strategy:
+      matrix: ${{ fromJson(needs.detect.outputs.charts) }}
+      max-parallel: 1
+      fail-fast: false
+
+    steps:
+      - name: Checkout Commit
+        id: checkout
+        uses: actions/checkout@v5
+
+      - id: gcp-auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          service_account: artifact-writer@${{ env.GAR_PROJECT_ID }}.iam.gserviceaccount.com
+          workload_identity_provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
+
+      - id: docker-login
+        uses: docker/login-action@v3
+        with:
+          registry: us-west1-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.gcp-auth.outputs.access_token }}
+
+      - name: package and push
+        id: package_and_push
+        env:
+          CHART_NAME: ${{ matrix.name }}
+          CHART_TYPE: ${{ matrix.type }}
+
+        run: |-
+          if [[ "${CHART_TYPE}" == "both" ]]; then
+            CHART_PATHS=("${CHART_NAME}/library" "${CHART_NAME}/application")
+          else
+            CHART_PATHS=("${CHART_NAME}/${CHART_TYPE}")
+          fi
+
+          SUCCESS="false"
+
+          for CHART_PATH in "${CHART_PATHS[@]}"; do
+            if [ -d "${CHART_PATH}" ]; then
+              pushd ${CHART_PATH}
+
+              helm dependency update
+
+              popd
+
+              helm package ${CHART_PATH}
+
+              while read PACKAGE; do
+                CHART_TAG=${PACKAGE%.tgz}
+                CHART_VERSION=${CHART_TAG##*-}
+
+                echo "CHART_VERSION=${CHART_VERSION}" | tee -a $GITHUB_OUTPUT
+                echo "CHART_TAG=${CHART_TAG}" | tee -a $GITHUB_OUTPUT
+
+                helm push ${PACKAGE} oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+
+              done <<< $(ls -rt *.tgz) && SUCCESS="true" || SUCCESS="false"
+            else
+              echo "Did not find directory \"${CHART_PATH}\"... skipping..."
+            fi
+          done
+
+          echo "success=${SUCCESS}" >> $GITHUB_OUTPUT
+
+          if [[ "${SUCCESS}" == "false" ]]; then
+            exit 1
+          fi
+
+      - name: create tag
+        uses: actions/github-script@v7
+        env:
+          CHART_TAG: ${{ steps.package_and_push.outputs.CHART_TAG }}
+
+        if: ${{ steps.package_and_push.outputs.success == 'true' }}
+
+        with:
+          script: |
+            const tagName = process.env.CHART_TAG;
+
+            console.log(`creating tag "${tagName}" in repo "${context.repo.owner}/${context.repo.repo}"`);
+
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/tags/${tagName}`,
+              sha: context.sha
+            });
