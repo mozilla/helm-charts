@@ -1,0 +1,21 @@
+{{- define "mozcloud-workload-stateless-lib.hpa" -}}
+{{- if .hpas }}
+{{- $hpas := include "mozcloud-workload-stateless-lib.config.hpas" . | fromYaml }}
+{{- range $hpa := $hpas.hpas }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $hpa.name }}
+  labels:
+    {{- $hpa.labels | toYaml | nindent 4 }}
+spec:
+  scaleTargetRef:
+    {{- $hpa.scaleTargetRef | toYaml | nindent 4 }}
+  minReplicas: {{ $hpa.minReplicas }}
+  maxReplicas: {{ $hpa.maxReplicas }}
+  metrics:
+    {{- $hpa.metrics | toYaml |nindent 4 }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
