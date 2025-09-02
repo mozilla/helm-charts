@@ -25,5 +25,5 @@ dependencies:
     version: 0.2.2
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
   - name: mozcloud-gateway-lib
-    version: 0.2.6
+    version: 0.2.7
     repository: file://../../mozcloud-gateway/library
