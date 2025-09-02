@@ -6,7 +6,7 @@ kind: FrontendConfig
 metadata:
   name: {{ $frontend_config.name }}
   labels:
-    {{- $label_params := dict "labels" (default (dict) $frontend_config.labels) }}
+    {{- $label_params := mergeOverwrite ($ | deepCopy) (dict "labels" (default (dict) $frontend_config.labels)) }}
     {{- $labels := include "mozcloud-ingress-lib.labels" (mergeOverwrite . $label_params) | fromYaml }}
     {{- $labels | toYaml | nindent 4 }}
 spec:

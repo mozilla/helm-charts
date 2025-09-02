@@ -68,6 +68,9 @@ Template helpers
 {{- if and (.nameOverride) (not $name) -}}
   {{- $name = .nameOverride -}}
 {{- end -}}
+{{- if and (.chart) (not $name) -}}
+  {{- $name = .chart -}}
+{{- end -}}
 {{- if not $name -}}
   {{- $name = include "mozcloud-gateway-lib.fullname" $ -}}
 {{- end -}}
@@ -102,7 +105,7 @@ BackendPolicy template helpers
   {{- end -}}
   {{- $_ := set $backend_policy_config "config" $merged_policy -}}
   {{- /* Use name helper function to populate name and targetService using rules hierarchy */ -}}
-  {{- $params := dict -}}
+  {{- $params := $ | deepCopy -}}
   {{- if $backend.name -}}
     {{- $_ := set $params "name" $backend.name -}}
   {{- end -}}
@@ -142,13 +145,14 @@ Gateway template helpers
   {{- $gateway_defaults := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
   {{- $gateway_config := mergeOverwrite $gateway_defaults $gateway -}}
   {{- /* Use name helper function to populate name using rules hierarchy */ -}}
-  {{- $params := dict "gatewayConfig" $gateway_config -}}
+  {{- $params := $ | deepCopy -}}
+  {{- $_ := set $params "gatewayConfig" $gateway_config -}}
   {{- $name_override := default "" $.nameOverride -}}
   {{- if $name_override -}}
     {{- $_ := set $params "nameOverride" $name_override -}}
   {{- end -}}
   {{- $name := include "mozcloud-gateway-lib.config.name" $params -}}
-  {{- $_ := set $gateway_config "name" $name -}}
+  {{- $_ = set $gateway_config "name" $name -}}
   {{- /* Use helper function to determine className if not defined */ -}}
   {{- if not $gateway_config.className -}}
     {{- $class_name := include "mozcloud-gateway-lib.config.gateway.className" $gateway_config -}}
@@ -183,9 +187,10 @@ GatewayPolicy template helpers
       {{- $https_listener = true -}}
     {{- end -}}
   {{- end -}}
+  {{- $context := $ | deepCopy -}}
   {{- if $https_listener -}}
     {{- /* Use name helper function to populate name using rules hierarchy */ -}}
-    {{- $params := dict "gatewayConfig" $gateway_config -}}
+    {{- $params := mergeOverwrite $context (dict "gatewayConfig" $gateway_config) -}}
     {{- $name_override := default "" $.nameOverride -}}
     {{- if $name_override -}}
       {{- $_ := set $params "nameOverride" $name_override -}}
@@ -226,7 +231,7 @@ HealthCheckPolicy template helpers
   {{- $_ = set $config "protocolProperty" (index $protocol_property $config.protocol) -}}
   {{- $_ = set $health_check_policy_config "config" $config -}}
   {{- /* Use name helper function to populate name and targetService using rules hierarchy */ -}}
-  {{- $params := dict -}}
+  {{- $params := $ | deepCopy -}}
   {{- if $backend.name -}}
     {{- $_ := set $params "name" $backend.name -}}
   {{- end -}}
@@ -257,13 +262,14 @@ HTTPRoute template helpers
   {{- $http_route_defaults := include "mozcloud-gateway-lib.defaults.httpRoute.config" . | fromYaml -}}
   {{- $http_route_config := mergeOverwrite $http_route_defaults ($http_route | deepCopy) -}}
   {{- /* Use name helper function to populate name using rules hierarchy */ -}}
-  {{- $params := dict "httpRouteConfig" $http_route_config -}}
+  {{- $params := $ | deepCopy -}}
+  {{- $_ := set $params "httpRouteConfig" $http_route_config -}}
   {{- $name_override := default "" $.nameOverride -}}
   {{- if $name_override -}}
     {{- $_ := set $params "nameOverride" $name_override -}}
   {{- end -}}
   {{- $name := include "mozcloud-gateway-lib.config.name" $params -}}
-  {{- $_ := set $http_route_config "name" $name -}}
+  {{- $_ = set $http_route_config "name" $name -}}
   {{- /* Generate labels */ -}}
   {{- $label_params := dict "labels" (default (dict) $http_route_config.labels) -}}
   {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}

@@ -1,11 +1,5 @@
 {{- define "mozcloud-labels-lib.selectorLabels" -}}
-{{- if .appCode }}
-app.kubernetes.io/name: {{ .appCode }}
-{{- end -}}
-{{- if .component }}
-app.kubernetes.io/component: {{ .component }}
-{{- end -}}
-{{- if .environment }}
+app.kubernetes.io/name: {{ .app_code }}
+app.kubernetes.io/component: {{ .component_code }}
 env_code: {{ .environment }}
-{{- end -}}
 {{- end -}}
