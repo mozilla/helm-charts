@@ -1,5 +1,8 @@
 {{- if gt (len .Values.jobs) 0 }}
-{{- $params := dict "jobConfig" (dict "jobs" .Values.jobs) "nameOverride" (include "mozcloud-job.name" .) "Chart" .Chart "Release" .Release }}
+{{- $params := dict "jobConfig" (dict "jobs" .Values.jobs) "Chart" .Chart "Release" .Release }}
+{{- if .Values.nameOverride }}
+  {{- $_ := set $params "nameOverride" .Values.nameOverride }}
+{{- end }}
 {{- $label_params := include "mozcloud-job.labelParams" . | fromYaml }}
 {{- include "mozcloud-job-lib.job" (mergeOverwrite $params $label_params) }}
 {{- end }}

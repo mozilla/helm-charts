@@ -1,7 +1,7 @@
 {{- define "mozcloud-labels-lib.labels" -}}
 {{- $chart_name := "" }}
-{{- if .chartName }}
-  {{- $chart_name = .chartName }}
+{{- if .chart }}
+  {{- $chart_name = .chart }}
 {{- else if (.Chart).Name }}
   {{- $chart_name = .Chart.Name }}
 {{- else if (.Chart).name }}

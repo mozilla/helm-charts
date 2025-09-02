@@ -77,7 +77,9 @@ spec:
       serviceAccountName: {{ $config.serviceAccount.name }}
       {{- end }}
 {{- if ($config.serviceAccount).create }}
-{{- $service_accounts = append $service_accounts (omit $config.serviceAccount "create") }}
+{{- $service_account := omit $config.serviceAccount "create" -}}
+{{- $_ := set $service_account "labels" $job.labels -}}
+{{- $service_accounts = append $service_accounts $service_account }}
 {{- end }}
 {{- end }}
 {{- if gt (len $service_accounts) 0 }}
