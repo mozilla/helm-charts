@@ -65,7 +65,8 @@ jobs:
     if: needs.detect.outputs.charts != '[]'
 
     strategy:
-      matrix: ${{ fromJson(needs.detect.outputs.charts) }}
+      matrix:
+        charts: ${{ fromJson(needs.detect.outputs.charts) }}
       max-parallel: 1
       fail-fast: false
 
@@ -91,8 +92,8 @@ jobs:
       - name: package and push
         id: package_and_push
         env:
-          CHART_NAME: ${{ matrix.name }}
-          CHART_TYPE: ${{ matrix.type }}
+          CHART_NAME: ${{ matrix.charts.name }}
+          CHART_TYPE: ${{ matrix.charts.type }}
 
         run: |-
           if [[ "${CHART_TYPE}" == "both" ]]; then
