@@ -103,6 +103,7 @@ maxAttempts: {{ .maxAttempts | default 60 }}
 maxTimePerAttempt: {{ .maxTimePerAttempt | default 5 }}
 sleepSeconds: {{ .sleepSeconds | default 15 }}
 backoffLimit: {{ .backoffLimit | default 1 }}
+activeDeadlineSeconds: {{ .activeDeadlineSeconds | default 900 }}
 labels:
   app.kubernetes.io/component: endpoint-check
   {{- if .labels -}}
