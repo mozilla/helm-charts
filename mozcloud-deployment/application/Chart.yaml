@@ -1,13 +1,9 @@
-#
-# !!BETA Chart!!
-#
-# This chart only serves demonstration purposes right now .. it is supposed to serve as a dependency
-# to the `mozcloud-kit` chart, which is in turn supposed to be a dependency of the sandbox acme tenant only.
-#
-# Don't use it just yet.
-#
 apiVersion: v2
 name: mozcloud-deployment
 description: mozcloud deployment chart
-version:  0.1.0
+version:  0.2.0
 type: application
+dependencies:
+  - name: mozcloud-deployment-lib
+    version: 0.1.0
+    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
