@@ -12,6 +12,7 @@ metadata:
     argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
 spec:
   backoffLimit: {{ $config.backoffLimit }}
+  activeDeadlineSeconds: {{ $config.activeDeadlineSeconds }}
   template:
     spec:
       containers:
