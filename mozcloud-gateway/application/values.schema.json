@@ -1,0 +1,420 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-gateway/application/values.schema.json",
+  "title": "mozcloud-gateway",
+  "description": "mozcloud-gateway values",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "mozcloud-gateway-lib": {
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-gateway/library/values.schema.json"
+    },
+    "global": {
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-kit/application/values.schema.json#/$defs/global"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "nameOverride": {
+      "type": "string"
+    },
+    "fullnameOverride": {
+      "type": "string"
+    },
+    "backendPolicy": {
+      "$ref": "#/$defs/backendPolicy"
+    },
+    "gatewayPolicy": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "sslPolicy": {
+          "type": "string"
+        }
+      }
+    },
+    "backends": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/backend"
+      }
+    },
+    "gateway": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "gateways": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/gateway"
+          }
+        }
+      }
+    },
+    "httpRoute": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "httpRoutes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/httpRoute"
+          }
+        }
+      }
+    },
+    "trafficDistributionPolicy": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "serviceAccount": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "create": {
+          "type": "boolean"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "backendPolicy": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "connectionDraining": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "drainingTimeoutSec": {
+              "type": "integer"
+            }
+          }
+        },
+        "iap": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "oauth2ClientId": {
+              "type": "string"
+            },
+            "oauth2ClientSecret": {
+              "type": "string"
+            }
+          }
+        },
+        "logging": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "sampleRate": {
+              "type": "integer"
+            }
+          }
+        },
+        "sessionAffinity": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "cookieTtlSec": {
+              "type": "integer"
+            }
+          }
+        },
+        "timeoutSec": {
+          "type": "integer"
+        }
+      }
+    },
+    "backend": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "service": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "create": {
+              "type": "boolean"
+            },
+            "port": {
+              "type": "number"
+            },
+            "portName": {
+              "type": "string"
+            },
+            "protocol": {
+              "type": "string"
+            },
+            "targetPort": {
+              "type": "string"
+            },
+            "annotations": {
+              "type": "object"
+            },
+            "labels": {
+              "type": "object"
+            },
+            "selectorLabels": {
+              "type": "object"
+            }
+          }
+        },
+        "healthCheck": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            },
+            "protocol": {
+              "type": "string"
+            },
+            "port": {
+              "type": "number"
+            },
+            "checkIntervalSec": {
+              "type": "number"
+            },
+            "timeoutSec": {
+              "type": "number"
+            },
+            "healthyThreshold": {
+              "type": "number"
+            },
+            "unhealthyThreshold": {
+              "type": "number"
+            }
+          }
+        },
+        "backendPolicy": {
+          "$ref": "#/$defs/backendPolicy"
+        },
+        "labels": {
+          "type": "object"
+        }
+      }
+    },
+    "gateway": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "type": {
+          "enum": ["internal", "external"]
+        },
+        "scope": {
+          "type": "string"
+        },
+        "className": {
+          "type": "string"
+        },
+        "addresses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "listeners": {
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "protocol": {
+                "type": "string"
+              },
+              "port": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "tls": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "certs": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "type": {
+              "enum": ["certmap", "pre-shared", "secret"]
+            },
+            "annotations": {
+              "type": "object"
+            },
+            "labels": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "httpRoute": {
+      "additionalProperties": false,
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "gatewayRefs": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "namespace": {
+              "type": "string"
+            },
+            "section": {
+              "type": "string"
+            }
+          }
+        },
+        "hostnames": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "httpToHttpsRedirect": {
+          "type": "boolean"
+        },
+        "rules": {
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "type": "object",
+            "properties": {
+              "backendRefs": {
+                "type": "array",
+                "items": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "number"
+                    },
+                    "weight": {
+                      "type": "number"
+                    }
+                  }
+                }
+              },
+              "matches": {
+                "type": "array",
+                "items": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": "string"
+                        },
+                        "pathPrefix": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "headers": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "redirect": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "path": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string"
+                  },
+                  "statusCode": {
+                    "type": "number"
+                  }
+                }
+              },
+              "rewrite": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "hostname": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "labels": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}
