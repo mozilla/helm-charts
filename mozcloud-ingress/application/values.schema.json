@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-ingress/application/values.schema.json",
+  "title": "mozcloud-ingress",
+  "description": "mozcloud-ingress values",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "mozcloud-ingress-lib": {
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-ingress/library/values.schema.json"
+    },
+    "global": {
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-kit/application/values.schema.json#/$defs/global"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "ingresses": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ingress"
+      }
+    },
+    "frontendConfig": {
+      "type": "object",
+      "items": {
+        "$ref": "#/$defs/frontendConfig"
+      }
+    },
+    "backendConfig": {
+      "type": "object",
+      "items": {
+        "$ref": "#/$defs/backendConfig"
+      }
+    }
+  },
+  "$defs": {
+    "frontendConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "redirectToHttps": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "responseCodeName": {
+              "type": "string"
+            }
+          }
+        },
+        "sslPolicy": {
+          "type": "string"
+        }
+      }
+    },
+    "backendConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "logging": {
+          "$ref": "#/$defs/logging"
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "staticIpName": {
+          "type": "string"
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/host"
+          }
+        },
+        "tls": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "createCertificates": {
+              "type": "boolean"
+            },
+            "type": {
+              "type": "string"
+            },
+            "multipleHosts": {
+              "type": "boolean"
+            },
+            "multipleHosts": {
+              "type": "boolean"
+            }
+          }
+        }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "domains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path"
+          }
+        }
+      }
+    },
+    "path": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "pathType": {
+          "type": "string"
+        },
+        "backend": {
+          "$ref": "#/$defs/backend"
+        }
+      }
+    },
+    "backend": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "config": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "logging": {
+              "$ref": "#/$defs/logging"
+            },
+            "securityPolicy": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "service": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "port": {
+              "type": "integer"
+            },
+            "targetPort": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enable": {
+          "type": "boolean"
+        },
+        "sampleRate": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
