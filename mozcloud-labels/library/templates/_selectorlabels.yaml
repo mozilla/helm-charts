@@ -1,5 +1,6 @@
 {{- define "mozcloud-labels-lib.selectorLabels" -}}
-app.kubernetes.io/name: {{ .app_code }}
-app.kubernetes.io/component: {{ .component_code }}
-env_code: {{ .environment }}
+{{- $labels := include "mozcloud-labels-lib.labels" . | fromYaml -}}
+app.kubernetes.io/name: {{ index $labels "app.kubernetes.io/name" }}
+app.kubernetes.io/component: {{ index $labels "app.kubernetes.io/component" }}
+env_code: {{ index $labels "env_code" }}
 {{- end -}}

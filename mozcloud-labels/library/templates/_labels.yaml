@@ -1,4 +1,13 @@
 {{- define "mozcloud-labels-lib.labels" -}}
+{{- $additional_labels := include "mozcloud-labels-lib.additional_labels" . | fromYaml -}}
+{{- $params := dict "context" . "appCode" .app_code "dataKey" "labels" "customData" $additional_labels "precedence" "shared" -}}
+{{- $shared_data := include "mozcloud-shared-data-lib.smartMergeData" $params | fromYaml -}}
+{{- $kubernetes_labels := include "mozcloud-labels-lib.kubernetes_labels" (mergeOverwrite (. | deepCopy) $shared_data) | fromYaml -}}
+{{- $merged_labels := mergeOverwrite $shared_data $kubernetes_labels -}}
+{{ $merged_labels | toYaml }}
+{{- end -}}
+
+{{- define "mozcloud-labels-lib.additional_labels" -}}
 {{- $chart_name := "" }}
 {{- if .chart }}
   {{- $chart_name = .chart }}
@@ -10,9 +19,19 @@
 {{- if $chart_name }}
 helm.sh/chart: {{ $chart_name }}
 {{- end }}
-{{ include "mozcloud-labels-lib.selectorLabels" . }}
+env_code: {{ .environment }}
+{{- if eq .environment "prod" }}
+realm: prod
+{{- else }}
+realm: nonprod
+{{- end }}
 {{- if .appVersion }}
 app.kubernetes.io/version: {{ .appVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: Helm
+{{- end -}}
+
+{{- define "mozcloud-labels-lib.kubernetes_labels" -}}
+app.kubernetes.io/name: {{ default .app_code .system }}
+app.kubernetes.io/component: {{ .component_code }}
 {{- end -}}
