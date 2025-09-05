@@ -91,6 +91,14 @@ Template helpers
 {{- include "mozcloud-preview-lib.config.name" (merge (dict "prefix" "preview") .) }}{{- end -}}
 {{- end -}}
 
+{{- define "mozcloud-preview-lib.config.labels" -}}
+{{- $labels := include "mozcloud-labels-lib.labels" . | fromYaml -}}
+{{- if .labels -}}
+  {{- $labels = mergeOverwrite $labels .labels -}}
+{{- end }}
+{{- $labels | toYaml }}
+{{- end -}}
+
 {{/*
 EndpointCheck Render
 */}}
@@ -105,10 +113,8 @@ sleepSeconds: {{ .sleepSeconds | default 15 }}
 backoffLimit: {{ .backoffLimit | default 1 }}
 activeDeadlineSeconds: {{ .activeDeadlineSeconds | default 900 }}
 labels:
-  app.kubernetes.io/component: endpoint-check
-  {{- if .labels -}}
-  {{- .labels | toYaml | nindent 4 }}
-  {{- end }}
+  {{- $labelParams := mergeOverwrite (dict "app.kubernetes.io/component" "endpoint-check") (default (dict) .labels) -}}
+  {{- include "mozcloud-preview-lib.config.labels" (mergeOverwrite . (dict "labels" $labelParams)) | nindent 2 }}
 {{- end }}
 
 {{/*
