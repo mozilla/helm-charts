@@ -29,3 +29,10 @@ Create chart name and version as used by the chart label.
 {{- define "mozcloud-labels-lib.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
+
+{{/*
+Debug helper
+*/}}
+{{- define "mozcloud-labels-lib.debug" -}}
+{{- . | mustToPrettyJson | printf "\nThe JSON output of the dumped var is: \n%s" | fail }}
+{{- end -}}
