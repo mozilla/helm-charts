@@ -113,8 +113,7 @@ sleepSeconds: {{ .sleepSeconds | default 15 }}
 backoffLimit: {{ .backoffLimit | default 1 }}
 activeDeadlineSeconds: {{ .activeDeadlineSeconds | default 900 }}
 labels:
-  {{- $labelParams := mergeOverwrite (dict "app.kubernetes.io/component" "endpoint-check") (default (dict) .labels) -}}
-  {{- include "mozcloud-preview-lib.config.labels" (mergeOverwrite . (dict "labels" $labelParams)) | nindent 2 }}
+  {{- include "mozcloud-preview-lib.config.labels" . | nindent 2 }}
 {{- end }}
 
 {{/*
