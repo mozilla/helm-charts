@@ -31,26 +31,6 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Common labels
-*/}}
-{{- define "mozcloud-gateway.labels" -}}
-helm.sh/chart: {{ include "mozcloud-gateway.chart" . }}
-{{ include "mozcloud-gateway.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Selector labels
-*/}}
-{{- define "mozcloud-gateway.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "mozcloud-gateway.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-{{/*
 Create the name of the service account to use
 */}}
 {{- define "mozcloud-gateway.serviceAccountName" -}}

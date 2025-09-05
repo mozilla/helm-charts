@@ -41,17 +41,6 @@ Common labels
 {{- end }}
 
 {{/*
-Selector labels
-*/}}
-{{- define "mozcloud-workload-core-lib.selectorLabels" -}}
-{{- $selector_labels := include "mozcloud-labels-lib.selectorLabels" . | fromYaml -}}
-{{- if .selectorLabels -}}
-  {{- $selector_labels = mergeOverwrite $selector_labels .selectorLabels -}}
-{{- end }}
-{{- $selector_labels | toYaml }}
-{{- end }}
-
-{{/*
 Template helpers
 */}}
 {{- define "mozcloud-workload-core-lib.config.common" -}}

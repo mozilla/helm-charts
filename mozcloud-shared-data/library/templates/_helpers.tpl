@@ -4,12 +4,12 @@ _helpers.tpl for mozcloud-shared-data-lib
 This file contains logic to read and expose data from common-data.yaml.
 */}}
 
-{{- define "mozcloud-shared-data-lib.loadCommonData" -}}
 {{/*
-    Load common data from files in the shared library.
-    This function should be called from within the shared library context.
-    */}}
-{{-   .Files.Get "files/common-data.yaml" -}}
+Load common data from files in the shared library.
+This function should be called from within the shared library context.
+*/}}
+{{- define "mozcloud-shared-data-lib.loadCommonData" -}}
+{{- .Files.Get "files/common-data.yaml" -}}
 {{- end -}}
 
 {{/*
@@ -21,23 +21,26 @@ Usage:
   {{- include "mozcloud-shared-data-lib.getDynamicData" (dict "context" . "appCode" "jameslabel" "dataKey" "labels") | nindent 4 }}
 */}}
 {{- define "mozcloud-shared-data-lib.getDynamicData" -}}
-{{-   $commonDataYaml := include "mozcloud-shared-data-lib.commonData" .context -}}
-{{-   if $commonDataYaml -}}
-{{-     $commonData := $commonDataYaml | fromYaml -}}
-{{-     if $commonData -}}
-{{-       $appCode := .appCode -}}
-{{-       $dataKey := .dataKey -}}
-{{-       $appData := index $commonData $appCode -}}
-{{-       if $appData -}}
-{{-         $dataSet := index $appData $dataKey -}}
-{{-         if $dataSet -}}
-{{-           range $key, $value := $dataSet }}
+{{- $app_code := .appCode -}}
+{{- $data_key := .dataKey -}}
+{{- $common_data_yaml := include "mozcloud-shared-data-lib.commonData" .context -}}
+  {{- if $common_data_yaml -}}
+    {{- $common_data := $common_data_yaml | fromYaml -}}
+    {{- if $common_data -}}
+      {{- $app_data := dict -}}
+      {{- if hasKey $common_data $app_code -}}
+        {{- $app_data = index $common_data $app_code -}}
+      {{- end -}}
+      {{- if $app_data -}}
+        {{- $data_set := index $app_data $data_key -}}
+        {{- if $data_set -}}
+          {{- range $key, $value := $data_set }}
 {{ $key }}: {{ $value | toString | quote }}
-{{-           end }}
-{{-         end -}}
-{{-       end -}}
-{{-     end -}}
-{{-   end -}}
+          {{- end }}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
 {{- end -}}
 
 
@@ -64,23 +67,19 @@ Usage:
   {{- include "mozcloud-shared-data-lib.smartMergeData" (dict "context" . "appCode" "jameslabel" "dataKey" "labels" "customData" .Values.labels "precedence" "shared") | nindent 8 }}
 */}}
 {{- define "mozcloud-shared-data-lib.smartMergeData" -}}
-{{-   $dynamicDataYaml := include "mozcloud-shared-data-lib.getDynamicData" (dict "context" .context "appCode" .appCode "dataKey" .dataKey) -}}
-{{-   $dynamicData := dict -}}
-{{-   if $dynamicDataYaml -}}
-{{-     $dynamicData = $dynamicDataYaml | fromYaml -}}
-{{-   end -}}
-{{-   $customData := .customData | default dict -}}
-{{-   $precedence := .precedence | default "local" -}}
-{{-   $mergedYaml := "" -}}
-{{-   if eq $precedence "local" -}}
-{{-     $mergedYaml = include "mozcloud-shared-data-lib.mergeDataPreferLocal" (dict "globalData" $dynamicData "localData" $customData) -}}
-{{-   else -}}
-{{-     $mergedYaml = include "mozcloud-shared-data-lib.mergeDataPreferShared" (dict "globalData" $dynamicData "localData" $customData) -}}
-{{-   end -}}
-{{-   $merged := $mergedYaml | fromYaml -}}
-{{-   range $key, $value := $merged }}
+{{- $dynamic_data := default (dict) (include "mozcloud-shared-data-lib.getDynamicData" (dict "context" .context "appCode" .appCode "dataKey" .dataKey) | fromYaml) -}}
+{{- $custom_data := .customData | default dict -}}
+{{- $precedence := .precedence | default "local" -}}
+{{- $merged_yaml := "" -}}
+{{- if eq $precedence "local" -}}
+  {{- $merged_yaml = include "mozcloud-shared-data-lib.mergeDataPreferLocal" (dict "globalData" $dynamic_data "localData" $custom_data) -}}
+{{- else -}}
+  {{- $merged_yaml = include "mozcloud-shared-data-lib.mergeDataPreferShared" (dict "globalData" $dynamic_data "localData" $custom_data) -}}
+{{- end -}}
+{{- $merged := $merged_yaml | fromYaml -}}
+{{- range $key, $value := $merged }}
 {{ $key }}: {{ $value | toString | quote }}
-{{-   end -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -96,11 +95,11 @@ Usage:
   {{- $merged := include "mozcloud-shared-data-lib.mergeDataPreferLocal" (dict "globalData" $globalData "localData" $localData) | fromYaml -}}
 */}}
 {{- define "mozcloud-shared-data-lib.mergeDataPreferLocal" -}}
-{{-   $merged := .globalData | default dict -}}
-{{-   if .localData -}}
-{{-     $merged = mergeOverwrite $merged .localData -}}
-{{-   end -}}
-{{-   $merged | toYaml -}}
+{{- $merged := .globalData | default dict -}}
+{{- if .localData -}}
+  {{- $merged = mergeOverwrite $merged .localData -}}
+{{- end -}}
+{{- $merged | toYaml -}}
 {{- end -}}
 
 {{/*
@@ -116,11 +115,11 @@ Usage:
   {{- $merged := include "mozcloud-shared-data-lib.mergeDataPreferShared" (dict "globalData" $globalData "localData" $localData) | fromYaml -}}
 */}}
 {{- define "mozcloud-shared-data-lib.mergeDataPreferShared" -}}
-{{-   $merged := .localData | default dict -}}
-{{-   if .globalData -}}
-{{-     $merged = mergeOverwrite $merged .globalData -}}
-{{-   end -}}
-{{-   $merged | toYaml -}}
+{{- $merged := .localData | default dict -}}
+{{- if .globalData -}}
+  {{- $merged = mergeOverwrite $merged .globalData -}}
+{{- end -}}
+{{- $merged | toYaml -}}
 {{- end -}}
 
 {{/*
@@ -137,5 +136,12 @@ Usage:
   {{- $merged := include "mozcloud-shared-data-lib.mergeDataOnly" (dict "globalData" $globalData "localData" $localData) | fromYaml -}}
 */}}
 {{- define "mozcloud-shared-data-lib.mergeDataOnly" -}}
-{{-   include "mozcloud-shared-data-lib.mergeDataPreferLocal" . -}}
+{{- include "mozcloud-shared-data-lib.mergeDataPreferLocal" . -}}
+{{- end -}}
+
+{{/*
+Debug helper
+*/}}
+{{- define "mozcloud-shared-data-lib.debug" -}}
+{{- . | mustToPrettyJson | printf "\nThe JSON output of the dumped var is: \n%s" | fail }}
 {{- end -}}
