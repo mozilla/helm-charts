@@ -77,7 +77,7 @@ spec:
 {{- end }}
 {{- end }}
 {{- if gt (len $service_accounts) 0 }}
-{{ include "mozcloud-workload-core-lib.serviceAccount" (dict "serviceAccounts" $service_accounts) }}
+{{ include "mozcloud-workload-core-lib.serviceAccount" (mergeOverwrite ($ | deepCopy) (dict "serviceAccounts" $service_accounts)) }}
 {{- end }}
 {{- end }}
 {{- end -}}
