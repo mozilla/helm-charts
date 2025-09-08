@@ -6,6 +6,9 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "mozcloud-shared-data-lib": {
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-shared-data/library/values.schema.json"
+    },
     "global": {
       "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-kit/application/values.schema.json#/$defs/global"
     },
