@@ -22,7 +22,9 @@
   {{- $transformedBackends = append $transformedBackends $be -}}
 {{- end }}
 
-{{- $params := dict
+{{- $label_params := include "mozcloud-preview.labelParams" . | fromYaml }}
+
+{{- $params := mergeOverwrite $label_params (dict
     "httpRouteConfig" $httpRouteConfig
     "backendConfig" (dict "backends" $transformedBackends)
     "nameOverride" (printf "pr%s-%s" $previewPr (include "mozcloud-preview.name" .))
@@ -30,7 +32,7 @@
     "Release" .Release
     "previewPr" $previewPr
     "previewHost" (.Values.global.preview.host | toString)
-}}
+)}}
 
 {{- include "mozcloud-preview-lib.httpRoute" $params }}
 {{- include "mozcloud-preview-lib.endpointcheck" $params }}
