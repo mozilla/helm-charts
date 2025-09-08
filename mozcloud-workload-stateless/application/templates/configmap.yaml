@@ -1,5 +1,5 @@
 {{- if .Values.enabled }}
-{{- $params := dict "configMapConfig" .Values.configMaps }}
+{{- $params := dict "configMaps" .Values.configMaps }}
 {{- $label_params := include "mozcloud-workload-stateless.labelParams" . | fromYaml }}
 {{- include "mozcloud-workload-stateless-lib.configMap" (mergeOverwrite $params $label_params) }}
 {{- end }}
