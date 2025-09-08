@@ -31,26 +31,6 @@ Create chart name and version as used by the chart label.
 {{- end }}
 
 {{/*
-Common labels
-*/}}
-{{- define "mozcloud-preview.labels" -}}
-helm.sh/chart: {{ include "mozcloud-preview.chart" . }}
-{{ include "mozcloud-preview.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- end }}
-
-{{/*
-Selector labels
-*/}}
-{{- define "mozcloud-preview.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "mozcloud-preview.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- end }}
-
-{{/*
 Create the name of the service account to use
 */}}
 {{- define "mozcloud-preview.serviceAccountName" -}}
@@ -59,4 +39,18 @@ Create the name of the service account to use
 {{- else }}
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
+{{- end }}
+
+{{/*
+Create label parameters to be used in library chart if defined as values.
+*/}}
+{{- define "mozcloud-preview.labelParams" -}}
+{{- $params := dict "chart" (include "mozcloud-preview.name" .) -}}
+{{- $label_params := list "app_code" "chart" "component_code" "environment" -}}
+{{- range $label_param := $label_params -}}
+  {{- if index $.Values.global.mozcloud $label_param -}}
+    {{- $_ := set $params $label_param (index $.Values.global.mozcloud $label_param) -}}
+  {{- end }}
+{{- end }}
+{{- $params | toYaml }}
 {{- end }}
