@@ -7,12 +7,12 @@ type: application
 dependencies:
   - name: mozcloud-workload-stateless-lib
     version: 0.2.0
-    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+    repository: file://../library
 
   - name: mozcloud-ingress
     version: 0.3.0
-    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+    repository: file://../../mozcloud-ingress/application
 
   - name: mozcloud-gateway
     version: 0.3.0
-    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+    repository: file://../../mozcloud-gateway/application
