@@ -57,4 +57,3 @@ Deployment template helpers
 {{- $deployments = dict "deployments" $output -}}
 {{ $deployments | toYaml }}
 {{- end -}}
-
