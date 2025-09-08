@@ -26,4 +26,4 @@ appVersion: 1.16.0
 dependencies:
   - name: mozcloud-preview-lib
     version: 0.2.6
-    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+    repository: file://../library
