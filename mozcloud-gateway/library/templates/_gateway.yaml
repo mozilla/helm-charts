@@ -33,10 +33,14 @@ spec:
     {{- end }}
   listeners:
     {{- range $listener := $gateway.listeners }}
-    - allowedRoutes:
+    - name: {{ $listener.name }}
+     {{- if $listener.allowedRoutes }}
+      allowedRoutes: {{ $listener.allowedRoutes | toYaml | nindent 8 }}
+     {{- else }}
+      allowedRoutes:
         namespaces:
           from: Same
-      name: {{ $listener.name }}
+      {{- end }}
       protocol: {{ $listener.protocol }}
       port: {{ $listener.port }}
       {{- if and (eq $listener.protocol "HTTPS") (ne ($gateway.tls).type "certmap") }}
