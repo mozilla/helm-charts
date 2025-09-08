@@ -6,8 +6,8 @@ type: application
 dependencies:
   - name: mozcloud-labels-lib
     version: 0.3.0
-    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+    repository: file://../../mozcloud-labels/library
 
   - name: mozcloud-workload-stateless
     version: 0.2.0
-    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+    repository: file://../../mozcloud-workload-stateless/application

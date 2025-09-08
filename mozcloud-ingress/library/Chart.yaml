@@ -20,8 +20,8 @@ version: 0.3.0
 dependencies:
   - name: mozcloud-labels-lib
     version: 0.3.0
-    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+    repository: file://../../mozcloud-lables/library
 
   - name: mozcloud-service-lib
     version: 0.2.4
-    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+    repository: file://../../mozcloud-service/library
