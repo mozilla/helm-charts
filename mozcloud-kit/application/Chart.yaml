@@ -1,11 +1,3 @@
-#
-# !!BETA Chart!!
-#
-# This chart only serves demonstration purposes right now .. it is supposed to serve as a dependency
-# to the acme tenant in sandbox-infra. We're showcasing our future helm-charts structure here.
-#
-# Don't use it just yet.
-#
 apiVersion: v2
 name: mozcloud-kit
 description: mozcloud opinionated bundle of helm charts
@@ -14,8 +6,8 @@ type: application
 dependencies:
   - name: mozcloud-labels-lib
     version: 0.2.0
-    repository: file://../../mozcloud-labels/library
+    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 
-  - name: mozcloud-deployment
-    version: 0.1.0
-    repository: file://../../mozcloud-deployment/application
+  - name: mozcloud-workload-stateless
+    version: 0.1.1
+    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
