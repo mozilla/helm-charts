@@ -1,22 +1,22 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-workload-stateless/application/values.schema.json",
+  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-workload-stateless/application/values.schema.json",
   "title": "mozcloud-workload-stateless",
   "description": "mozcloud-workload-stateless values",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "mozcloud-ingress": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-ingress/application/values.schema.json"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-ingress/application/values.schema.json"
     },
     "mozcloud-gateway": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-gateway/application/values.schema.json"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-gateway/application/values.schema.json"
     },
     "mozcloud-workload-stateless-lib": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-workload-stateless/library/values.schema.json"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-workload-stateless/library/values.schema.json"
     },
     "global": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-kit/application/values.schema.json#/$defs/global"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-kit/application/values.schema.json#/$defs/global"
     },
     "enabled": {
       "type": "boolean"
@@ -24,13 +24,13 @@
     "configMaps": {
       "type": "array",
       "items": {
-        "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-workload-core/library/values.schema.json#/$defs/configmap"
+        "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-workload-core/library/values.schema.json#/$defs/configmap"
       }
     },
     "externalSecrets": {
       "type": "array",
       "items": {
-        "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-workload-core/library/values.schema.json#/$defs/externalsecret"
+        "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-workload-core/library/values.schema.json#/$defs/externalsecret"
       }
     }
   }
