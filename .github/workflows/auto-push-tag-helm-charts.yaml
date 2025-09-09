@@ -2,6 +2,9 @@
 name: auto push and tag helm charts
 on:
   pull_request:
+    branches:
+      - main
+
     types:
       - opened
       - closed
@@ -83,6 +86,7 @@ jobs:
 
     strategy:
       matrix: "${{ fromJson(needs.detect.outputs.modified-charts) }}"
+      fail-fast: false
 
     steps:
       - name: Checkout Commit
