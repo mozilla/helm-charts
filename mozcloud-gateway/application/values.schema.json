@@ -1,16 +1,16 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-gateway/application/values.schema.json",
+  "$id": "file:///../../mozcloud-gateway/application/values.schema.json",
   "title": "mozcloud-gateway",
   "description": "mozcloud-gateway values",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "mozcloud-gateway-lib": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-gateway/library/values.schema.json"
+      "$ref": "file:///../../mozcloud-gateway/library/values.schema.json"
     },
     "global": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-kit/application/values.schema.json#/$defs/global"
+      "$ref": "file:///../../mozcloud-kit/application/values.schema.json#/$defs/global"
     },
     "enabled": {
       "type": "boolean"
@@ -289,17 +289,20 @@
           "type": "string"
         },
         "gatewayRefs": {
-          "additionalProperties": false,
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "namespace": {
-              "type": "string"
-            },
-            "section": {
-              "type": "string"
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "namespace": {
+                "type": "string"
+              },
+              "section": {
+                "type": "string"
+              }
             }
           }
         },
