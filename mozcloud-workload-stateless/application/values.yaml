@@ -1,2 +1,8 @@
 # if enabled, all mozcloud-workload-stateless templates will be included.
 enabled: true
+
+# configure your configMaps here
+configMaps: []
+
+# configure your externalSecrets here
+externalSecrets: []

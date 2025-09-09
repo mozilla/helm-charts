@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-kit/application/values.schema.json",
+  "title": "mozcloud-kit",
+  "description": "mozcloud-kit values",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "global": {
+      "$ref": "#/$defs/global"
+    },
+    "mozcloud-workload-stateless": {
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-workload-stateless/application/values.schema.json"
+    }
+  },
+  "$defs": {
+    "global": {
+      "description": "gloabl values dictionary",
+      "type": "object",
+      "properties": {
+        "app_code": {
+          "description": "tenant's application code, e.g. sumo, ads, remote-settings",
+          "type": "string"
+        },
+        "component_code": {
+          "description": "application component's code, e.g. web, shepherd, mars",
+          "type": "string"
+        },
+        "environment": {
+          "description": "environment tag, e.g. dev, stage, prod",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

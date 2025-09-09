@@ -1,0 +1,402 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-ingress/application/values.schema.json",
+  "title": "mozcloud-ingress",
+  "description": "mozcloud-ingress values",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "mozcloud-ingress-lib": {
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-ingress/library/values.schema.json"
+    },
+    "global": {
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-kit/application/values.schema.json#/$defs/global"
+    },
+    "enabled": {
+      "type": "boolean"
+    },
+    "nameOverride": {
+      "type": "string"
+    },
+    "fullnameOverride": {
+      "type": "string"
+    },
+    "ingresses": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/ingress"
+      }
+    },
+    "frontendConfig": {
+      "type": "object",
+      "items": {
+        "$ref": "#/$defs/frontendConfig"
+      }
+    },
+    "backendConfig": {
+      "type": "object",
+      "items": {
+        "$ref": "#/$defs/backendConfig"
+      }
+    }
+  },
+  "$defs": {
+    "frontendConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object"
+        },
+        "redirectToHttps": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "responseCodeName": {
+              "type": "string"
+            }
+          }
+        },
+        "sslPolicy": {
+          "type": "string"
+        }
+      }
+    },
+    "backendConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "labels": {
+          "type": "object"
+        },
+        "cdn": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "cachePolicy": {
+              "additionalProperties": false,
+              "type": "object",
+              "properties": {
+                "includeHost": {
+                  "type": "boolean"
+                },
+                "includeProtocol": {
+                  "type": "boolean"
+                },
+                "includeQueryString": {
+                  "type": "boolean"
+                },
+                "queryStringBlacklist": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "queryStringWhitelist": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "cacheMode": {
+              "type": "string"
+            },
+            "clientTtl": {
+              "type": "integer"
+            },
+            "defaultTtl": {
+              "type": "integer"
+            },
+            "maxTtl": {
+              "type": "integer"
+            },
+            "negativeCaching": {
+              "type": "boolean"
+            },
+            "negativeCachingPolicy": {
+              "additionalProperties": false,
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string"
+                },
+                "ttl": {
+                  "type": "integer"
+                }
+              }
+            },
+            "requestCoalescing": {
+              "type": "boolean"
+            },
+            "serveWhileStale": {
+              "type": "integer"
+            },
+            "signedUrlCacheMaxAgeSec": {
+              "type": "integer"
+            },
+            "signedUrlKeys": {
+              "additionalProperties": false,
+              "type": "object",
+              "properties": {
+                "keyname": {
+                  "type": "string"
+                },
+                "keyValue": {
+                  "type": "string"
+                },
+                "secretName": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "customRequestHeaders": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "headers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "customResponseHeaders": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "headers": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "connectionDraining": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "drainingTimeoutSec": {
+              "type": "integer"
+            }
+          }
+        },
+        "healthCheck": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "checkIntervalSec": {
+              "type": "integer"
+            },
+            "timeoutSec": {
+              "type": "integer"
+            },
+            "healthyThreshold": {
+              "type": "integer"
+            },
+            "unhealthyThreshold": {
+              "type": "integer"
+            },
+            "type": {
+              "type": "string"
+            },
+            "requestPath": {
+              "type": "string"
+            },
+            "port": {
+              "type": "integer"
+            }
+          }
+        },
+        "iap": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean"
+            },
+            "oauthClientCredentials": {
+              "additionalProperties": false,
+              "type": "object",
+              "properties": {
+                "secretName": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "logging": {
+          "$ref": "#/$defs/logging"
+        },
+        "securityPolicy": {
+          "type": "string"
+        },
+        "sessionAffinity": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "affinityType": {
+              "type": "string"
+            },
+            "affinityCookieTtlSec": {
+              "type": "integer"
+            }
+          }
+        },
+        "timeoutSec": {
+          "type": "integer"
+        }
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "staticIpName": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "annotations": {
+          "type": "object"
+        },
+        "labels": {
+          "type": "object"
+        },
+        "hosts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/host"
+          }
+        },
+        "tls": {
+          "$ref": "#/$defs/tls"
+        }
+      }
+    },
+    "tls": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "createCertificates": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string"
+        },
+        "multipleHosts": {
+          "type": "boolean"
+        },
+        "prefix": {
+          "type": "string"
+        },
+        "preSharedCerts": {
+          "type": "string"
+        }
+      }
+    },
+    "host": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "domains": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/path"
+          }
+        },
+        "tls": {
+          "$ref": "#/$defs/tls"
+        }
+      }
+    },
+    "path": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "pathType": {
+          "type": "string"
+        },
+        "backend": {
+          "$ref": "#/$defs/backend"
+        }
+      }
+    },
+    "backend": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "config": {
+          "$ref": "#/$defs/backendConfig"
+        },
+        "service": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "createNeg": {
+              "type": "boolean"
+            },
+            "port": {
+              "type": "integer"
+            },
+            "protocol": {
+              "type": "string"
+            },
+            "targetPort": {
+              "type": "string"
+            },
+            "labels": {
+              "type": "object"
+            },
+            "selectorLabels": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "logging": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enable": {
+          "type": "boolean"
+        },
+        "sampleRate": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
