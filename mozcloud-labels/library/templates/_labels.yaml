@@ -1,7 +1,16 @@
 {{- define "mozcloud-labels-lib.labels" -}}
+{{- /* Validates that .app_code and .environment are specified, failing if not */ -}}
+{{- $_ := .app_code | required "Error: 'app_code' must be defined. This can be set as a global value in your application chart: .Values.global.mozcloud.app_code" -}}
+{{- $_ = .environment | required "Error: 'environment' must be defined. This can be set as a global value in your application chart: .Values.global.mozcloud.environment" -}}
+{{- /*
+Additional labels to include in addition to those pulled from mozcloud-shared-data-lib.
+These also serve as defaults in case there are no matches for app_code in that chart.
+*/ -}}
 {{- $additional_labels := include "mozcloud-labels-lib.additional_labels" . | fromYaml -}}
+{{- /* Use mozcloud-shared-data-lib to source tenant data for labels */ -}}
 {{- $params := dict "context" . "appCode" .app_code "dataKey" "labels" "customData" $additional_labels "precedence" "shared" -}}
 {{- $shared_data := include "mozcloud-shared-data-lib.smartMergeData" $params | fromYaml -}}
+{{- /* We are keeping K8s labels for now as they are being used for selector labels in existing tenants */ -}}
 {{- $kubernetes_labels := include "mozcloud-labels-lib.kubernetes_labels" (mergeOverwrite (. | deepCopy) $shared_data) | fromYaml -}}
 {{- $merged_labels := mergeOverwrite $shared_data $kubernetes_labels -}}
 {{ $merged_labels | toYaml }}
