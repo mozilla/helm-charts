@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-shared-data/library/values.schema.json",
+  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-shared-data/library/values.schema.json",
   "title": "mozcloud-shared-data-lib",
   "description": "mozcloud-shared-data-lib values",
   "type": "object",
   "additionalProperties": false,
   "properties": {
     "global": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-kit/application/values.schema.json#/$defs/global"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-kit/application/values.schema.json#/$defs/global"
     }
   }
 }

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-kit/application/values.schema.json",
+  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-kit/application/values.schema.json",
   "title": "mozcloud-kit",
   "description": "mozcloud-kit values",
   "type": "object",
@@ -10,7 +10,7 @@
       "$ref": "#/$defs/global"
     },
     "mozcloud-workload-stateless": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/MZCLD-798/mozcloud-workload-stateless/application/values.schema.json"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-workload-stateless/application/values.schema.json"
     }
   },
   "$defs": {
