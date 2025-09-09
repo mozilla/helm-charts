@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "global",
+  "description": "Global MozCloud values",
+  "type": "object",
+  "properties": {},
+  "$defs": {
+    "global": {
+      "description": "global values dictionary",
+      "type": "object",
+      "properties": {
+        "app_code": {
+          "description": "tenant's application code, e.g. sumo, ads, remote-settings",
+          "type": "string"
+        },
+        "component_code": {
+          "description": "application component's code, e.g. web, shepherd, mars",
+          "type": "string"
+        },
+        "environment": {
+          "description": "environment tag, e.g. dev, stage, prod",
+          "type": "string"
+        }
+      }
+    }
+  }
+}
