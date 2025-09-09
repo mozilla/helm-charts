@@ -40,10 +40,12 @@ not be reflected.
 """
 
 from __future__ import annotations
+
 import argparse
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
+
 import yaml
 
 ChartInfo = Dict[str, str]
@@ -61,7 +63,7 @@ def find_chart_files(roots: List[Path]) -> List[Path]:
     """
     chart_files: List[Path] = []
     seen_paths: Set[Path] = set()
-    
+
     for root in roots:
         if not root.exists():
             print(f"WARN: Root path does not exist: {root}", file=sys.stderr)
@@ -69,25 +71,25 @@ def find_chart_files(roots: List[Path]) -> List[Path]:
         if not root.is_dir():
             print(f"WARN: Root path is not a directory: {root}", file=sys.stderr)
             continue
-            
+
         # Use rglob to recursively find all Chart.yaml files
         for p in root.rglob("Chart.yaml"):
             # Skip if this is actually Chart.lock or other variants
             if p.name != "Chart.yaml":
                 continue
-            
+
             # Skip if we've already seen this path (handles overlapping roots)
             resolved_path = p.resolve()
             if resolved_path in seen_paths:
                 continue
             seen_paths.add(resolved_path)
-            
+
             # Skip if the file is not readable
             if not p.is_file() or not p.exists():
                 continue
-                
+
             chart_files.append(p)
-    
+
     return sorted(chart_files)  # Sort for consistent output
 
 
@@ -190,20 +192,20 @@ def find_dependency_tree(
     """
     visited = set()
     to_visit = [root_chart]
-    
+
     while to_visit:
         current = to_visit.pop()
         if current in visited:
             continue
         visited.add(current)
-        
+
         # Find dependencies of current chart
         if current in deps:
             for dep in deps[current]:
                 child = (dep.get("alias") or dep.get("name") or "").strip()
                 if child and child not in visited:
                     to_visit.append(child)
-    
+
     return visited
 
 
@@ -217,21 +219,29 @@ def filter_by_root_chart(
     Filter charts and edges to only include those in the dependency tree of root_chart.
     """
     if root_chart not in charts:
-        print(f"ERROR: Root chart '{root_chart}' not found in discovered charts", file=sys.stderr)
+        print(
+            f"ERROR: Root chart '{root_chart}' not found in discovered charts",
+            file=sys.stderr,
+        )
         available_charts = sorted(charts.keys())
         print(f"Available charts: {', '.join(available_charts)}", file=sys.stderr)
         sys.exit(1)
-    
+
     # Find all charts in the dependency tree
     tree_charts = find_dependency_tree(root_chart, deps, charts)
-    
+
     # Filter charts to only include those in the tree
-    filtered_charts = {name: info for name, info in charts.items() if name in tree_charts}
-    
+    filtered_charts = {
+        name: info for name, info in charts.items() if name in tree_charts
+    }
+
     # Filter edges to only include those between charts in the tree
-    filtered_edges = {(parent, child) for parent, child in edges 
-                     if parent in tree_charts and child in tree_charts}
-    
+    filtered_edges = {
+        (parent, child)
+        for parent, child in edges
+        if parent in tree_charts and child in tree_charts
+    }
+
     return filtered_charts, filtered_edges
 
 
@@ -253,8 +263,8 @@ def generate_mermaid(
             # Keep attributes short; ER expects simple type labels
             ver = info.get("version", "")
             typ = info.get("type", "")
-            lines.append(f"        string version \"{ver}\"")
-            lines.append(f"        string type \"{typ}\"")
+            lines.append(f'        string version "{ver}"')
+            lines.append(f'        string type "{typ}"')
             lines.append("    }")
         else:
             # Minimal body (Mermaid requires a body). We'll include a single attr.
@@ -350,17 +360,24 @@ def main():
         if not out_path:
             # Need to write Mermaid to a temp file
             import tempfile
+
             with tempfile.NamedTemporaryFile("w", suffix=".mmd", delete=False) as tmp:
                 tmp.write(mermaid)
                 tmp_path = tmp.name
         else:
             tmp_path = str(out_path)
         import subprocess
+
         svg_path = args.svg_output
         cmd = [
-            "npx", "-p", "@mermaid-js/mermaid-cli", "mmdc",
-            "-i", tmp_path,
-            "-o", svg_path
+            "npx",
+            "-p",
+            "@mermaid-js/mermaid-cli",
+            "mmdc",
+            "-i",
+            tmp_path,
+            "-o",
+            svg_path,
         ]
         print(f"Running Mermaid CLI to generate SVG: {' '.join(cmd)}")
         try:
@@ -372,4 +389,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
