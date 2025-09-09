@@ -5,7 +5,7 @@
   "type": "object",
   "properties": {
     "global": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json#/$defs/global"
     },
     "mozcloud-job-lib": {
       "type": "object"
@@ -28,18 +28,15 @@
   },
   "$defs": {
     "cronjob": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "name": {
           "type": "string"
         },
         "config": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "jobHistory": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "successful": {
@@ -73,7 +70,6 @@
       }
     },
     "job": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "name": {
@@ -100,7 +96,6 @@
       }
     },
     "container": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "name": {
@@ -119,11 +114,9 @@
           "type": "string"
         },
         "resources": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "cpu": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "requests": {
@@ -135,7 +128,6 @@
               }
             },
             "memory": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "requests": {
@@ -149,7 +141,6 @@
           }
         },
         "securityContext": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "group": {
@@ -163,7 +154,6 @@
       }
     },
     "jobConfig": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "activeDeadlineSeconds": {
@@ -179,7 +169,6 @@
           "type": "string"
         },
         "securityContext": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "group": {
@@ -191,7 +180,6 @@
           }
         },
         "serviceAccount": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "name": {
@@ -201,7 +189,6 @@
               "type": "boolean"
             },
             "gcpServiceAccount": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "fullName": {
@@ -226,7 +213,6 @@
       }
     },
     "argoConfig": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "hookDeletionPolicy": {

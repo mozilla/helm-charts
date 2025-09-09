@@ -11,7 +11,7 @@ metadata:
     {{- $deployment.labels | toYaml | nindent 4 }}
 spec:
   selector:
-    {{- include "mozcloud-workload-core-lib.selectorLabels" $ | nindent 4 }}
+    {{- include "mozcloud-labels-lib.selectorLabels" $ | nindent 4 }}
   template:
     metadata:
       labels:
@@ -20,7 +20,7 @@ spec:
       containers:
         {{- range $container := $deployment.containers }}
         - name: {{ $container.name }}
-          image: {{ printf "%s:%s" $container.image.repo $container.image.tag }}
+          image: {{ printf "%s:%s" $container.image $container.tag }}
           imagePullPolicy: IfNotPresent
           {{- if $container.envFrom }}
           envFrom:

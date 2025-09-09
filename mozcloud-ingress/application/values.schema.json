@@ -5,7 +5,7 @@
   "type": "object",
   "properties": {
     "global": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json#/$defs/global"
     },
     "mozcloud-ingress-lib": {
       "type": "object"
@@ -41,7 +41,6 @@
   "$defs": {
     "frontendConfig": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "name": {
           "type": "string"
@@ -51,7 +50,6 @@
         },
         "redirectToHttps": {
           "type": "object",
-          "additionalProperties": false,
           "properties": {
             "enabled": {
               "type": "boolean"
@@ -68,7 +66,6 @@
     },
     "backendConfig": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "name": {
           "type": "string"
@@ -77,14 +74,12 @@
           "type": "object"
         },
         "cdn": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "enabled": {
               "type": "boolean"
             },
             "cachePolicy": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "includeHost": {
@@ -126,7 +121,6 @@
               "type": "boolean"
             },
             "negativeCachingPolicy": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "code": {
@@ -147,7 +141,6 @@
               "type": "integer"
             },
             "signedUrlKeys": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "keyname": {
@@ -164,7 +157,6 @@
           }
         },
         "customRequestHeaders": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "headers": {
@@ -176,7 +168,6 @@
           }
         },
         "customResponseHeaders": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "headers": {
@@ -188,7 +179,6 @@
           }
         },
         "connectionDraining": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "drainingTimeoutSec": {
@@ -197,7 +187,6 @@
           }
         },
         "healthCheck": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "checkIntervalSec": {
@@ -224,14 +213,12 @@
           }
         },
         "iap": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "enabled": {
               "type": "boolean"
             },
             "oauthClientCredentials": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "secretName": {
@@ -248,7 +235,6 @@
           "type": "string"
         },
         "sessionAffinity": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "affinityType": {
@@ -266,7 +252,6 @@
     },
     "ingress": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "staticIpName": {
           "type": "string"
@@ -293,7 +278,6 @@
     },
     "tls": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "createCertificates": {
           "type": "boolean"
@@ -314,7 +298,6 @@
     },
     "host": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "domains": {
           "type": "array",
@@ -335,7 +318,6 @@
     },
     "path": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "path": {
           "type": "string"
@@ -350,13 +332,11 @@
     },
     "backend": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "config": {
           "$ref": "#/$defs/backendConfig"
         },
         "service": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "name": {
@@ -386,7 +366,6 @@
     },
     "logging": {
       "type": "object",
-      "additionalProperties": false,
       "properties": {
         "enable": {
           "type": "boolean"

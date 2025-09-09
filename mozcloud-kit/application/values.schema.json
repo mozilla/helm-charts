@@ -5,7 +5,13 @@
   "type": "object",
   "properties": {
     "global": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json#/$defs/global"
+    },
+    "mozcloud-labels-lib": {
+      "type": "object"
+    },
+    "mozcloud-workload-stateless": {
+      "type": "object"
     }
   }
 }

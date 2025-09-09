@@ -20,7 +20,7 @@ spec:
     {{- end }}
   selector:
     matchLabels:
-      {{- include "mozcloud-workload-core-lib.selectorLabels" $ | nindent 6 }}
+      {{- include "mozcloud-labels-lib.selectorLabels" $ | nindent 6 }}
 {{- end -}}
 {{- end -}}
 {{- end -}}
