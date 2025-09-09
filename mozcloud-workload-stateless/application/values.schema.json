@@ -1,37 +1,17 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "file:///../../mozcloud-workload-stateless/application/values.schema.json",
   "title": "mozcloud-workload-stateless",
   "description": "mozcloud-workload-stateless values",
   "type": "object",
-  "additionalProperties": false,
   "properties": {
-    "mozcloud-ingress": {
-      "$ref": "file:///../../mozcloud-ingress/application/values.schema.json"
-    },
-    "mozcloud-gateway": {
-      "$ref": "file:///../../mozcloud-gateway/application/values.schema.json"
+    "global": {
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json"
     },
     "mozcloud-workload-stateless-lib": {
-      "$ref": "file:///../../mozcloud-workload-stateless/library/values.schema.json"
-    },
-    "global": {
-      "$ref": "file:///../../mozcloud-kit/application/values.schema.json#/$defs/global"
+      "type": "object"
     },
     "enabled": {
       "type": "boolean"
-    },
-    "configMaps": {
-      "type": "array",
-      "items": {
-        "$ref": "file:///../../mozcloud-workload-core/library/values.schema.json#/$defs/configmap"
-      }
-    },
-    "externalSecrets": {
-      "type": "array",
-      "items": {
-        "$ref": "file:///../../mozcloud-workload-core/library/values.schema.json#/$defs/externalsecret"
-      }
     }
   }
 }

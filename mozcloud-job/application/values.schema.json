@@ -1,16 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "file:///../../mozcloud-job/application/values.schema.json",
   "title": "mozcloud-job",
   "description": "mozcloud-job values",
   "type": "object",
-  "additionalProperties": false,
   "properties": {
-    "mozcloud-job-lib": {
-      "$ref": "file:///../../mozcloud-job/library/values.schema.json"
-    },
     "global": {
-      "$ref": "file:///../../mozcloud-kit/application/values.schema.json#/$defs/global"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json"
+    },
+    "mozcloud-job-lib": {
+      "type": "object"
     },
     "nameOverride": {
       "type": "string"
