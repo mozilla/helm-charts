@@ -3,7 +3,6 @@
   "title": "global",
   "description": "Global MozCloud values",
   "type": "object",
-  "properties": {},
   "$defs": {
     "global": {
       "description": "global values dictionary",
