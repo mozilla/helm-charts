@@ -1,8 +1,200 @@
-# if enabled, all mozcloud-workload-stateless templates will be included.
+# Flag to enable / disable rendering of all templates this chart provides
 enabled: true
 
-# configure your configMaps here
-configMaps: []
+#
+# global
+#
+# Values should include global.mozcloud to provide common config keys like the
+# app_code or component_code labels
+#
+#global:
+#  mozcloud:
+#    app_code: unset
+#    component_code: unset
+#    environment: unset
 
-# configure your externalSecrets here
-externalSecrets: []
+#
+# ConfigMaps
+#
+# Use this array to define configMap resources. A configMap item should have
+# at least a name and a data section
+#
+configMaps:
+#  - name: unset
+#    data:
+#      foo: bar
+
+#
+# ExternalSecrets
+#
+# List externalSecret definitions here. An externalSecret should at least
+# define a name. If you don't provide anyting else, we expect this to default
+# to reading from {{ .Values.global.environment }}-gke-app-secrets and writing
+# to "mozcloud-workload-core-secrets.
+#
+externalSecrets:
+#  - name: unset
+#    target: my-target-k8s-secret
+#    gsm:
+#      secret: my-gsm-secret-to-read-from
+#      version: my-gsm-secret-version-to-read-from
+
+
+#
+# ServiceAccounts
+#
+# Service Account List to render. A ServiceAccount object has at least a
+# name, additionally, a GCP Service Account to map to via annotations can
+# be specified, too.
+#
+serviceAccounts:
+#  - name: unset
+#    gcpServiceAccount:
+#      name: unset
+#      projectId: unset
+
+
+#
+# Deployments
+#
+# Deployment definitions go here. A Deployment has a name and a list of containers.
+#
+deployments:
+#  - name: unset
+#    containers:
+#      - # containers have names, too
+#        name: unset
+#        #
+#        # Where to read the container image from. Will end up as {{ .image }}:{{ .tag }}
+#        #
+#        image: some-image
+#        tag: some-image-tag
+#
+#        #
+#        # mount ConfigMaps or Secrets to container env
+#        #
+#        envFrom:
+#          - configMapRef:
+#              name: some-configmap
+#
+#          - secretRef:
+#              name: some-secret
+#
+#        #
+#        # Containers shouldn't be running with elevated privileges. This section
+#        # defines a UID & GID the container should run with.
+#        #
+#        securityContext:
+#          user: 10001
+#          group: 10001
+#
+#        #
+#        # Container resources. k8s spawns new containers only when enough room is left
+#        # to match the defined requests here. This helps to scale k8s nodes efficiently.
+#        # limits define the upper boundary of resources a container can consume. This can
+#        # be more than requests of course, and competing resource usage on nodes (so don't
+#        # set this too high).
+#        # If resources == limits, k8s is asked to run Pods with QoS class of "Guaranteed",
+#        # this effectively means reserving the specified resources explicitly for the container
+#        # only, might be useful in some high performance workload scenarios.
+#        #
+#        resources:
+#          requests:
+#            cpu: 1000m
+#            memory: 2Gi
+#
+#          limits:
+#            cpu: 2000m
+#            memory: 4Gi
+#
+#        #
+#        # List of ports that the resulting Pod will be reachable at. Map ports to actual container ports.
+#        #
+#        ports:
+#          - name: app
+#            containerPort: 8000
+#
+#        #
+#        # Define a method to poll the container to determine if it is still "live". If this probe fails,
+#        # k8s will try to restart the container. livenessProbe should primarily prevent long running pods
+#        # from transitioning to broken states.
+#        #
+#        livenessProbe:
+#          httpGet:
+#            path: /__heartbeat__
+#            port: unset
+#
+#        #
+#        # Define a method to poll the container to determine if it is "ready to serve traffic". If this
+#        # probe fails, container will not receive traffic through k8s services. E.g. during long startup
+#        # times, you don't want to send traffic to a pod, yet. Similarly, if e.g. dependent services on
+#        # other ports fail their readiness, this could also be used to not serve any traffic, but keep
+#        # the pod running, for example.
+#        #
+#        readinessProbe:
+#          httpGet:
+#            path: /__lbheartbeat__
+#            port: unset
+
+#
+# PodMonitorings
+#
+# Define PodMonitorings to create here. A PodMonotoring has a name and a list of
+# endpoints to target for querying by GMP (Google managed Prometheus).
+#
+podMonitorings:
+#  - name: unset
+#    endpoints:
+#      - port: app
+#        scheme: http
+#        interval: 30s
+#        path: /metrics
+
+#
+# HorizontalPodAutoscalers
+#
+# Configure HorizontalPodAutoscalers here. HPAs have a name, should set
+# min & max replica sizes, have a scale target reference and of course
+# a list of metrics to scale upon.
+#
+hpas:
+#  - name: unset
+#    minReplicas: 2
+#    maxReplicas: 10
+#    scaleTargetRef:
+#      apiVersion: apps/v1
+#      kind: Deployment
+#      name: deployment-to-target
+#
+#    metrics:
+#      - type: Resource
+#        resource:
+#          name: cpu
+#          target:
+#            type: Utilization
+#            averageUtilization: 80
+#
+#      - type: Resource
+#        resource:
+#          name: memory
+#          target:
+#            type: Utilization
+#            averageUtilization: 80
+
+#
+# mozcloud-ingress subchart
+#
+# current default for building tenants, so we enable it to render
+#
+# see https://github.com/mozilla/helm-charts/tree/main/mozcloud-ingress/application/values.schema.json
+mozcloud-ingress:
+  enabled: true
+
+#
+# mozcloud-gateway subchart
+#
+# likely future default for building tenants, not enabled just yet
+#
+# see https://github.com/mozilla/helm-charts/tree/main/mozcloud-gateway/application/values.schema.json
+mozcloud-gateway:
+  enabled: false

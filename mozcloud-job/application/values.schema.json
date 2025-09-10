@@ -1,16 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-job/application/values.schema.json",
   "title": "mozcloud-job",
   "description": "mozcloud-job values",
   "type": "object",
-  "additionalProperties": false,
   "properties": {
-    "mozcloud-job-lib": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-job/library/values.schema.json"
-    },
     "global": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-kit/application/values.schema.json#/$defs/global"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json#/$defs/global"
+    },
+    "mozcloud-job-lib": {
+      "type": "object"
     },
     "nameOverride": {
       "type": "string"
@@ -30,18 +28,15 @@
   },
   "$defs": {
     "cronjob": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "name": {
           "type": "string"
         },
         "config": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "jobHistory": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "successful": {
@@ -75,7 +70,6 @@
       }
     },
     "job": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "name": {
@@ -102,7 +96,6 @@
       }
     },
     "container": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "name": {
@@ -115,17 +108,35 @@
           "type": "string"
         },
         "command": {
-          "type": "string"
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
         },
         "args": {
-          "type": "string"
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
         },
         "resources": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "cpu": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "requests": {
@@ -137,7 +148,6 @@
               }
             },
             "memory": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "requests": {
@@ -151,7 +161,6 @@
           }
         },
         "securityContext": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "group": {
@@ -165,7 +174,6 @@
       }
     },
     "jobConfig": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "activeDeadlineSeconds": {
@@ -181,7 +189,6 @@
           "type": "string"
         },
         "securityContext": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "group": {
@@ -193,7 +200,6 @@
           }
         },
         "serviceAccount": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "name": {
@@ -203,7 +209,6 @@
               "type": "boolean"
             },
             "gcpServiceAccount": {
-              "additionalProperties": false,
               "type": "object",
               "properties": {
                 "fullName": {
@@ -228,7 +233,6 @@
       }
     },
     "argoConfig": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "hookDeletionPolicy": {

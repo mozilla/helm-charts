@@ -1,36 +1,331 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-workload-stateless/application/values.schema.json",
   "title": "mozcloud-workload-stateless",
   "description": "mozcloud-workload-stateless values",
   "type": "object",
-  "additionalProperties": false,
   "properties": {
-    "mozcloud-ingress": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-ingress/application/values.schema.json"
-    },
-    "mozcloud-gateway": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-gateway/application/values.schema.json"
-    },
-    "mozcloud-workload-stateless-lib": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-workload-stateless/library/values.schema.json"
-    },
-    "global": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-kit/application/values.schema.json#/$defs/global"
-    },
     "enabled": {
       "type": "boolean"
+    },
+    "global": {
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json#/$defs/global"
+    },
+    "mozcloud-workload-stateless-lib": {
+      "type": "object"
+    },
+    "mozcloud-ingress": {
+      "type": "object"
+    },
+    "mozcloud-gateway": {
+      "type": "object"
     },
     "configMaps": {
       "type": "array",
       "items": {
-        "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-workload-core/library/values.schema.json#/$defs/configmap"
+        "$ref": "#/$defs/configMap"
       }
     },
     "externalSecrets": {
       "type": "array",
       "items": {
-        "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-workload-core/library/values.schema.json#/$defs/externalsecret"
+        "$ref": "#/$defs/externalSecret"
+      }
+    },
+    "serviceAccounts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/serviceAccount"
+      }
+    },
+    "deployments": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/deployment"
+      }
+    },
+    "podMonitorings": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/podMonitoring"
+      }
+    },
+    "hpas": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/hpa"
+      }
+    }
+  },
+  "$defs": {
+    "configMap": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "data": {
+          "type": "object"
+        }
+      }
+    },
+    "externalSecret": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "target": {
+          "type": "string"
+        },
+        "gsm": {
+          "type": "object",
+          "properties": {
+            "secret": {
+              "type": "string"
+            },
+            "version": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "gcpServiceAccount": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string"
+            },
+            "projectId": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "containers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "image": {
+                "type": "string"
+              },
+              "tag": {
+                "type": "string"
+              },
+              "envFrom": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "configMapRef": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "secretRef": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "securityContext": {
+                "type": "object",
+                "properties": {
+                  "user": {
+                    "type": "number"
+                  },
+                  "group": {
+                    "type": "number"
+                  }
+                }
+              },
+              "resources": {
+                "type": "object",
+                "properties": {
+                  "requests": {
+                    "type": "object",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "limits": {
+                    "type": "object",
+                    "properties": {
+                      "cpu": {
+                        "type": "string"
+                      },
+                      "memory": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "livenessProbe": {
+                "type": "object",
+                "properties": {
+                  "httpGet": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "port": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "readinessProbe": {
+                "type": "object",
+                "properties": {
+                  "httpGet": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "string"
+                      },
+                      "port": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "ports": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "containerPort": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "podMonitoring": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "port": {
+                "type": "string"
+              },
+              "scheme": {
+                "type": "string"
+              },
+              "interval": {
+                "type": "string"
+              },
+              "path": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "hpa": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "minReplicas": {
+          "type": "integer"
+        },
+        "maxReplicas": {
+          "type": "integer"
+        },
+        "scaleTargetRef": {
+          "type": "object",
+          "properties": {
+            "apiVersion": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            }
+          }
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "resource": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "target": {
+                    "type": "object",
+                    "properties": {
+                      "type": {
+                        "type": "string"
+                      },
+                      "averageUtilization": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     }
   }

@@ -1,16 +1,14 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-gateway/application/values.schema.json",
   "title": "mozcloud-gateway",
   "description": "mozcloud-gateway values",
   "type": "object",
-  "additionalProperties": false,
   "properties": {
-    "mozcloud-gateway-lib": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-gateway/library/values.schema.json"
-    },
     "global": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/mozcloud-kit/application/values.schema.json#/$defs/global"
+      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json#/$defs/global"
+    },
+    "mozcloud-gateway-lib": {
+      "type": "object"
     },
     "enabled": {
       "type": "boolean"
@@ -25,7 +23,6 @@
       "$ref": "#/$defs/backendPolicy"
     },
     "gatewayPolicy": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "sslPolicy": {
@@ -40,7 +37,6 @@
       }
     },
     "gateway": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "enabled": {
@@ -55,7 +51,6 @@
       }
     },
     "httpRoute": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "enabled": {
@@ -76,7 +71,6 @@
       }
     },
     "serviceAccount": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "name": {
@@ -90,11 +84,9 @@
   },
   "$defs": {
     "backendPolicy": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "connectionDraining": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "drainingTimeoutSec": {
@@ -103,7 +95,6 @@
           }
         },
         "iap": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "enabled": {
@@ -118,7 +109,6 @@
           }
         },
         "logging": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "enabled": {
@@ -130,7 +120,6 @@
           }
         },
         "sessionAffinity": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "type": {
@@ -147,14 +136,12 @@
       }
     },
     "backend": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "name": {
           "type": "string"
         },
         "service": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "create": {
@@ -184,7 +171,6 @@
           }
         },
         "healthCheck": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "path": {
@@ -219,7 +205,6 @@
       }
     },
     "gateway": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "name": {
@@ -243,7 +228,6 @@
         "listeners": {
           "type": "array",
           "items": {
-            "additionalProperties": false,
             "type": "object",
             "properties": {
               "name": {
@@ -259,7 +243,6 @@
           }
         },
         "tls": {
-          "additionalProperties": false,
           "type": "object",
           "properties": {
             "certs": {
@@ -282,24 +265,25 @@
       }
     },
     "httpRoute": {
-      "additionalProperties": false,
       "type": "object",
       "properties": {
         "name": {
           "type": "string"
         },
         "gatewayRefs": {
-          "additionalProperties": false,
-          "type": "object",
-          "properties": {
-            "name": {
-              "type": "string"
-            },
-            "namespace": {
-              "type": "string"
-            },
-            "section": {
-              "type": "string"
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "namespace": {
+                "type": "string"
+              },
+              "section": {
+                "type": "string"
+              }
             }
           }
         },
@@ -315,13 +299,11 @@
         "rules": {
           "type": "array",
           "items": {
-            "additionalProperties": false,
             "type": "object",
             "properties": {
               "backendRefs": {
                 "type": "array",
                 "items": {
-                  "additionalProperties": false,
                   "type": "object",
                   "properties": {
                     "name": {
@@ -339,11 +321,9 @@
               "matches": {
                 "type": "array",
                 "items": {
-                  "additionalProperties": false,
                   "type": "object",
                   "properties": {
                     "path": {
-                      "additionalProperties": false,
                       "type": "object",
                       "properties": {
                         "value": {
@@ -357,7 +337,6 @@
                     "headers": {
                       "type": "array",
                       "items": {
-                        "additionalProperties": false,
                         "type": "object",
                         "properties": {
                           "name": {
@@ -373,7 +352,6 @@
                 }
               },
               "redirect": {
-                "additionalProperties": false,
                 "type": "object",
                 "properties": {
                   "path": {
@@ -388,14 +366,12 @@
                 }
               },
               "rewrite": {
-                "additionalProperties": false,
                 "type": "object",
                 "properties": {
                   "hostname": {
                     "type": "string"
                   },
                   "path": {
-                    "additionalProperties": false,
                     "type": "object",
                     "properties": {
                       "name": {
