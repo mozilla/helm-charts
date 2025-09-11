@@ -14,7 +14,7 @@ update_dependencies:
 		helm dependencies update; \
 		popd; \
 	done; \
-	pushd mozcloud-kit/application; \
+	pushd mozcloud-workload/application; \
 	helm dependencies update; \
 	popd
 
