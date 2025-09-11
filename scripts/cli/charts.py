@@ -218,10 +218,24 @@ class ChartGraph:
 
         return filtered_charts, filtered_edges
     
+    def get_roots(self) -> List[str]:
+        # get roots from edges
+        all_children = {child for _, child in self.edges}
+        roots = [name for name in self.charts.keys() if name not in all_children]
+        if not roots:
+            roots = list(self.charts.keys())  # fallback to all charts
+        return roots
+
     def print_graph(self):
-        print("Charts:")
-        for name, info in self.charts.items():
-            print(f'  - {name}: {info}')
-        print("Edges:")
-        for parent, child in sorted(self.edges):
-            print(f'  - {parent} -> {child}')
+        roots = self.get_roots()
+        for root in sorted(roots):
+            children = {child for parent, child in self.edges if parent == root}
+            self.print_subtree(root, children, level=1)
+
+    def print_subtree(self, chart: str, children: Set[str], level: int, is_last: bool = True):
+        prefix = "" if level == 1 else "│   " * (level - 1) + ("└──" if is_last else "├──")
+        print(f"{prefix}{chart}")
+        for child in children:
+            subchildren = {c for p, c in self.edges if p == child}
+            if subchildren:
+                self.print_subtree(child, subchildren, level + 1)
