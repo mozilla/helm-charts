@@ -433,7 +433,6 @@ TCP: tcpHealthCheck
 gatewayRefs:
   - name: {{ include "mozcloud-gateway-lib.config.name" . }}
     section: https
-hostnames: []
 httpToHttpsRedirect: true
 match:
   path:
