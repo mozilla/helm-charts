@@ -117,7 +117,7 @@ workloads:
       # value is 8080.
       #
       # This value should be an integer.
-      port:
+      #port:
 
       # The "resources" section allows you to specify the amount of CPU and
       # memory that your container needs to run. These are equivalent to
@@ -193,7 +193,7 @@ workloads:
         #
         # Use "ingress" for legacy environments that have not yet migrated to
         # Gateway API. Do not use "ingress" for new tenants!
-        api: gateway
+        #api: gateway
 
         # Configure the type of load balancer to use for your host.
         #
@@ -208,28 +208,28 @@ workloads:
         #             automatically configured.
         #
         # The default value is "external".
-        type: external
+        #type: external
 
         # Optionally configure the log sample rate for the load balancer, IAP
         # details, or a custom backend timeout.
-        options:
-          # Configures Identity-Aware Proxy for the service.
-          #iap:
-          #  # You must explicitly enable this feature.
-          #  enabled: false
-          #
-          #  # The OAuth2 client ID.
-          #  #oauth2ClientId:
-          #
-          #  # Name of the Kubernetes secret containing the OAuth2 client secret.
-          #  #oauth2ClientSecret:
-
-          # The sample rate at which HTTP access should be logged. This can be
-          # configured as a float, integer, or string. The default is 10 (10%).
-          #logSampleRate: 10
-
-          # Backend service timeout period in seconds.
-          #timeoutSec: 30
+        #options:
+        #  # Configures Identity-Aware Proxy for the service.
+        #  #iap:
+        #  #  # You must explicitly enable this feature.
+        #  #  enabled: false
+        #  #
+        #  #  # The OAuth2 client ID.
+        #  #  #oauth2ClientId:
+        #  #
+        #  #  # Name of the Kubernetes secret containing the OAuth2 client secret.
+        #  #  #oauth2ClientSecret:
+        #
+        #  # The sample rate at which HTTP access should be logged. This can be
+        #  # configured as a float, integer, or string. The default is 10 (10%).
+        #  #logSampleRate: 10
+        #
+        #  # Backend service timeout period in seconds.
+        #  #timeoutSec: 30
 
     # Configure jobs to run before or after the rest of the deployment.
     #jobs:
