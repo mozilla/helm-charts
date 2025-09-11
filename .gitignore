@@ -1,3 +1,7 @@
 **/charts/
 Chart.lock
 *.tgz
+__pycache__/
+*.pyc
+*.pyo
+.venv/
