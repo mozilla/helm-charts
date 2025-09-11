@@ -1,0 +1,183 @@
+# We have additional features we will want to add in the coming releases.
+#
+# To do list:
+#   - Add support for the OTEL Collector (defaults, optional overrides)
+#   - Add support for Rollout steps (enabling canary deployments through Argo Rollouts)
+#   - Add support for Nimbus/Experimenter sidecars
+#   - Add support for stateful workloads (ie. StatefulSet resources) and
+#     relevant configurations, such as PVC volume names and sizes
+
+# app_code, chart, component_code, and environment should all be defined as
+# global values in the parent Helm chart's values file(s) outside the scope of
+# this Helm chart.
+#
+# For example:
+#
+#   # my-app/values.yaml
+#   global:
+#     mozcloud:
+#       app_code: my-app    # should match app_code in tenant file
+#       chart: my-chart     # the name of the chart
+#       component_code: web # should match component_code in tenant file
+#
+#   # my-app/values-dev.yaml
+#   global:
+#     mozcloud:
+#       environment: dev    # should match .Values.environment
+#
+# These are used to populate labels and metadata in MozCloud charts.
+
+# Name to be used for all resources if not specified at the resource level.
+# This overrides the chart name set in .Values.global.mozcloud.chart but is
+# overridden by names defined at the resource level.
+#nameOverride:
+
+workloads:
+  - name:
+
+    # Additional ConfigMap names, if necessary. These refer to ConfigMap
+    # templates created outside the scope of this Helm chart.
+    #configMaps: []
+
+    container:
+      # Arguments to pass to a container. This can be an array or a string.
+      #args: []
+
+      # A list of optional autoscaling configurations for stateless workloads.
+      #
+      # By default, we will scale pods at 60% CPU utilization, but users can
+      # also configure memory and network metrics, as well thresholds for each.
+      #
+      # Values for "threshold" will always be averages as percentages.
+      #autoscaling:
+      #  metrics:
+      #    - type: cpu
+      #      threshold: 60 # percent
+      #    - type: memory
+      #      threshold: 80 # percent
+      #
+      #    # The "network" type allows us to configure traffic-based
+      #    # autoscaling with Gateway API.
+      #    - type: network
+      #
+      #      # We can configure custom metrics to use with the "network"
+      #      # autoscaling type. The default behavior to scale using the
+      #      # RequestsPerSecond metric.
+      #      #
+      #      # Visit this page for more info:
+      #      # https://cloud.google.com/kubernetes-engine/docs/how-to/horizontal-pod-autoscaling#autoscale-traffic
+      #      #customMetric: "autoscaling.googleapis.com|gclb-capacity-fullness"
+      #
+      #      threshold: 70 # percent
+
+      # The command a container should run as its entrypoint.
+      #command: []
+
+      # A dictionary of environment variables to pass to this container. This
+      # should not include secrets.
+      #
+      # Format:
+      #
+      #   envVars:
+      #     KEY1: VALUE1
+      #     KEY2: VALUE2
+      #envVars: {}
+
+      # A list of external secret names and versions to mount in containers.
+      #
+      # Format:
+      #
+      #   externalSecets:
+      #
+      #     # The secret name should match the name of the secret in Google
+      #     # Secret Manager (GSM).
+      #     - name: external-secret-name
+      #
+      #       # The version of the secret to pull from GSM. The default value
+      #       # is "latest".
+      #       version: latest
+      #externalSecrets: []
+
+      # The image repo, name, and tag to use for the container. The format is:
+      #
+      #   repo/image:tag
+      #
+      # For example:
+      #
+      #   us-docker.pkg.dev/moz-fx-system-prod/system-prod/app:1.0.0
+      #
+      # We recommend you allow Image Updater to automatically manage image tags
+      # for your applications. See the link below for more details:
+      # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1695449473/How+to+Configuring+your+tenant+to+use+ArgoCD
+      image:
+
+      # Optionally configure a custom port for your container. The default
+      # value is 8080.
+      #
+      # This value should be an integer.
+      port:
+
+      # The "resources" section allows you to specify the amount of CPU and
+      # memory that your container needs to run. These are equivalent to
+      # requests values.
+      resources:
+        # CPU can be specified in either of the following formats:
+        #
+        #   Positive integer (eg. "2"):
+        #     - This represents an entire vCPU
+        #
+        #   Millicpu (eg. "200m"):
+        #     - This represents a fraction of a vCPU.
+        #     - For example, "200m" means 0.2 CPU.
+        cpu:
+
+        # Memory can be specified using any of the following suffixes:
+        #
+        #   K (kilobytes), Ki (kibibytes)
+        #   M (megabytes), Mi (mebibytes)
+        #   G (gigabytes), Gi (gibibytes)
+        #
+        # We recommend using Binary (IEC) units, such as Ki, Mi, and Gi.
+        memory:
+      
+      security:
+        gid:
+        uid:
+        runAsRoot:
+      serviceAccount:
+        create: true
+
+    healthCheckEndpoints:
+      application: /__heartbeat__
+      metrics: /metrics
+      nginx: /__lbheartbeat__
+    hosts:
+      - domain: example.com
+        type: internal/external
+        options:
+          logSampleRate:
+          iap:
+          backendTimeout:
+    jobs:
+      preDeployment:
+        - image:
+          command: []
+          args: []
+          envVars:
+            useAppEnvVars: true # default
+            customVars: # merges with app environment variables
+              KEY1: OVERRIDE1
+              KEY3: VALUE3
+          externalSecrets:
+            useAppExternalSecrest: true
+            customExternalSecrets: []
+      postDeployment:
+        - image:
+          command: []
+          args: []
+          envVars: []
+    nginx:
+      enabled: true
+      image:
+      customConfigFile: nginx.conf
+
