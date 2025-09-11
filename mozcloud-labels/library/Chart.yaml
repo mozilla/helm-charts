@@ -20,4 +20,4 @@ version: 0.3.2
 dependencies:
   - name: mozcloud-shared-data-lib
     version: 0.1.3
-    repository: file://../../mozcloud-shared-data/library
+    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
