@@ -1,15 +1,21 @@
 ---
 name: auto push and tag helm charts
 on:
-  pull_request:
-    branches:
-      - main
-
-    types:
-      - opened
-      - closed
-      - synchronize
-      - reopened
+  workflow_dispatch:
+    inputs:
+      charts:
+        description: Helm charts to build (comma-separated)
+        required: true
+        type: string
+      type:
+        description: The type of chart (application, library, both)
+        required: true
+        default: both
+        type: choice
+        options:
+          - application
+          - library
+          - both
 
 env:
   GAR_PROJECT_ID: moz-fx-platform-artifacts

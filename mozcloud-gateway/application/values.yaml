@@ -251,10 +251,10 @@ httpRoute:
           # chart.
           section: https
 
-      # Hostnames to match against. Hostnames are matched before any other
+      # Optional: Hostnames to match against. Hostnames are matched before any other
       # matches (path, headers) occur.
-      hostnames:
-        - chart.example.local
+      # hostnames:
+      # - chart.example.local
 
       # If enabled, create an HTTP-to-HTTPS redirect. This is enabled by
       # default.

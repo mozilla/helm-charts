@@ -19,10 +19,12 @@ spec:
       {{- end }}
       sectionName: {{ $gateway_ref.section }}
     {{- end }}
+  {{- if $http_route.hostnames }}
   hostnames:
     {{- range $hostname := $http_route.hostnames }}
     - {{ $hostname }}
     {{- end }}
+  {{- end }}
   rules:
     {{- range $rule := $http_route.rules }}
     - backendRefs:
@@ -107,10 +109,12 @@ spec:
       {{- end }}
       sectionName: http
     {{- end }}
+  {{- if $http_route.hostnames }}
   hostnames:
     {{- range $hostname := $http_route.hostnames }}
     - {{ $hostname }}
     {{- end }}
+  {{- end }}
   rules:
     - filters:
       - type: RequestRedirect

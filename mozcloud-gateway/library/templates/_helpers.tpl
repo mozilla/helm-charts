@@ -274,7 +274,7 @@ HTTPRoute template helpers
   {{- $label_params := dict "labels" (default (dict) $http_route_config.labels) -}}
   {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
   {{- $_ = set $http_route_config "labels" $labels -}}
-  {{- /* 
+  {{- /*
   Set defaults for matches, redirects and rewrites, if defined.
   We will need to recreate the rule list as some items in child lists have
   optional values and defaults.
@@ -433,8 +433,6 @@ TCP: tcpHealthCheck
 gatewayRefs:
   - name: {{ include "mozcloud-gateway-lib.config.name" . }}
     section: https
-hostnames:
-  - chart.example.local
 httpToHttpsRedirect: true
 match:
   path:
