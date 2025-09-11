@@ -42,7 +42,6 @@ def charts(
     if ctx.invoked_subcommand is not None:
         ctx.obj = ctx.params
         return
-    click.echo(f"Scanning for Helm charts in: {roots}")
     ChartGraph(
         roots=roots, internal_only=internal_only, root_chart=root_chart
     ).print_graph()
