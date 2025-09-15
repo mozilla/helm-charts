@@ -1,0 +1,116 @@
+# Ultra light configuration that will deploy a containerized workload and
+# necessary supporting Gateway API resources for ingress.
+workloads:
+  - name: my-app
+    container:
+      image: repo/image:tag
+      resources:
+        cpu: 200m
+        memory: 256Mi
+    hosts:
+      - domain: example.com
+
+# This is a common (but still light) configuration that will deploy a
+# containerized workload with environment variables and custom CPU and memory
+# resource allocations. Additionally, this creates an internal endpoint with
+# Gateway API and creates a database migration job that runs before other
+# resources are deployed within an Argo CD deployment.
+workloads:
+  - name: app1
+    container:
+      args: ["param1"]
+      command: ["/path/to/binary"]
+      envVars:
+        KEY1: VALUE1
+        KEY2: VALUE2
+      image: repo/image1:1.0.0
+      resources:
+        cpu: 1
+        memory: 1Gi
+    hosts:
+      - domain: app1.example.com
+      - domain: app1.internal.example.com
+        type: internal
+    jobs:
+      preDeployment:
+        - command: ["/path/to/job/binary"]
+          args: ["migrate"]
+
+
+# This is a heavy configuration which includes many customization options. This
+# is not likely to be a common use case, but it shows how we can introduce
+# additional features, such as network-based autoscaling, IAP configuration,
+# a post-deployment job, and custom NGINX configurations.
+workloads:
+  - name: app1
+    containers:
+      args: ["arg1", "arg2"]
+      autoscaling:
+        metrics:
+          - type: cpu
+            threshold: 40
+          - type: network
+            customMetric: "autoscaling.googleapis.com|gclb-capacity-fullness"
+            threshold: 75
+      command: ["app1.py"]
+      envVars:
+        KEY1: VALUE1
+        KEY2: VALUE2
+      externalsecrets:
+        - name: app1-secrets-gsm
+      image: repo/image1:1.0.0
+      resources:
+        cpu: 1
+        memory: 1Gi
+      serviceAccount:
+        name: app1-sa
+        create: true
+        gcpServiceAccount:
+          app1-sa
+          projectId: moz-fx-system-nonprod
+    hosts:
+      - domain: app1.example.com
+        options:
+          iap:
+            enabled: true
+            oauth2ClientId: myclientid
+            oauth2ClientSecret: my-oauth-client-k8s-secret
+          logSampleRate: 5 # percent
+          timeoutSec: 60
+      - domain: app1.internal.example.com
+        type: internal
+    jobs:
+      preDeployment:
+        - command: ["/path/to/job/binary"]
+          args: ["migration", "start"]
+          envVars:
+            useAppEnvVars: true
+            customVars: # merges with app env vars
+              KEY1: OVERRIDE_VALUE_1
+              KEY3: VALUE3
+          externalsecrets:
+            useAppExternalSecrets: true
+            customExternalSecrets:
+              - name: custom-migration-job-secret-gsm
+                version: 1.0.0
+          serviceAccount:
+            useAppServiceAccount: true
+      postDeployment:
+        - command: ["/path/to/job/binary"]
+          args: ["migration", "stop"] 
+          envVars:
+            useAppEnvVars: true
+            customVars: # merges with app env vars
+              KEY1: OVERRIDE_VALUE_1
+              KEY3: VALUE3
+          externalsecrets:
+            useAppExternalSecrets: true
+            customExternalSecrets:
+              - name: custom-migration-job-secret-gsm
+                version: 1.0.0
+          serviceAccount:
+            useAppServiceAccount: true
+    nginx:
+      enabled: true
+      image: repo/my-custom-nginx-image:2.3.4
+      configMap: my-nginx-configmap # This would be created outside of this Helm chart
