@@ -1,0 +1,395 @@
+# See values.yaml.example for example configurations.
+#
+# We have additional features we will want to add in the coming releases.
+#
+# To do list:
+#   - Add support for the OTEL Collector (defaults, optional overrides)
+#   - Add support for Rollout steps (enabling canary deployments through Argo Rollouts)
+#   - Add support for Nimbus/Experimenter sidecars
+#   - Add support for stateful workloads (ie. StatefulSet resources) and
+#     relevant configurations, such as PVC volume names and sizes
+
+# app_code, chart, component_code, and environment should all be defined as
+# global values in the parent Helm chart's values file(s) outside the scope of
+# this Helm chart.
+#
+# For example:
+#
+#   # my-app/values.yaml
+#   global:
+#     mozcloud:
+#       app_code: my-app    # should match app_code in tenant file
+#       chart: my-chart     # the name of the chart
+#       component_code: web # should match component_code in tenant file
+#
+#   # my-app/values-dev.yaml
+#   global:
+#     mozcloud:
+#       environment: dev    # should match .Values.environment
+#
+# These are used to populate labels and metadata in MozCloud charts.
+
+# Name to be used for all resources if not specified at the resource level.
+# This overrides the chart name set in .Values.global.mozcloud.chart but is
+# overridden by names defined at the resource level.
+#nameOverride:
+
+workloads:
+  - name:
+
+    # Additional ConfigMap names, if necessary. These refer to ConfigMap
+    # templates created outside the scope of this Helm chart.
+    #configMaps: []
+
+    container:
+      # Arguments to pass to a container. This can be an array or a string.
+      #args: []
+
+      # A list of optional autoscaling configurations for stateless workloads.
+      #
+      # By default, we will scale pods at 60% CPU utilization, but users can
+      # also configure memory and network metrics, as well thresholds for each.
+      #
+      # Values for "threshold" will always be averages as percentages.
+      #autoscaling:
+      #  metrics:
+      #    - type: cpu
+      #      threshold: 60 # percent
+      #    - type: memory
+      #      threshold: 80 # percent
+      #
+      #    # The "network" type allows us to configure traffic-based
+      #    # autoscaling with Gateway API.
+      #    - type: network
+      #
+      #      # We can configure custom metrics to use with the "network"
+      #      # autoscaling type. The default behavior to scale using the
+      #      # RequestsPerSecond metric.
+      #      #
+      #      # Visit this page for more info:
+      #      # https://cloud.google.com/kubernetes-engine/docs/how-to/horizontal-pod-autoscaling#autoscale-traffic
+      #      #customMetric: "autoscaling.googleapis.com|gclb-capacity-fullness"
+      #
+      #      threshold: 70 # percent
+
+      # The command a container should run as its entrypoint.
+      #command: []
+
+      # A dictionary of environment variables to pass to this container. This
+      # should not include secrets.
+      #
+      # Format:
+      #
+      #   envVars:
+      #     KEY1: VALUE1
+      #     KEY2: VALUE2
+      #envVars: {}
+
+      # A list of external secret names and versions to mount in containers.
+      #
+      # Format:
+      #
+      #   externalSecets:
+      #
+      #     # The secret name should match the name of the secret in Google
+      #     # Secret Manager (GSM).
+      #     - name: external-secret-name
+      #
+      #       # The version of the secret to pull from GSM. The default value
+      #       # is "latest".
+      #       version: latest
+      #externalSecrets: []
+
+      # The image repo, name, and tag to use for the container. The format is:
+      #
+      #   repo/image:tag
+      #
+      # For example:
+      #
+      #   us-docker.pkg.dev/moz-fx-system-prod/system-prod/app:1.0.0
+      #
+      # We recommend you allow Image Updater to automatically manage image tags
+      # for your applications. See the link below for more details:
+      # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1695449473/How+to+Configuring+your+tenant+to+use+ArgoCD
+      image:
+
+      # Optionally configure a custom port for your container. The default
+      # value is 8080.
+      #
+      # This value should be an integer.
+      #port:
+
+      # The "resources" section allows you to specify the amount of CPU and
+      # memory that your container needs to run. These are equivalent to
+      # requests values.
+      resources:
+        # CPU can be specified in either of the following formats:
+        #
+        #   Positive integer (eg. "2"):
+        #     - This represents an entire vCPU
+        #
+        #   Millicpu (eg. "200m"):
+        #     - This represents a fraction of a vCPU.
+        #     - For example, "200m" means 0.2 CPU.
+        cpu:
+
+        # Memory can be specified using any of the following suffixes:
+        #
+        #   K (kilobytes), Ki (kibibytes)
+        #   M (megabytes), Mi (mebibytes)
+        #   G (gigabytes), Gi (gibibytes)
+        #
+        # We recommend using Binary (IEC) units, such as Ki, Mi, and Gi.
+        memory:
+
+      # Optionally override some securityContext settings for the container.
+      # This section should not be configured unless the user knows what they
+      # are doing. Most tenants will not need to configure any of this.
+      #security:
+      #  # The 'uid' and 'gid' values to use for the container, if non-default.
+      #  # The default value for both is 10001.
+      #  uid: 10001
+      #  gid: 10001
+      #
+      #  # By default, no containers should run as root. The few exceptions to
+      #  # this rule can configure this by setting "runAsRoot" to "true".
+      #  #
+      #  # Note: The webservices-high and dataservices-high Kubernetes clusters
+      #  # will not allow you to deploy containers using the root user.
+      #  #runAsRoot: false
+
+      # Optionally use a custom service account for the container.
+      #serviceAccount:
+      #  name:
+
+      #  # If true, the service account will be created.
+      #  create: true
+
+      #  # # If this service account should map to a service account in GCP, enter
+      #  # # the details here.
+      #  #gcpServiceAccount:
+      #  #  # The name of the GCP service account (everything before "@" in the
+      #  #  # email address).
+      #  #  name:
+
+      #  #  # GCP project ID.
+      #  #  projectId:
+
+    # Optionally specify health check endpoints for the application, metrics
+    # collection, and NGINX. The default values are listed next each of the
+    # options below.
+    #healthCheckEndpoints:
+    #  application: /__heartbeat__
+    #  metrics: /metrics
+    #  nginx: /__lbheartbeat__
+
+    # Define host details in this section.
+    hosts:
+      - domain: example.com
+
+        # Configure the API to use when building network resources. The default
+        # is "gateway", which will build Gateway API resources. This is the
+        # preferred API.
+        #
+        # Use "ingress" for legacy environments that have not yet migrated to
+        # Gateway API. Do not use "ingress" for new tenants!
+        #api: gateway
+
+        # Configure the type of load balancer to use for your host.
+        #
+        # Options include:
+        #
+        #   internal: An internal load balancer. This is only available when
+        #             "api" is set to "gateway".
+        #
+        #   external: An external/public facing load balancer. This can be used
+        #             for both "gateway" and "ingress" APIs. If specified, TLS
+        #             certificates and an HTTP to HTTPS redirect will be
+        #             automatically configured.
+        #
+        # The default value is "external".
+        #type: external
+
+        # Optionally configure the log sample rate for the load balancer, IAP
+        # details, or a custom backend timeout.
+        #options:
+        #  # Configures Identity-Aware Proxy for the service.
+        #  #iap:
+        #  #  # You must explicitly enable this feature.
+        #  #  enabled: false
+        #  #
+        #  #  # The OAuth2 client ID.
+        #  #  #oauth2ClientId:
+        #  #
+        #  #  # Name of the Kubernetes secret containing the OAuth2 client secret.
+        #  #  #oauth2ClientSecret:
+        #
+        #  # The sample rate at which HTTP access should be logged. This can be
+        #  # configured as a float, integer, or string. The default is 10 (10%).
+        #  #logSampleRate: 10
+        #
+        #  # Backend service timeout period in seconds.
+        #  #timeoutSec: 30
+
+    # Configure jobs to run before or after the rest of the deployment.
+    #jobs:
+    #  preDeployment:
+    #    # See image, command, args, and resources configurations for containers
+    #    # as a reference.
+    #    - image:
+    #      command: []
+    #      args: []
+    #      resources:
+    #        cpu:
+    #        memory:
+    #
+    #      # Optionally configure environment variables for your job. By
+    #      # default, the environment variables used for your app container
+    #      # will be used for your job.
+    #      #envVars:
+    #      #  # Configure whether or not to use the environment variables used
+    #      #  # for your app container. Default is "true".
+    #      #  useAppEnvVars: true
+    #
+    #      #  # Define custom environment variables. If any of these are
+    #      #  # duplicates of the app container's environment variables, the
+    #      #  # values set here will override those from your app container's
+    #      #  # environment variables.
+    #      #  customVars: # merges with app environment variables
+    #      #    KEY1: OVERRIDE1
+    #      #    KEY3: VALUE3
+    #
+    #      # Optionally configure external secrets for your job. By default,
+    #      # the external secrets used for your app container will be used for
+    #      # your job.
+    #      #externalSecrets:
+    #      #  # Configure whether or not to use the external secrets used for
+    #      #  # your app container. Default is "true".
+    #      #  useAppExternalSecrets: true
+    #      #
+    #      #  # Define custom external secrets.
+    #      #  customExternalSecrets:
+    #      #    # The secret name should match the name of the secret in Google
+    #      #    # Secret Manager (GSM).
+    #      #    - name:
+    #      #
+    #      #      # The version of the secret to pull from GSM. The default value
+    #      #      # is "latest".
+    #      #      version: latest
+    #
+    #      # Optionally use a custom service account for the container.
+    #      #serviceAccount:
+    #      #
+    #      #  # If "true", the same service account used for the app pod will
+    #      #  # be used for the job pod. Set to "false" to not use any service
+    #      #  # account or configure a custom one.
+    #      #  useAppServiceAccount: true
+    #      #
+    #      #  # Optionally configure a custom service account. This section is
+    #      #  # only applicable if "useAppServiceAccount" is set to "false".
+    #      #  #customServiceAccount:
+    #      #  #  name:
+    #      #  #
+    #      #  #  # If true, the service account will be created.
+    #      #  #  create: true
+    #      #  #
+    #      #  #  # # If this service account should map to a service account in GCP, enter
+    #      #  #  # # the details here.
+    #      #  #  #gcpServiceAccount:
+    #      #  #  #  # The name of the GCP service account (everything before "@" in the
+    #      #  #  #  # email address).
+    #      #  #  #  name:
+    #      #  #  #
+    #      #  #  #  # GCP project ID.
+    #      #  #  #  projectId:
+    #
+    #  postDeployment:
+    #    # See image, command, args, and resources configurations for containers
+    #    # as a reference.
+    #    - image:
+    #      command: []
+    #      args: []
+    #      resources:
+    #        cpu:
+    #        memory:
+    #
+    #      # Optionally configure environment variables for your job. By
+    #      # default, the environment variables used for your app container
+    #      # will be used for your job.
+    #      #envVars:
+    #      #  # Configure whether or not to use the environment variables used
+    #      #  # for your app container. Default is "true".
+    #      #  useAppEnvVars: true
+    #
+    #      #  # Define custom environment variables. If any of these are
+    #      #  # duplicates of the app container's environment variables, the
+    #      #  # values set here will override those from your app container's
+    #      #  # environment variables.
+    #      #  customVars: # merges with app environment variables
+    #      #    KEY1: OVERRIDE1
+    #      #    KEY3: VALUE3
+    #
+    #      # Optionally configure external secrets for your job. By default,
+    #      # the external secrets used for your app container will be used for
+    #      # your job.
+    #      #externalSecrets:
+    #      #  # Configure whether or not to use the external secrets used for
+    #      #  # your app container. Default is "true".
+    #      #  useAppExternalSecrets: true
+    #      #
+    #      #  # Define custom external secrets.
+    #      #  customExternalSecrets:
+    #      #    # The secret name should match the name of the secret in Google
+    #      #    # Secret Manager (GSM).
+    #      #    - name:
+    #      #
+    #      #      # The version of the secret to pull from GSM. The default value
+    #      #      # is "latest".
+    #      #      version: latest
+    #
+    #      # Optionally use a custom service account for the container.
+    #      #serviceAccount:
+    #      #
+    #      #  # If "true", the same service account used for the app pod will
+    #      #  # be used for the job pod. Set to "false" to not use any service
+    #      #  # account or configure a custom one.
+    #      #  useAppServiceAccount: true
+    #      #
+    #      #  # Optionally configure a custom service account. This section is
+    #      #  # only applicable if "useAppServiceAccount" is set to "false".
+    #      #  #customServiceAccount:
+    #      #  #  name:
+    #      #  #
+    #      #  #  # If true, the service account will be created.
+    #      #  #  create: true
+    #      #  #
+    #      #  #  # # If this service account should map to a service account in GCP, enter
+    #      #  #  # # the details here.
+    #      #  #  #gcpServiceAccount:
+    #      #  #  #  # The name of the GCP service account (everything before "@" in the
+    #      #  #  #  # email address).
+    #      #  #  #  name:
+    #      #  #  #
+    #      #  #  #  # GCP project ID.
+    #      #  #  #  projectId:
+
+    # Optionally configure NGINX.
+    #nginx:
+    #  # NGINX is enabled by default, but can be disabled if set to "false".
+    #  enabled: true
+
+    #  # If you are using a custom NGINX image such as openresty-oidc, specify
+    #  # that here.
+    #  #
+    #  # The format is:
+    #  #
+    #  #   repo/image:tag
+    #  #
+    #  # For example:
+    #  #
+    #  #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/openresty-oidc:1.21.4.1-0-alpine
+    #  image:
+
+    #  # Optionally define an NGINX configuration to use for nginx.conf. This
+    #  # should refer to a template created outside the scope of this Helm chart.
+    #  #configMap:

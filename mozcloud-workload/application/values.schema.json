@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "mozcloud-kit",
-  "description": "mozcloud-kit values",
+  "title": "mozcloud-workload",
+  "description": "mozcloud-workload values",
   "type": "object",
   "properties": {
     "global": {
