@@ -5,7 +5,7 @@ import os
 from typing import Dict, List, Set
 
 import click
-from cli.charts import ChartGraph
+from .charts import ChartGraph
 
 
 class MermaidDiagram:

@@ -1,13 +1,13 @@
-# CLI tooling for managing helm charts and dependencies
+# ChartKit - CLI tooling for managing Helm charts and dependencies
 
 Requires `uv` to run.
 
 ```sh
-$ uv run ./scripts/cli.py --help
+$ uv run chartkit --help
 
-Usage: cli.py [OPTIONS] COMMAND [ARGS]...
+Usage: chartkit [OPTIONS] COMMAND [ARGS]...
 
-  CLI tool for helm-charts scripts.
+  ChartKit: CLI tooling for Helm chart dependencies and utilities.
 
 Options:
   --help  Show this message and exit.
@@ -20,9 +20,9 @@ Commands:
 ## Charts Command
 Collects and generates a depenency graph for the given root paths.
 ```sh
-$ uv run ./scripts/cli.py charts --help
+$ uv run chartkit charts --help
 
-Usage: cli.py charts [OPTIONS] COMMAND [ARGS]...
+Usage: chartkit charts [OPTIONS] COMMAND [ARGS]...
 
   Prints Helm chart dependencies.
 
@@ -41,14 +41,14 @@ Commands:
 
 #### View the depency tree of a single chart
 ```sh
-uv run ./scripts/cli.py charts -r ./ -c mozcloud-kit
+uv run chartkit charts -r ./ -c mozcloud-kit
 ```
 
 ## Mermaid Chart subcommand
 Generates mermaid charts of the previously selected chart dependency graph
 ```sh
-$ uv run ./scripts/cli.py charts mermaid --help
-Usage: cli.py charts mermaid [OPTIONS]
+$ uv run chartkit charts mermaid --help
+Usage: chartkit charts mermaid [OPTIONS]
 
   Generates a diagram of Helm chart dependencies.
 
@@ -61,10 +61,10 @@ Options:
 
 #### Generate mermaid chart to stdout
 ```sh
-uv run ./scripts/cli.py charts -r ./ -c mozcloud-kit mermaid
+uv run chartkit charts -r ./ -c mozcloud-kit mermaid
 ```
 
 #### Generate mermaid chart svg
 ```sh
-uv run ./scripts/cli.py charts -r ./ -c mozcloud-kit mermaid --svg-output mozcloud-kit.svg
+uv run chartkit charts -r ./ -c mozcloud-kit mermaid --svg-output mozcloud-kit.svg
 ```

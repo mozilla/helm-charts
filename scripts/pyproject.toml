@@ -1,5 +1,5 @@
 [project]
-name = "scripts"
+name = "chartkit"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -8,3 +8,10 @@ dependencies = [
     "click>=8.2.1",
     "pyaml>=25.7.0",
 ]
+    
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+chartkit = "chartkit.cli:cli"

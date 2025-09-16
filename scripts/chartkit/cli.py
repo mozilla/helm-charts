@@ -1,13 +1,13 @@
 from typing import Optional
 import click
 
-from cli.charts import ChartGraph
-from cli.mermaid import MermaidDiagram
+from .charts import ChartGraph
+from .mermaid import MermaidDiagram
 
 
 @click.group()
 def cli():
-    """CLI tool for helm-charts scripts."""
+    """ChartKit: CLI tooling for Helm chart dependencies and utilities."""
     pass
 
 
