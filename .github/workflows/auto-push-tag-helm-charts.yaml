@@ -1,24 +1,19 @@
 ---
 name: auto push and tag helm charts
 on:
-  workflow_dispatch:
-    inputs:
-      charts:
-        description: Helm charts to build (comma-separated)
-        required: true
-        type: string
-      type:
-        description: The type of chart (application, library, both)
-        required: true
-        default: both
-        type: choice
-        options:
-          - application
-          - library
-          - both
+  pull_request:
+    branches:
+      - main
+
+    types:
+      - opened
+      - closed
+      - synchronize
+      - reopened
 
 env:
   GAR_PROJECT_ID: moz-fx-platform-artifacts
+  HELM_REGISTRY: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 
 jobs:
   detect:
@@ -116,12 +111,10 @@ jobs:
       - name: package and push
         id: package_and_push
         env:
-          CHART_NAME: ${{ matrix.name }}
-          CHART_TYPE: ${{ matrix.type }}
+          CHART_PATH: "${{ matrix.name }}/${{ matrix.type }}"
+          HELM_REGISTRY: ${{ env.HELM_REGISTRY }}
 
         run: |-
-          CHART_PATH=${CHART_NAME}/${CHART_TYPE}
-
           pushd ${CHART_PATH}
 
           helm dependency update
@@ -133,11 +126,18 @@ jobs:
           while read PACKAGE; do
             CHART_TAG=${PACKAGE%.tgz}
             CHART_VERSION=${CHART_TAG##*-}
+            CHART_NAME=${CHART_TAG%-*}
 
-            echo "CHART_VERSION=${CHART_VERSION}" |tee -a $GITHUB_OUTPUT
             echo "CHART_TAG=${CHART_TAG}" |tee -a $GITHUB_OUTPUT
 
-            helm push ${PACKAGE} oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+            if ! OUTPUT=$(helm show chart ${HELM_REGISTRY}/${CHART_NAME} --version ${CHART_VERSION}); then
+              helm push ${PACKAGE} ${HELM_REGISTRY}
+
+            else
+              echo -e "\033[1;31m[ERROR]\033[0m chart \"${CHART_NAME}\" version ${CHART_VERSION} already present in registry, won't push again." >&2
+              exit 1
+
+            fi
 
           done <<< $(ls -rt *.tgz)
 
