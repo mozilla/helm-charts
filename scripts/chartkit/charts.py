@@ -13,7 +13,7 @@ class ChartGraph:
 
     def __init__(
         self,
-        roots: List[str],
+        roots: List[str] = ["."],
         internal_only: bool = False,
         root_chart: Optional[str] = None,
     ):
@@ -239,3 +239,7 @@ class ChartGraph:
             subchildren = {c for p, c in self.edges if p == child}
             if subchildren:
                 self.print_subtree(child, subchildren, level + 1)
+
+    def find_parents(self, chart_name: str) -> Set[str]:
+        """Find all parent charts that depend on the given chart."""
+        return {parent for parent, child in self.edges if child == chart_name}

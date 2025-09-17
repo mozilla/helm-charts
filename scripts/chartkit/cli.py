@@ -4,14 +4,7 @@ import click
 from .charts import ChartGraph
 from .mermaid import MermaidDiagram
 
-
 @click.group()
-def cli():
-    """ChartKit: CLI tooling for Helm chart dependencies and utilities."""
-    pass
-
-
-@cli.group(invoke_without_command=True)
 @click.option(
     "--roots",
     "-r",
@@ -32,22 +25,41 @@ def cli():
     help="If specified, only show the dependency tree for this root chart.",
 )
 @click.pass_context
+def cli(ctx: click.Context, roots: list[str], internal_only: bool, root_chart: Optional[str]):
+    """ChartKit: CLI tooling for Helm chart dependencies and utilities."""
+    click.echo(f"Scanning roots: {', '.join(roots)}")
+    ctx.obj = ChartGraph(
+        roots=roots, internal_only=internal_only, root_chart=root_chart
+    )
+
+
+@cli.command()
+@click.pass_obj
 def charts(
-    ctx: click.Context,
-    roots: list[str] = ["."],
-    internal_only: bool = False,
-    root_chart: Optional[str] = None,
+    graph: ChartGraph,
 ):
     """Prints Helm chart dependencies."""
-    if ctx.invoked_subcommand is not None:
-        ctx.obj = ctx.params
-        return
-    ChartGraph(
-        roots=roots, internal_only=internal_only, root_chart=root_chart
-    ).print_graph()
+    graph.print_graph()
 
+@cli.command()
+@click.option(
+    "--chart",
+    "-c",
+    required=True,
+    help="Chart name to find parents for.",
+)
+@click.pass_obj
+def chart_parents(graph: ChartGraph, chart: str):
+    """Prints Helm chart dependencies."""
+    def print_parents(chart: str, level: int = 0):
+        parents = graph.find_parents(chart)
+        prefix = "    " * level
+        for parent in sorted(parents):
+            click.echo(f"{prefix}{parent}")
+            print_parents(parent, level + 1)
+    print_parents(chart)
 
-@charts.command()
+@cli.command()
 @click.option(
     "--include-attrs",
     is_flag=True,
@@ -64,20 +76,15 @@ def charts(
     default=None,
     help="Output file for the diagram.",
 )
-@click.pass_context
+@click.pass_obj
 def mermaid(
-    ctx: click.Context,
+    graph: ChartGraph,
     include_attrs: bool = False,
     output: Optional[str] = None,
     svg_output: Optional[str] = None,
 ):
     """Generates a diagram of Helm chart dependencies."""
-    chart_graph = ChartGraph(
-        roots=ctx.obj["roots"],
-        internal_only=ctx.obj["internal_only"],
-        root_chart=ctx.obj["root_chart"],
-    )
-    diagram = MermaidDiagram(chart_graph, include_attrs)
+    diagram = MermaidDiagram(graph, include_attrs)
     if output:
         diagram.write_mermaid_to_file(output)
 
