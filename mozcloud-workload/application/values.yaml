@@ -35,8 +35,12 @@
 #nameOverride:
 
 workloads:
-  - name:
-
+  # The name of your workload and all related components. "mozcloud-workload"
+  # is the default if no names are specified.
+  #
+  # Each workload should be specified in this dictionary format, where the key
+  # is the name of the workload and the values are the configurations.
+  mozcloud-workload:
     # Additional ConfigMap names, if necessary. These refer to ConfigMap
     # templates created outside the scope of this Helm chart.
     #configMaps: []

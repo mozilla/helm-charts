@@ -44,19 +44,11 @@ Common labels
 Template helpers
 */}}
 {{- define "mozcloud-job-lib.config.common" -}}
-{{- $name_override := default "" .nameOverride -}}
 {{- $output := dict -}}
-{{- /* Use name helper function to populate name using rules hierarchy */ -}}
-{{- $config := .config -}}
-{{- if $name_override -}}
-  {{- $_ := set $config "nameOverride" $name_override -}}
-{{- end -}}
-{{- $name := include "mozcloud-job-lib.config.name" $config -}}
-{{- $_ := set $output "name" $name -}}
 {{- /* Generate labels */ -}}
 {{- $label_params := mergeOverwrite .context (dict "labels" .labels) -}}
 {{- $labels := include "mozcloud-job-lib.labels" $label_params | fromYaml -}}
-{{- $_ = set $output "labels" $labels -}}
+{{- $_ := set $output "labels" $labels -}}
 {{- /* Return output */ -}}
 {{ $output | toYaml }}
 {{- end -}}
@@ -90,10 +82,14 @@ CronJob template helpers
 {{- $cron_jobs := .cronJobConfig.cronJobs -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
-{{- range $cron_job := $cron_jobs -}}
+{{- range $name, $cron_job := $cron_jobs -}}
   {{- $cron_job_defaults := include "mozcloud-job-lib.defaults.cronJob.config" . | fromYaml -}}
   {{- $cron_job_config := mergeOverwrite $cron_job_defaults $cron_job -}}
-  {{- /* Configure name and labels */ -}}
+  {{- if $name_override -}}
+    {{- $name = $name_override -}}
+  {{- end -}}
+  {{- $_ := set $cron_job_config "name" $name -}}
+  {{- /* Configure labels */ -}}
   {{- $labels := default (dict) $cron_job_config.labels -}}
   {{- $params := dict "config" $cron_job_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-job-lib.config.common" $params | fromYaml -}}
@@ -104,12 +100,12 @@ CronJob template helpers
   {{- /* Configure pod securityContext */ -}}
   {{- $pod_security_context_params := dict -}}
   {{- if ($job_config.securityContext).user -}}
-    {{- $_ := set $pod_security_context_params "user" $job_config.securityContext.user -}}
+    {{- $_ = set $pod_security_context_params "user" $job_config.securityContext.user -}}
   {{- end -}}
   {{- if ($job_config.securityContext).group -}}
-    {{- $_ := set $pod_security_context_params "group" $job_config.securityContext.group -}}
+    {{- $_ = set $pod_security_context_params "group" $job_config.securityContext.group -}}
   {{- end -}}
-  {{- $_ := set $job_config "securityContext" (include "mozcloud-workload-core-lib.pod.securityContext" $pod_security_context_params | fromYaml) -}}
+  {{- $_ = set $job_config "securityContext" (include "mozcloud-workload-core-lib.pod.securityContext" $pod_security_context_params | fromYaml) -}}
   {{- $_ = set $cron_job_config "jobConfig" $job_config -}}
   {{- /*
   Configure default tag and container settings.
@@ -121,19 +117,19 @@ CronJob template helpers
     {{- $container_config := mergeOverwrite $container_defaults $container -}}
     {{- $resource_params := $container_config.resources -}}
     {{- $resources := include "mozcloud-workload-core-lib.pod.container.resources" $resource_params | fromYaml -}}
-    {{- $_ := set $container_config "resources" $resources -}}
+    {{- $_ = set $container_config "resources" $resources -}}
     {{/* Configure container securityContext */ -}}
     {{- $container_security_context_params := dict -}}
     {{- if ($container_config.securityContext).user -}}
-      {{- $_ := set $container_security_context_params "user" $container_config.securityContext.user -}}
+      {{- $_ = set $container_security_context_params "user" $container_config.securityContext.user -}}
     {{- end -}}
     {{- if ($container_config.securityContext).group -}}
-      {{- $_ := set $container_security_context_params "group" $container_config.securityContext.group -}}
+      {{- $_ = set $container_security_context_params "group" $container_config.securityContext.group -}}
     {{- end -}}
     {{- $_ = set $container_config "securityContext" (include "mozcloud-workload-core-lib.pod.container.securityContext" $container_security_context_params | fromYaml) -}}
     {{- $container_output = append $container_output $container_config -}}
   {{- end -}}
-  {{- $_ := set $cron_job_config "containers" $container_output -}}
+  {{- $_ = set $cron_job_config "containers" $container_output -}}
   {{- $output = append $output $cron_job_config -}}
 {{- end -}}
 {{- $cron_jobs = dict "cronJobs" $output -}}
@@ -147,10 +143,14 @@ Job template helpers
 {{- $jobs := .jobConfig.jobs -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
-{{- range $job := $jobs -}}
+{{- range $name, $job := $jobs -}}
   {{- $defaults := include "mozcloud-job-lib.defaults.job.config" . | fromYaml -}}
   {{- $job_config := mergeOverwrite $defaults $job -}}
-  {{- /* Configure name and labels */ -}}
+  {{- if $name_override -}}
+    {{- $name = $name_override -}}
+  {{- end -}}
+  {{- $_ := set $job_config "name" $name -}}
+  {{- /* Configure labels */ -}}
   {{- $labels := default (dict) $job_config.labels -}}
   {{- $params := dict "config" $job_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-job-lib.config.common" $params | fromYaml -}}
@@ -158,12 +158,12 @@ Job template helpers
   {{- /* Configure pod securityContext */ -}}
   {{- $pod_security_context_params := dict -}}
   {{- if ($job_config.config.securityContext).user -}}
-    {{- $_ := set $pod_security_context_params "user" $job_config.config.securityContext.user -}}
+    {{- $_ = set $pod_security_context_params "user" $job_config.config.securityContext.user -}}
   {{- end -}}
   {{- if ($job_config.config.securityContext).group -}}
-    {{- $_ := set $pod_security_context_params "group" $job_config.config.securityContext.group -}}
+    {{- $_ = set $pod_security_context_params "group" $job_config.config.securityContext.group -}}
   {{- end -}}
-  {{- $_ := set $job_config.config "securityContext" (include "mozcloud-workload-core-lib.pod.securityContext" $pod_security_context_params | fromYaml) -}}
+  {{- $_ = set $job_config.config "securityContext" (include "mozcloud-workload-core-lib.pod.securityContext" $pod_security_context_params | fromYaml) -}}
   {{- /*
   Configure default tag and container settings.
   */ -}}
@@ -174,19 +174,19 @@ Job template helpers
     {{- $container_config := mergeOverwrite $container_defaults $container -}}
     {{- $resource_params := $container_config.resources -}}
     {{- $resources := include "mozcloud-workload-core-lib.pod.container.resources" $resource_params | fromYaml -}}
-    {{- $_ := set $container_config "resources" $resources -}}
+    {{- $_ = set $container_config "resources" $resources -}}
     {{/* Configure container securityContext */ -}}
     {{- $container_security_context_params := dict -}}
     {{- if ($container_config.securityContext).user -}}
-      {{- $_ := set $container_security_context_params "user" $container_config.securityContext.user -}}
+      {{- $_ = set $container_security_context_params "user" $container_config.securityContext.user -}}
     {{- end -}}
     {{- if ($container_config.securityContext).group -}}
-      {{- $_ := set $container_security_context_params "group" $container_config.securityContext.group -}}
+      {{- $_ = set $container_security_context_params "group" $container_config.securityContext.group -}}
     {{- end -}}
     {{- $_ = set $container_config "securityContext" (include "mozcloud-workload-core-lib.pod.container.securityContext" $container_security_context_params | fromYaml) -}}
     {{- $container_output = append $container_output $container_config -}}
   {{- end -}}
-  {{- $_ := set $job_config "containers" $container_output -}}
+  {{- $_ = set $job_config "containers" $container_output -}}
   {{- /*
   Configure Argo CD annotations for the job and serviceAccount, if applicable.
   Job annotations should always be determined before service account annotations
@@ -199,7 +199,7 @@ Job template helpers
   {{- if or $argo.hookDeletionPolicy $argo.hooks $argo.syncWave -}}
     {{- $annotations = (include "mozcloud-job-lib.config.jobs.annotations" (dict "type" "job" "jobConfig" $job_config) | fromYaml) -}}
     {{- if gt (len $annotations) 0 -}}
-      {{- $_ := set $job_config "annotations" $annotations -}}
+      {{- $_ = set $job_config "annotations" $annotations -}}
     {{- end -}}
   {{- end -}}
   {{- /* Then do service account annotations */ -}}

@@ -1,5 +1,16 @@
 {{- if and .Values.enabled (.Values.gateway).enabled }}
-{{- $params := dict "gatewayConfig" .Values.gateway "Chart" .Chart "Release" .Release }}
+{{- $gateway_config := .Values.gateway }}
+{{- /* Remove default key and merge with user-defined keys, if defined */}}
+{{- if or
+  (and (eq (keys .Values.gateway.gateways | len) 1) (ne (keys .Values.gateway.gateways | first) "mozcloud-gateway"))
+  (gt (keys .Values.gateway.gateways | len) 1)
+}}
+  {{- $_ := set $gateway_config "gateways" (omit .Values.gateway.gateways "mozcloud-gateway") }}
+  {{- range $name, $config := $gateway_config.gateways }}
+    {{- $_ = set $gateway_config.gateways $name (mergeOverwrite (index $.Values.gateway.gateways "mozcloud-gateway") $config) }}
+  {{- end }}
+{{- end }}
+{{- $params := dict "gatewayConfig" $gateway_config "Chart" .Chart "Release" .Release }}
 {{- if .Values.nameOverride }}
   {{- $_ := set $params "nameOverride" .Values.nameOverride }}
 {{- end }}

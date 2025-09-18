@@ -6,12 +6,16 @@ PodMonitoring template helpers
 {{- $labels := default (dict) .labels -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
-{{- range $pod_monitoring := $pod_monitorings -}}
+{{- range $name, $pod_monitoring := $pod_monitorings -}}
   {{- $pod_monitoring_config := $pod_monitoring | deepCopy -}}
   {{- /* Configure name and labels */ -}}
   {{- $params := dict "config" $pod_monitoring_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-workload-core-lib.config.common" $params | fromYaml -}}
   {{- $pod_monitoring_config = mergeOverwrite $pod_monitoring_config $common -}}
+  {{- if $name_override }}
+    {{- $name = $name_override }}
+  {{- end }}
+  {{- $_ := set $pod_monitoring_config "name" $name -}}
   {{- $output = append $output $pod_monitoring_config -}}
 {{- end -}}
 {{- $pod_monitorings = dict "podMonitorings" $output -}}
@@ -26,12 +30,16 @@ HPA template helpers
 {{- $labels := default (dict) .labels -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
-{{- range $hpa := $hpas -}}
+{{- range $name, $hpa := $hpas -}}
   {{- $hpa_config := $hpa | deepCopy -}}
   {{- /* Configure name and labels */ -}}
   {{- $params := dict "config" $hpa_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-workload-core-lib.config.common" $params | fromYaml -}}
   {{- $hpa_config = mergeOverwrite $hpa_config $common -}}
+  {{- if $name_override }}
+    {{- $name = $name_override }}
+  {{- end }}
+  {{- $_ := set $hpa_config "name" $name -}}
   {{- $output = append $output $hpa_config -}}
 {{- end -}}
 {{- $hpas = dict "hpas" $output -}}
@@ -46,12 +54,16 @@ Deployment template helpers
 {{- $labels := default (dict) .labels -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
-{{- range $deployment := $deployments -}}
+{{- range $name, $deployment := $deployments -}}
   {{- $deployment_config := $deployment | deepCopy -}}
   {{- /* Configure name and labels */ -}}
   {{- $params := dict "config" $deployment_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $common := include "mozcloud-workload-core-lib.config.common" $params | fromYaml -}}
   {{- $deployment_config = mergeOverwrite $deployment_config $common -}}
+  {{- if $name_override }}
+    {{- $name = $name_override }}
+  {{- end }}
+  {{- $_ := set $deployment_config "name" $name -}}
   {{- $output = append $output $deployment_config -}}
 {{- end -}}
 {{- $deployments = dict "deployments" $output -}}

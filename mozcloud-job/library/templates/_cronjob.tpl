@@ -1,5 +1,5 @@
 {{- define "mozcloud-job-lib.cronJob" -}}
-{{- if gt (len ((.cronJobConfig).cronJobs)) 0 }}
+{{- if gt (keys (default (dict) (.cronJobConfig).cronJobs) | len) 0 }}
 {{- $cron_jobs := include "mozcloud-job-lib.config.cronJobs" . | fromYaml }}
 {{- $service_accounts := list }}
 {{- range $cron_job := $cron_jobs.cronJobs }}

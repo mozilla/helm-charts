@@ -44,19 +44,11 @@ Common labels
 Template helpers
 */}}
 {{- define "mozcloud-workload-core-lib.config.common" -}}
-{{- $name_override := default "" .nameOverride -}}
 {{- $output := dict -}}
-{{- /* Use name helper function to populate name using rules hierarchy */ -}}
-{{- $config := .config -}}
-{{- if $name_override -}}
-  {{- $_ := set $config "nameOverride" $name_override -}}
-{{- end -}}
-{{- $name := include "mozcloud-workload-core-lib.config.name" $config -}}
-{{- $_ := set $output "name" $name -}}
 {{- /* Generate labels */ -}}
 {{- $label_params := mergeOverwrite .context (dict "labels" .labels) -}}
 {{- $labels := include "mozcloud-workload-core-lib.labels" $label_params | fromYaml -}}
-{{- $_ = set $output "labels" $labels -}}
+{{- $_ := set $output "labels" $labels -}}
 {{- /* Return output */ -}}
 {{ $output | toYaml }}
 {{- end -}}
