@@ -1,10 +1,10 @@
 {{- if .Values.enabled }}
 {{- $previewPr := .Values.global.preview.pr | toString }}
-{{- $httpRoutes := list }}
-{{- range .Values.httpRoute.httpRoutes }}
-  {{- $route := deepCopy . }}
-  {{- $_ := set $route "name" (printf "pr%s-%s" $previewPr .name) }}
-  {{- $httpRoutes = append $httpRoutes $route }}
+{{- $httpRoutes := dict }}
+{{- range $name, $config := .Values.httpRoute.httpRoutes }}
+  {{- $route := deepCopy $config }}
+  {{- $name = printf "pr%s-%s" $previewPr $name }}
+  {{- $_ := set $httpRoutes $name $route }}
 {{- end }}
 
 {{- $httpRouteConfig := dict
@@ -12,14 +12,15 @@
     "httpRoutes" $httpRoutes
 }}
 
-{{- $transformedBackends := list }}
-{{- range .Values.backends }}
-  {{- $be := deepCopy . }}
+{{- $transformedBackends := dict }}
+{{- range $name, $config := .Values.backends }}
+  {{- $name = printf "pr%s-%s" $previewPr (include "mozcloud-preview.name" $) }}
+  {{- $be := deepCopy $config }}
   {{- $base := default (dict) $be.service.selectorLabels -}}
   {{- $labels := merge (dict) $base -}}
   {{- $_ := set $labels "app.preview/pr" $previewPr -}}
-  {{- $_ := set $be.service "selectorLabels" $labels -}}
-  {{- $transformedBackends = append $transformedBackends $be -}}
+  {{- $_ = set $be.service "selectorLabels" $labels -}}
+  {{- $_ = set $transformedBackends $name $be -}}
 {{- end }}
 
 {{- $label_params := include "mozcloud-preview.labelParams" . | fromYaml }}

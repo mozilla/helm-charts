@@ -2,11 +2,11 @@
 {{- $rawRoutes := .httpRouteConfig.httpRoutes }}
 {{- $previewHost := .previewHost }}
 {{- $previewPr := .previewPr }}
-{{- $transformedRoutes := list }}
+{{- $transformedRoutes := dict }}
 
 {{- $svcName := printf "pr%s-%s" $previewPr .Chart.Name -}}
 
-{{- range $route := $rawRoutes }}
+{{- range $name, $route := $rawRoutes }}
   {{- $newHostnames := list }}
 
   {{- range $i, $hostname := $route.hostnames }}
@@ -41,7 +41,7 @@
     ))
     "rules" $transformedRules
   ) }}
-  {{- $transformedRoutes = append $transformedRoutes $updatedRoute }}
+  {{- $_ := set $transformedRoutes $name $updatedRoute }}
 {{- end }}
 
 {{- $transformedConfig := dict "httpRoutes" $transformedRoutes }}
