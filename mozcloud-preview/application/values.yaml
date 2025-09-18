@@ -9,8 +9,10 @@ global:
 
 # Defines the backend services to create, backend policies, and healthchecks.
 backends:
+  # The name of the backend service.
+  mozcloud-gateway:
     # Definitions for the Kubernetes service.
-  - service:
+    service:
       # If disabled, a new Kubernetes will not be created.
       #create: true
 
@@ -35,9 +37,6 @@ backends:
 
       # Selector labels the service should use to match against pods.
       #selectorLabels: {}
-
-    # Set a name for the backend to use for all related components.
-    #name:
 
     # Backend policy to apply to this specific backend service. Overrides the
     # defaults from .Values.backendPolicy
@@ -89,7 +88,8 @@ httpRoute:
   enabled: true
 
   httpRoutes:
-    - name: mozcloud-gateway
+    # The name of the HTTPRoute to create.
+    mozcloud-gateway:
       # Hostnames to match against. Hostnames are matched before any other
       # matches (path, headers) occur.
       hostnames:
