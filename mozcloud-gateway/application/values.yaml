@@ -69,8 +69,14 @@ backendPolicy:
 
 # Defines the backend services to create, backend policies, and healthchecks.
 backends:
+  # The name of your backend and all related components. "mozcloud-gateway" is
+  # the default if no names are specified.
+  #
+  # Each gateway should be specified in this dictionary format, where the key
+  # is the name of the gateway and the values are the configurations.
+  mozcloud-gateway:
     # Definitions for the Kubernetes service.
-  - service:
+    service:
       # If disabled, a new Kubernetes will not be created.
       #create: true
 
@@ -95,9 +101,6 @@ backends:
 
       # Selector labels the service should use to match against pods.
       #selectorLabels: {}
-
-    # Set a name for the backend to use for all related components.
-    #name:
 
     # Backend policy to apply to this specific backend service. Overrides the
     # defaults from .Values.backendPolicy
@@ -148,8 +151,12 @@ gateway:
   enabled: true
 
   gateways:
-    - name: mozcloud-gateway
-
+    # The name of your gateway. "mozcloud-gateway" is the default if no names
+    # are specified.
+    #
+    # Each gateway should be specified in this dictionary format, where the key
+    # is the name of the gateway and the values are the configurations.
+    mozcloud-gateway:
       # Type can be "internal" or "external". The library chart will
       # automatically assign the preferred className if not defined here.
       # Overridden by "className", if defined.
@@ -236,8 +243,12 @@ httpRoute:
   enabled: true
 
   httpRoutes:
-    - name: mozcloud-gateway
-
+    # The name of your HTTPRoute. "mozcloud-gateway" is the default if no names
+    # are specified.
+    #
+    # Each HTTPRoute should be specified in this dictionary format, where the
+    # key is the name of the gateway and the values are the configurations.
+    mozcloud-gateway:
       # Define parent Gateway resource the HTTPRoute should attach to.
       gatewayRefs:
         - name: mozcloud-gateway
