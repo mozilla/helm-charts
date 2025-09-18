@@ -3,6 +3,8 @@ import click
 
 from .charts import ChartGraph
 from .mermaid import MermaidDiagram
+from .versions import VersionManager
+
 
 @click.group()
 @click.option(
@@ -24,40 +26,48 @@ from .mermaid import MermaidDiagram
     default=None,
     help="If specified, only show the dependency tree for this root chart.",
 )
+@click.version_option(message="ChartKit %(version)s")
 @click.pass_context
-def cli(ctx: click.Context, roots: list[str], internal_only: bool, root_chart: Optional[str]):
+def cli(
+    ctx: click.Context, roots: list[str], internal_only: bool, root_chart: Optional[str]
+):
     """ChartKit: CLI tooling for Helm chart dependencies and utilities."""
-    click.echo(f"Scanning roots: {', '.join(roots)}")
     ctx.obj = ChartGraph(
         roots=roots, internal_only=internal_only, root_chart=root_chart
     )
 
 
 @cli.command()
+@click.option("--json", is_flag=True, default=False, help="Output as JSON.")
 @click.pass_obj
 def charts(
     graph: ChartGraph,
+    json: bool = False,
+    chart: Optional[str] = None,
 ):
     """Prints Helm chart dependencies."""
-    graph.print_graph()
+    graph.print_dependency_graph(json_output=json)
+
 
 @cli.command()
+@click.option("--json", is_flag=True, default=False, help="Output as JSON.")
 @click.option(
-    "--chart",
-    "-c",
-    required=True,
-    help="Chart name to find parents for.",
+    "--mode",
+    default="info",
+    type=click.Choice(["dependency", "dependent", "info"]),
+    help="Type of tree to display.",
 )
+@click.argument("chart", type=str)
 @click.pass_obj
-def chart_parents(graph: ChartGraph, chart: str):
-    """Prints Helm chart dependencies."""
-    def print_parents(chart: str, level: int = 0):
-        parents = graph.find_parents(chart)
-        prefix = "    " * level
-        for parent in sorted(parents):
-            click.echo(f"{prefix}{parent}")
-            print_parents(parent, level + 1)
-    print_parents(chart)
+def chart(graph: ChartGraph, chart: str, json: bool, mode: str):
+    """Prints Helm either a single chart details or the a tree of dependents or dependencies."""
+    if mode == "dependency":
+        graph.print_dependency_graph(chart_name=chart, json_output=json)
+    elif mode == "dependent":
+        graph.print_dependent_graph(chart_name=chart, json_output=json)
+    else:
+        graph.print_chart_info(chart_name=chart, json_output=json)
+
 
 @cli.command()
 @click.option(
@@ -93,6 +103,63 @@ def mermaid(
 
     if not output and not svg_output:
         click.echo(diagram.mermaid_str)
+
+@cli.group()
+def version():
+    """Manage chart versions."""
+    pass
+    
+@version.command()
+@click.argument("chart", type=str, required=True)
+@click.pass_obj
+def list(graph: ChartGraph, chart: str):
+    """Lists the versions of all charts."""
+    graph.print_dependent_graph(chart_name=chart, json_output=False, show_versions=True)
+
+@version.command()
+@click.option(
+    "--part",
+    type=click.Choice(["major", "minor", "patch"]),
+    default="patch",
+    help="Part of the version to bump.",
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Show what would be changed, but do not write changes.",
+)
+@click.option(
+    "--json",
+    is_flag=True,
+    default=False,
+    help="Output results as JSON.",
+)
+@click.argument("chart", type=str)
+@click.pass_obj
+def bump(
+    graph: ChartGraph,
+    chart: str,
+    part: str,
+    dry_run: bool = False,
+    json: bool = False,
+):
+    """Bumps the version of a chart and cascades to dependents."""
+
+    vm = VersionManager(graph)
+    target_chart = graph.get_chart(chart)
+    if not target_chart:
+        click.echo(f"Chart '{chart}' not found.", err=True)
+        return
+
+    vm.cascade_bump(target_chart, part)
+    vm.print_updates(json_output=json)
+
+    if not dry_run:
+        vm.save_versions()
+        click.echo("Chart versions updated.")
+    else:
+        click.echo("Dry run; no changes made.")
 
 
 if __name__ == "__main__":

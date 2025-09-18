@@ -1,15 +1,94 @@
+from dataclasses import dataclass
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
-import yaml
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple
 
-ChartInfo = Dict[str, str]
-Edge = Tuple[str, str]  # parent -> child
+# import yaml
+import ruamel.yaml
+import json
+
+# YAML setup for round-trip and comment preservation
+yaml = ruamel.yaml.YAML()
+yaml.indent(mapping=2, sequence=4, offset=2)
+
+
+class ChartEdge(NamedTuple):
+    parent: str
+    child: str
+
+
+class ChartNode:
+    name: str
+    info: "ChartInfo"
+    next: List["ChartNode"]
+
+    def __init__(self, name: str, info: "ChartInfo"):
+        self.name = name
+        self.info = info
+        self.next = []
+
+    def add_next(self, node: "ChartNode"):
+        self.next.append(node)
+
+    def to_json(self, direction: str = "next") -> dict[str, Any]:
+        obj: dict[str, Any] = {"name": self.name, "info": self.info.to_json()}
+        if len(self.next) > 0:
+            obj[direction] = [n.to_json(direction) for n in self.next]
+        return obj
+
+    def __repr__(self) -> str:
+        return f"ChartNode(name={self.name}, info={self.info}, next={self.next})"
+
+
+@dataclass
+class ChartInfo:
+    name: str
+    type: str
+    version: str
+    path: Path
+    dependencies: List[dict[str, str]]  # names of dependent charts
+
+    def __repr__(self) -> str:
+        return f"""Chart: {self.name}
+    Type: {self.type}
+    Version: {self.version}
+    Path: {self.path}
+    Dependencies: {self.dependencies}"""
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "type": self.type,
+            "version": self.version,
+            "path": str(self.path),
+            "dependencies": self.dependencies,
+        }
+
+    def save_chart_yaml(self):
+        chart_yaml_path = self.path / "Chart.yaml"
+        try:
+            with chart_yaml_path.open("r", encoding="utf-8") as f:
+                data = yaml.load(f) or {}
+        except Exception as e:
+            print(f"WARN: Failed to parse {chart_yaml_path}: {e}", file=sys.stderr)
+            return
+
+        data["version"] = self.version
+        data["type"] = self.type
+        data["name"] = self.name
+        data["dependencies"] = self.dependencies
+
+        try:
+            with chart_yaml_path.open("w", encoding="utf-8") as f:
+                yaml.dump(data, f)
+        except Exception as e:
+            print(f"WARN: Failed to write {chart_yaml_path}: {e}", file=sys.stderr)
+
 
 class ChartGraph:
     chart_files: List[Path]
     charts: Dict[str, ChartInfo]
-    edges: Set[Edge]
+    edges: Set[ChartEdge]
 
     def __init__(
         self,
@@ -17,7 +96,6 @@ class ChartGraph:
         internal_only: bool = False,
         root_chart: Optional[str] = None,
     ):
-
         root_paths = [Path(p).resolve() for p in roots]
         self.chart_files = self.find_chart_files(root_paths)
         self.charts, self.name_to_path = self.collect_charts()
@@ -28,7 +106,6 @@ class ChartGraph:
             self.charts, self.edges = self.filter_by_root_chart(
                 root_chart, self.charts, self.deps, self.edges
             )
-
 
     def find_chart_files(self, roots: List[Path]) -> List[Path]:
         """
@@ -66,27 +143,13 @@ class ChartGraph:
 
         return sorted(chart_files)  # Sort for consistent output
 
-
     def load_chart(self, chart_yaml_path: Path) -> Optional[dict]:
         try:
             with chart_yaml_path.open("r", encoding="utf-8") as f:
-                return yaml.safe_load(f) or {}
+                return yaml.load(f) or {}
         except Exception as e:
             print(f"WARN: Failed to parse {chart_yaml_path}: {e}", file=sys.stderr)
             return None
-
-    def sanitize_identifier(self, name: str) -> str:
-        """Sanitize a chart name to a Mermaid-safe identifier.
-        Mermaid ER likes [A-Za-z0-9_] and dislikes hyphens/spaces.
-        We'll replace non-alnum with underscores and ensure it doesn't start with a digit.
-        """
-        import re
-
-        ident = re.sub(r"[^A-Za-z0-9_]", "_", name)
-        if ident and ident[0].isdigit():
-            ident = f"_{ident}"
-        return ident or "_unnamed_"
-
 
     def collect_charts(self) -> Tuple[Dict[str, ChartInfo], Dict[str, Path]]:
         charts: Dict[str, ChartInfo] = {}
@@ -96,21 +159,16 @@ class ChartGraph:
             data = self.load_chart(chart_path)
             if not data:
                 continue
-            name = data.get("name")
-            if not name:
-                # If name missing, try directory name
-                name = chart_path.parent.name
-            chart_type = data.get("type", "application")
-            version = data.get("version", "")
-            charts[name] = {
-                "name": name,
-                "type": chart_type,
-                "version": version,
-                "path": str(chart_path.parent.resolve()),
-            }
+            name = data.get("name", chart_path.parent.name or "unnamed")
+            charts[name] = ChartInfo(
+                name=name,
+                type=data.get("type", "application"),
+                version=data.get("version", ""),
+                path=chart_path.parent,
+                dependencies=data.get("dependencies", []) or [],
+            )
             name_to_path[name] = chart_path.parent
         return charts, name_to_path
-
 
     def collect_edges(self) -> Dict[str, List[dict]]:
         """Return mapping of chart name -> list of dependency objects.
@@ -129,14 +187,13 @@ class ChartGraph:
                 deps[name] = []
         return deps
 
-
     def build_graph(
         self,
         charts: Dict[str, ChartInfo],
         deps: Dict[str, List[dict]],
         internal_only: bool,
-    ) -> Set[Edge]:
-        edges: Set[Edge] = set()
+    ) -> Set[ChartEdge]:
+        edges: Set[ChartEdge] = set()
         internal_names = set(charts.keys())
 
         for parent, dep_list in deps.items():
@@ -149,9 +206,8 @@ class ChartGraph:
                     # Try to map alias to actual local subchart under charts/
                     # If alias not found, skip
                     continue
-                edges.add((parent, child))
+                edges.add(ChartEdge(parent, child))
         return edges
-
 
     def find_dependency_tree(
         self,
@@ -181,14 +237,13 @@ class ChartGraph:
 
         return visited
 
-
     def filter_by_root_chart(
         self,
         root_chart: str,
         charts: Dict[str, ChartInfo],
         deps: Dict[str, List[dict]],
-        edges: Set[Edge],
-    ) -> Tuple[Dict[str, ChartInfo], Set[Edge]]:
+        edges: Set[ChartEdge],
+    ) -> Tuple[Dict[str, ChartInfo], Set[ChartEdge]]:
         """
         Filter charts and edges to only include those in the dependency tree of root_chart.
         """
@@ -211,13 +266,13 @@ class ChartGraph:
 
         # Filter edges to only include those between charts in the tree
         filtered_edges = {
-            (parent, child)
+            ChartEdge(parent, child)
             for parent, child in edges
             if parent in tree_charts and child in tree_charts
         }
 
         return filtered_charts, filtered_edges
-    
+
     def get_roots(self) -> List[str]:
         # get roots from edges
         all_children = {child for _, child in self.edges}
@@ -226,20 +281,117 @@ class ChartGraph:
             roots = list(self.charts.keys())  # fallback to all charts
         return roots
 
-    def print_graph(self):
-        roots = self.get_roots()
-        for root in sorted(roots):
-            children = {child for parent, child in self.edges if parent == root}
-            self.print_subtree(root, children, level=1)
+    def print_dependency_graph(
+        self,
+        chart_name: Optional[str] = None,
+        json_output: bool = False,
+        show_versions: bool = False,
+    ):
+        """Print the full dependency graph as a tree."""
+        if chart_name:
+            self.print_subtree(
+                self.find_subtree(chart_name, self.dependency_selector()),
+                level=1,
+                json_output=json_output,
+                show_versions=show_versions,
+            )
+        else:
+            roots = self.get_roots()
+            for root in sorted(roots):
+                self.print_subtree(
+                    self.find_subtree(root, self.dependency_selector()),
+                    level=1,
+                    json_output=json_output,
+                )
 
-    def print_subtree(self, chart: str, children: Set[str], level: int, is_last: bool = True):
-        prefix = "" if level == 1 else "│   " * (level - 1) + ("└──" if is_last else "├──")
-        print(f"{prefix}{chart}")
-        for child in children:
-            subchildren = {c for p, c in self.edges if p == child}
-            if subchildren:
-                self.print_subtree(child, subchildren, level + 1)
+    def print_dependent_graph(
+        self, chart_name: str, json_output: bool = False, show_versions: bool = False
+    ):
+        """Print all parent charts that depend on the given chart."""
+        self.print_subtree(
+            self.find_subtree(chart_name, self.dependent_selector()),
+            level=1,
+            json_output=json_output,
+            show_versions=show_versions,
+        )
 
-    def find_parents(self, chart_name: str) -> Set[str]:
-        """Find all parent charts that depend on the given chart."""
-        return {parent for parent, child in self.edges if child == chart_name}
+    def print_subtree(
+        self,
+        subtree: ChartNode,
+        level: int,
+        is_last: bool = True,
+        json_output: bool = False,
+        show_versions: bool = False,
+    ):
+        """Recursively print the subtree starting from chart."""
+        if json_output:
+            print(json.dumps(subtree.to_json(), indent=2))
+        else:
+            prefix = (
+                ""
+                if level == 1
+                else "│   " * (level - 1) + ("└──" if is_last else "├──")
+            )
+            print(
+                f"{prefix}{subtree.name}{' v' + subtree.info.version if show_versions else ''}"
+            )
+            for idx, node in enumerate(subtree.next):
+                self.print_subtree(
+                    node,
+                    level=level + 1,
+                    is_last=idx == len(subtree.next) - 1,
+                    show_versions=show_versions,
+                )
+
+    def make_edge_selector(
+        self,
+        edges: Set[ChartEdge],
+        comparator: Callable[[ChartEdge, str], bool],
+        selector: Callable[[ChartEdge], str],
+    ) -> Callable[[str], Set[str]]:
+        def wrapper(root: str) -> Set[str]:
+            return {selector(edge) for edge in edges if comparator(edge, root)}
+
+        return wrapper
+
+    def dependent_selector(self) -> Callable[[str], Set[str]]:
+        """Return a function that finds all parents of a given chart."""
+        return self.make_edge_selector(
+            self.edges,
+            lambda edge, child: edge.child == child,
+            lambda edge: edge.parent,
+        )
+
+    def dependency_selector(self) -> Callable[[str], Set[str]]:
+        """Return a function that finds all children of a given chart."""
+        return self.make_edge_selector(
+            self.edges,
+            lambda edge, parent: edge.parent == parent,
+            lambda edge: edge.child,
+        )
+
+    def find_subtree(
+        self, chart_name: str, selector: Callable[[str], Set[str]]
+    ) -> ChartNode:
+        """Recursively find the subtree for a given chart."""
+        root = ChartNode(chart_name, self.get_chart(chart_name))
+        for node in selector(chart_name):
+            root.add_next(self.find_subtree(node, selector))
+        return root
+
+    def get_chart(self, chart_name: str) -> ChartInfo:
+        """Get chart info by name."""
+        try:
+            return self.charts[chart_name]
+        except KeyError:
+            raise KeyError(f"Chart '{chart_name}' not found")
+
+    def print_chart_info(self, chart_name: str, json_output: bool = False):
+        chart = self.get_chart(chart_name)
+        if chart:
+            if json_output:
+                print(json.dumps(chart.to_json(), indent=2))
+            else:
+                print(chart)
+        else:
+            print(f"Chart '{chart_name}' not found.", file=sys.stderr)

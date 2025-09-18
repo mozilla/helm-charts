@@ -5,7 +5,7 @@ import os
 from typing import Dict, List, Set
 
 import click
-from .charts import ChartGraph
+from .charts import ChartEdge, ChartGraph, ChartInfo
 
 
 class MermaidDiagram:
@@ -28,7 +28,7 @@ class MermaidDiagram:
         self.mermaid_str = self.generate(charts, edges, include_attrs)
 
 
-    def generate(self, charts: Dict[str, dict], edges: Set[tuple], include_attrs: bool) -> str:
+    def generate(self, charts: Dict[str, ChartInfo], edges: Set[ChartEdge], include_attrs: bool) -> str:
         # Build identifier map
         id_map: Dict[str, str] = {name: self.sanitize_identifier(name) for name in charts.keys()}
 
@@ -39,10 +39,8 @@ class MermaidDiagram:
             if include_attrs:
                 lines.append(f"    {ident} {{")
                 # Keep attributes short; ER expects simple type labels
-                ver = info.get("version", "")
-                typ = info.get("type", "")
-                lines.append(f'        string version "{ver}"')
-                lines.append(f'        string type "{typ}"')
+                lines.append(f'        string version "{info.version}"')
+                lines.append(f'        string type "{info.type}"')
                 lines.append("    }")
             else:
                 # Minimal body (Mermaid requires a body). We'll include a single attr.

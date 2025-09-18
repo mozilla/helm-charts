@@ -6,7 +6,8 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "click>=8.2.1",
-    "pyaml>=25.7.0",
+    "ruamel-yaml>=0.18.15",
+    "semver>=3.0.4",
 ]
     
 [build-system]
