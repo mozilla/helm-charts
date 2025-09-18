@@ -1,5 +1,16 @@
 {{- if .Values.enabled }}
-{{- $params := dict "configMaps" .Values.configMaps }}
+{{- $config_maps := .Values.configMaps }}
+{{- /* Remove default key and merge with user-defined keys, if defined */}}
+{{- if or
+  (and (eq (keys .Values.configMaps | len) 1) (ne (keys .Values.configMaps | first) "name"))
+  (gt (keys .Values.configMaps | len) 1)
+}}
+  {{- $config_maps = omit .Values.configMaps "name" }}
+  {{- range $name, $config := $config_maps }}
+    {{- $_ := set $config_maps $name (mergeOverwrite (index $.Values.configMaps "name") $config) }}
+  {{- end }}
+{{- end }}
+{{- $params := dict "configMaps" $config_maps }}
 {{- $label_params := include "mozcloud-workload-stateless.labelParams" . | fromYaml }}
 {{- include "mozcloud-workload-stateless-lib.configMap" (mergeOverwrite $params $label_params) }}
 {{- end }}

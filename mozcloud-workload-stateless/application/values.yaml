@@ -16,24 +16,30 @@ enabled: true
 #
 # ConfigMaps
 #
-# Use this array to define configMap resources. A configMap item should have
-# at least a name and a data section
+# A dictionary of configMap definitions. Use this dictionary to define configMap
+# resources. A configMap item should have at least a name and a data section.
+#
+# The top-level key should be the name and the configuration should be the
+# value.
 #
 configMaps:
-#  - name: unset
+#  name:
 #    data:
 #      foo: bar
 
 #
 # ExternalSecrets
 #
-# List externalSecret definitions here. An externalSecret should at least
-# define a name. If you don't provide anyting else, we expect this to default
+# A dictionary of externalSecret definitions. An externalSecret should at least
+# define a name. If you don't provide anything else, we expect this to default
 # to reading from {{ .Values.global.environment }}-gke-app-secrets and writing
 # to "mozcloud-workload-core-secrets.
 #
+# Each externalSecret should be a dictionary where the key is the name of the
+# externalSecret and the value is its configuration.
+#
 externalSecrets:
-#  - name: unset
+#  name:
 #    target: my-target-k8s-secret
 #    gsm:
 #      secret: my-gsm-secret-to-read-from
@@ -43,12 +49,15 @@ externalSecrets:
 #
 # ServiceAccounts
 #
-# Service Account List to render. A ServiceAccount object has at least a
+# A dictionary of serviceAccount definitions. A serviceAccount object has at least a
 # name, additionally, a GCP Service Account to map to via annotations can
 # be specified, too.
 #
+# Each serviceAccount should be a dictionary where the key is the name of the
+# serviceAccount and the value is its configuration.
+#
 serviceAccounts:
-#  - name: unset
+#  name:
 #    gcpServiceAccount:
 #      name: unset
 #      projectId: unset
@@ -57,10 +66,14 @@ serviceAccounts:
 #
 # Deployments
 #
-# Deployment definitions go here. A Deployment has a name and a list of containers.
+# A dictionary of deployment definitions. A Deployment has a name and a list of
+# containers.
+#
+# Each deployment should be a dictionary where the key is the name of the
+# deployment and the value is its configuration.
 #
 deployments:
-#  - name: unset
+#  name:
 #    containers:
 #      - # containers have names, too
 #        name: unset
@@ -139,11 +152,15 @@ deployments:
 #
 # PodMonitorings
 #
-# Define PodMonitorings to create here. A PodMonotoring has a name and a list of
-# endpoints to target for querying by GMP (Google managed Prometheus).
+# A dictionary of podMonitoring definitions. A PodMonotoring resource has a
+# name and a list of endpoints to target for querying by GMP (Google managed
+# Prometheus).
+#
+# Each podMonitoring should be a dictionary where the key is the name of the
+# podMonitoring and the value is its configuration.
 #
 podMonitorings:
-#  - name: unset
+#  name:
 #    endpoints:
 #      - port: app
 #        scheme: http
@@ -153,12 +170,15 @@ podMonitorings:
 #
 # HorizontalPodAutoscalers
 #
-# Configure HorizontalPodAutoscalers here. HPAs have a name, should set
-# min & max replica sizes, have a scale target reference and of course
-# a list of metrics to scale upon.
+# A dictionary of HorizontalPodAutoscaler (HPA) definitions. HPAs have a name,
+# should set min & max replica sizes, have a scale target reference and, of
+# course, a list of metrics to scale upon.
+#
+# Each HPA should be a dictionary where the key is the name of the
+# podMonitoring and the value is its configuration.
 #
 hpas:
-#  - name: unset
+#  name:
 #    minReplicas: 2
 #    maxReplicas: 10
 #    scaleTargetRef:

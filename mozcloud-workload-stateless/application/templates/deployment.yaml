@@ -1,5 +1,16 @@
 {{- if .Values.enabled }}
-{{- $params := dict "deployments" .Values.deployments }}
+{{- $deployments := .Values.deployments }}
+{{- /* Remove default key and merge with user-defined keys, if defined */}}
+{{- if or
+  (and (eq (keys .Values.deployments | len) 1) (ne (keys .Values.deployments | first) "name"))
+  (gt (keys .Values.deployments | len) 1)
+}}
+  {{- $deployments = omit .Values.deployments "name" }}
+  {{- range $name, $config := $deployments }}
+    {{- $_ := set $deployments $name (mergeOverwrite (index $.Values.deployments "name") $config) }}
+  {{- end }}
+{{- end }}
+{{- $params := dict "deployments" $deployments }}
 {{- $label_params := include "mozcloud-workload-stateless.labelParams" . | fromYaml }}
 {{- include "mozcloud-workload-stateless-lib.deployment" (mergeOverwrite $params $label_params) }}
 {{- end }}
