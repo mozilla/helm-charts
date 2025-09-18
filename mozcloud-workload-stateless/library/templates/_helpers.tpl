@@ -15,7 +15,7 @@ PodMonitoring template helpers
   {{- if $name_override }}
     {{- $name = $name_override }}
   {{- end }}
-  {{- $_ := set $pod_monitoring_config $name -}}
+  {{- $_ := set $pod_monitoring_config "name" $name -}}
   {{- $output = append $output $pod_monitoring_config -}}
 {{- end -}}
 {{- $pod_monitorings = dict "podMonitorings" $output -}}
@@ -39,7 +39,7 @@ HPA template helpers
   {{- if $name_override }}
     {{- $name = $name_override }}
   {{- end }}
-  {{- $_ := set $hpa_config $name -}}
+  {{- $_ := set $hpa_config "name" $name -}}
   {{- $output = append $output $hpa_config -}}
 {{- end -}}
 {{- $hpas = dict "hpas" $output -}}
@@ -63,7 +63,7 @@ Deployment template helpers
   {{- if $name_override }}
     {{- $name = $name_override }}
   {{- end }}
-  {{- $_ := set $deployment_config $name -}}
+  {{- $_ := set $deployment_config "name" $name -}}
   {{- $output = append $output $deployment_config -}}
 {{- end -}}
 {{- $deployments = dict "deployments" $output -}}

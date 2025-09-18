@@ -48,7 +48,7 @@ Template helpers
 {{- /* Generate labels */ -}}
 {{- $label_params := mergeOverwrite .context (dict "labels" .labels) -}}
 {{- $labels := include "mozcloud-workload-core-lib.labels" $label_params | fromYaml -}}
-{{- $_ = set $output "labels" $labels -}}
+{{- $_ := set $output "labels" $labels -}}
 {{- /* Return output */ -}}
 {{ $output | toYaml }}
 {{- end -}}
