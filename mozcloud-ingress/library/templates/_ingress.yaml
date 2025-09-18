@@ -5,16 +5,11 @@
 {{- $frontend_config := include "mozcloud-ingress-lib.config.frontend" . | fromYaml }}
 {{- $managed_certificates := include "mozcloud-ingress-lib.config.managedCertificates" . | fromYamlArray }}
 {{- range $ingress := $ingresses.ingresses }}
-{{- $params := (dict "ingressConfig" $ingress) }}
-{{- if $name_override }}
-{{- $_ := set $params "nameOverride" $name_override }}
-{{- end }}
-{{- $ingress_name := include "mozcloud-ingress-lib.config.name" $params }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ $ingress_name }}
+  name: {{ $ingress.name }}
   labels:
     {{- $label_params := mergeOverwrite ($ | deepCopy) (dict "labels" (default (dict) $ingress.labels)) }}
     {{- $labels := include "mozcloud-ingress-lib.labels" (mergeOverwrite $ $label_params) | fromYaml }}
@@ -25,7 +20,7 @@ metadata:
     {{- if gt (len $managed_certificates) 0 }}
     {{- $certs := list }}
     {{- range $managed_certificate := $managed_certificates }}
-    {{- if and (eq $managed_certificate.ingressName $ingress_name) $managed_certificate.createCertificate }}
+    {{- if and (eq $managed_certificate.ingressName $ingress.name) $managed_certificate.createCertificate }}
     {{- $certs = append $certs $managed_certificate.name }}
     {{- end }}
     {{- end }}
@@ -33,8 +28,8 @@ metadata:
     networking.gke.io/managed-certificates: {{ join "," (uniq $certs | sortAlpha) }}
     {{- end }}
     {{- end }}
-    {{- if (index $ingresses "preSharedCerts" $ingress_name) }}
-    ingress.gcp.kubernetes.io/pre-shared-cert: {{ index $ingresses "preSharedCerts" $ingress_name }}
+    {{- if (index $ingresses "preSharedCerts" $ingress.name) }}
+    ingress.gcp.kubernetes.io/pre-shared-cert: {{ index $ingresses "preSharedCerts" $ingress.name }}
     {{- end }}
     networking.gke.io/v1beta1.FrontendConfig: {{ $frontend_config.name }}
 spec:

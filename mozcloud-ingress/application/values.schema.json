@@ -20,9 +20,11 @@
       "type": "string"
     },
     "ingresses": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/ingress"
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]+$": {
+          "$ref": "#/$defs/ingress"
+        }
       }
     },
     "frontendConfig": {
@@ -254,9 +256,6 @@
       "type": "object",
       "properties": {
         "staticIpName": {
-          "type": "string"
-        },
-        "name": {
           "type": "string"
         },
         "annotations": {
