@@ -4,7 +4,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: pr{{ $config.pr -}}-endpoint-check
+  name: {{ include "mozcloud-preview-lib.name" $ -}}-endpoint-check
   labels:
     {{- $config.labels | toYaml | nindent 4 }}
   annotations:
