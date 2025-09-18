@@ -1,5 +1,16 @@
 {{- if and .Values.enabled (.Values.httpRoute).enabled }}
-{{- $params := dict "httpRouteConfig" .Values.httpRoute "Chart" .Chart "Release" .Release }}
+{{- $http_route_config := .Values.httpRoute }}
+{{- /* Remove default key and merge with user-defined keys, if defined */}}
+{{- if or
+  (and (eq (keys .Values.httpRoute.httpRoutes | len) 1) (ne (keys .Values.httpRoute.httpRoutes | first) "mozcloud-gateway"))
+  (gt (keys .Values.httpRoute.httpRoutes | len) 1)
+}}
+  {{- $_ := set $http_route_config "httpRoutes" (omit .Values.httpRoute.httpRoutes "mozcloud-gateway") }}
+  {{- range $name, $config := $http_route_config.httpRoutes }}
+    {{- $_ = set $http_route_config.httpRoutes $name (mergeOverwrite (index $.Values.httpRoute.httpRoutes "mozcloud-gateway") $config) }}
+  {{- end }}
+{{- end }}
+{{- $params := dict "httpRouteConfig" $http_route_config "Chart" .Chart "Release" .Release }}
 {{- if .Values.nameOverride }}
   {{- $_ := set $params "nameOverride" .Values.nameOverride }}
 {{- end }}

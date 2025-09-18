@@ -1,3 +1,14 @@
 {{- define "mozcloud-workload-stateless-lib.configMap" -}}
-{{- include "mozcloud-workload-core-lib.configMap" . }}
+{{- $config_maps := default (dict) .configMaps }}
+{{- $name_override := default "" .nameOverride }}
+{{- $params := list }}
+{{- range $name, $config := $config_maps }}
+  {{- if $name_override }}
+    {{- $name = $name_override }}
+  {{- end }}
+  {{- $_ := set $config "name" $name }}
+  {{- $params = append $params $config }}
+{{- end }}
+{{- $params := mergeOverwrite (. | deepCopy) (dict "configMaps" $params) }}
+{{- include "mozcloud-workload-core-lib.configMap" $params }}
 {{- end -}}

@@ -22,18 +22,20 @@
     "backendPolicy": {
       "$ref": "#/$defs/backendPolicy"
     },
+    "backends": {
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]+$": {
+          "$ref": "#/$defs/backend"
+        }
+      }
+    },
     "gatewayPolicy": {
       "type": "object",
       "properties": {
         "sslPolicy": {
           "type": "string"
         }
-      }
-    },
-    "backends": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/backend"
       }
     },
     "gateway": {
@@ -43,9 +45,11 @@
           "type": "boolean"
         },
         "gateways": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/gateway"
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9-_]+$": {
+              "$ref": "#/$defs/gateway"
+            }
           }
         }
       }
@@ -57,9 +61,11 @@
           "type": "boolean"
         },
         "httpRoutes": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/httpRoute"
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z0-9-_]+$": {
+              "$ref": "#/$defs/httpRoute"
+            }
           }
         }
       }
@@ -138,9 +144,6 @@
     "backend": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
-        },
         "service": {
           "type": "object",
           "properties": {
@@ -207,9 +210,6 @@
     "gateway": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
-        },
         "type": {
           "enum": ["internal", "external"]
         },

@@ -1,5 +1,5 @@
 {{- define "mozcloud-job-lib.job" -}}
-{{- if gt (len ((.jobConfig).jobs)) 0 }}
+{{- if gt (keys (default (dict) (.jobConfig).jobs) | len) 0 }}
 {{- $jobs := include "mozcloud-job-lib.config.jobs" . | fromYaml }}
 {{- $service_accounts := list }}
 {{- range $job := $jobs.jobs }}

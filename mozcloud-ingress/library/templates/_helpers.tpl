@@ -147,7 +147,7 @@ Ingress template helpers
 {{- define "mozcloud-ingress-lib.config.ingress.preSharedCerts" -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $pre_shared_certs := dict "preSharedCerts" (dict) -}}
-{{- $tls_defaults := (index (include "mozcloud-ingress-lib.defaults.ingresses" . | fromYaml) "ingresses" 0).tls -}}
+{{- $tls_defaults := (include "mozcloud-ingress-lib.defaults.ingress" . | fromYaml).tls -}}
 {{- range $ingress := .ingresses -}}
   {{- range $host := $ingress.hosts -}}
     {{- $tls := mergeOverwrite (mergeOverwrite $tls_defaults (default (dict) $ingress.tls)) (default (dict) ($host.tls)) -}}
@@ -168,16 +168,20 @@ Ingress template helpers
 {{- end -}}
 
 {{- define "mozcloud-ingress-lib.config.ingresses" -}}
-{{- $defaults := include "mozcloud-ingress-lib.defaults.ingresses" . | fromYaml -}}
-{{- $ingresses := $defaults -}}
-{{- if .ingressConfig -}}
-  {{- $ingresses = mergeOverwrite $defaults (dict "ingresses" .ingressConfig) -}}
+{{- $defaults := include "mozcloud-ingress-lib.defaults.ingress" . | fromYaml -}}
+{{- $ingresses := dict "ingresses" .ingressConfig -}}
+{{- $name_override := default "" .nameOverride -}}
+{{- $output := list -}}
+{{- range $name, $ingress := $ingresses.ingresses -}}
+  {{- $ingress_config := mergeOverwrite $defaults $ingress -}}
+  {{- if $name_override -}}
+    {{- $name = $name_override -}}
+  {{- end -}}
+  {{- $_ := set $ingress_config "name" $name -}}
+  {{- $output = append $output $ingress_config -}}
 {{- end -}}
-{{- $params := (dict "ingresses" $ingresses.ingresses) }}
-{{- $name_override := default "" .nameOverride }}
-{{- if $name_override }}
-  {{- $_ := set $params "nameOverride" $name_override }}
-{{- end -}}
+{{- $ingresses = dict "ingresses" $output -}}
+{{- $params := (dict "ingresses" $ingresses.ingresses) -}}
 {{- $pre_shared_certs := include "mozcloud-ingress-lib.config.ingress.preSharedCerts" $params | fromYaml -}}
 {{- $_ := set $ingresses "preSharedCerts" $pre_shared_certs.preSharedCerts -}}
 {{ $ingresses | toYaml }}
@@ -190,7 +194,7 @@ ManagedCertificate template helpers
 {{- $name_override := default "" .nameOverride -}}
 {{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml -}}
 {{- $managed_certs := list -}}
-{{- $tls_defaults := (index (include "mozcloud-ingress-lib.defaults.ingresses" . | fromYaml) "ingresses" 0).tls -}}
+{{- $tls_defaults := (include "mozcloud-ingress-lib.defaults.ingress" . | fromYaml).tls -}}
 {{- range $iindex, $ingress := $ingresses.ingresses -}}
   {{- range $hindex, $host := $ingress.hosts -}}
     {{- $create_cert := false -}}
@@ -339,20 +343,19 @@ redirectToHttps:
 sslPolicy: mozilla-intermediate
 {{- end -}}
 
-{{- define "mozcloud-ingress-lib.defaults.ingresses" -}}
-ingresses:
-  - hosts:
-      - domains: ["chart.example.local"]
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                port: 8080
-    tls:
-      createCertificates: true
-      type: ManagedCertificate
-      multipleHosts: true
+{{- define "mozcloud-ingress-lib.defaults.ingress" -}}
+hosts:
+  - domains: ["chart.example.local"]
+    paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            port: 8080
+tls:
+  createCertificates: true
+  type: ManagedCertificate
+  multipleHosts: true
 {{- end -}}
 
 {{- define "mozcloud-ingress-lib.defaults.service.config" -}}

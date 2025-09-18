@@ -1,7 +1,7 @@
 # Ultra light configuration that will deploy a containerized workload and
 # necessary supporting Gateway API resources for ingress.
 workloads:
-  - name: my-app
+  my-app:
     container:
       image: repo/image:tag
       resources:
@@ -16,7 +16,7 @@ workloads:
 # Gateway API and creates a database migration job that runs before other
 # resources are deployed within an Argo CD deployment.
 workloads:
-  - name: app1
+  app1:
     container:
       args: ["param1"]
       command: ["/path/to/binary"]
@@ -42,7 +42,7 @@ workloads:
 # additional features, such as network-based autoscaling, IAP configuration,
 # a post-deployment job, and custom NGINX configurations.
 workloads:
-  - name: app1
+  app1:
     containers:
       args: ["arg1", "arg2"]
       autoscaling:
@@ -66,7 +66,7 @@ workloads:
         name: app1-sa
         create: true
         gcpServiceAccount:
-          app1-sa
+          name: app1-sa
           projectId: moz-fx-system-nonprod
     hosts:
       - domain: app1.example.com

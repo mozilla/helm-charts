@@ -1,5 +1,16 @@
 {{- if .Values.enabled }}
-{{- $params := dict "podMonitorings" .Values.podMonitorings }}
+{{- $pod_monitorings := .Values.podMonitorings }}
+{{- /* Remove default key and merge with user-defined keys, if defined */}}
+{{- if or
+  (and (eq (keys .Values.podMonitorings | len) 1) (ne (keys .Values.podMonitorings | first) "name"))
+  (gt (keys .Values.podMonitorings | len) 1)
+}}
+  {{- $pod_monitorings = omit .Values.podMonitorings "name" }}
+  {{- range $name, $config := $pod_monitorings }}
+    {{- $_ := set $pod_monitorings $name (mergeOverwrite (index $.Values.podMonitorings "name") $config) }}
+  {{- end }}
+{{- end }}
+{{- $params := dict "podMonitorings" $pod_monitorings }}
 {{- $label_params := include "mozcloud-workload-stateless.labelParams" . | fromYaml }}
 {{- include "mozcloud-workload-stateless-lib.podMonitoring" (mergeOverwrite $params $label_params) }}
 {{- end }}

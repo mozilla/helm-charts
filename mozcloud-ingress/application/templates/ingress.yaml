@@ -1,5 +1,16 @@
 {{- if .Values.enabled }}
-{{- $params := dict "defaults" .Values.backendConfig "ingressConfig" .Values.ingresses "Chart" .Chart "Release" .Release }}
+{{- $ingresses := .Values.ingresses }}
+{{- /* Remove default key and merge with user-defined keys, if defined */}}
+{{- if or
+  (and (eq (keys .Values.ingresses | len) 1) (ne (keys .Values.ingresses | first) "mozcloud-ingress"))
+  (gt (keys .Values.ingresses | len) 1)
+}}
+  {{- $ingresses = omit .Values.ingresses "mozcloud-ingress" }}
+  {{- range $name, $config := $ingresses }}
+    {{- $_ := set $ingresses $name (mergeOverwrite (index $.Values.ingresses "mozcloud-ingress") $config) }}
+  {{- end }}
+{{- end }}
+{{- $params := dict "defaults" .Values.backendConfig "ingressConfig" $ingresses "Chart" .Chart "Release" .Release }}
 {{- if .Values.nameOverride }}
   {{- $_ := set $params "nameOverride" .Values.nameOverride }}
 {{- end }}

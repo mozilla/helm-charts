@@ -20,39 +20,51 @@
       "type": "object"
     },
     "configMaps": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/configMap"
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]+$": {
+          "$ref": "#/$defs/configMap"
+        }
       }
     },
     "externalSecrets": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/externalSecret"
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]+$": {
+          "$ref": "#/$defs/externalSecret"
+        }
       }
     },
     "serviceAccounts": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/serviceAccount"
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]+$": {
+          "$ref": "#/$defs/serviceAccount"
+        }
       }
     },
     "deployments": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/deployment"
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]+$": {
+          "$ref": "#/$defs/deployment"
+        }
       }
     },
     "podMonitorings": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/podMonitoring"
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]+$": {
+          "$ref": "#/$defs/podMonitoring"
+        }
       }
     },
     "hpas": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/hpa"
+      "type": "object",
+      "patternProperties": {
+        "^[a-zA-Z0-9-_]+$": {
+          "$ref": "#/$defs/hpa"
+        }
       }
     }
   },
@@ -60,9 +72,6 @@
     "configMap": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
-        },
         "data": {
           "type": "object"
         }
@@ -71,9 +80,6 @@
     "externalSecret": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
-        },
         "target": {
           "type": "string"
         },
@@ -93,9 +99,6 @@
     "serviceAccount": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
-        },
         "gcpServiceAccount": {
           "type": "object",
           "properties": {
@@ -112,9 +115,6 @@
     "deployment": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
-        },
         "containers": {
           "type": "array",
           "items": {
@@ -245,9 +245,6 @@
     "podMonitoring": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
-        },
         "endpoints": {
           "type": "array",
           "items": {
@@ -273,9 +270,6 @@
     "hpa": {
       "type": "object",
       "properties": {
-        "name": {
-          "type": "string"
-        },
         "minReplicas": {
           "type": "integer"
         },
