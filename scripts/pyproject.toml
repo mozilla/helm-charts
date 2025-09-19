@@ -1,0 +1,18 @@
+[project]
+name = "chartkit"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.2.1",
+    "ruamel-yaml>=0.18.15",
+    "semver>=3.0.4",
+]
+    
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+chartkit = "chartkit.cli:cli"
