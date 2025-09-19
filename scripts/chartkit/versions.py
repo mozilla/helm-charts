@@ -2,7 +2,6 @@
 
 import json
 from typing import Optional
-from webbrowser import get
 from semver import Version
 from .charts import ChartGraph, ChartInfo
 
