@@ -20,7 +20,9 @@
   {{- $labels := merge (dict) $base -}}
   {{- $_ := set $labels "app.preview/pr" $previewPr -}}
   {{- $_ = set $be.service "selectorLabels" $labels -}}
+  {{- $_ = set $be.service "name" $name }}
   {{- $_ = set $transformedBackends $name $be -}}
+
 {{- end }}
 
 {{- $label_params := include "mozcloud-preview.labelParams" . | fromYaml }}
@@ -29,7 +31,6 @@
     "httpRouteConfig" $httpRouteConfig
     "backendConfig" (dict "backends" $transformedBackends)
     "nameOverride" (printf "pr%s-%s" $previewPr (include "mozcloud-preview.name" .))
-    "Chart" .Chart
     "Release" .Release
     "previewPr" $previewPr
     "previewHost" (.Values.global.preview.host | toString)
