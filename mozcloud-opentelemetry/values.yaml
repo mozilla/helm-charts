@@ -1,4 +1,4 @@
-# Default values for opentelemetry-templates.
+# Default values for mozcloud-opentelemetry.
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 

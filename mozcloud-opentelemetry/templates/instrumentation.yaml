@@ -2,7 +2,7 @@
 apiVersion: opentelemetry.io/v1alpha1
 kind: Instrumentation
 metadata:
-  name: {{ include "opentelemetry-templates.fullname" . }}-instrumentation
+  name: {{ include "mozcloud-opentelemetry.name" . }}-instrumentation
   namespace: {{ .Release.Namespace }}
 spec:
   exporter:

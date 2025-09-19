@@ -1,6 +1,0 @@
-apiVersion: v2
-name: opentelemetry-templates
-description: Templates for OpenTelemetry Operator Custom Resources
-type: application
-version: 0.1.0
-appVersion: "1.16.0"

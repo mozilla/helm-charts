@@ -1,7 +1,7 @@
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
-  name: {{ include "opentelemetry-templates.fullname" . }}-collectors
+  name: {{ include "mozcloud-opentelemetry.name" . }}-collectors
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
