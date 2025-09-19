@@ -4,7 +4,7 @@
 {{- $previewPr := .previewPr }}
 {{- $transformedRoutes := dict }}
 
-{{- $svcName := printf "pr%s-%s" $previewPr .Chart.Name -}}
+{{- $svcName := (include "mozcloud-preview-lib.name" .) -}}
 
 {{- range $name, $route := $rawRoutes }}
   {{- $newHostnames := list }}
@@ -41,11 +41,12 @@
     ))
     "rules" $transformedRules
   ) }}
-  {{- $_ := set $transformedRoutes $name $updatedRoute }}
+  {{- $_ := set $transformedRoutes $svcName $updatedRoute }}
+
 {{- end }}
 
 {{- $transformedConfig := dict "httpRoutes" $transformedRoutes }}
 
+{{- include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite (omit . "httpRouteConfig") (dict "httpRouteConfig" $transformedConfig)) }}
 
-{{- include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite . (dict "httpRouteConfig" $transformedConfig)) }}
 {{- end }}
