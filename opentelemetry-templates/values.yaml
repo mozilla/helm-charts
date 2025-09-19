@@ -1,0 +1,53 @@
+# Default values for opentelemetry-templates.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+collectors:
+  daemonset:
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      privileged: false
+      runAsUser: 10001
+      runAsGroup: 10001
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    resources: {}
+
+  gateway:
+    endpoints:
+      otlp:
+        endpoint: "gateway-collector"
+        port: "4317"
+      headless:
+        endpoint: "gateway-collector-headless"
+        port: "4317"
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+          - ALL
+      privileged: false
+      runAsUser: 10001
+      runAsGroup: 10001
+      runAsNonRoot: true
+      seccompProfile:
+        type: RuntimeDefault
+    autoscaler:
+      minReplicas: 2
+      maxReplicas: 5
+      targetCPUUtilization: 50
+      targetMemoryUtilization: 60
+    resources:
+      limits:
+        cpu: 400m
+        memory: 2Gi
+      requests:
+        cpu: 300m
+        memory: 1536Mi      
+
+serviceAccount:
+  create: true
