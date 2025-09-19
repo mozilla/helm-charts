@@ -100,9 +100,10 @@ class VersionManager:
 
     def print_updates(self, json_output: bool = False):
         """Print the updated charts and their new versions."""
+        sorted_updates = sorted(self.updated_charts)
         if json_output:
             result = {"updated": []}
-            for chart_name in self.updated_charts:
+            for chart_name in sorted_updates:
                 updates = {"name": chart_name, "version": self.get_version(chart_name)}
                 result["updated"].append(
                     updates
@@ -120,10 +121,10 @@ class VersionManager:
             print(json.dumps(result, indent=2))
             return
         print("Updating chart versions:")
-        for chart_name in self.updated_charts:
+        for chart_name in sorted_updates:
             print(f"{chart_name}: {self.get_version(chart_name)}")
             if chart_name in self.dependencies_updated:
                 for d in self.dependencies_updated[chart_name]:
                     print(
-                        f"    - updated dependency: {d} -> {self.chart_graph.get_chart(d).version}"
+                        f"    - dependency: {d} -> {self.chart_graph.get_chart(d).version}"
                     )

@@ -10,11 +10,18 @@ Usage: chartkit [OPTIONS] COMMAND [ARGS]...
   ChartKit: CLI tooling for Helm chart dependencies and utilities.
 
 Options:
-  --help  Show this message and exit.
+  -r, --roots TEXT  Root directories to scan for Helm charts. Can be specified
+                    multiple times.
+  --internal-only   Only include dependencies that are also found in the
+                    scanned charts.
+  --version         Show the version and exit.
+  --help            Show this message and exit.
 
 Commands:
-  charts  Prints Helm chart dependencies.
-
+  chart    Prints Helm either a single chart details or the a tree of...
+  charts   Prints Helm chart dependencies.
+  mermaid  Generates a diagram of Helm chart dependencies.
+  version  Manage chart versions..
 ```
 
 ## Charts Command
@@ -22,29 +29,24 @@ Collects and generates a depenency graph for the given root paths.
 ```sh
 $ uv run chartkit charts --help
 
-Usage: chartkit charts [OPTIONS] COMMAND [ARGS]...
+Usage: chartkit charts [OPTIONS]
 
   Prints Helm chart dependencies.
 
 Options:
-  -r, --roots TEXT       Root directories to scan for Helm charts. Can be
-                         specified multiple times.
-  --internal-only        Only include dependencies that are also found in the
-                         scanned charts.
-  -c, --root-chart TEXT  If specified, only show the dependency tree for this
-                         root chart.
-  --help                 Show this message and exit.
-
-Commands:
-  mermaid  Generates a diagram of Helm chart dependencies.
+  --json  Output as JSON.
+  --help  Show this message and exit.
 ```
+
+## Chart Command
+Displays information about a single chart. Can print dependency/dependent tree for the given chart or chart details.
 
 #### View the depency tree of a single chart
 ```sh
-uv run chartkit charts -r ./ -c mozcloud-kit
+uv run chartkit chart mozcloud-preview --mode dependency
 ```
 
-## Mermaid Chart subcommand
+## Mermaid Command
 Generates mermaid charts of the previously selected chart dependency graph
 ```sh
 $ uv run chartkit charts mermaid --help
@@ -61,10 +63,48 @@ Options:
 
 #### Generate mermaid chart to stdout
 ```sh
-uv run chartkit charts -r ./ -c mozcloud-kit mermaid
+uv run chartkit charts -c mozcloud-workload mermaid
 ```
 
 #### Generate mermaid chart svg
 ```sh
-uv run chartkit charts -r ./ -c mozcloud-kit mermaid --svg-output mozcloud-kit.svg
+uv run chartkit charts -c mozcloud-workload mermaid --svg-output mozcloud-kit.svg
 ```
+
+## Version Management
+`chartkit` can be used to manage the version of individual charts and cascade those version updates across dependent charts.
+
+#### List dependent tree and version details
+This shows a list of charts that are dependent on a single chart or a list of charts and their version information.
+```sh
+Usage: chartkit version list [OPTIONS] CHARTS...
+
+  Lists the versions of all charts.
+
+Options:
+  --help  Show this message and exit.
+```
+##### Example
+```sh
+uv run chartkit version list mozcloud-service
+```
+
+#### Bump version
+```sh
+Usage: chartkit version bump [OPTIONS] [CHARTS]...
+
+  Bumps the version of a chart and cascades to dependents.
+
+Options:
+  --part [major|minor|patch]  Part of the version to bump.
+  --dry-run                   Show what would be changed, but do not write
+                              changes.
+  --json                      Output results as JSON.
+  --help                      Show this message and exit.
+```
+##### Example
+For example you can take a list of changed charts and update all their versions and dependencies in one command:
+```sh
+echo "mozcloud-gateway mozcloud-gateway-lib mozcloud-preview-lib" | xargs uv run chartkit version bump
+```
+

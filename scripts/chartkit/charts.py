@@ -39,6 +39,13 @@ class ChartNode:
     def __repr__(self) -> str:
         return f"ChartNode(name={self.name}, info={self.info}, next={self.next})"
 
+    def flatten(self) -> List["ChartInfo"]:
+        """Flatten the tree into a list of nodes."""
+        nodes = [self.info]
+        for child in self.next:
+            nodes.extend(child.flatten())
+        return nodes
+
 
 @dataclass
 class ChartInfo:
@@ -93,19 +100,12 @@ class ChartGraph:
     def __init__(
         self,
         roots: List[str] = ["."],
-        internal_only: bool = False,
-        root_chart: Optional[str] = None,
+        internal_only: bool = True,
     ):
         root_paths = [Path(p).resolve() for p in roots]
         self.chart_files = self.find_chart_files(root_paths)
         self.charts, self.name_to_path = self.collect_charts()
-        self.deps = self.collect_edges()
-        self.edges = self.build_graph(self.charts, self.deps, internal_only)
-
-        if root_chart:
-            self.charts, self.edges = self.filter_by_root_chart(
-                root_chart, self.charts, self.deps, self.edges
-            )
+        self.edges = self.build_graph(self.charts, internal_only)
 
     def find_chart_files(self, roots: List[Path]) -> List[Path]:
         """
@@ -170,34 +170,16 @@ class ChartGraph:
             name_to_path[name] = chart_path.parent
         return charts, name_to_path
 
-    def collect_edges(self) -> Dict[str, List[dict]]:
-        """Return mapping of chart name -> list of dependency objects.
-        We preserve raw dependency dicts for alias/conditions info.
-        """
-        deps: Dict[str, List[dict]] = {}
-        for chart_path in self.chart_files:
-            data = self.load_chart(chart_path)
-            if not data:
-                continue
-            name = data.get("name", chart_path.parent.name)
-            dep_list = data.get("dependencies", []) or []
-            if isinstance(dep_list, list):
-                deps[name] = dep_list
-            else:
-                deps[name] = []
-        return deps
-
     def build_graph(
         self,
         charts: Dict[str, ChartInfo],
-        deps: Dict[str, List[dict]],
         internal_only: bool,
     ) -> Set[ChartEdge]:
         edges: Set[ChartEdge] = set()
         internal_names = set(charts.keys())
 
-        for parent, dep_list in deps.items():
-            for d in dep_list:
+        for parent, info in charts.items():
+            for d in info.dependencies:
                 # Helm dependency fields: name (required), alias (optional)
                 child = (d.get("alias") or d.get("name") or "").strip()
                 if not child:
@@ -208,70 +190,6 @@ class ChartGraph:
                     continue
                 edges.add(ChartEdge(parent, child))
         return edges
-
-    def find_dependency_tree(
-        self,
-        root_chart: str,
-        deps: Dict[str, List[dict]],
-        charts: Dict[str, ChartInfo],
-    ) -> Set[str]:
-        """
-        Find all charts in the dependency tree starting from root_chart.
-        Returns a set of chart names that are reachable from the root.
-        """
-        visited = set()
-        to_visit = [root_chart]
-
-        while to_visit:
-            current = to_visit.pop()
-            if current in visited:
-                continue
-            visited.add(current)
-
-            # Find dependencies of current chart
-            if current in deps:
-                for dep in deps[current]:
-                    child = (dep.get("alias") or dep.get("name") or "").strip()
-                    if child and child not in visited:
-                        to_visit.append(child)
-
-        return visited
-
-    def filter_by_root_chart(
-        self,
-        root_chart: str,
-        charts: Dict[str, ChartInfo],
-        deps: Dict[str, List[dict]],
-        edges: Set[ChartEdge],
-    ) -> Tuple[Dict[str, ChartInfo], Set[ChartEdge]]:
-        """
-        Filter charts and edges to only include those in the dependency tree of root_chart.
-        """
-        if root_chart not in charts:
-            print(
-                f"ERROR: Root chart '{root_chart}' not found in discovered charts",
-                file=sys.stderr,
-            )
-            available_charts = sorted(charts.keys())
-            print(f"Available charts: {', '.join(available_charts)}", file=sys.stderr)
-            sys.exit(1)
-
-        # Find all charts in the dependency tree
-        tree_charts = self.find_dependency_tree(root_chart, deps, charts)
-
-        # Filter charts to only include those in the tree
-        filtered_charts = {
-            name: info for name, info in charts.items() if name in tree_charts
-        }
-
-        # Filter edges to only include those between charts in the tree
-        filtered_edges = {
-            ChartEdge(parent, child)
-            for parent, child in edges
-            if parent in tree_charts and child in tree_charts
-        }
-
-        return filtered_charts, filtered_edges
 
     def get_roots(self) -> List[str]:
         # get roots from edges
@@ -385,6 +303,29 @@ class ChartGraph:
             return self.charts[chart_name]
         except KeyError:
             raise KeyError(f"Chart '{chart_name}' not found")
+
+    def get_chart_depth(self, chart_name: str) -> int:
+        """Get the depth of a chart in the dependency graph."""
+
+        def _depth(name: str, visited: Set[str]) -> int:
+            visited.add(name)
+            children = self.dependency_selector()(name)
+            if not children:
+                return 1
+            return 1 + max(_depth(child, visited) for child in children)
+
+        try:
+            return _depth(chart_name, set())
+        except KeyError:
+            raise KeyError(f"Chart '{chart_name}' not found")
+
+    def sort_by_depth(self, chart_names: List[str]) -> List[str]:
+        """Sort chart names by their depth in the dependency graph (deepest first)."""
+        return sorted(
+            chart_names,
+            key=lambda name: self.get_chart_depth(name) if name in self.charts else 0,
+            reverse=True,
+        )
 
     def print_chart_info(self, chart_name: str, json_output: bool = False):
         chart = self.get_chart(chart_name)

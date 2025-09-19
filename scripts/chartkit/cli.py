@@ -1,4 +1,5 @@
-from typing import Optional
+import subprocess
+from typing import List, Optional
 import click
 
 from .charts import ChartGraph
@@ -11,7 +12,7 @@ from .versions import VersionManager
     "--roots",
     "-r",
     multiple=True,
-    default=["."],
+    default=[],
     help="Root directories to scan for Helm charts. Can be specified multiple times.",
 )
 @click.option(
@@ -20,20 +21,25 @@ from .versions import VersionManager
     default=False,
     help="Only include dependencies that are also found in the scanned charts.",
 )
-@click.option(
-    "--root-chart",
-    "-c",
-    default=None,
-    help="If specified, only show the dependency tree for this root chart.",
-)
 @click.version_option(message="ChartKit %(version)s")
 @click.pass_context
 def cli(
-    ctx: click.Context, roots: list[str], internal_only: bool, root_chart: Optional[str]
+    ctx: click.Context, roots: list[str], internal_only: bool
 ):
     """ChartKit: CLI tooling for Helm chart dependencies and utilities."""
+
+    # find the git root
+    if not roots or len(roots) == 0:
+        git_root = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        roots = [git_root]
+
     ctx.obj = ChartGraph(
-        roots=roots, internal_only=internal_only, root_chart=root_chart
+        roots=roots, internal_only=internal_only
     )
 
 
@@ -43,7 +49,6 @@ def cli(
 def charts(
     graph: ChartGraph,
     json: bool = False,
-    chart: Optional[str] = None,
 ):
     """Prints Helm chart dependencies."""
     graph.print_dependency_graph(json_output=json)
@@ -104,17 +109,21 @@ def mermaid(
     if not output and not svg_output:
         click.echo(diagram.mermaid_str)
 
+
 @cli.group()
 def version():
     """Manage chart versions."""
     pass
-    
+
+
 @version.command()
-@click.argument("chart", type=str, required=True)
+@click.argument("charts", nargs=-1, type=str, required=True)
 @click.pass_obj
-def list(graph: ChartGraph, chart: str):
+def list(graph: ChartGraph, charts: list[str]):
     """Lists the versions of all charts."""
-    graph.print_dependent_graph(chart_name=chart, json_output=False, show_versions=True)
+    for chart in graph.sort_by_depth(charts):
+        graph.print_dependent_graph(chart_name=chart, json_output=False, show_versions=True)
+
 
 @version.command()
 @click.option(
@@ -135,24 +144,31 @@ def list(graph: ChartGraph, chart: str):
     default=False,
     help="Output results as JSON.",
 )
-@click.argument("chart", type=str)
+@click.argument("charts", nargs=-1, type=str)
 @click.pass_obj
 def bump(
     graph: ChartGraph,
-    chart: str,
+    charts: List[str],
     part: str,
     dry_run: bool = False,
     json: bool = False,
 ):
     """Bumps the version of a chart and cascades to dependents."""
 
-    vm = VersionManager(graph)
-    target_chart = graph.get_chart(chart)
-    if not target_chart:
-        click.echo(f"Chart '{chart}' not found.", err=True)
+    if len(charts) == 0:
+        click.echo("At least one chart name must be specified to bump.", err=True)
         return
+    
+    vm = VersionManager(graph)
+    # Sort by depth (deepest first) to ensure dependents are processed after dependencies
+    sorted_charts = graph.sort_by_depth(charts)
+    for chart_name in sorted_charts:
+        target_chart = graph.get_chart(chart_name)
+        if not target_chart:
+            click.echo(f"Chart '{chart_name}' not found.", err=True)
+            continue
+        vm.cascade_bump(target_chart, part)
 
-    vm.cascade_bump(target_chart, part)
     vm.print_updates(json_output=json)
 
     if not dry_run:
