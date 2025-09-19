@@ -1,10 +1,10 @@
 apiVersion: opentelemetry.io/v1beta1
 kind: OpenTelemetryCollector
 metadata:
-  name: {{ include "opentelemetry-templates.fullname" . }}-daemonset
+  name: {{ include "mozcloud-opentelemetry.name" . }}-daemonset
   namespace: {{ .Release.Namespace }}
 spec:
-  serviceAccount: {{ include "opentelemetry-templates.serviceAccountName" . }}-collector
+  serviceAccount: {{ include "mozcloud-opentelemetry.serviceAccountName" . }}-collector
   mode: daemonset
   terminationGracePeriodSeconds: 600
   hostNetwork: true
