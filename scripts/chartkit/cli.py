@@ -91,15 +91,17 @@ def chart(graph: ChartGraph, chart: str, json: bool, mode: str):
     default=None,
     help="Output file for the diagram.",
 )
+@click.argument("chart", required=False, type=str) 
 @click.pass_obj
 def mermaid(
     graph: ChartGraph,
+    chart: Optional[str] = None,
     include_attrs: bool = False,
     output: Optional[str] = None,
     svg_output: Optional[str] = None,
 ):
     """Generates a diagram of Helm chart dependencies."""
-    diagram = MermaidDiagram(graph, include_attrs)
+    diagram = MermaidDiagram(graph, include_attrs, root_chart=chart)
     if output:
         diagram.write_mermaid_to_file(output)
 

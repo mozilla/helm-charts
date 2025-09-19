@@ -1,8 +1,9 @@
+from re import sub
 import sys
 import subprocess
 import tempfile
 import os
-from typing import Dict, List, Set
+from typing import Dict, List, Optional, Set
 
 import click
 from .charts import ChartEdge, ChartGraph, ChartInfo
@@ -21,10 +22,20 @@ class MermaidDiagram:
         self,
         chart_graph: ChartGraph,
         include_attrs: bool,
+        root_chart: Optional[str] = None,
     ):
         """Generate a Mermaid ER diagram from the given chartgraph."""
         charts = chart_graph.charts
         edges = chart_graph.edges
+
+        if root_chart:
+            subcharts = { c.name: c for c in chart_graph.find_subtree(
+                root_chart, chart_graph.dependency_selector()
+            ).flatten()}
+            charts = subcharts
+            # filter edges to those that connect to subcharts
+            edges = {e for e in edges if e.parent in subcharts}
+
         self.mermaid_str = self.generate(charts, edges, include_attrs)
 
 
