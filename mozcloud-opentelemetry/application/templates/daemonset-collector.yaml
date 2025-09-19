@@ -1,0 +1,137 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: {{ include "mozcloud-opentelemetry.name" . }}-daemonset
+  namespace: {{ .Release.Namespace }}
+spec:
+  {{- if .Values.serviceAccount.create }}
+  serviceAccount: {{ include "mozcloud-opentelemetry.serviceAccountName" . }}-collector
+  {{- end }}
+  mode: daemonset
+  terminationGracePeriodSeconds: 600
+  hostNetwork: true
+  {{- with .Values.collectors.daemonset.securityContext }}
+  securityContext: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.collectors.daemonset.resources }}
+  resources: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  env:
+  - name: MY_POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  - name: KUBE_NODE_NAME
+    valueFrom:
+      fieldRef:
+        apiVersion: v1
+        fieldPath: spec.nodeName
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc: {}
+          http: {}
+
+    processors:
+      k8sattributes:
+        filter:
+          node_from_env_var: KUBE_NODE_NAME
+        extract:
+          metadata:
+          - k8s.namespace.name
+          - k8s.pod.name
+          - k8s.pod.ip
+          - k8s.pod.uid
+        passthrough: false
+        pod_association:
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.ip
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
+        - sources:
+          - from: connection
+
+      resourcedetection:
+        detectors: [env, gcp]
+        timeout: 10s
+        override: false
+
+      filter:
+        error_mode: ignore
+        traces:
+          span:
+            - attributes["http.route"] == "/__lbheartbeat__"
+            - 'IsMatch(name, ".*__lbheartbeat__.*")'
+
+      memory_limiter:
+        # drop metrics if memory usage gets too high
+        check_interval: 1s
+        limit_percentage: 65
+        spike_limit_percentage: 20
+
+    exporters:
+      debug:
+        verbosity: detailed
+
+      otlp:
+        endpoint: {{ printf "%s:%s" .Values.collectors.gateway.endpoints.otlp.endpoint .Values.collectors.gateway.endpoints.otlp.port | quote }}
+        tls:
+          insecure: true
+
+      loadbalancing/otlp:
+        routing_key: traceID
+        protocol:
+          otlp:
+            tls:
+              insecure: true
+        resolver:
+          dns:
+            hostname: {{ .Values.collectors.gateway.endpoints.headless.endpoint }}
+            port: {{ .Values.collectors.gateway.endpoints.headless.port }}
+
+    extensions:
+      health_check:
+        endpoint: ${env:MY_POD_IP}:13133
+
+      googleclientauth: {}
+
+    service:
+      extensions:
+      - health_check
+      - googleclientauth
+      pipelines:
+        metrics:
+          receivers:
+          - otlp
+          processors:
+          - k8sattributes
+          - memory_limiter
+          - resourcedetection
+          exporters:
+          - otlp
+        traces:
+          receivers:
+          - otlp
+          processors:
+          - memory_limiter
+          - filter
+          - resourcedetection
+          exporters:
+          - loadbalancing/otlp
+      telemetry:
+        logs:
+          encoding: json
+        metrics:
+          readers:
+            # self-monitoring of collector metrics
+            # k8sprocessor doesnt annotate pods using host networking
+            # podmonitoring will add at least minimal labeling
+            # this enables the /metrics endpoint
+            - pull:
+                exporter:
+                  prometheus:
+                    host: '0.0.0.0'
+                    port: 8888

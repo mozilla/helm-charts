@@ -1,0 +1,25 @@
+---
+apiVersion: opentelemetry.io/v1alpha1
+kind: Instrumentation
+metadata:
+  name: {{ include "mozcloud-opentelemetry.name" . }}-instrumentation
+  namespace: {{ .Release.Namespace }}
+spec:
+  exporter:
+    endpoint: http://$(OTEL_COLLECTOR_HOST):4318
+  env:
+    - name: OTEL_COLLECTOR_HOST
+      valueFrom:
+        fieldRef:
+          fieldPath: status.hostIP
+  propagators:
+    - tracecontext
+    - baggage
+  python:
+    env:
+      # https://opentelemetry.io/docs/zero-code/python/configuration/#disabling-specific-instrumentations
+      #     - name: OTEL_PYTHON_DISABLED_INSTRUMENTATIONS
+      #       value:
+      #         <comma-separated list of package names to exclude from instrumentation>
+      - name: OTEL_PYTHON_DISABLED_INSTRUMENTATIONS
+        value: "system_metrics"
