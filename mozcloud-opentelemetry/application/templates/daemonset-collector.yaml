@@ -4,7 +4,9 @@ metadata:
   name: {{ include "mozcloud-opentelemetry.name" . }}-daemonset
   namespace: {{ .Release.Namespace }}
 spec:
+  {{- if .Values.serviceAccount.create }}
   serviceAccount: {{ include "mozcloud-opentelemetry.serviceAccountName" . }}-collector
+  {{- end }}
   mode: daemonset
   terminationGracePeriodSeconds: 600
   hostNetwork: true
