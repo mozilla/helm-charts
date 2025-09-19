@@ -61,14 +61,14 @@ uv run chartkit chart mozcloud-preview --mode dependency
 Generates mermaid charts of the previously selected chart dependency graph
 ```sh
 $ uv run chartkit mermaid --help
-Usage: chartkit mermaid [OPTIONS]
+Usage: chartkit mermaid [OPTIONS] [CHART]
 
   Generates a diagram of Helm chart dependencies.
 
 Options:
   --include-attrs    Include chart attributes (version, type) in the diagram.
-  --output TEXT      Output file for the diagram.
-  --svg-output TEXT  Output file for the diagram.
+  --output TEXT      Text output file for the diagram.
+  --svg-output TEXT  SVG output file for the diagram.
   --help             Show this message and exit.
 ```
 
