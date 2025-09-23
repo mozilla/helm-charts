@@ -180,6 +180,9 @@
           "type": "boolean"
         }
       }
+    },
+    "project_id": {
+      "type": "string"
     }
   },
   "additionalProperties": true
