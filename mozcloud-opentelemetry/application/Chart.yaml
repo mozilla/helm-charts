@@ -2,5 +2,5 @@ apiVersion: v2
 name: mozcloud-opentelemetry
 description: Opinionated application chart for MozCloud OpenTelemetry signals collection
 type: application
-version: 0.1.2
+version: 0.1.3
 appVersion: "0.134.0"
