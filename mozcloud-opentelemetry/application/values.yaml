@@ -51,4 +51,4 @@ collectors:
 
 serviceAccount:
   create: true
-  name: mozcloud-opentelemetry-collector
+  name: mozcloud-otel-collector
