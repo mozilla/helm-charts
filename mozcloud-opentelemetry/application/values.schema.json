@@ -178,6 +178,9 @@
       "properties": {
         "create": {
           "type": "boolean"
+        },
+        "name": {
+          "type": "string"
         }
       }
     },

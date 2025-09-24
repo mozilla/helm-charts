@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   {{- if .Values.serviceAccount.create }}
-  serviceAccount: {{ include "mozcloud-opentelemetry.serviceAccountName" . }}-gateway
+  serviceAccount: {{ .Values.serviceAccount.name }}
   {{- end }}
   mode: deployment
   terminationGracePeriodSeconds: 600

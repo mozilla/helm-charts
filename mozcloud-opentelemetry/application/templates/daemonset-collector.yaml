@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   {{- if .Values.serviceAccount.create }}
-  serviceAccount: {{ include "mozcloud-opentelemetry.serviceAccountName" . }}-collector
+  serviceAccount: {{ .Values.serviceAccount.name }}
   {{- end }}
   mode: daemonset
   terminationGracePeriodSeconds: 600
@@ -90,7 +90,7 @@ spec:
         resolver:
           dns:
             hostname: {{ .Values.collectors.gateway.endpoints.headless.endpoint }}
-            port: {{ .Values.collectors.gateway.endpoints.headless.port }}
+            port: {{ .Values.collectors.gateway.endpoints.headless.port | quote }}
 
     extensions:
       health_check:
