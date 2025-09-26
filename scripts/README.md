@@ -17,10 +17,11 @@ Options:
   --help            Show this message and exit.
 
 Commands:
-  chart    Prints Helm either a single chart details or the a tree of...
-  charts   Prints Helm chart dependencies.
-  mermaid  Generates a diagram of Helm chart dependencies.
-  version  Manage chart versions..
+  chart                Prints Helm either a single chart details or the a...
+  charts               Prints Helm chart dependencies.
+  mermaid              Generates a diagram of Helm chart dependencies.
+  update-dependencies  Updates the dependencies for all charts.
+  version              Manage chart versions.
 ```
 
 ## Charts Command
@@ -82,14 +83,30 @@ uv run chartkit mermaid
 uv run chartkit mermaid --svg-output mozcloud-workload.svg mozcloud-workload 
 ```
 
+## Update Dependencies Command
+Does a depth first traversal of all charts found in the root directories and performs a `helm dep update` if the chart has dependencies
+
+#### Example Usage
+```sh
+$ uv run chartkit update-dependencies --help
+Usage: chartkit update-dependencies [OPTIONS] [CHARTS]...
+
+  Updates the dependencies for all charts.
+
+Options:
+  --all      Update all chart dependencies.
+  --dry-run  Show what would be changed, but do not write changes.
+  --help     Show this message and exit.
+```
+
 ## Version Management
 `chartkit` can be used to manage the version of individual charts and cascade those version updates across dependent charts.
 
 #### List dependent tree and version details
-This shows a list of charts that are dependent on a single chart or a list of charts and their version information.
+Shows a list of charts that are dependent on a single chart or a list of charts and their version information.
 ```sh
 $ uv run chartkit version list --help
-Usage: chartkit version list [OPTIONS] CHARTS...
+Usage: chartkit version list [OPTIONS] [CHARTS]...
 
   Lists the versions of all charts.
 
@@ -136,3 +153,19 @@ mozcloud-workload: 0.0.3
 Chart versions updated. 
 ```
 
+#### Check Versions
+Checks staged charts and compares their versions to the current branch `HEAD` version. If the versions match (indicating a bump is necessary) the command will fail. This is specifically useful as a pre-commit check
+
+##### Example
+```sh
+$ uv run chartkit version check --help
+Usage: chartkit version check [OPTIONS] [CHARTS]...
+
+  Checks the previous version of a chart against a specific commit. If the
+  file has changed but not the version, it indicates that a version bump is
+  needed.
+
+Options:
+  --commit TEXT  Git commit to check against (default: HEAD).
+  --help         Show this message and exit.
+  ```

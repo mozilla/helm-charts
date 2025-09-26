@@ -1,7 +1,8 @@
-import subprocess
 from typing import List, Optional
 import click
+from semver import Version
 
+from .git import git_root, staged_files
 from .charts import ChartGraph
 from .mermaid import MermaidDiagram
 from .versions import VersionManager
@@ -23,35 +24,33 @@ from .versions import VersionManager
 )
 @click.version_option(message="ChartKit %(version)s")
 @click.pass_context
-def cli(
-    ctx: click.Context, roots: list[str], internal_only: bool
-):
+def cli(ctx: click.Context, roots: list[str], internal_only: bool):
     """ChartKit: CLI tooling for Helm chart dependencies and utilities."""
 
     # find the git root
     if not roots or len(roots) == 0:
-        git_root = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            check=True,
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
-        roots = [git_root]
+        roots = [git_root().as_posix()]
 
-    ctx.obj = ChartGraph(
-        roots=roots, internal_only=internal_only
-    )
+    ctx.obj = ChartGraph(roots=roots, internal_only=internal_only)
 
 
 @cli.command()
 @click.option("--json", is_flag=True, default=False, help="Output as JSON.")
+@click.option("--sort", is_flag=True, default=False, help="Sort charts by depth.")
+@click.option("--reverse", is_flag=True, default=False, help="Reverse the sort order.")
 @click.pass_obj
 def charts(
     graph: ChartGraph,
     json: bool = False,
+    sort: bool = False,
+    reverse: bool = False,
 ):
     """Prints Helm chart dependencies."""
-    graph.print_dependency_graph(json_output=json)
+    if sort:
+        chart_names = graph.sort_by_depth(list(graph.charts.keys()), reverse=reverse)
+        graph.print_charts(chart_names, json_output=json)
+    else:
+        graph.print_dependency_graph(json_output=json)
 
 
 @cli.command()
@@ -76,6 +75,25 @@ def chart(graph: ChartGraph, chart: str, json: bool, mode: str):
 
 @cli.command()
 @click.option(
+    "--all", is_flag=True, default=False, help="Update all chart dependencies."
+)
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    help="Show what would be changed, but do not write changes.",
+)
+@click.argument("charts", nargs=-1, type=str)
+@click.pass_obj
+def update_dependencies(
+    graph: ChartGraph, all: bool, charts: list[str], dry_run: bool = False
+):
+    """Updates the dependencies for all charts."""
+    graph.update_dependencies(charts, all=all, dry_run=dry_run)
+
+
+@cli.command()
+@click.option(
     "--include-attrs",
     is_flag=True,
     default=False,
@@ -91,7 +109,7 @@ def chart(graph: ChartGraph, chart: str, json: bool, mode: str):
     default=None,
     help="Output file for the diagram.",
 )
-@click.argument("chart", required=False, type=str) 
+@click.argument("chart", required=False, type=str)
 @click.pass_obj
 def mermaid(
     graph: ChartGraph,
@@ -118,13 +136,16 @@ def version():
     pass
 
 
-@version.command()
-@click.argument("charts", nargs=-1, type=str, required=True)
+@version.command("list")
+@click.argument("charts", nargs=-1, type=str)
 @click.pass_obj
-def list(graph: ChartGraph, charts: list[str]):
+def list_versions(graph: ChartGraph, charts: list[str]):
     """Lists the versions of all charts."""
+    charts = graph.ensure_charts_or_files(charts)
     for chart in graph.sort_by_depth(charts):
-        graph.print_dependent_graph(chart_name=chart, json_output=False, show_versions=True)
+        graph.print_dependent_graph(
+            chart_name=chart, json_output=False, show_versions=True
+        )
 
 
 @version.command()
@@ -146,6 +167,12 @@ def list(graph: ChartGraph, charts: list[str]):
     default=False,
     help="Output results as JSON.",
 )
+@click.option(
+    "--staged",
+    is_flag=True,
+    default=False,
+    help="Bump versions for charts with staged changes (in git).",
+)
 @click.argument("charts", nargs=-1, type=str)
 @click.pass_obj
 def bump(
@@ -154,13 +181,11 @@ def bump(
     part: str,
     dry_run: bool = False,
     json: bool = False,
+    staged: bool = False,
 ):
     """Bumps the version of a chart and cascades to dependents."""
 
-    if len(charts) == 0:
-        click.echo("At least one chart name must be specified to bump.", err=True)
-        return
-    
+    charts = get_chart_arguments(graph, charts, staged)
     vm = VersionManager(graph)
     # Sort by depth (deepest first) to ensure dependents are processed after dependencies
     sorted_charts = graph.sort_by_depth(charts)
@@ -178,6 +203,59 @@ def bump(
         click.echo("Chart versions updated.")
     else:
         click.echo("Dry run; no changes made.")
+
+
+@version.command()
+@click.option(
+    "--commit",
+    default="HEAD",
+    help="Git commit to check against (default: HEAD).",
+)
+@click.argument("charts", nargs=-1, type=str)
+@click.pass_obj
+def check(graph: ChartGraph, charts: List[str], commit: str):
+    """Checks the previous version of a chart against a specific commit.
+    If the file has changed but not the version, it indicates that a version bump is needed."""
+    # resolve charts from staged files if needed
+    charts = get_chart_arguments(graph, charts, staged=True)
+    charts_to_bump = []
+    for chart in charts:
+        current_version = Version.parse(graph.get_chart(chart).version)
+        previous_version = Version.parse(
+            graph.get_chart(chart).get_previous_version(commit) or "0.0.0"
+        )
+        needs_bump = (
+            current_version == previous_version or current_version < previous_version
+        )
+        if needs_bump:
+            charts_to_bump.append(chart)
+    if len(charts_to_bump) == 0:
+        click.echo("All specified charts are up to date.")
+    else:
+        click.echo(
+            f"""The following charts need version bumps: \n - {"\n  - ".join(charts_to_bump)}
+Please bump their versions using the 'bump' command. eg:
+  make bump-charts
+""",
+            err=True,
+        )
+        exit(1)
+
+
+def get_chart_arguments(
+    graph: ChartGraph, charts: List[str], staged: bool
+) -> List[str]:
+    """Helper function to get chart names or file paths."""
+    if staged:
+        charts = staged_files()
+        if len(charts) == 0:
+            click.echo("No staged changes found in any charts.", err=True)
+            return []
+    elif len(charts) == 0:
+        click.echo("At least one chart name or file path must be specified.", err=True)
+        return []
+
+    return graph.ensure_charts_or_files(charts)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,3 @@
-from re import sub
 import sys
 import subprocess
 import tempfile

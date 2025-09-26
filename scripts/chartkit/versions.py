@@ -2,6 +2,7 @@
 
 import json
 from typing import Optional
+import click
 from semver import Version
 from .charts import ChartGraph, ChartInfo
 
@@ -117,13 +118,13 @@ class VersionManager:
                         else {}
                     )
                 )
-            print(json.dumps(result, indent=2))
+            click.echo(json.dumps(result, indent=2))
             return
-        print("Updating chart versions:")
+        click.echo("Updating chart versions:")
         for chart_name in sorted_updates:
-            print(f"{chart_name}: {self.get_version(chart_name)}")
+            click.echo(f"{chart_name}: {self.get_version(chart_name)}")
             if chart_name in self.dependencies_updated:
                 for d in self.dependencies_updated[chart_name]:
-                    print(
+                    click.echo(
                         f"    - dependency: {d} -> {self.chart_graph.get_chart(d).version}"
                     )

@@ -1,11 +1,16 @@
 from dataclasses import dataclass
-import sys
 from pathlib import Path
-from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set, Tuple
+import subprocess
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set
 
 # import yaml
+import click
+from git import Blob
 import ruamel.yaml
 import json
+
+from .git import get_commit_blob
+from .files import files_to_chart_files, find_chart_files, load_chart
 
 # YAML setup for round-trip and comment preservation
 yaml = ruamel.yaml.YAML()
@@ -71,13 +76,39 @@ class ChartInfo:
             "dependencies": self.dependencies,
         }
 
+    @staticmethod
+    def from_yaml(chart: Path | Blob) -> Optional["ChartInfo"]:
+        data: Optional[Dict[str, Any]] = None
+        chart_path: Path
+        try:
+            if isinstance(chart, Path):
+                chart_path = chart.resolve()
+                data = load_chart(chart_path)
+            elif isinstance(chart, Blob):
+                chart_path = Path(chart.path)
+                data = yaml.load(chart.data_stream.read().decode("utf-8"))
+            if not data:
+                return None
+        except Exception as e:
+            click.echo(f"WARN: Failed to parse chart: {e}", err=True)
+            return None
+
+        name = data.get("name", chart_path.parent.name or "unnamed")
+        return ChartInfo(
+            name=name,
+            type=data.get("type", "application"),
+            version=data.get("version", ""),
+            path=chart_path.parent,
+            dependencies=data.get("dependencies", []) or [],
+        )
+
     def save_chart_yaml(self):
         chart_yaml_path = self.path / "Chart.yaml"
         try:
             with chart_yaml_path.open("r", encoding="utf-8") as f:
                 data = yaml.load(f) or {}
         except Exception as e:
-            print(f"WARN: Failed to parse {chart_yaml_path}: {e}", file=sys.stderr)
+            click.echo(f"WARN: Failed to parse {chart_yaml_path}: {e}", err=True)
             return
 
         data["version"] = self.version
@@ -89,7 +120,36 @@ class ChartInfo:
             with chart_yaml_path.open("w", encoding="utf-8") as f:
                 yaml.dump(data, f)
         except Exception as e:
-            print(f"WARN: Failed to write {chart_yaml_path}: {e}", file=sys.stderr)
+            click.echo(f"WARN: Failed to write {chart_yaml_path}: {e}", err=True)
+
+    def update_dependencies(self, dry_run: bool = False):
+        if len(self.dependencies) > 0:
+            if dry_run:
+                click.echo(
+                    f"DRY-RUN: Would update dependencies for chart {self.name}..."
+                )
+                return
+            click.echo(f"Updating dependencies for chart {self.name}...")
+            try:
+                subprocess.run(
+                    ["helm", "dependency", "update"], cwd=self.path, check=True
+                )
+            except subprocess.CalledProcessError as e:
+                click.echo(
+                    f"WARN: Failed to update dependencies for {self.name}: {e}",
+                    err=True,
+                )
+        else:
+            click.echo(f"No dependencies to update for chart {self.name}.")
+
+    def get_previous_version(self, commit: str = "HEAD") -> Optional[str]:
+        """Check the version of the chart in a specific commit."""
+        chart_yaml_path = self.path / "Chart.yaml"
+        blob = get_commit_blob(commit, str(chart_yaml_path))
+        if blob is None:
+            return None
+        chart_info = ChartInfo.from_yaml(blob)
+        return chart_info.version if chart_info else None
 
 
 class ChartGraph:
@@ -103,72 +163,33 @@ class ChartGraph:
         internal_only: bool = True,
     ):
         root_paths = [Path(p).resolve() for p in roots]
-        self.chart_files = self.find_chart_files(root_paths)
-        self.charts, self.name_to_path = self.collect_charts()
+        self.chart_files = find_chart_files(root_paths)
+        self.charts = self.collect_charts()
         self.edges = self.build_graph(self.charts, internal_only)
 
-    def find_chart_files(self, roots: List[Path]) -> List[Path]:
+    def ensure_charts_or_files(self, charts: List[str]) -> List[str]:
+        """Ensure that the provided list contains valid chart names or file paths.
+        If a file path is provided, it will be converted to the corresponding chart name.
         """
-        Recursively find all Chart.yaml files in the given root directories.
-        Excludes Chart.lock files and handles various edge cases.
-        """
-        chart_files: List[Path] = []
-        seen_paths: Set[Path] = set()
 
-        for root in roots:
-            if not root.exists():
-                print(f"WARN: Root path does not exist: {root}", file=sys.stderr)
-                continue
-            if not root.is_dir():
-                print(f"WARN: Root path is not a directory: {root}", file=sys.stderr)
-                continue
+        def is_chart(c: str) -> bool:
+            return c in self.charts
 
-            # Use rglob to recursively find all Chart.yaml files
-            for p in root.rglob("Chart.yaml"):
-                # Skip if this is actually Chart.lock or other variants
-                if p.name != "Chart.yaml":
-                    continue
+        valid_charts = [c for c in charts if is_chart(c)]
+        valid_charts.extend(
+            files_to_chart_files([c for c in charts if not is_chart(c)])
+        )
+        return valid_charts
 
-                # Skip if we've already seen this path (handles overlapping roots)
-                resolved_path = p.resolve()
-                if resolved_path in seen_paths:
-                    continue
-                seen_paths.add(resolved_path)
-
-                # Skip if the file is not readable
-                if not p.is_file() or not p.exists():
-                    continue
-
-                chart_files.append(p)
-
-        return sorted(chart_files)  # Sort for consistent output
-
-    def load_chart(self, chart_yaml_path: Path) -> Optional[dict]:
-        try:
-            with chart_yaml_path.open("r", encoding="utf-8") as f:
-                return yaml.load(f) or {}
-        except Exception as e:
-            print(f"WARN: Failed to parse {chart_yaml_path}: {e}", file=sys.stderr)
-            return None
-
-    def collect_charts(self) -> Tuple[Dict[str, ChartInfo], Dict[str, Path]]:
+    def collect_charts(self) -> Dict[str, ChartInfo]:
         charts: Dict[str, ChartInfo] = {}
-        name_to_path: Dict[str, Path] = {}
 
         for chart_path in self.chart_files:
-            data = self.load_chart(chart_path)
-            if not data:
+            chart_info = ChartInfo.from_yaml(chart_path)
+            if not chart_info:
                 continue
-            name = data.get("name", chart_path.parent.name or "unnamed")
-            charts[name] = ChartInfo(
-                name=name,
-                type=data.get("type", "application"),
-                version=data.get("version", ""),
-                path=chart_path.parent,
-                dependencies=data.get("dependencies", []) or [],
-            )
-            name_to_path[name] = chart_path.parent
-        return charts, name_to_path
+            charts[chart_info.name] = chart_info
+        return charts
 
     def build_graph(
         self,
@@ -243,14 +264,14 @@ class ChartGraph:
     ):
         """Recursively print the subtree starting from chart."""
         if json_output:
-            print(json.dumps(subtree.to_json(), indent=2))
+            click.echo(json.dumps(subtree.to_json(), indent=2))
         else:
             prefix = (
                 ""
                 if level == 1
                 else "│   " * (level - 1) + ("└──" if is_last else "├──")
             )
-            print(
+            click.echo(
                 f"{prefix}{subtree.name}{' v' + subtree.info.version if show_versions else ''}"
             )
             for idx, node in enumerate(subtree.next):
@@ -319,20 +340,44 @@ class ChartGraph:
         except KeyError:
             raise KeyError(f"Chart '{chart_name}' not found")
 
-    def sort_by_depth(self, chart_names: List[str]) -> List[str]:
+    def sort_by_depth(self, chart_names: List[str], reverse: bool = False) -> List[str]:
         """Sort chart names by their depth in the dependency graph (deepest first)."""
         return sorted(
-            chart_names,
+            list(filter(lambda name: name in self.charts, chart_names)),
             key=lambda name: self.get_chart_depth(name) if name in self.charts else 0,
-            reverse=True,
+            reverse=reverse,
         )
+
+    def print_charts(self, chart_names: List[str], json_output: bool = False):
+        """Print chart information for the given chart names."""
+        if json_output:
+            charts_info = [
+                self.get_chart(name).to_json()
+                for name in chart_names
+                if name in self.charts
+            ]
+            click.echo(json.dumps(charts_info, indent=2))
+        else:
+            for name in chart_names:
+                self.print_chart_info(name)
 
     def print_chart_info(self, chart_name: str, json_output: bool = False):
         chart = self.get_chart(chart_name)
         if chart:
             if json_output:
-                print(json.dumps(chart.to_json(), indent=2))
+                click.echo(json.dumps(chart.to_json(), indent=2))
             else:
-                print(chart)
+                click.echo(chart)
         else:
-            print(f"Chart '{chart_name}' not found.", file=sys.stderr)
+            click.echo(f"Chart '{chart_name}' not found.", err=True)
+
+    def update_dependencies(
+        self, chart_names: List[str], all: bool = False, dry_run: bool = False
+    ):
+        charts = self.charts.keys() if all else chart_names
+        for name in self.sort_by_depth(list(charts)):
+            chart = self.get_chart(name)
+            if chart:
+                chart.update_dependencies(dry_run=dry_run)
+            else:
+                click.echo(f"Chart '{name}' not found.", err=True)
