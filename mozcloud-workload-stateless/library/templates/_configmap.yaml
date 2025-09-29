@@ -7,6 +7,10 @@
     {{- $name = $name_override }}
   {{- end }}
   {{- $_ := set $config "name" $name }}
+  {{- /* Configure Argo CD annotations */}}
+  {{- $annotation_params := dict "config" $config "type" "configMap" }}
+  {{- $argo_annotations := include "mozcloud-workload-stateless-lib.config.argo.annotations" $annotation_params | fromYaml }}
+  {{- $_ = set $config "annotations" (mergeOverwrite (default (dict) $annotation_params.config.annotations) $argo_annotations) }}
   {{- $params = append $params $config }}
 {{- end }}
 {{- $params := mergeOverwrite (. | deepCopy) (dict "configMaps" $params) }}

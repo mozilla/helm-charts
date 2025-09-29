@@ -4,14 +4,27 @@ enabled: true
 #
 # global
 #
-# Values should include global.mozcloud to provide common config keys like the
-# app_code or component_code labels
+# app_code, chart, component_code, environment, and projectId should all be
+# defined as global values in the parent Helm chart's values file(s) outside the
+# scope of this Helm chart.
 #
-#global:
-#  mozcloud:
-#    app_code: unset
-#    component_code: unset
-#    environment: unset
+# For example:
+#
+#   # my-app/values.yaml
+#   global:
+#     mozcloud:
+#       app_code: my-app                 # should match app_code in tenant file
+#       chart: my-chart                  # the name of the chart
+#       component_code: web              # should match component_code in tenant file
+#
+#   # my-app/values-dev.yaml
+#   global:
+#     mozcloud:
+#       environment: dev                 # should match .Values.environment
+#       projectId: moz-fx-my-app-nonprod # should match realms.<realm>.project_id in tenant file
+#
+# These are used to populate labels and metadata in MozCloud charts.
+#
 
 #
 # ConfigMaps
@@ -24,6 +37,13 @@ enabled: true
 #
 configMaps:
 #  name:
+#    # Argo CD settings
+#    #
+#    # See .Values.deployments.name.argo for details about how to configure this
+#    # section.
+#    #
+#    # By default, configMaps will receive a syncWave value of -2.
+#    #argo: {}
 #    data:
 #      foo: bar
 
@@ -40,6 +60,13 @@ configMaps:
 #
 externalSecrets:
 #  name:
+#    # Argo CD settings
+#    #
+#    # See .Values.deployments.name.argo for details about how to configure this
+#    # section.
+#    #
+#    # By default, configMaps will receive a syncWave value of -2.
+#    #argo: {}
 #    target: my-target-k8s-secret
 #    gsm:
 #      secret: my-gsm-secret-to-read-from
@@ -58,6 +85,13 @@ externalSecrets:
 #
 serviceAccounts:
 #  name:
+#    # Argo CD settings
+#    #
+#    # See .Values.deployments.name.argo for details about how to configure this
+#    # section.
+#    #
+#    # By default, serviceAccounts will receive a syncWave value of -2.
+#    #argo: {}
 #    gcpServiceAccount:
 #      name: unset
 #      projectId: unset
@@ -74,6 +108,82 @@ serviceAccounts:
 #
 deployments:
 #  name:
+#    # Argo CD settings
+#    #argo:
+#      # This configures the Argo hook deletion policies to apply to this
+#      # resource.
+#      #
+#      # Options include:
+#      #
+#      #        HookSucceeded: The hook resource is deleted after the hook
+#      #                       succeeded (e.g. job completed successfully).
+#      #
+#      #           HookFailed: The hook resource is deleted after the hook
+#      #                       failed.
+#      #
+#      #   BeforeHookCreation: Hook resources are deleted before new ones are
+#      #                       created. Do not use this if generateName is
+#      #                       enabled.
+#      #
+#      # This should be configured as a comma-separated string (eg.
+#      # "BeforeHookCreation,HookSucceeded"). Set to an empty string ("") to
+#      # prevent the chart from creating any hook deletion policies.
+#      #
+#      # The default setting is: unset
+#      #hookDeletionPolicy:
+#
+#      # Hooks (or resource hooks) allow you to specify at what point the
+#      # resource should be created or updated relative to the application's
+#      # sync operation in Argo CD. Hooks should be specified as a
+#      # comma-separated string.
+#      #
+#      # Possible values:
+#      #
+#      #     PreSync*: Executes before the other manifests in the Helm chart.
+#      #
+#      #        Sync*: Executes at the same time as the other manifests in the
+#      #               Helm chart.
+#      #
+#      #         Skip: Argo CD will skip this during the sync operation.
+#      #
+#      #    PostSync*: Executes after the other manifests in the Helm chart are
+#      #               applied successfully.
+#      #
+#      #     SyncFail: Executes after a failed sync operation.
+#      #
+#      #   PostDelete: Executes after all resources in an Argo CD application
+#      #               are deleted.
+#      #
+#      #   * The 3 sync phases commonly used when creating resource hooks.
+#      #
+#      # For example: to update a resource after every sync operation,
+#      # regardless of success, set "hooks" to "PostSync,SyncFail".
+#      #hooks:
+#
+#      # Sync waves are used to define an order in which resources are applied
+#      # within a sync phase. Sync waves are configured using integers in
+#      # ascending order, where resources with lower-value sync waves are
+#      # applied first and resources with higher-value sync waves are applied
+#      # last. The default sync wave used for all resources is "0".
+#      #
+#      # Here is an example illustrating ordering resources with sync waves:
+#      #
+#      #  -2+: Evaluated first. Good for ConfigMap, ExternalSecret,
+#      #       ServiceAccount, or any other resources that are necessary
+#      #       to successfully apply resources in later sync waves.
+#      #
+#      #   -1: Evaluated next. Good for jobs that need to be executed before
+#      #       other resources in the chart (eg. database migrations).
+#      #
+#      #    0: Evaluated next. This is where all resources in the chart are
+#      #       applied unless otherwise specified.
+#      #
+#      #   1+: Evaluated last. Resources in this sync wave are applied after
+#      #       everything else in the chart is applied successfully. This can be
+#      #       useful for things like jobs that toggle off maintenance mode.
+#      #
+#      # Sync waves can be used in conjunction with resource hooks.
+#      #syncWave:
 #    containers:
 #      - # containers have names, too
 #        name: unset
@@ -82,6 +192,21 @@ deployments:
 #        #
 #        image: some-image
 #        tag: some-image-tag
+#
+#        # Command to pass into the container as its entrypoint. This should be
+#        # specified as a list of strings.
+#        command: []
+#
+#        # Arguments to pass to a container. This should be specified as a list
+#        # of strings.
+#        args: []
+#
+#        # Expose environment variables directly into the container. This will
+#        # override duplicate values mounted via ConfigMaps or secrets in the
+#        # envFrom section.
+#        env:
+#          - name: KEY
+#            value: "value"
 #
 #        #
 #        # mount ConfigMaps or Secrets to container env
@@ -148,6 +273,38 @@ deployments:
 #          httpGet:
 #            path: /__lbheartbeat__
 #            port: unset
+#
+#    #
+#    # Enable or disable NGINX for the deployment. If enabled, an NGINX
+#    # container will be deployed to the pod alongside the application
+#    # container. You can also specify a custom image and/or custom
+#    # ConfigMap to use for the container.
+#    #
+#    # NGINX is enabled by default.
+#    #
+#    nginx:
+#      enabled: true
+#      image: unset
+#      configMap: unset
+#
+#    #
+#    # By default, no containers should run as root. The few exceptions to
+#    # this rule can configure this by setting "runAsNonRoot" to "false".
+#    #
+#    # Note: The webservices-high and dataservices-high Kubernetes clusters
+#    # will not allow you to deploy containers using the root user.
+#    #
+#    # The default value is "true".
+#    #
+#    securityContext:
+#      runAsNonRoot: true
+#
+#    #
+#    # If your pod should run using a specific Kubernetes service account,
+#    # specify it here.
+#    #
+#    serviceAccount:
+#
 
 #
 # PodMonitorings
@@ -200,21 +357,3 @@ hpas:
 #          target:
 #            type: Utilization
 #            averageUtilization: 80
-
-#
-# mozcloud-ingress subchart
-#
-# current default for building tenants, so we enable it to render
-#
-# see https://github.com/mozilla/helm-charts/tree/main/mozcloud-ingress/application/values.schema.json
-mozcloud-ingress:
-  enabled: true
-
-#
-# mozcloud-gateway subchart
-#
-# likely future default for building tenants, not enabled just yet
-#
-# see https://github.com/mozilla/helm-charts/tree/main/mozcloud-gateway/application/values.schema.json
-mozcloud-gateway:
-  enabled: false

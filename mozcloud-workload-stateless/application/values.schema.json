@@ -8,15 +8,44 @@
       "type": "boolean"
     },
     "global": {
-      "$ref": "https://raw.githubusercontent.com/mozilla/helm-charts/refs/heads/main/values.schema.json#/$defs/global"
+      "description": "Global values dictionary",
+      "type": "object",
+      "properties": {
+        "mozcloud": {
+          "type": "object",
+          "properties": {
+            "app_code": {
+              "description": "Tenant's application code (eg. sumo, ads, remote-settings)",
+              "type": "string"
+            },
+            "chart": {
+              "description": "The name of the chart. This will match the app_code in single chart applications",
+              "type": "string"
+            },
+            "component_code": {
+              "description": "Application component's code (eg. web, shepherd, mars)",
+              "type": "string"
+            },
+            "environment": {
+              "description": "Environment (ie. dev, stage, prod)",
+              "type": "string"
+            },
+            "projectId": {
+              "description": "GCP project ID",
+              "type": "string"
+            }
+          },
+          "required": [
+            "app_code",
+            "chart",
+            "component_code",
+            "environment",
+            "projectId"
+          ]
+        }
+      }
     },
     "mozcloud-workload-stateless-lib": {
-      "type": "object"
-    },
-    "mozcloud-ingress": {
-      "type": "object"
-    },
-    "mozcloud-gateway": {
       "type": "object"
     },
     "configMaps": {
@@ -69,9 +98,29 @@
     }
   },
   "$defs": {
+    "argo": {
+      "type": "object",
+      "properties": {
+        "hookDeletionPolicy": {
+          "type": "string"
+        },
+        "hooks": {
+          "type": "string"
+        },
+        "syncWave": {
+          "type": "integer"
+        }
+      }
+    },
     "configMap": {
       "type": "object",
       "properties": {
+        "argo": {
+          "type": "object",
+          "properties": {
+            "$ref": "#/$defs/argo"
+          }
+        },
         "data": {
           "type": "object"
         }
@@ -80,6 +129,12 @@
     "externalSecret": {
       "type": "object",
       "properties": {
+        "argo": {
+          "type": "object",
+          "properties": {
+            "$ref": "#/$defs/argo"
+          }
+        },
         "target": {
           "type": "string"
         },
@@ -99,6 +154,12 @@
     "serviceAccount": {
       "type": "object",
       "properties": {
+        "argo": {
+          "type": "object",
+          "properties": {
+            "$ref": "#/$defs/argo"
+          }
+        },
         "gcpServiceAccount": {
           "type": "object",
           "properties": {
@@ -115,6 +176,12 @@
     "deployment": {
       "type": "object",
       "properties": {
+        "argo": {
+          "type": "object",
+          "properties": {
+            "$ref": "#/$defs/argo"
+          }
+        },
         "containers": {
           "type": "array",
           "items": {
@@ -128,6 +195,32 @@
               },
               "tag": {
                 "type": "string"
+              },
+              "command": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "env": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "value": {
+                      "type": "string"
+                    }
+                  }
+                }
               },
               "envFrom": {
                 "type": "array",
@@ -239,6 +332,39 @@
               }
             }
           }
+        },
+        "nginx": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            },
+            "image": {
+              "type": "string"
+            },
+            "configMap": {
+              "type": "string"
+            }
+          }
+        },
+        "securityContext": {
+          "type": "object",
+          "properties": {
+            "runAsNonRoot": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          }
+        },
+        "serviceAccount": {
+          "type": "string"
         }
       }
     },

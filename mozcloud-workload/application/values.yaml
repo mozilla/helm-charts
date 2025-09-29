@@ -1,38 +1,56 @@
 # See values.yaml.example for example configurations.
-#
-# We have additional features we will want to add in the coming releases.
-#
-# To do list:
-#   - Add support for the OTEL Collector (defaults, optional overrides)
-#   - Add support for Rollout steps (enabling canary deployments through Argo Rollouts)
-#   - Add support for Nimbus/Experimenter sidecars
-#   - Add support for stateful workloads (ie. StatefulSet resources) and
-#     relevant configurations, such as PVC volume names and sizes
 
-# app_code, chart, component_code, and environment should all be defined as
-# global values in the parent Helm chart's values file(s) outside the scope of
-# this Helm chart.
+# app_code, chart, component_code, environment, and projectId should all be
+# defined as global values in the parent Helm chart's values file(s) outside the
+# scope of this Helm chart.
 #
 # For example:
 #
 #   # my-app/values.yaml
 #   global:
 #     mozcloud:
-#       app_code: my-app    # should match app_code in tenant file
-#       chart: my-chart     # the name of the chart
-#       component_code: web # should match component_code in tenant file
+#       app_code: my-app                 # should match app_code in tenant file
+#       chart: my-chart                  # the name of the chart
+#       component_code: web              # should match component_code in tenant file
 #
 #   # my-app/values-dev.yaml
 #   global:
 #     mozcloud:
-#       environment: dev    # should match .Values.environment
+#       environment: dev                 # should match .Values.environment
+#       projectId: moz-fx-my-app-nonprod # should match realms.<realm>.project_id in tenant file
 #
 # These are used to populate labels and metadata in MozCloud charts.
+
+# If disabled, no resources in the chart will be created.
+enabled: true
 
 # Name to be used for all resources if not specified at the resource level.
 # This overrides the chart name set in .Values.global.mozcloud.chart but is
 # overridden by names defined at the resource level.
 #nameOverride:
+
+# In this section, you can create ConfigMap resources that can be used
+# by all workloads and jobs. To use ConfigMaps created here in a workload,
+# you must list the ConfigMap name you wish to include in each workload or
+# job's "configMaps" section.
+#
+# ConfigMaps defined here will be overridden by a workload or job's environment
+# variables defined in the "envVars" configurations.
+#
+# Format:
+#   configMaps:
+#     my-configmap-name:
+#       annotations:
+#         foo.io/bar: baz
+#
+#       data:
+#         KEY1: VALUE1
+#         KEY2: VALUE2
+#
+#     a-different-configmap-name:
+#       data:
+#         KEY3: VALUE3
+configMaps: {}
 
 workloads:
   # The name of your workload and all related components. "mozcloud-workload"
@@ -41,46 +59,68 @@ workloads:
   # Each workload should be specified in this dictionary format, where the key
   # is the name of the workload and the values are the configurations.
   mozcloud-workload:
-    # Additional ConfigMap names, if necessary. These refer to ConfigMap
-    # templates created outside the scope of this Helm chart.
-    #configMaps: []
-
     container:
       # Arguments to pass to a container. This can be an array or a string.
       #args: []
 
       # A list of optional autoscaling configurations for stateless workloads.
-      #
-      # By default, we will scale pods at 60% CPU utilization, but users can
-      # also configure memory and network metrics, as well thresholds for each.
-      #
-      # Values for "threshold" will always be averages as percentages.
-      #autoscaling:
-      #  metrics:
-      #    - type: cpu
-      #      threshold: 60 # percent
-      #    - type: memory
-      #      threshold: 80 # percent
-      #
-      #    # The "network" type allows us to configure traffic-based
-      #    # autoscaling with Gateway API.
-      #    - type: network
-      #
-      #      # We can configure custom metrics to use with the "network"
-      #      # autoscaling type. The default behavior to scale using the
-      #      # RequestsPerSecond metric.
-      #      #
-      #      # Visit this page for more info:
-      #      # https://cloud.google.com/kubernetes-engine/docs/how-to/horizontal-pod-autoscaling#autoscale-traffic
-      #      #customMetric: "autoscaling.googleapis.com|gclb-capacity-fullness"
-      #
-      #      threshold: 70 # percent
+      autoscaling:
+        # By default, we will scale pods at 60% CPU utilization, but users can
+        # also configure memory and network metrics, as well thresholds for
+        # each.
+        #
+        # Values for "threshold" will always be averages as percentages.
+        metrics:
+          - type: cpu
+            threshold: 60 # percent
+
+          # Optionally configure memory-based autoscaling.
+          #- type: memory
+          #  threshold: 80 # percent
+
+          # The "network" type allows us to configure traffic-based
+          # autoscaling with Gateway API.
+          #- type: network
+
+          #  # We can configure custom metrics to use with the "network"
+          #  # autoscaling type. The default behavior to scale using the
+          #  # RequestsPerSecond metric.
+          #  #
+          #  # Visit this page for more info:
+          #  # https://cloud.google.com/kubernetes-engine/docs/how-to/horizontal-pod-autoscaling#autoscale-traffic
+          #  #customMetric: "autoscaling.googleapis.com|gclb-capacity-fullness"
+
+          #  threshold: 70 # percent
+
+        # Configure the minimum and maximum replica counts while autoscaling.
+        #
+        # Default values:
+        #
+        #   min: 1
+        #   max: 30
+        replicas:
+          min: 1
+          max: 30
 
       # The command a container should run as its entrypoint.
       #command: []
 
+      # A list of config map names to mount into the container. These should be
+      # defined higher up in the file under the "configMaps" key.
+      #
+      # Format:
+      #
+      #   configMaps:
+      #     - my-configmap-name
+      #     - a-different-configmap-name
+      #
+      # Important: The last config map in the list will always take
+      #            precendence.
+      #configMaps: []
+
       # A dictionary of environment variables to pass to this container. This
-      # should not include secrets.
+      # should not include secrets. These variables will override those defined
+      # in the "configMaps" section above.
       #
       # Format:
       #
@@ -102,26 +142,41 @@ workloads:
       #       # The version of the secret to pull from GSM. The default value
       #       # is "latest".
       #       version: latest
+      #
+      # By default an external secret called "app-secrets" will be created. This
+      # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
+      # the value defined in `.Values.global.mozcloud.environment` (ie. "dev",
+      # "stage", "prod"). There will be a corresponding Kubernetes secret called
+      # "app-secrets" which will automatically be mounted in your app container
+      # using the "latest" version.
+      #
+      # Any secrets you define here will be created IN ADDITION to that secret.
       #externalSecrets: []
 
       # The image repo, name, and tag to use for the container. The format is:
       #
-      #   repo/image:tag
+      #   image:
+      #     repository: repo/image_name
+      #     tag: tag_name
       #
       # For example:
       #
-      #   us-docker.pkg.dev/moz-fx-system-prod/system-prod/app:1.0.0
+      #   image:
+      #     repository: us-docker.pkg.dev/moz-fx-system-prod/system-prod/app
+      #     tag: 1.0.0
       #
       # We recommend you allow Image Updater to automatically manage image tags
       # for your applications. See the link below for more details:
       # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1695449473/How+to+Configuring+your+tenant+to+use+ArgoCD
       image:
+        repository:
+        tag:
 
       # Optionally configure a custom port for your container. The default
-      # value is 8080.
+      # value is 8000.
       #
       # This value should be an integer.
-      #port:
+      port: 8000
 
       # The "resources" section allows you to specify the amount of CPU and
       # memory that your container needs to run. These are equivalent to
@@ -135,7 +190,9 @@ workloads:
         #   Millicpu (eg. "200m"):
         #     - This represents a fraction of a vCPU.
         #     - For example, "200m" means 0.2 CPU.
-        cpu:
+        #
+        # The default value is "100m".
+        cpu: 100m
 
         # Memory can be specified using any of the following suffixes:
         #
@@ -144,7 +201,9 @@ workloads:
         #   G (gigabytes), Gi (gibibytes)
         #
         # We recommend using Binary (IEC) units, such as Ki, Mi, and Gi.
-        memory:
+        #
+        # The default value is 64Mi.
+        memory: 64Mi
 
       # Optionally override some securityContext settings for the container.
       # This section should not be configured unless the user knows what they
@@ -162,21 +221,26 @@ workloads:
       #  # will not allow you to deploy containers using the root user.
       #  #runAsRoot: false
 
-      # Optionally use a custom service account for the container.
+      # Optionally use a custom service account for the container. By default,
+      # a service account using the name of your workload will be created that
+      # uses the GCP service account automatically created with your tenant:
+      #
+      #   gke-<environment>@<gcp_project_id>.iam.serviceaccont.com
       #serviceAccount:
       #  name:
 
       #  # If true, the service account will be created.
       #  create: true
 
-      #  # # If this service account should map to a service account in GCP, enter
-      #  # # the details here.
+      #  # # If this service account should map to a service account in GCP,
+      #  # # enter the details here.
       #  #gcpServiceAccount:
       #  #  # The name of the GCP service account (everything before "@" in the
       #  #  # email address).
       #  #  name:
 
-      #  #  # GCP project ID.
+      #  #  # GCP project ID. If not specified, the value in
+      #  #  # .Values.global.mozcloud.projectId will be used.
       #  #  projectId:
 
     # Optionally specify health check endpoints for the application, metrics
@@ -184,12 +248,25 @@ workloads:
     # options below.
     #healthCheckEndpoints:
     #  application: /__heartbeat__
-    #  metrics: /metrics
-    #  nginx: /__lbheartbeat__
+    #  loadBalancer: /__lbheartbeat__
+    #  # Custom PodMonitoring metrics not yet supported.
+    #  #metrics: /metrics
 
     # Define host details in this section.
     hosts:
-      - domain: example.com
+      # The name to use for the Gateway/Ingress and related resources. If this
+      # is not changed, the workload name will be used instead.
+      name:
+        # A list of domains to use for each host.
+        domains:
+          - example.com
+
+        # A list of the named addresses to use on the Gateway. These should
+        # match the named addresses created for the tenant in GCP.
+        #
+        # If you are using the "ingress" API type, only the first address in
+        # the list will be used.
+        addresses: []
 
         # Configure the API to use when building network resources. The default
         # is "gateway", which will build Gateway API resources. This is the
@@ -197,7 +274,7 @@ workloads:
         #
         # Use "ingress" for legacy environments that have not yet migrated to
         # Gateway API. Do not use "ingress" for new tenants!
-        #api: gateway
+        api: gateway
 
         # Configure the type of load balancer to use for your host.
         #
@@ -212,7 +289,43 @@ workloads:
         #             automatically configured.
         #
         # The default value is "external".
-        #type: external
+        type: external
+
+        # Global certificate details for external gateways. Certificates MUST be
+        # specified if one or more listener(s) uses the HTTPS procotol.
+        #
+        # This section is not required if host type is "internal".
+        tls:
+          # A list of the certmap, pre-shared cert, or ManagedCertificate names
+          # to use on the Gateway or Ingress. Only the first entry is used if
+          # "type" is "certmap".
+          #
+          # Certificate maps and pre-shared certificates are created
+          # outside of Kubernetes either by tenant Terraform modules (certmaps)
+          # or manually (pre-shared).
+          #
+          # ManagedCertificate certificates will be automatically created by
+          # this chart if "create" is set to "true".
+          certs: []
+
+          # If enabled, certificates will be created.
+          #
+          # This is only applicable when the TLS type is "ManagedCertificate"
+          # and the type of API is "ingress".
+          #
+          # The default behavior is to create ManagedCertificate resources when
+          # using Ingress. This option is ignored for Gateway API resources.
+          create: true
+
+          # Can be "certmap", "ManagedCertificate", or "pre-shared". What you
+          # depends on the type of API used.
+          #
+          # Options (based on API):
+          #   Gateway: certmap
+          #   Ingress: ManagedCertificate (preferred), pre-shared
+          #
+          # As the default API is "gateway", the default TLS type is "certmap".
+          type: certmap
 
         # Optionally configure the log sample rate for the load balancer, IAP
         # details, or a custom backend timeout.
@@ -222,10 +335,11 @@ workloads:
         #  #  # You must explicitly enable this feature.
         #  #  enabled: false
         #  #
-        #  #  # The OAuth2 client ID.
+        #  #  # The OAuth2 client ID. Only used for Gateway API.
         #  #  #oauth2ClientId:
         #  #
-        #  #  # Name of the Kubernetes secret containing the OAuth2 client secret.
+        #  #  # Name of the Kubernetes secret containing the OAuth2 client
+        #  #  # secret. Only used for Gateway API.
         #  #  #oauth2ClientSecret:
         #
         #  # The sample rate at which HTTP access should be logged. This can be
@@ -238,14 +352,47 @@ workloads:
     # Configure jobs to run before or after the rest of the deployment.
     #jobs:
     #  preDeployment:
-    #    # See image, command, args, and resources configurations for containers
-    #    # as a reference.
-    #    - image:
+    #    # The name to use for the job. If this is not changed, the job will be
+    #    # named: "<workload_name>-predeployment".
+    #    name:
+    #      # Optionally define a Sync Wave value for ArgoCD.
+    #      #
+    #      # Sync waves are used to define an order in which resources are
+    #      # applied within a sync phase. Sync waves are configured using
+    #      # integers in ascending order, where resources with lower-value sync
+    #      # waves are applied first and resources with higher-value sync waves
+    #      # are applied last.
+    #      #
+    #      # This chart allows you to assign Sync Wave values for pre-deployment
+    #      # jobs ranging from -10 (run first) to -1 (run last).
+    #      #
+    #      # If no values are specified, a default of -1 will be applied.
+    #      argo:
+    #        syncWave: -1
+    #
+    #      # See image, command, args, and resources configurations for
+    #      # containers as a reference.
+    #      image:
+    #        repository:
+    #        tag:
     #      command: []
     #      args: []
     #      resources:
     #        cpu:
     #        memory:
+    #
+    #      # A list of Config map names to mount into the container. These
+    #      # should be defined higher up in the file under the "configMaps" key.
+    #      #
+    #      # Format:
+    #      #
+    #      #   configMaps:
+    #      #     - my-configmap
+    #      #     - a-different-configmap
+    #      #
+    #      # Important: The last config map in the list will always take
+    #      #            precendence.
+    #      #configMaps: []
     #
     #      # Optionally configure environment variables for your job. By
     #      # default, the environment variables used for your app container
@@ -259,6 +406,11 @@ workloads:
     #      #  # duplicates of the app container's environment variables, the
     #      #  # values set here will override those from your app container's
     #      #  # environment variables.
+    #      #  #
+    #      #  # These will also override environment variables specified in
+    #      #  # config maps created in the "configMaps" section as well as
+    #      #  # external secrets mounted into the container in the
+    #      #  # "externalSecrets" section.
     #      #  customVars: # merges with app environment variables
     #      #    KEY1: OVERRIDE1
     #      #    KEY3: VALUE3
@@ -277,8 +429,8 @@ workloads:
     #      #    # Secret Manager (GSM).
     #      #    - name:
     #      #
-    #      #      # The version of the secret to pull from GSM. The default value
-    #      #      # is "latest".
+    #      #      # The version of the secret to pull from GSM. The default
+    #      #      # value is "latest".
     #      #      version: latest
     #
     #      # Optionally use a custom service account for the container.
@@ -297,25 +449,58 @@ workloads:
     #      #  #  # If true, the service account will be created.
     #      #  #  create: true
     #      #  #
-    #      #  #  # # If this service account should map to a service account in GCP, enter
-    #      #  #  # # the details here.
+    #      #  #  # # If this service account should map to a service account in
+    #      #  #  # # GCP, enter the details here.
     #      #  #  #gcpServiceAccount:
-    #      #  #  #  # The name of the GCP service account (everything before "@" in the
-    #      #  #  #  # email address).
+    #      #  #  #  # The name of the GCP service account (everything before "@"
+    #      #  #  #  # in the email address).
     #      #  #  #  name:
     #      #  #  #
     #      #  #  #  # GCP project ID.
     #      #  #  #  projectId:
     #
     #  postDeployment:
-    #    # See image, command, args, and resources configurations for containers
-    #    # as a reference.
-    #    - image:
+    #    # The name to use for the job. If this is not changed, the job will be
+    #    # named: "<workload_name>-postdeployment".
+    #    name:
+    #      # Optionally define a Sync Wave value for ArgoCD.
+    #      #
+    #      # Sync waves are used to define an order in which resources are
+    #      # applied within a sync phase. Sync waves are configured using
+    #      # integers in ascending order, where resources with lower-value sync
+    #      # waves are applied first and resources with higher-value sync waves
+    #      # are applied last.
+    #      #
+    #      # This chart allows you to assign Sync Wave values for
+    #      # post-deployment jobs, as long as the values are greater than 0.
+    #      #
+    #      # If no values are specified, a default of 1 will be applied.
+    #      argo:
+    #        syncWave: 1
+    #
+    #      # See image, command, args, and resources configurations for
+    #      # containers as a reference.
+    #      image:
+    #        repository:
+    #        tag:
     #      command: []
     #      args: []
     #      resources:
     #        cpu:
     #        memory:
+    #
+    #      # A list of Config map names to mount into the container. These
+    #      # should be defined higher up in the file under the "configMaps" key.
+    #      #
+    #      # Format:
+    #      #
+    #      #   configMaps:
+    #      #     - my-configmap
+    #      #     - a-different-configmap
+    #      #
+    #      # Important: The last config map in the list will always take
+    #      #            precendence.
+    #      #configMaps: []
     #
     #      # Optionally configure environment variables for your job. By
     #      # default, the environment variables used for your app container
@@ -329,6 +514,11 @@ workloads:
     #      #  # duplicates of the app container's environment variables, the
     #      #  # values set here will override those from your app container's
     #      #  # environment variables.
+    #      #  #
+    #      #  # These will also override environment variables specified in
+    #      #  # config maps created in the "configMaps" section as well as
+    #      #  # external secrets mounted into the container in the
+    #      #  # "externalSecrets" section.
     #      #  customVars: # merges with app environment variables
     #      #    KEY1: OVERRIDE1
     #      #    KEY3: VALUE3
@@ -347,8 +537,8 @@ workloads:
     #      #    # Secret Manager (GSM).
     #      #    - name:
     #      #
-    #      #      # The version of the secret to pull from GSM. The default value
-    #      #      # is "latest".
+    #      #      # The version of the secret to pull from GSM. The default
+    #      #      # value is "latest".
     #      #      version: latest
     #
     #      # Optionally use a custom service account for the container.
@@ -367,11 +557,11 @@ workloads:
     #      #  #  # If true, the service account will be created.
     #      #  #  create: true
     #      #  #
-    #      #  #  # # If this service account should map to a service account in GCP, enter
-    #      #  #  # # the details here.
+    #      #  #  # # If this service account should map to a service account in
+    #      #  #  # # GCP, enter the details here.
     #      #  #  #gcpServiceAccount:
-    #      #  #  #  # The name of the GCP service account (everything before "@" in the
-    #      #  #  #  # email address).
+    #      #  #  #  # The name of the GCP service account (everything before "@"
+    #      #  #  #  # in the email address).
     #      #  #  #  name:
     #      #  #  #
     #      #  #  #  # GCP project ID.
@@ -392,8 +582,20 @@ workloads:
     #  # For example:
     #  #
     #  #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/openresty-oidc:1.21.4.1-0-alpine
-    #  image:
+   #  #image:
 
     #  # Optionally define an NGINX configuration to use for nginx.conf. This
-    #  # should refer to a template created outside the scope of this Helm chart.
+    #  # should refer to a template created outside the scope of this Helm
+    #  # chart.
     #  #configMap:
+
+# We have additional features we will want to add in the coming releases.
+#
+# To do list:
+#   - Add support for additional PodMonitoring definitions
+#   - Add support for the OTEL Collector (defaults, optional overrides)
+#   - Add support for Rollout steps (enabling canary deployments through Argo
+#     Rollouts)
+#   - Add support for Nimbus/Experimenter sidecars
+#   - Add support for stateful workloads (ie. StatefulSet resources) and
+#     relevant configurations, such as PVC volume names and sizes

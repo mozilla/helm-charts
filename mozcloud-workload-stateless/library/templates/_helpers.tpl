@@ -64,8 +64,47 @@ Deployment template helpers
     {{- $name = $name_override }}
   {{- end }}
   {{- $_ := set $deployment_config "name" $name -}}
+  {{- /* Configure Argo CD annotations, if applicable */}}
+  {{- if gt (keys (default (dict) $deployment_config.argo) | len) 0 }}
+    {{- $annotation_params := dict "config" $deployment_config "type" "deployment" }}
+    {{- $annotations := include "mozcloud-workload-stateless-lib.config.argo.annotations" $annotation_params | fromYaml }}
+    {{- $_ = set $deployment_config "annotations" $annotations }}
+  {{- end }}
   {{- $output = append $output $deployment_config -}}
 {{- end -}}
 {{- $deployments = dict "deployments" $output -}}
 {{ $deployments | toYaml }}
+{{- end -}}
+
+{{/*
+Argo CD annotation helper
+*/}}
+{{- define "mozcloud-workload-stateless-lib.config.argo.annotations" -}}
+{{- $config := .config -}}
+{{- $argo := ($config.argo) -}}
+{{- if $argo.hooks }}
+argocd.argoproj.io/hook: {{ $argo.hooks }}
+{{- else if and $argo.hookDeletionPolicy $argo.syncWave }}
+argocd.argoproj.io/hook: Sync
+{{- end -}}
+{{- if $argo.hookDeletionPolicy }}
+argocd.argoproj.io/hook-delete-policy: {{ $argo.hookDeletionPolicy }}
+{{- end -}}
+{{- $sync_wave_defaults := include "mozcloud-workload-stateless-lib.defaults.argo.syncWaves" . | fromYaml -}}
+{{- if or $argo.syncWave (index $sync_wave_defaults .type) -}}
+argocd.argoproj.io/sync-wave: {{ default (index $sync_wave_defaults .type) $argo.syncWave | quote }}
+{{- end -}}
+{{- end -}}
+
+{{- define "mozcloud-workload-stateless-lib.defaults.argo.syncWaves" -}}
+configMap: -2
+externalSecret: -2
+serviceAccount: -2
+{{- end -}}
+
+{{/*
+Debug helper
+*/}}
+{{- define "mozcloud-workload-stateless-lib.debug" -}}
+{{- . | mustToPrettyJson | printf "\nThe JSON output of the dumped var is: \n%s" | fail }}
 {{- end -}}

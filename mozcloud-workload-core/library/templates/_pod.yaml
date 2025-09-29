@@ -115,7 +115,7 @@ seccompProfile:
 # restricted profile
 seccompProfile:
   type: "RuntimeDefault"
-runAsNonRoot: true
+runAsNonRoot: {{ default "true" .runAsNonRoot }}
 runAsUser: {{ default 10001 .user }}
 runAsGroup: {{ default 10001 .group }}
 {{- end -}}

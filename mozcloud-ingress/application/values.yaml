@@ -1,23 +1,24 @@
 # If enabled, all mozcloud-ingress templates will be included.
 enabled: true
 
-# app_code, chart, component_code, and environment should all be defined as
-# global values in the parent Helm chart's values file(s) outside the scope of
-# this Helm chart.
+# app_code, chart, component_code, environment, and projectId should all be
+# defined as global values in the parent Helm chart's values file(s) outside the
+# scope of this Helm chart.
 #
 # For example:
 #
 #   # my-app/values.yaml
 #   global:
 #     mozcloud:
-#       app_code: my-app    # should match app_code in tenant file
-#       chart: my-chart     # the name of the chart
-#       component_code: web # should match component_code in tenant file
+#       app_code: my-app                 # should match app_code in tenant file
+#       chart: my-chart                  # the name of the chart
+#       component_code: web              # should match component_code in tenant file
 #
 #   # my-app/values-dev.yaml
 #   global:
 #     mozcloud:
-#       environment: dev    # should match .Values.environment
+#       environment: dev                 # should match .Values.environment
+#       projectId: moz-fx-my-app-nonprod # should match realms.<realm>.project_id in tenant file
 #
 # These are used to populate labels and metadata in MozCloud charts.
 

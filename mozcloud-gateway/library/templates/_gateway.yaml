@@ -20,7 +20,7 @@ metadata:
     {{- if $gateway.annotations }}
     {{- $gateway.annotations | toYaml | nindent 4 }}
     {{- end }}
-    {{- if eq ($gateway.tls).type "certmap" }}
+    {{- if and (eq ($gateway.tls).type "certmap") (($gateway.tls).certs) }}
     networking.gke.io/certmap: {{ $gateway.tls.certs | first }}
     {{- end }}
   {{- end }}

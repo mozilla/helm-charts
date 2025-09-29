@@ -1,0 +1,47 @@
+{{- if .Values.enabled }}
+{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
+{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud-workload.labelParams" . | fromYaml) }}
+{{- /* Call a helper function that merges user data with defaults */}}
+{{- $formatter_params := dict "component" "containers" "workloads" (.Values.workloads | deepCopy) }}
+{{- $workloads := include "mozcloud-workload.formatter.workloads" $formatter_params | fromYaml -}}
+
+{{- /* We will build $params as we go */}}
+{{- $_ := "" }}
+{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $params := $label_params -}}
+
+{{- /*
+Deployments
+*/}}
+{{- $deployments := include "mozcloud-workload.config.deployments" $helper_params | fromYaml }}
+{{- $_ = set $params "deployments" $deployments.deployments }}
+{{ include "mozcloud-workload-stateless-lib.deployment" (mergeOverwrite $params $label_params) }}
+
+{{- /*
+External Secrets
+*/}}
+{{- $external_secrets := include "mozcloud-workload.config.externalSecrets" $helper_params | fromYaml }}
+{{- $_ = set $params "externalSecrets" $external_secrets.externalSecrets }}
+{{ include "mozcloud-workload-stateless-lib.externalSecret" (mergeOverwrite $params $label_params) }}
+
+{{- /*
+Service Accounts
+*/}}
+{{- $service_accounts := include "mozcloud-workload.config.serviceAccounts" $helper_params | fromYaml }}
+{{- $_ = set $params "serviceAccounts" $service_accounts.serviceAccounts }}
+{{ include "mozcloud-workload-stateless-lib.serviceAccount" (mergeOverwrite $params $label_params) }}
+
+{{- /*
+HPAs
+*/}}
+{{- $hpas := include "mozcloud-workload.config.autoscaling" $helper_params | fromYaml }}
+{{- $_ = set $params "hpas" $hpas.hpas }}
+{{ include "mozcloud-workload-stateless-lib.hpa" (mergeOverwrite $params $label_params) }}
+
+{{- /*
+Pod Monitorings
+*/}}
+{{- $pod_monitorings := include "mozcloud-workload.config.podMonitorings" $helper_params | fromYaml }}
+{{- $_ = set $params "podMonitorings" $pod_monitorings.podMonitorings }}
+{{ include "mozcloud-workload-stateless-lib.podMonitoring" (mergeOverwrite $params $label_params) }}
+{{- end }}

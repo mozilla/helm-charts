@@ -1,12 +1,12 @@
 # Ultra light configuration that will deploy a containerized workload and
-# necessary supporting Gateway API resources for ingress.
+# necessary supporting Gateway API resources for ingress. This will size the
+# container at 100m CPU and 64Mi memory.
 workloads:
   my-app:
     container:
-      image: repo/image:tag
-      resources:
-        cpu: 200m
-        memory: 256Mi
+      image:
+        repository: repo/image
+        tag: v0.1.0
     hosts:
       - domain: example.com
 
@@ -23,7 +23,9 @@ workloads:
       envVars:
         KEY1: VALUE1
         KEY2: VALUE2
-      image: repo/image1:1.0.0
+      image:
+        repository: repo/image
+        tag: v0.1.0
       resources:
         cpu: 1
         memory: 1Gi
@@ -58,7 +60,9 @@ workloads:
         KEY2: VALUE2
       externalsecrets:
         - name: app1-secrets-gsm
-      image: repo/image1:1.0.0
+      image:
+        repository: repo/image
+        tag: v0.1.0
       resources:
         cpu: 1
         memory: 1Gi
@@ -114,3 +118,41 @@ workloads:
       enabled: true
       image: repo/my-custom-nginx-image:2.3.4
       configMap: my-nginx-configmap # This would be created outside of this Helm chart
+
+# This is an example of multiple common configurations that share a common set
+# of environment variables, optionally overriding some within each workload.
+configMaps:
+  apps-common:
+    data:
+      FOO: bar
+      BAZ: qux
+      QUUX: corge
+
+workloads:
+  app1:
+    container:
+      args: ["param1"]
+      command: ["/path/to/binary"]
+      configMaps:
+        - apps-common # Mounts environment variables from configMaps section.
+      image:
+        repository: repo/image
+        tag: v0.1.0
+      resources: # Overrides default resources
+        cpu: 1
+        memory: 1Gi
+    hosts:
+      - domain: app1.example.com
+  app2:
+    container:
+      args: ["param1"]
+      command: ["/path/to/binary"]
+      configMaps:
+        - apps-common # Mounts environment variables from configMaps section.
+      envVars:
+        BAZ: grault # Overrides "BAZ" from configMaps section.
+      image:
+        repository: repo/image
+        tag: v0.1.0
+    hosts:
+      - domain: app2.example.com

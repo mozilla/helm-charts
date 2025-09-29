@@ -1,0 +1,44 @@
+{{- if .Values.enabled }}
+{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
+{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud-workload.labelParams" . | fromYaml) }}
+{{- /* Call a helper function that merges user data with defaults */}}
+{{- $formatter_params := dict "component" "ingress" "workloads" (.Values.workloads | deepCopy) }}
+{{- $workloads := include "mozcloud-workload.formatter.workloads" $formatter_params | fromYaml -}}
+
+{{- /*
+Only include Ingress and related resources if we have Ingress hosts defined
+*/}}
+{{- $hosts := list }}
+{{- range $workload_name, $workload_config := $workloads }}
+  {{- range $host_name, $host_config := $workload_config.hosts }}
+    {{- $hosts = append $hosts $host_name }}
+  {{- end }}
+{{- end }}
+{{- if gt (len $hosts) 0 -}}
+
+{{- /* We will build $params as we go */}}
+{{- $_ := "" }}
+{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $params := $label_params -}}
+
+{{- /*
+Ingresses and related resources
+*/}}
+{{- $ingress_config := (include "mozcloud-workload.config.ingresses" $helper_params | fromYaml).ingresses }}
+{{- $_ = set $params "ingressConfig" $ingress_config }}
+{{ include "mozcloud-ingress-lib.ingress" (mergeOverwrite $params $label_params) }}
+{{ include "mozcloud-ingress-lib.backendConfig" (mergeOverwrite $params $label_params) }}
+{{ include "mozcloud-ingress-lib.managedCertificate" (mergeOverwrite $params $label_params) }}
+{{ include "mozcloud-ingress-lib.service" (mergeOverwrite $params $label_params) }}
+
+{{- /*
+Frontend Config
+*/}}
+{{- $frontends := (include "mozcloud-workload.config.frontendConfigs" $helper_params | fromYaml).frontendConfigs }}
+{{- range $frontend_name, $frontend_config := $frontends }}
+  {{- $_ := set $frontend_config "name" $frontend_name }}
+  {{- $_ = set $params "frontendConfig" $frontend_config }}
+{{ include "mozcloud-ingress-lib.frontendConfig" (mergeOverwrite $params $label_params) }}
+{{- end }}
+{{- end -}}
+{{- end -}}

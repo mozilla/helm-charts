@@ -1,0 +1,9 @@
+{{- if .Values.enabled }}
+{{- $config_maps := .Values.configMaps }}
+{{- if gt (keys $config_maps | len) 0 }}
+{{- $helper_params := dict "configMaps" $config_maps }}
+{{- $params := include "mozcloud-workload.config.configMap" $helper_params | fromYaml }}
+{{- $label_params := include "mozcloud-workload.labelParams" . | fromYaml }}
+{{- include "mozcloud-workload-stateless-lib.configMap" (mergeOverwrite $params $label_params) }}
+{{- end -}}
+{{- end -}}

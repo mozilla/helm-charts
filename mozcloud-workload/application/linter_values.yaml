@@ -1,0 +1,7 @@
+global:
+  mozcloud:
+    app_code: mock-app
+    chart: mock-chart
+    component_code: mock-component
+    environment: dev
+    projectId: moz-fx-mock-nonprod

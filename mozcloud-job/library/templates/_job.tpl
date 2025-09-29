@@ -58,6 +58,24 @@ spec:
             - {{ $line | quote }}
             {{- end }}
           {{- end }}
+          {{- if $container.env }}
+          env:
+            {{- range $env_var := $container.env }}
+            - name: {{ $env_var.name }}
+              value: {{ $env_var.value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if $container.envFrom }}
+          envFrom:
+            {{- range $config_map := default (list) $container.envFrom.configMaps }}
+            - configMapRef:
+                name: {{ $config_map }}
+            {{- end }}
+            {{- range $secret := default (list) $container.envFrom.secrets }}
+            - secretRef:
+                name: {{ $secret }}
+            {{- end }}
+          {{- end }}
           resources:
             requests:
               cpu: {{ $container.resources.requests.cpu | quote }}

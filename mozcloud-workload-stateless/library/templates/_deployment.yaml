@@ -1,7 +1,12 @@
 {{- define "mozcloud-workload-stateless-lib.deployment" -}}
 {{- if .deployments }}
 {{- $deployments := include "mozcloud-workload-stateless-lib.config.deployments" . | fromYaml }}
+{{- $files := .Files }}
 {{- range $deployment := $deployments.deployments }}
+{{- $nginx_enabled := false }}
+{{- if and ($deployment).nginx "enabled" ($deployment.nginx).enabled }}
+{{- $nginx_enabled = true }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -9,9 +14,13 @@ metadata:
   name: {{ $deployment.name }}
   labels:
     {{- $deployment.labels | toYaml | nindent 4 }}
+  {{- if $deployment.annotations }}
+    {{- $deployment.annotations | toYaml | nindent 4 }}
+  {{- end }}
 spec:
   selector:
-    {{- include "mozcloud-labels-lib.selectorLabels" $ | nindent 4 }}
+    matchLabels:
+      {{- include "mozcloud-labels-lib.selectorLabels" $ | nindent 6 }}
   template:
     metadata:
       labels:
@@ -22,6 +31,21 @@ spec:
         - name: {{ $container.name }}
           image: {{ printf "%s:%s" $container.image $container.tag }}
           imagePullPolicy: IfNotPresent
+          {{- if $container.command }}
+          command:
+            {{- $container.command | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.args }}
+          args:
+            {{- $container.args | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.env }}
+          env:
+            {{- range $env_var := $container.env }}
+            - name: {{ $env_var.name }}
+              value: {{ $env_var.value | quote }}
+            {{- end }}
+          {{- end }}
           {{- if $container.envFrom }}
           envFrom:
             {{- $container.envFrom | toYaml | nindent 12 }}
@@ -37,17 +61,99 @@ spec:
             timeoutSeconds: 5
           {{- end }}
           {{- if $container.readinessProbe }}
-          redinessProbe:
+          readinessProbe:
             {{- $container.readinessProbe | toYaml | nindent 12 }}
             initialDelaySeconds: 10
             periodSecondS: 6
             timeoutSeconds: 5
           {{- end }}
           resources:
-            {{- include "mozcloud-workload-core-lib.pod.container.resources" (default (dict) $container.resources) | nindent 12 }}
+            {{- include "mozcloud-workload-core-lib.pod.container.resources" ($container).resources | nindent 12 }}
           securityContext:
-            {{- include "mozcloud-workload-core-lib.pod.container.securityContext" (default (dict) $container.securityContext) | nindent 12 }}
+            {{- include "mozcloud-workload-core-lib.pod.container.securityContext" ($container).securityContext | nindent 12 }}
         {{- end }}
+        {{- if $nginx_enabled }}
+        - name: nginx
+          securityContext:
+            runAsUser: 101
+            runAsGroup: 101
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          {{- if hasKey ($deployment).nginx "image" }}
+          image: {{ $deployment.nginx.image }}
+          {{- else }}
+          image: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.22"
+          {{- end }}
+          imagePullPolicy: IfNotPresent
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/bash", "-c", "/bin/sleep 25 && /usr/sbin/nginx -s quit"]
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: 15Mi
+              cpu: 50m
+            limits:
+              memory: 256Mi
+              cpu: 100m
+          readinessProbe:
+            httpGet:
+              path: /__lbheartbeat__
+              port: http
+            periodSeconds: 6
+            timeoutSeconds: 5
+            successThreshold: 1
+            failureThreshold: 5
+            initialDelaySeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /__nginxheartbeat__
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 6
+            timeoutSeconds: 2
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+        {{- end }}
+      securityContext:
+        {{- $params := dict }}
+        {{- if hasKey ($deployment.securityContext).runAsNonRoot "runAsNonRoot" }}
+        {{- $_ := set $params "runAsNonRoot" $deployment.securityContext.runAsNonRoot }}
+        {{- end }}
+        {{- include "mozcloud-workload-core-lib.pod.securityContext" $params | nindent 8 }}
+      {{- if $deployment.serviceAccount }}
+      serviceAccountName: {{ $deployment.serviceAccount }}
+      {{- end }}
+      {{- if $nginx_enabled }}
+      volumes:
+        - name: nginx-conf
+          configMap:
+            {{- if (hasKey ($deployment).nginx "configMap") }}
+            name: {{ $deployment.nginx.configMap }}
+            {{- else }}
+            name: {{ $deployment.name }}-nginx
+      {{- end }}
+{{- if and $nginx_enabled (not (hasKey ($deployment).nginx "configMap")) }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $deployment.name }}-nginx
+  labels:
+    {{- $deployment.labels | toYaml | nindent 4 }}
+data:
+  nginx.conf: |
+    {{ include "mozcloud-workload-stateless.nginx.conf" . | nindent 4 }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 {{- end -}}

@@ -1,0 +1,28 @@
+{{- if .Values.enabled }}
+{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
+{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud-workload.labelParams" . | fromYaml) }}
+{{- /* Call a helper function that merges user data with defaults */}}
+{{- $formatter_params := dict "component" "containers" "workloads" (.Values.workloads | deepCopy) }}
+{{- $workloads := include "mozcloud-workload.formatter.workloads" $formatter_params | fromYaml -}}
+
+{{- /* We will build $params as we go */}}
+{{- $_ := "" }}
+{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $params := $label_params -}}
+
+{{- /*
+Pre-deployment jobs
+*/}}
+{{- $job_type := dict "jobType" "preDeployment" }}
+{{- $jobs := include "mozcloud-workload.config.jobs" (mergeOverwrite $helper_params $job_type) | fromYaml }}
+{{- $_ = set $params "jobConfig" $jobs }}
+{{ include "mozcloud-job-lib.job" (mergeOverwrite $params $label_params) }}
+
+{{- /*
+Post-deployment jobs
+*/}}
+{{- $job_type := dict "jobType" "postDeployment" }}
+{{- $jobs := include "mozcloud-workload.config.jobs" (mergeOverwrite $helper_params $job_type) | fromYaml }}
+{{- $_ = set $params "jobConfig" $jobs }}
+{{ include "mozcloud-job-lib.job" (mergeOverwrite $params $label_params) }}
+{{- end }}

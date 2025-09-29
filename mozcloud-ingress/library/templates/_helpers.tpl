@@ -332,7 +332,7 @@ Defaults
 {{- else -}}
 logging:
   enable: true
-  sampleRate: 1.0
+  sampleRate: 0.1
 {{- end -}}
 {{- end -}}
 

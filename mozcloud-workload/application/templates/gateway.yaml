@@ -1,0 +1,53 @@
+{{- if .Values.enabled }}
+{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
+{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud-workload.labelParams" . | fromYaml) }}
+{{- /* Call a helper function that merges user data with defaults */}}
+{{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) }}
+{{- $workloads := include "mozcloud-workload.formatter.workloads" $formatter_params | fromYaml -}}
+
+{{- /*
+Only include Gateway and related resources if we have Gateway hosts defined
+*/}}
+{{- $hosts := list }}
+{{- range $workload_name, $workload_config := $workloads }}
+  {{- range $host_name, $host_config := $workload_config.hosts }}
+    {{- $hosts = append $hosts $host_name }}
+  {{- end }}
+{{- end }}
+{{- if gt (len $hosts) 0 -}}
+
+{{- /* We will build $params as we go */}}
+{{- $_ := "" }}
+{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $params := $label_params -}}
+
+{{- /*
+Gateways and Gateway policies
+
+Delete this section when it is time to move to shared gateways.
+*/}}
+{{- $gateway_config := include "mozcloud-workload.config.gateways" $helper_params | fromYaml }}
+{{- $_ = set $params "gatewayConfig" $gateway_config }}
+{{ include "mozcloud-gateway-lib.gateway" (mergeOverwrite $params $label_params) }}
+{{- $gateway_policy_config := include "mozcloud-workload.config.gatewayPolicy" . | fromYaml }}
+{{- $_ = set $params "gatewayPolicyConfig" $gateway_policy_config }} 
+{{ include "mozcloud-gateway-lib.gatewayPolicy" (mergeOverwrite $params $label_params) -}}
+
+{{- /*
+HTTPRoutes
+*/}}
+{{- $http_route_config := include "mozcloud-workload.config.httpRoutes" $helper_params | fromYaml }}
+{{- $_ = set $params "httpRouteConfig" $http_route_config }}
+{{ include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite $params $label_params) -}}
+
+{{- /*
+Backend services, backend policies, and health check policies
+*/}}
+{{- $backends := include "mozcloud-workload.config.backends" $helper_params | fromYaml }}
+{{- $_ := set $params "backendConfig" $backends }}
+{{ include "mozcloud-gateway-lib.service" (mergeOverwrite $params $label_params) }}
+{{ include "mozcloud-gateway-lib.backendPolicy" (mergeOverwrite $params $label_params) }}
+{{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $label_params) }}
+
+{{- end -}}
+{{- end -}}
