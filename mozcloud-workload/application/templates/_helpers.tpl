@@ -347,6 +347,10 @@ deployments:
   {{- end }}
   {{- $container := $workload_config.container }}
   {{ $workload_name }}:
+    labels:
+      {{- range $k, $v := (default (list) ($workload_config.labels)) }}
+      {{ $k }}: {{ $v }}
+      {{- end }}
     containers:
       - name: app
         image: {{ $container.image.repository }}
@@ -502,7 +506,8 @@ Service accounts
 {{- $workloads := .workloads -}}
 serviceAccounts:
   {{- range $workload_name, $workload_config := $workloads }}
-  {{ $globals.app_code }}:
+  {{- if ($workload_config.serviceAccount).enabled }}
+  {{ $workload_name }}:
     {{- /*
     ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
     other resources
@@ -527,6 +532,7 @@ serviceAccounts:
       name: {{ $service_account_config.gcpServiceAccount.name }}
       projectId: {{ default $globals.projectId $service_account_config.gcpServiceAccount.projectId }}
     {{- end }}
+  {{- end }}
   {{- end }}
   {{- end }}
   {{- end }}

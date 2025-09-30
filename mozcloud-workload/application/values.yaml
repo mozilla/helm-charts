@@ -59,6 +59,12 @@ workloads:
   # Each workload should be specified in this dictionary format, where the key
   # is the name of the workload and the values are the configurations.
   mozcloud-workload:
+    # Labels to pass down to workload resources, e.g. Deployments and Pods. In some scenarios,
+    # this can be useful to apply, e.g. when you spawn multiple workloads, but only want the main
+    # workload with default labels to match the selector of your Ingress / Gateway resources.
+    #labels:
+    #  my-custom-label: my-custom-value
+
     container:
       # Arguments to pass to a container. This can be an array or a string.
       #args: []

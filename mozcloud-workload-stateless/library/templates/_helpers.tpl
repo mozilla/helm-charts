@@ -51,13 +51,12 @@ Deployment template helpers
 */}}
 {{- define "mozcloud-workload-stateless-lib.config.deployments" -}}
 {{- $deployments := .deployments -}}
-{{- $labels := default (dict) .labels -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $name, $deployment := $deployments -}}
   {{- $deployment_config := $deployment | deepCopy -}}
   {{- /* Configure name and labels */ -}}
-  {{- $params := dict "config" $deployment_config "context" ($ | deepCopy) "labels" $labels -}}
+  {{- $params := dict "config" $deployment_config "context" ($ | deepCopy) "labels" (default (dict) ($deployment).labels) -}}
   {{- $common := include "mozcloud-workload-core-lib.config.common" $params | fromYaml -}}
   {{- $deployment_config = mergeOverwrite $deployment_config $common -}}
   {{- if $name_override }}
@@ -72,8 +71,7 @@ Deployment template helpers
   {{- end }}
   {{- $output = append $output $deployment_config -}}
 {{- end -}}
-{{- $deployments = dict "deployments" $output -}}
-{{ $deployments | toYaml }}
+{{- dict "deployments" $output | toYaml -}}
 {{- end -}}
 
 {{/*
