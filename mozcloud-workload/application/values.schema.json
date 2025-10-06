@@ -42,11 +42,555 @@
         }
       }
     },
+    "mozcloud-gateway-lib": {
+      "type": "object"
+    },
+    "mozcloud-ingress-lib": {
+      "type": "object"
+    },
+    "mozcloud-job-lib": {
+      "type": "object"
+    },
     "mozcloud-labels-lib": {
       "type": "object"
     },
     "mozcloud-workload-stateless": {
       "type": "object"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
+    },
+    "nameOverride": {
+      "type": "string"
+    },
+    "configMaps": {
+      "type": "object",
+      "description": "ConfigMaps available to workloads/jobs",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "annotations": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "data": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "workloads": {
+      "type": "object",
+      "description": "Declarative workloads keyed by workload name",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "container": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "args": {
+                "oneOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "autoscaling": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "metrics": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "cpu",
+                            "memory",
+                            "network"
+                          ]
+                        },
+                        "threshold": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 100,
+                          "description": "Average percent utilization"
+                        },
+                        "customMetric": {
+                          "type": "string",
+                          "description": "Only applicable when type=network"
+                        }
+                      },
+                      "required": ["type", "threshold"]
+                    }
+                  },
+                  "replicas": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "min": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 1
+                      },
+                      "max": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 30
+                      }
+                    }
+                  }
+                }
+              },
+              "command": {
+                "oneOf": [
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "configMaps": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "envVars": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              },
+              "externalSecrets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string",
+                      "default": "latest"
+                    }
+                  },
+                  "required": ["name"]
+                }
+              },
+              "image": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "repository": {
+                    "type": "string"
+                  },
+                  "tag": {
+                    "type": "string"
+                  }
+                }
+              },
+              "port": {
+                "type": "integer",
+                "default": 8000
+              },
+              "resources": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "cpu": {
+                    "type": "string",
+                    "description": "Integer cores (e.g., 2) or millicores (e.g., 200m)",
+                    "pattern": "^(\\d+|\\d+m)$",
+                    "default": "100m"
+                  },
+                  "memory": {
+                    "type": "string",
+                    "description": "K, Ki, M, Mi, G, or Gi (recommend binary units)",
+                    "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$",
+                    "default": "64Mi"
+                  }
+                }
+              },
+              "security": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "uid": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "gid": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "runAsRoot": {
+                    "type": "boolean",
+                    "default": false
+                  }
+                }
+              },
+              "serviceAccount": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "create": {
+                    "type": "boolean",
+                    "default": true
+                  },
+                  "gcpServiceAccount": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "projectId": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "required": ["image"]
+          },
+          "healthCheckEndpoints": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "application": {
+                "type": "string",
+                "default": "/__heartbeat__"
+              },
+              "loadBalancer": {
+                "type": "string",
+                "default": "/__lbheartbeat__"
+              },
+              "metrics": {
+                "type": "string",
+                "default": "/metrics"
+              }
+            }
+          },
+          "hosts": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "domains": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "addresses": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "api": {
+                  "type": "string",
+                  "enum": ["gateway", "ingress"],
+                  "default": "gateway"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["internal", "external"],
+                  "default": "external"
+                },
+                "tls": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "certs": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "create": {
+                      "type": "boolean",
+                      "default": true
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["certmap", "ManagedCertificate", "pre-shared"],
+                      "default": "certmap"
+                    }
+                  }
+                },
+                "options": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "iap": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "oauth2ClientId": {
+                          "type": "string"
+                        },
+                        "oauth2ClientSecret": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "logSampleRate": {
+                      "type": ["number", "integer", "string"],
+                      "default": 10
+                    },
+                    "timeoutSec": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "default": 30
+                    }
+                  }
+                }
+              },
+              "required": ["domains", "addresses"]
+            }
+          },
+          "jobs": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "preDeployment": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "allOf": [{ "$ref": "#/$defs/job" }],
+                  "properties": {
+                    "argo": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "syncWave": {
+                          "type": "integer",
+                          "minimum": -10,
+                          "maximum": -1,
+                          "default": -1
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "postDeployment": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "allOf": [{ "$ref": "#/$defs/job" }],
+                  "properties": {
+                    "argo": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "syncWave": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "default": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "nginx": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "image": {
+                "type": "string"
+              },
+              "configMap": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "job": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          }
+        },
+        "command": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "args": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "pattern": "^(\\d+|\\d+m)$"
+            },
+            "memory": {
+              "type": "string",
+              "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+            }
+          }
+        },
+        "configMaps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "envVars": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "useAppEnvVars": {
+              "type": "boolean",
+              "default": true
+            },
+            "customVars": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "externalSecrets": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "useAppExternalSecrets": {
+              "type": "boolean",
+              "default": true
+            },
+            "customExternalSecrets": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "version": {
+                    "type": "string",
+                    "default": "latest"
+                  }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "serviceAccount": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "useAppServiceAccount": {
+              "type": "boolean",
+              "default": true
+            },
+            "customServiceAccount": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "create": {
+                  "type": "boolean", "default": true
+                },
+                "gcpServiceAccount": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "projectId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

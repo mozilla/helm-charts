@@ -588,7 +588,7 @@ workloads:
     #  # For example:
     #  #
     #  #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/openresty-oidc:1.21.4.1-0-alpine
-   #  #image:
+    #  #image:
 
     #  # Optionally define an NGINX configuration to use for nginx.conf. This
     #  # should refer to a template created outside the scope of this Helm
