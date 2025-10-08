@@ -1,6 +1,7 @@
 apiVersion: v2
 name: mozcloud-gateway
-description: A Helm chart that creates gateways and supporting Gateway API resources
+description: A Helm chart that creates gateways and supporting Gateway API 
+  resources
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -15,7 +16,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.4.3
+version: 0.4.8
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -25,5 +26,5 @@ appVersion: 0.4.2
 
 dependencies:
   - name: mozcloud-gateway-lib
-    version: 0.4.2
+    version: 0.4.6
     repository: file://../library

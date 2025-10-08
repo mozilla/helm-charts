@@ -1,6 +1,6 @@
-# mozcloud-workload
+# mozcloud-workload-stateless
 
-This chart can be used to build a MozCloud workload. It's an opinionated bundle that loads a bunch of templates from other MozCloud library charts, e.g. from [mozcloud-workload-stateless-lib](../../mozcloud-workload-stateless/library) or [mozcloud-gateway-lib](../../mozcloud-gateway/library), enabling developers to deploy workloads to MozCloud fast, while maintaining best practices and secure defaults.
+This chart can be used to build a stateless MozCloud workload. A stateless workload consists of a Deployment / Argo Rollout that does not "hold any state", but is short-lived and burstable.
 
 ## Usage
 
@@ -16,8 +16,8 @@ name: my-mozcloud-tenant-chart
 version: 0.1.0
 type: application
 dependencies:
-  - name: mozcloud-workload
-    version: ~0.1.3
+  - name: mozcloud-workload-stateless
+    version: ~0.3.5
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 

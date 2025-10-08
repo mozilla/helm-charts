@@ -116,10 +116,7 @@
       "type": "object",
       "properties": {
         "argo": {
-          "type": "object",
-          "properties": {
-            "$ref": "#/$defs/argo"
-          }
+          "$ref": "#/$defs/argo"
         },
         "data": {
           "type": "object"
@@ -130,10 +127,7 @@
       "type": "object",
       "properties": {
         "argo": {
-          "type": "object",
-          "properties": {
-            "$ref": "#/$defs/argo"
-          }
+          "$ref": "#/$defs/argo"
         },
         "target": {
           "type": "string"
@@ -155,10 +149,7 @@
       "type": "object",
       "properties": {
         "argo": {
-          "type": "object",
-          "properties": {
-            "$ref": "#/$defs/argo"
-          }
+          "$ref": "#/$defs/argo"
         },
         "gcpServiceAccount": {
           "type": "object",
@@ -177,10 +168,7 @@
       "type": "object",
       "properties": {
         "argo": {
-          "type": "object",
-          "properties": {
-            "$ref": "#/$defs/argo"
-          }
+          "$ref": "#/$defs/argo"
         },
         "containers": {
           "type": "array",

@@ -1,6 +1,6 @@
-# mozcloud-workload
+# mozcloud-job
 
-This chart can be used to build a MozCloud workload. It's an opinionated bundle that loads a bunch of templates from other MozCloud library charts, e.g. from [mozcloud-workload-stateless-lib](../../mozcloud-workload-stateless/library) or [mozcloud-gateway-lib](../../mozcloud-gateway/library), enabling developers to deploy workloads to MozCloud fast, while maintaining best practices and secure defaults.
+This chart can be used to build Kubernetes Jobs and CronJobs.
 
 ## Usage
 
@@ -16,8 +16,8 @@ name: my-mozcloud-tenant-chart
 version: 0.1.0
 type: application
 dependencies:
-  - name: mozcloud-workload
-    version: ~0.1.3
+  - name: mozcloud-job
+    version: ~0.4.4
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 

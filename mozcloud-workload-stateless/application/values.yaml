@@ -35,7 +35,7 @@ enabled: true
 # The top-level key should be the name and the configuration should be the
 # value.
 #
-configMaps:
+configMaps: {}
 #  name:
 #    # Argo CD settings
 #    #
@@ -58,7 +58,7 @@ configMaps:
 # Each externalSecret should be a dictionary where the key is the name of the
 # externalSecret and the value is its configuration.
 #
-externalSecrets:
+externalSecrets: {}
 #  name:
 #    # Argo CD settings
 #    #
@@ -83,7 +83,7 @@ externalSecrets:
 # Each serviceAccount should be a dictionary where the key is the name of the
 # serviceAccount and the value is its configuration.
 #
-serviceAccounts:
+serviceAccounts: {}
 #  name:
 #    # Argo CD settings
 #    #
@@ -106,7 +106,7 @@ serviceAccounts:
 # Each deployment should be a dictionary where the key is the name of the
 # deployment and the value is its configuration.
 #
-deployments:
+deployments: {}
 #  name:
 #    # Argo CD settings
 #    #argo:
@@ -316,7 +316,7 @@ deployments:
 # Each podMonitoring should be a dictionary where the key is the name of the
 # podMonitoring and the value is its configuration.
 #
-podMonitorings:
+podMonitorings: {}
 #  name:
 #    endpoints:
 #      - port: app
@@ -334,7 +334,7 @@ podMonitorings:
 # Each HPA should be a dictionary where the key is the name of the
 # podMonitoring and the value is its configuration.
 #
-hpas:
+hpas: {}
 #  name:
 #    minReplicas: 2
 #    maxReplicas: 10
