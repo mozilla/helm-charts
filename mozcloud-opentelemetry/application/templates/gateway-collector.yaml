@@ -8,8 +8,6 @@ spec:
   serviceAccount: {{ .Values.serviceAccount.name }}
   {{- end }}
   mode: deployment
-  args:
-    - "--feature-gates=exporter.googlemanagedprometheus.intToDouble"
   terminationGracePeriodSeconds: 600
   hostNetwork: false
   {{- with .Values.collectors.gateway.securityContext }}
