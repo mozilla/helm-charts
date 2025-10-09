@@ -198,7 +198,6 @@ spec:
           receivers:
           - otlp/collectors
           processors:
-          - metricstransform/self-metrics
           - k8sattributes
           - memory_limiter
           - resourcedetection
