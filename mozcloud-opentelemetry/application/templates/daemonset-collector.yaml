@@ -126,12 +126,8 @@ spec:
           encoding: json
         metrics:
           readers:
-            # self-monitoring of collector metrics
-            # k8sprocessor doesnt annotate pods using host networking
-            # podmonitoring will add at least minimal labeling
-            # this enables the /metrics endpoint
-            - pull:
+            - periodic:
                 exporter:
-                  prometheus:
-                    host: '0.0.0.0'
-                    port: 8888
+                  otlp:
+                    protocol: grpc
+                    endpoint: {{ printf "%s:%s" .Values.collectors.gateway.endpoints.otlp.endpoint .Values.collectors.gateway.endpoints.otlp.collectorMetricsPort | quote }}

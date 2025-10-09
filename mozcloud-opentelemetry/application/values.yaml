@@ -22,6 +22,7 @@ collectors:
       otlp:
         endpoint: "mozcloud-opentelemetry-gateway-collector"
         port: "4317"
+        selfMetricsPort: "14317"
       headless:
         endpoint: "mozcloud-opentelemetry-gateway-collector-headless"
         port: "4317"
