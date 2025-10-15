@@ -20,6 +20,10 @@ spec:
   resources: {{ toYaml . | nindent 4 }}
   {{- end }}
   env:
+  - name: POD_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
   - name: MY_POD_IP
     valueFrom:
       fieldRef:
@@ -28,12 +32,23 @@ spec:
     valueFrom:
       fieldRef:
         fieldPath: status.hostIP
+
+  ports:
+  - name: otlp-collecotrs
+    port: {{ .Values.collectors.gateway.endpoints.otlp.collectorMetricsPort }}
+    targetPort: {{ .Values.collectors.gateway.endpoints.otlp.collectorMetricsPort }}
+
   config:
     receivers:
       otlp:
         protocols:
           grpc: {}
           http: {}
+
+      otlp/collectors:
+        protocols:
+          http:
+            endpoint: "0.0.0.0:{{ .Values.collectors.gateway.endpoints.otlp.collectorMetricsPort }}"
 
     processors:
       # The transform/collision processor ensures that any attributes that may
@@ -113,11 +128,24 @@ spec:
         - cluster
         - location
 
+      resourcedetection:
+        detectors: [env, gcp]
+        timeout: 10s
+        override: false
+
     exporters:
       debug:
         verbosity: detailed
       googlemanagedprometheus:
         metric:
+          # GMP exporter automatically adds the following labels from the listed attributes
+          #   project_id: auto-detected by Application Default Credentials, gcp.project.id, or project in exporter config
+          #   location: location, cloud.availability_zone, cloud.region
+          #   cluster: cluster, k8s.cluster_name
+          #   namespace: namespace, k8s.namespace_name
+          #   job: service.name + service.namespace
+          #   instance: service.instance.id
+          # Code below adds additional labels from attributes
           resource_filters:
           - prefix: "faas"
           - regex: "host.name"
@@ -159,6 +187,17 @@ spec:
           - batch
           exporters:
           - googlemanagedprometheus
+        metrics/collectors:
+          receivers:
+          - otlp/collectors
+          processors:
+          - memory_limiter
+          - resourcedetection
+          - transform/collision
+          - transform/aco-gke
+          - batch
+          exporters:
+          - googlemanagedprometheus
         traces:
           receivers:
           - otlp
@@ -172,14 +211,14 @@ spec:
       telemetry:
         logs:
           encoding: json
+        resource:
+          k8s.deployment.name: {{ include "mozcloud-opentelemetry.name" . }}-gateway-collector
+          k8s.pod.name: ${POD_NAME}
+          namespace: ${POD_NAMESPACE}
         metrics:
           readers:
-            # self-monitoring of collector metrics
-            # k8sprocessor doesnt annotate pods using host networking
-            # podmonitoring will add at least minimal labeling
-            # this enables the /metrics endpoint
-            - pull:
+            - periodic:
                 exporter:
-                  prometheus:
-                    host: '0.0.0.0'
-                    port: 8888
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: http://${env:MY_POD_IP}:14318
