@@ -1,5 +1,5 @@
 {{- define "mozcloud-service-lib.service" -}}
-{{- $config := merge (default dict .config) (include "mozcloud-service-lib.defaults.config" . | fromYaml) }}
+{{- $config := merge (default dict .config) (include "mozcloud-service-lib.defaults.config" . | fromYaml).config }}
 ---
 apiVersion: v1
 kind: Service

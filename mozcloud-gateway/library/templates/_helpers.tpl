@@ -352,7 +352,7 @@ ports:
     targetPort: {{ default $defaults.targetPort .targetPort }}
     protocol: {{ default $defaults.protocol .protocol }}
     name: {{ default $defaults.portName .portName }}
-type: {{ $defaults.type }}
+type: {{ default $defaults.type .type }}
 {{- end -}}
 
 {{/*
@@ -430,6 +430,7 @@ port: 8080
 portName: http
 protocol: TCP
 targetPort: http
+type: ClusterIP
 {{- end -}}
 
 {{/*
