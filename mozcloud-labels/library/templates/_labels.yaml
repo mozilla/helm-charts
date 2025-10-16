@@ -25,9 +25,6 @@ mozcloud-shared-data.
 {{- end -}}
 
 {{- define "mozcloud-labels-lib.additional_labels" -}}
-{{- if .chart }}
-helm.sh/chart: {{ .chart }}
-{{- end }}
 component_code: {{ .component_code }}
 env_code: {{ .env_code }}
 {{- if eq .env_code "prod" }}
@@ -35,13 +32,16 @@ realm: prod
 {{- else }}
 realm: nonprod
 {{- end }}
-{{- if .appVersion }}
-app.kubernetes.io/version: {{ .appVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: Helm
 {{- end -}}
 
 {{- define "mozcloud-labels-lib.kubernetes_labels" -}}
 app.kubernetes.io/name: {{ default .app_code .system }}
 app.kubernetes.io/component: {{ .component_code }}
+app.kubernetes.io/managed-by: argocd
+{{- if .appVersion }}
+app.kubernetes.io/version: {{ .appVersion | quote }}
+{{- end }}
+{{- if .chart }}
+helm.sh/chart: {{ .chart }}
+{{- end }}
 {{- end -}}

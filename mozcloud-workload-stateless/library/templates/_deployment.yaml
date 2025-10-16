@@ -20,7 +20,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      {{- (mergeOverwrite (include "mozcloud-labels-lib.selectorLabels" $ | fromYaml) $deployment.labels) | toYaml | nindent 6 }}
+      {{- $deployment.selectorLabels | toYaml | nindent 6 }}
   template:
     metadata:
       labels:
