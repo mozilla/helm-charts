@@ -102,8 +102,8 @@ ConfigMap template helpers
 ExternalSecret template helpers
 */}}
 {{- define "mozcloud-workload-core-lib.config.externalSecrets" -}}
-{{- $app_code := default "" .appCode -}}
-{{- $environment := default "" .environment -}}
+{{- $app_code := default "" .app_code -}}
+{{- $environment := default "" .env_code -}}
 {{- $external_secrets := .externalSecrets -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
@@ -117,7 +117,7 @@ ExternalSecret template helpers
   {{- $external_secret_config = mergeOverwrite $external_secret_config $common -}}
   {{- /* Populate ExternalSecret-specific fields, if not specified */ -}}
   {{- if and (not $external_secret.target) $app_code -}}
-    {{- /* Prefer to construct the target name using .appCode if specified, otherwise use default */ -}}
+    {{- /* Prefer to construct the target name using .app_code if specified, otherwise use default */ -}}
     {{- $target_name := printf "%s-secrets" $app_code -}}
     {{- $_ := set $external_secret_config "target" $target_name -}}
   {{- end -}}

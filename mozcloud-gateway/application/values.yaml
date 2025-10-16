@@ -1,7 +1,7 @@
 # If disabled, no resources in the chart will be created.
 enabled: true
 
-# app_code, chart, component_code, environment, and projectId should all be
+# app_code, chart, component_code, env_code, and projectId should all be
 # defined as global values in the parent Helm chart's values file(s) outside the
 # scope of this Helm chart.
 #
@@ -17,7 +17,7 @@ enabled: true
 #   # my-app/values-dev.yaml
 #   global:
 #     mozcloud:
-#       environment: dev                 # should match .Values.environment
+#       env_code: dev                    # should match .Values.environment
 #       projectId: moz-fx-my-app-nonprod # should match realms.<realm>.project_id in tenant file
 #
 # These are used to populate labels and metadata in MozCloud charts.

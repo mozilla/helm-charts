@@ -35,7 +35,7 @@ Create label parameters to be used in library chart if defined as values.
 */}}
 {{- define "mozcloud-workload.labelParams" -}}
 {{- $params := dict "chart" (include "mozcloud-workload.name" .) -}}
-{{- $label_params := list "app_code" "chart" "component_code" "environment" -}}
+{{- $label_params := list "app_code" "chart" "component_code" "env_code" -}}
 {{- range $label_param := $label_params -}}
   {{- if index $.Values.global.mozcloud $label_param -}}
     {{- $_ := set $params $label_param (index $.Values.global.mozcloud $label_param) -}}
@@ -138,7 +138,7 @@ gateways:
       - {{ $address }}
       {{- end }}
       {{- else }}
-      - {{ $globals.app_code }}-{{ $globals.environment }}-ip-v4
+      - {{ $globals.app_code }}-{{ $globals.env_code }}-ip-v4
       {{- end }}
     listeners:
       - name: http
@@ -278,7 +278,7 @@ ingresses:
     {{- if $host_config.addresses }}
     staticIpName: {{ $host_config.addresses | first }}
     {{- else }}
-    staticIpName: {{ $globals.app_code }}-{{ $globals.environment }}-ip-v4
+    staticIpName: {{ $globals.app_code }}-{{ $globals.env_code }}-ip-v4
     {{- end }}
   {{- end }}
   {{- end }}
@@ -449,7 +449,7 @@ externalSecrets:
       syncWave: -11
     target: {{ $globals.app_code }}-secrets
     gsm:
-      secret: {{ .Values.global.mozcloud.environment }}-gke-app-secrets
+      secret: {{ .Values.global.mozcloud.env_code }}-gke-app-secrets
   {{- range $workload_name, $workload_config := $workloads }}
   {{- $external_secrets := include "mozcloud-workload.formatter.externalSecrets" $workload_config | fromYaml }}
   {{- range $external_secret := $external_secrets.secrets }}
@@ -515,7 +515,7 @@ serviceAccounts:
     argo:
       syncWave: -11
     gcpServiceAccount:
-      name: gke-{{ $globals.environment }}
+      name: gke-{{ $globals.env_code }}
       projectId: {{ $globals.projectId }}
   {{- $service_accounts := include "mozcloud-workload.formatter.serviceAccounts" (dict "workload" $workload_config) | fromYaml }}
   {{- range $service_account_name, $service_account_config := $service_accounts.serviceAccounts }}

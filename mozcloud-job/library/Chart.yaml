@@ -15,13 +15,13 @@ type: library
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.4.6
+version: 0.4.7
 
 dependencies:
   - name: mozcloud-labels-lib
-    version: 0.3.5
+    version: 0.3.6
     repository: file://../../mozcloud-labels/library
 
   - name: mozcloud-workload-core-lib
-    version: 0.6.4
+    version: 0.6.5
     repository: file://../../mozcloud-workload-core/library

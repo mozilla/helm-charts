@@ -4,7 +4,7 @@ enabled: true
 #
 # global
 #
-# app_code, chart, component_code, environment, and projectId should all be
+# app_code, chart, component_code, env_code, and projectId should all be
 # defined as global values in the parent Helm chart's values file(s) outside the
 # scope of this Helm chart.
 #
@@ -20,7 +20,7 @@ enabled: true
 #   # my-app/values-dev.yaml
 #   global:
 #     mozcloud:
-#       environment: dev                 # should match .Values.environment
+#       env_code: dev                    # should match .Values.environment
 #       projectId: moz-fx-my-app-nonprod # should match realms.<realm>.project_id in tenant file
 #
 # These are used to populate labels and metadata in MozCloud charts.
@@ -52,7 +52,7 @@ configMaps: {}
 #
 # A dictionary of externalSecret definitions. An externalSecret should at least
 # define a name. If you don't provide anything else, we expect this to default
-# to reading from {{ .Values.global.environment }}-gke-app-secrets and writing
+# to reading from {{ .Values.global.env_code }}-gke-app-secrets and writing
 # to "mozcloud-workload-core-secrets.
 #
 # Each externalSecret should be a dictionary where the key is the name of the

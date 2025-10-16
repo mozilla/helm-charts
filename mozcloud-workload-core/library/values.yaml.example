@@ -1,7 +1,7 @@
 # Example values showing a visual representation of the parameters accepted by
 # this library chart.
 
-# app_code, chart, component_code, environment, and projectId should all be
+# app_code, chart, component_code, env_code, and projectId should all be
 # defined as global values in the parent Helm chart's values file(s) outside the
 # scope of this Helm chart.
 #
@@ -17,7 +17,7 @@
 #   # my-app/values-dev.yaml
 #   global:
 #     mozcloud:
-#       environment: dev                 # should match .Values.environment
+#       env_code: dev                    # should match .Values.environment
 #       projectId: moz-fx-my-app-nonprod # should match realms.<realm>.project_id in tenant file
 #
 # These are used to populate labels and metadata in MozCloud charts.
@@ -57,7 +57,7 @@ externalSecrets:
     # if you specify ".Values.global.mozcloud.appCode" in your parent chart.
     target: my-k8s-secret
 
-    # This section is optional if you specify "environment" and are fine with
+    # This section is optional if you specify "env_code" and are fine with
     # "version" being "latest".
     gsm:
       secret: dev-gke-custom-secrets

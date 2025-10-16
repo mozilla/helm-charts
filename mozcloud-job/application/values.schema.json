@@ -23,7 +23,7 @@
               "description": "Application component's code (eg. web, shepherd, mars)",
               "type": "string"
             },
-            "environment": {
+            "env_code": {
               "description": "Environment (ie. dev, stage, prod)",
               "type": "string"
             },
@@ -35,7 +35,7 @@
           "required": [
             "app_code",
             "component_code",
-            "environment",
+            "env_code",
             "projectId"
           ]
         }

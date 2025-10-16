@@ -1,26 +1,36 @@
 {{- define "mozcloud-labels-lib.labels" -}}
-{{- $additional_labels := include "mozcloud-labels-lib.additional_labels" . | fromYaml -}}
-{{- $params := dict "context" . "appCode" .app_code "dataKey" "labels" "customData" $additional_labels "precedence" "shared" -}}
+{{- /* We do not need the full context here */ -}}
+{{- $context := dict "app_code" .app_code "component_code" .component_code "env_code" .env_code  -}}
+{{- $chart := "" }}
+{{- if .chart }}
+  {{- $chart = .chart }}
+{{- else if (.Chart).Name }}
+  {{- $chart = .Chart.Name }}
+{{- else if (.Chart).name }}
+  {{- $chart = .Chart.name }}
+{{- end }}
+{{- if $chart }}
+  {{- $_ := set $context "chart" $chart -}}
+{{- end }}
+{{- $additional_labels := include "mozcloud-labels-lib.additional_labels" $context | fromYaml -}}
+{{- /*
+Change "precedence" to "shared" once we are ready to go live with the data in
+mozcloud-shared-data.
+*/}}
+{{- $params := dict "context" $context "appCode" .app_code "dataKey" "labels" "customData" $additional_labels "precedence" "local" -}}
 {{- $shared_data := include "mozcloud-shared-data-lib.smartMergeData" $params | fromYaml -}}
-{{- $kubernetes_labels := include "mozcloud-labels-lib.kubernetes_labels" (mergeOverwrite (. | deepCopy) $shared_data) | fromYaml -}}
+{{- $kubernetes_labels := include "mozcloud-labels-lib.kubernetes_labels" (mergeOverwrite $context $shared_data) | fromYaml -}}
 {{- $merged_labels := mergeOverwrite $shared_data $kubernetes_labels -}}
 {{ $merged_labels | toYaml }}
 {{- end -}}
 
 {{- define "mozcloud-labels-lib.additional_labels" -}}
-{{- $chart_name := "" }}
 {{- if .chart }}
-  {{- $chart_name = .chart }}
-{{- else if (.Chart).Name }}
-  {{- $chart_name = .Chart.Name }}
-{{- else if (.Chart).name }}
-  {{- $chart_name = .Chart.name }}
+helm.sh/chart: {{ .chart }}
 {{- end }}
-{{- if $chart_name }}
-helm.sh/chart: {{ $chart_name }}
-{{- end }}
-env_code: {{ .environment }}
-{{- if eq .environment "prod" }}
+component_code: {{ .component_code }}
+env_code: {{ .env_code }}
+{{- if eq .env_code "prod" }}
 realm: prod
 {{- else }}
 realm: nonprod
