@@ -40,9 +40,10 @@ jobs:
         with:
           script: |
             const all_changed_files = JSON.parse(process.env.ALL_CHANGED_FILES)
+            const regex = /mozcloud-[a-z]+\/(application|library)\//gm;
 
             const unique = new Set(all_changed_files
-              .filter(path => path.toLowerCase().startsWith("mozcloud"))
+              .filter(path => path.toLowerCase().match(regex))
               .map(path => {
                 const parts = path.split("/");
 
@@ -52,15 +53,15 @@ jobs:
 
             const charts = Array.from(unique)
               .map(path => {
-              const parts = path.split("/");
+                const parts = path.split("/");
 
-              return {name: parts[0], type: parts[1]};
+                return {name: parts[0], type: parts[1]};
               });
 
             if (!charts.length) return {};
 
             for (const chart of charts) {
-              console.log(`.. found modified chart: ${chart.name}`);
+              console.log(`.. found modified chart: ${chart.name}/${chart.type}`);
             }
 
             return {include: charts};
