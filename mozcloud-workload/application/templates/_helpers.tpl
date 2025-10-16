@@ -506,8 +506,7 @@ Service accounts
 {{- $workloads := .workloads -}}
 serviceAccounts:
   {{- range $workload_name, $workload_config := $workloads }}
-  {{- if ($workload_config.serviceAccount).enabled }}
-  {{ $workload_name }}:
+  {{ $globals.app_code }}:
     {{- /*
     ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
     other resources
@@ -532,7 +531,6 @@ serviceAccounts:
       name: {{ $service_account_config.gcpServiceAccount.name }}
       projectId: {{ default $globals.projectId $service_account_config.gcpServiceAccount.projectId }}
     {{- end }}
-  {{- end }}
   {{- end }}
   {{- end }}
   {{- end }}
