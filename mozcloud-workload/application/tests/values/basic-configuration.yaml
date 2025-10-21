@@ -1,0 +1,30 @@
+---
+workloads:
+  # This is the name of the workload ("test-service").
+  #
+  # Within the scope of Gateway configurations, the name is also used for the
+  # Service, GCPBackendPolicy, HealthCheckPolicy, and any references to
+  # "backends" in HTTPRoutes.
+  #
+  # Additionally, this name will be used for Deployments, HPAs, and all other
+  # workload-related Kubernetes resources.
+  test-service:
+    container:
+      image:
+        repository: test-repo/test-image
+        tag: 1.0.0
+    hosts:
+      # This is the name of the host to be created. The name is also used for
+      # the Gateway, HTTPRoutes, and GCPGatewayPolicy. For simplicity sake, we
+      # will use the same name as the workload, though it be configured to use
+      # a different name if desired.
+      test-service:
+        domains:
+          - test-service.dev.test-domain.com
+        addresses:
+          - mozcloud-workload-dev-ip-v4
+        tls:
+          # The certificate map below needs to be created using Terraform before
+          # this chart is applied.
+          certs:
+            - test-service-nonprod-dev

@@ -1,0 +1,8 @@
+---
+jobs:
+  test-job:
+    containers:
+      - name: app
+        image: test-repo/test-image
+        command: ["sh", "-c"]
+        args: ["echo", "foo", "bar"]

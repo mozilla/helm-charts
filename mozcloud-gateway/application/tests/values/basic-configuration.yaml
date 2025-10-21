@@ -1,0 +1,37 @@
+---
+backends:
+  # This names the Service "test-service".
+  test-service:
+    service:
+      port: 8080
+gateway:
+  gateways:
+    # This names the Gateway "test-gateway".
+    test-gateway:
+      addresses:
+        - mozcloud-test-dev-ip-v4
+      tls:
+        # The certificate map below needs to be created using Terraform before
+        # this chart is applied.
+        certs:
+          - mozcloud-test-nonprod-dev
+        type: certmap
+httpRoute:
+  httpRoutes:
+    # This names the HTTPRoute "test-httproute".
+    test-httproute:
+      # The gatewayRef name needs to match the Gateway name above.
+      #
+      # "https" is implied because the default configuration for a Gateway is
+      # global and external, meaning there will be an "https" section to which
+      # the HTTPRoute should attach.
+      gatewayRefs:
+        - name: test-gateway
+          section: https
+      hostnames:
+        - test-service.dev.test-domain.com
+      rules:
+        - backendRefs:
+            # The service name and port should match the configuration above.
+            - name: test-service
+              port: 8080

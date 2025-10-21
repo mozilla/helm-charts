@@ -1,0 +1,303 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-service
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: test-service
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: test-service
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            component_code: test-service
+            env_code: dev
+            helm.sh/chart: test-chart
+            realm: nonprod
+        spec:
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
+              image: test-repo/test-image:1.0.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__heartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSecondS: 6
+                timeoutSeconds: 5
+              name: app
+              ports:
+                - containerPort: 8000
+                  name: app
+              readinessProbe:
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSecondS: 6
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.22
+              imagePullPolicy: IfNotPresent
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/bash
+                      - -c
+                      - /bin/sleep 25 && /usr/sbin/nginx -s quit
+              livenessProbe:
+                httpGet:
+                  path: /__nginxheartbeat__
+                  port: http
+                initialDelaySeconds: 5
+                periodSeconds: 6
+                timeoutSeconds: 2
+              name: nginx
+              ports:
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 15Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 101
+                runAsUser: 101
+              volumeMounts:
+                - mountPath: /etc/nginx/nginx.conf
+                  name: nginx-conf
+                  readOnly: true
+                  subPath: nginx.conf
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+          volumes:
+            - configMap:
+                name: test-service-nginx
+              name: nginx-conf
+  2: |
+    apiVersion: v1
+    data:
+      nginx.conf: |
+        # The nginx docker container has ln -sf /dev/stderr /var/log/nginx/error.log
+        error_log  /var/log/nginx/error.log warn;
+        pid        /tmp/nginx.pid;
+
+        events {
+            worker_connections  2048;
+        }
+
+        http {
+            include       /etc/nginx/mime.types;
+
+            default_type  application/octet-stream;
+
+            log_format main escape=json
+            '{'
+              '"time":"$time_local",'
+              '"remote_addr":"$remote_addr",'
+              '"remote_user":"$remote_user",'
+              '"request":"$request",'
+              '"status": "$status",'
+              '"log_type": "access",'
+              '"bytes_sent": $body_bytes_sent,'
+              '"request_time": $request_time,'
+              '"referrer":"$http_referer",'
+              '"user_agent":"$http_user_agent",'
+              '"x_forwarded_for":"$http_x_forwarded_for",'
+              '"x_forwarded_proto":"$http_x_forwarded_proto",'
+              '"trace":"$http_x_cloud_trace_context"'
+            '}';
+
+            # The nginx docker container has ln -sf /dev/stdout /var/log/nginx/access.log
+            access_log  /var/log/nginx/access.log  main;
+
+            sendfile        on;
+
+            keepalive_timeout  620;
+
+            server_tokens off;
+
+            gzip on;
+            gzip_http_version 1.1;
+            gzip_comp_level 1;
+            gzip_vary on;
+            gzip_proxied any;
+            gzip_disable "MSIE [1-6]\.(?!.*SV1)";
+            gzip_min_length 1100;
+            gzip_types
+                text/plain
+                text/css
+                application/json
+                application/x-javascript
+                text/xml
+                application/xml
+                application/xml+rss
+                text/javascript
+                application/javascript;
+
+            upstream upstream_docker {
+                server 127.0.0.1:8000;
+            }
+
+            server {
+                listen 8080;
+
+                client_max_body_size 2g;
+
+                add_header Strict-Transport-Security "max-age=31536000" always;
+
+                location / {
+                    proxy_set_header x-forwarded-proto $http_x_forwarded_proto;
+                    proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;
+                    proxy_set_header Host $http_host;
+                    proxy_redirect off;
+                    proxy_pass http://upstream_docker;
+                }
+
+                location = /nginx_status {
+                  stub_status on;
+                  access_log off;
+                  allow 127.0.0.1;
+                  deny all;
+                }
+
+                location = /__nginxheartbeat__ {
+                  return 200;
+                }
+            }
+        }
+    kind: ConfigMap
+    metadata:
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-service-nginx
+  3: |
+    apiVersion: external-secrets.io/v1beta1
+    kind: ExternalSecret
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-11"
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: mozcloud-test-secrets
+    spec:
+      dataFrom:
+        - extract:
+            key: dev-gke-app-secrets
+            version: latest
+      refreshInterval: 5m
+      secretStoreRef:
+        kind: SecretStore
+        name: secret-store
+      target:
+        creationPolicy: Owner
+        name: mozcloud-test-secrets
+  4: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-11"
+        iam.gke.io/gcp-service-account: gke-dev@moz-fx-mozcloud-test-nonprod.iam.gserviceaccount.com
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: mozcloud-test
+  5: |
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-service
+    spec:
+      maxReplicas: 30
+      metrics:
+        - resource:
+            name: cpu
+            target:
+              averageUtilization: 60
+              type: Utilization
+          type: Resource
+      minReplicas: 1
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: test-service

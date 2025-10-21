@@ -1,0 +1,8 @@
+---
+global:
+  mozcloud:
+    app_code: mozcloud-test
+    chart: test-chart
+    component_code: test-service
+    env_code: dev
+    projectId: moz-fx-mozcloud-test-nonprod

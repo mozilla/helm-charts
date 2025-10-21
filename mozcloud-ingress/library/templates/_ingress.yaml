@@ -2,7 +2,6 @@
 {{- $name_override := default "" .nameOverride }}
 {{- $backend_defaults := include "mozcloud-ingress-lib.defaults.backendConfig" . | fromYaml }}
 {{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml }}
-{{- $frontend_config := include "mozcloud-ingress-lib.config.frontend" . | fromYaml }}
 {{- $managed_certificates := include "mozcloud-ingress-lib.config.managedCertificates" . | fromYamlArray }}
 {{- range $ingress := $ingresses.ingresses }}
 ---
@@ -31,7 +30,7 @@ metadata:
     {{- if (index $ingresses "preSharedCerts" $ingress.name) }}
     ingress.gcp.kubernetes.io/pre-shared-cert: {{ index $ingresses "preSharedCerts" $ingress.name }}
     {{- end }}
-    networking.gke.io/v1beta1.FrontendConfig: {{ $frontend_config.name }}
+    networking.gke.io/v1beta1.FrontendConfig: {{ $ingress.name }}
 spec:
   {{- if and (eq (len $ingress.hosts) 1) (eq (len (first $ingress.hosts).paths) 1) }}
   {{- range $host := $ingress.hosts }}

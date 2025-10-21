@@ -131,14 +131,19 @@ FrontendConfig template helpers
 {{- define "mozcloud-ingress-lib.config.frontend" -}}
 {{- $defaults := include "mozcloud-ingress-lib.defaults.frontendConfig" . | fromYaml -}}
 {{- $name_override := default "" .nameOverride -}}
-{{- $params := dict "frontendConfig" .frontendConfig -}}
-{{- if $name_override -}}
-  {{- $_ := set $params "nameOverride" $name_override -}}
-{{- end -}}
-name: {{ include "mozcloud-ingress-lib.config.name" $params }}
-redirectToHttps:
-  enabled: {{ default $defaults.redirectToHttps.enabled ((.frontendConfig).redirectToHttps).enabled }}
-sslPolicy: {{ default $defaults.sslPolicy (.frontendConfig).sslPolicy }}
+{{- $ingresses := default (dict) .ingressConfig -}}
+{{- range $ingress_name, $ingress_config := $ingresses -}}
+  {{- $_ := set $ingress_config "name" $ingress_name -}}
+  {{- $params := dict "ingressConfig" $ingress_config "frontendConfig" $.frontendConfig -}}
+  {{- if $name_override -}}
+    {{- $_ = set $params "nameOverride" $name_override -}}
+  {{- end -}}
+  {{- $frontend_name := include "mozcloud-ingress-lib.config.name" $params }}
+{{ $frontend_name }}:
+  redirectToHttps:
+    enabled: {{ default $defaults.redirectToHttps.enabled ((.frontendConfig).redirectToHttps).enabled }}
+  sslPolicy: {{ default $defaults.sslPolicy (.frontendConfig).sslPolicy }}
+{{- end }}
 {{- end -}}
 
 {{/*

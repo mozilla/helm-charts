@@ -1,0 +1,192 @@
+---
+suite: "mozcloud-gateway: Basic configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+  appVersion: 1.16.0
+values:
+  - values/globals.yaml
+  - values/basic-configuration.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: GCP backend policy is configured correctly
+    template: backendpolicy.yaml
+    documentSelector:
+      path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
+      value: test-service
+    asserts:
+      - isSubset:
+          path: spec.default
+          content:
+            logging:
+              enabled: true
+              sampleRate: 100000
+      - equal:
+          path: spec.targetRef.name
+          value: test-service
+  - it: External gateway is configured correctly
+    template: gateway.yaml
+    documentSelector:
+      path: $[?(@.kind == "Gateway")].metadata.name
+      value: test-gateway
+    asserts:
+      - equal:
+          path: metadata.annotations["networking.gke.io/certmap"]
+          value: mozcloud-test-nonprod-dev
+      - isNotNullOrEmpty:
+          path: spec.addresses
+      - contains:
+          path: spec.listeners
+          count: 1
+          content:
+            allowedRoutes:
+              namespaces:
+                from: Same
+            name: http
+            port: 80
+            protocol: HTTP
+      - contains:
+          path: spec.listeners
+          count: 1
+          content:
+            allowedRoutes:
+              namespaces:
+                from: Same
+            name: https
+            port: 443
+            protocol: HTTPS
+      - matchRegex:
+          path: spec.gatewayClassName
+          pattern: ^gke-l7-global-external-managed(-mc)?$
+  - it: Gateway policy is configured correctly
+    template: gatewaypolicy.yaml
+    documentSelector:
+      path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
+      value: test-gateway
+    asserts:
+      - equal:
+          path: spec.default.sslPolicy
+          value: mozilla-intermediate
+      - isSubset:
+          path: spec.targetRef
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: test-gateway
+  - it: Healthcheck policy is configured correctly
+    template: healthcheckpolicy.yaml
+    documentSelector:
+      path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.default.config.httpHealthCheck.requestPath
+          value: /__lbheartbeat__
+      - equal:
+          path: spec.targetRef.name
+          value: test-service
+  - it: HTTPS HTTPRoute is configured correctly
+    template: httproute.yaml
+    documentSelector:
+      path: $[?(@.kind == "HTTPRoute")].metadata.name
+      value: test-httproute
+    asserts:
+      - contains:
+          path: spec.parentRefs
+          count: 1
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: test-gateway
+            sectionName: https
+      - notContains:
+          path: spec.parentRefs
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: test-gateway
+            sectionName: http
+      - lengthEqual:
+          path: spec.rules
+          count: 1
+      - exists:
+          path: spec.rules[0].backendRefs
+      - contains:
+          path: spec.rules[0].backendRefs
+          count: 1
+          content:
+            group: ""
+            kind: Service
+            name: test-service
+            port: 8080
+      - notExists:
+          path: spec.rules[0].filters[0].requestRedirect
+  - it: HTTP-to-HTTPS redirect HTTPRoute is configured correctly
+    template: httproute.yaml
+    documentSelector:
+      path: $[?(@.kind == "HTTPRoute")].metadata.name
+      value: test-httproute-http-redirect
+    asserts:
+      - contains:
+          path: spec.parentRefs
+          count: 1
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: test-gateway
+            sectionName: http
+      - notContains:
+          path: spec.parentRefs
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: test-gateway
+            sectionName: https
+      - lengthEqual:
+          path: spec.rules
+          count: 1
+      - notExists:
+          path: spec.rules[0].backendRefs
+      - contains:
+          path: spec.rules[0].filters
+          count: 1
+          content:
+            requestRedirect:
+              scheme: https
+              statusCode: 302
+            type: RequestRedirect
+      - contains:
+          path: spec.rules[0].matches
+          count: 1
+          content:
+            path:
+              type: PathPrefix
+              value: /
+  - it: Service is configured correctly
+    template: service.yaml
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.ports
+          count: 1
+          content:
+            name: http
+            port: 8080
+            protocol: TCP
+            targetPort: http
+      - exists:
+          path: spec.selector
+      - isNotNullOrEmpty:
+          path: spec.selector
+      - equal:
+          path: spec.type
+          value: ClusterIP

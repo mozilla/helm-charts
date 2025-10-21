@@ -1,0 +1,93 @@
+---
+suite: "mozcloud-workload: Basic ingress configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+  appVersion: 1.16.0
+values:
+  - values/globals.yaml
+  - values/basic-ingress-configuration.yaml
+templates:
+  - ingress.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Backend is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "BackendConfig")].metadata.name
+      value: test-service
+    asserts:
+      - isSubset:
+          path: spec
+          content:
+            logging:
+              enable: true
+              sampleRate: 0.1
+  - it: Frontend is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "FrontendConfig")].metadata.name
+      value: test-service
+    asserts:
+      - isSubset:
+          path: spec
+          content:
+            redirectToHttps:
+              enabled: true
+            sslPolicy: mozilla-intermediate
+  - it: Ingress is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "Ingress")].metadata.name
+      value: test-service
+    asserts:
+      - isSubset:
+          path: metadata.annotations
+          content:
+            kubernetes.io/ingress.class: gce
+            kubernetes.io/ingress.global-static-ip-name: mozcloud-workload-dev-ip-v4
+            networking.gke.io/managed-certificates: mcrt-test-service-dev-test-domain-com
+            networking.gke.io/v1beta1.FrontendConfig: test-service
+      - isSubset:
+          path: spec
+          content:
+            defaultBackend:
+              service:
+                name: test-service
+                port:
+                  number: 8080
+  - it: Managed certificate is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: mcrt-test-service-dev-test-domain-com
+    asserts:
+      - lengthEqual:
+          path: spec.domains
+          count: 1
+      - contains:
+          path: spec.domains
+          content: "test-service.dev.test-domain.com"
+  - it: Service is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.ports
+          count: 1
+          content:
+            name: http
+            port: 8080
+            protocol: TCP
+            targetPort: http
+      - exists:
+          path: spec.selector
+      - isNotNullOrEmpty:
+          path: spec.selector
+      - equal:
+          path: spec.type
+          value: ClusterIP

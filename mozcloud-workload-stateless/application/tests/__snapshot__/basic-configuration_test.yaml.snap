@@ -1,0 +1,175 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: v1
+    data:
+      BAZ: qux
+      FOO: bar
+    kind: ConfigMap
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-2"
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-config-map
+  2: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-deployment
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: test-service
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/component: test-service
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            component_code: test-service
+            env_code: dev
+            helm.sh/chart: test-chart
+            realm: nonprod
+        spec:
+          containers:
+            - envFrom:
+                - configMapRef:
+                    name: test-config-map
+                  secretRef:
+                    name: test-k8s-secret
+              image: test-repo/test-image:1.0.0
+              imagePullPolicy: IfNotPresent
+              name: test-container
+              ports:
+                - containerPort: 8000
+                  name: app
+              resources:
+                limits:
+                  cpu: "1"
+                  memory: 1Gi
+                requests:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+  3: |
+    apiVersion: external-secrets.io/v1beta1
+    kind: ExternalSecret
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-2"
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-k8s-secret
+    spec:
+      dataFrom:
+        - extract:
+            key: test-gsm-secret
+            version: latest
+      refreshInterval: 5m
+      secretStoreRef:
+        kind: SecretStore
+        name: secret-store
+      target:
+        creationPolicy: Owner
+        name: test-k8s-secret
+  4: |
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-deployment
+    spec:
+      maxReplicas: 5
+      metrics:
+        - resource:
+            name: cpu
+            target:
+              averageUtilization: 70
+              type: Utilization
+          type: Resource
+      minReplicas: 1
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: test-deployment
+  5: |
+    apiVersion: monitoring.googleapis.com/v1
+    kind: PodMonitoring
+    metadata:
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-pod-monitoring
+    spec:
+      endpoints:
+        - interval: 30s
+          path: /metrics
+          port: app
+          scheme: http
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: test-service
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev
+  6: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-2"
+        iam.gke.io/gcp-service-account: test-sa@moz-fx-mozcloud-workload-nonprod.iam.gserviceaccount.com
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-service-account

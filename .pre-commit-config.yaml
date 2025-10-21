@@ -18,3 +18,11 @@ repos:
     rev: v0.1.30
     hooks:
       - id: helmlint
+  - repo: local
+    hooks:
+      - id: helm-unittest
+        name: Run helm-unittest against charts
+        entry: make unit-tests
+        files: '^.*\/(application|library)\/.*(\.yaml|\.tpl)$'
+        language: system
+        pass_filenames: false

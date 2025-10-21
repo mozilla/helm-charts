@@ -1,0 +1,267 @@
+---
+suite: "mozcloud-workload: Basic workload configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+  appVersion: 1.16.0
+values:
+  - values/globals.yaml
+  - values/basic-configuration.yaml
+templates:
+  - workload.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: External secret is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "ExternalSecret")].metadata.name
+      value: mozcloud-test-secrets
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-11"
+      - contains:
+          path: spec.dataFrom
+          content:
+            extract:
+              key: dev-gke-app-secrets
+              version: latest
+      - equal:
+          path: spec.refreshInterval
+          value: 5m
+      - isSubset:
+          path: spec.secretStoreRef
+          content:
+            kind: SecretStore
+            name: secret-store
+      - equal:
+          path: spec.target.name
+          value: mozcloud-test-secrets
+  - it: Service account is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "ServiceAccount")].metadata.name
+      value: mozcloud-test
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-11"
+      - exists:
+          path: metadata.annotations["iam.gke.io/gcp-service-account"]
+      - equal:
+          path: metadata.annotations["iam.gke.io/gcp-service-account"]
+          value: gke-dev@moz-fx-mozcloud-test-nonprod.iam.gserviceaccount.com
+  - it: Deployment (containers excluded) is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - exists:
+          path: spec.selector.matchLabels
+      - isNotNullOrEmpty:
+          path: spec.selector.matchLabels
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 2
+      - isSubset:
+          path: spec.template.spec.securityContext
+          content:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: mozcloud-test
+      - lengthEqual:
+          path: spec.template.spec.volumes
+          count: 1
+      - isSubset:
+          path: spec.template.spec.volumes[0]
+          content:
+            configMap:
+              name: test-service-nginx
+            name: nginx-conf
+  - it: Deployment (app container) is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: mozcloud-test-secrets
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: test-repo/test-image:1.0.0
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+      - isSubset:
+          path: spec.template.spec.containers[0].readinessProbe
+          content:
+            httpGet:
+              path: /__lbheartbeat__
+              port: app
+            initialDelaySeconds: 10
+            periodSecondS: 6
+            timeoutSeconds: 5
+      - isSubset:
+          path: spec.template.spec.containers[0].livenessProbe
+          content:
+            failureThreshold: 5
+            httpGet:
+              path: /__heartbeat__
+              port: app
+            initialDelaySeconds: 10
+            periodSecondS: 6
+            timeoutSeconds: 5
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - lengthEqual:
+          path: spec.template.spec.containers[0].ports
+          count: 1
+      - isSubset:
+          path: spec.template.spec.containers[0].ports[0]
+          content:
+            containerPort: 8000
+            name: app
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            limits:
+              cpu: 200m
+              memory: 128Mi
+            requests:
+              cpu: 100m
+              memory: 64Mi
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+  - it: Deployment (nginx container) is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].image
+          value: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.22
+      - equal:
+          path: spec.template.spec.containers[1].imagePullPolicy
+          value: IfNotPresent
+      - isSubset:
+          path: spec.template.spec.containers[1].lifecycle
+          content:
+            preStop:
+              exec:
+                command:
+                  - /bin/bash
+                  - -c
+                  - /bin/sleep 25 && /usr/sbin/nginx -s quit
+      - isSubset:
+          path: spec.template.spec.containers[1].readinessProbe
+          content:
+            failureThreshold: 5
+            httpGet:
+              path: /__lbheartbeat__
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 6
+            successThreshold: 1
+            timeoutSeconds: 5
+      - isSubset:
+          path: spec.template.spec.containers[1].livenessProbe
+          content:
+            httpGet:
+              path: /__nginxheartbeat__
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 6
+            timeoutSeconds: 2
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: nginx
+      - lengthEqual:
+          path: spec.template.spec.containers[1].ports
+          count: 1
+      - isSubset:
+          path: spec.template.spec.containers[1].ports[0]
+          content:
+            containerPort: 8080
+            name: http
+            protocol: TCP
+      - isSubset:
+          path: spec.template.spec.containers[1].resources
+          content:
+            limits:
+              cpu: 100m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 15Mi
+      - isSubset:
+          path: spec.template.spec.containers[1].securityContext
+          content:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsGroup: 101
+            runAsUser: 101
+      - lengthEqual:
+          path: spec.template.spec.containers[1].volumeMounts
+          count: 1
+      - isSubset:
+          path: spec.template.spec.containers[1].volumeMounts[0]
+          content:
+            mountPath: /etc/nginx/nginx.conf
+            name: nginx-conf
+            readOnly: true
+            subPath: nginx.conf
+  - it: NGINX config map is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "ConfigMap")].metadata.name
+      value: test-service-nginx
+    asserts:
+      - isNotNullOrEmpty:
+          path: data["nginx.conf"]
+  - it: HPA is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.minReplicas
+          value: 1
+      - equal:
+          path: spec.maxReplicas
+          value: 30
+      - lengthEqual:
+          path: spec.metrics
+          count: 1
+      - equal:
+          path: spec.metrics[0].resource.name
+          value: cpu
+      - equal:
+          path: spec.metrics[0].resource.target.averageUtilization
+          value: 60
+      - isSubset:
+          path: spec.scaleTargetRef
+          content:
+            apiVersion: apps/v1
+            kind: Deployment
+            name: test-service

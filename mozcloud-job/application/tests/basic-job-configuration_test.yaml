@@ -1,0 +1,83 @@
+---
+suite: "mozcloud-job: Basic job configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+  appVersion: 1.16.0
+values:
+  - values/globals.yaml
+  - values/basic-job-configuration.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Job is configured correctly
+    template: job.yaml
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-job
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
+          value: BeforeHookCreation,HookSucceeded
+      - equal:
+          path: spec.backoffLimit
+          value: 6
+      - equal:
+          path: spec.parallelism
+          value: 1
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: test-repo/test-image:latest
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["sh", "-c"]
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["echo", "foo", "bar"]
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - exists:
+          path: spec.template.spec.containers[0].resources
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            limits:
+              cpu: 20m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+      - exists:
+          path: spec.template.spec.containers[0].securityContext
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+      - exists:
+          path: spec.template.spec.securityContext
+      - isSubset:
+          path: spec.template.spec.securityContext
+          content:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault

@@ -1,0 +1,160 @@
+---
+suite: "mozcloud-workload: Basic job configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+  appVersion: 1.16.0
+values:
+  - values/globals.yaml
+  - values/basic-job-configuration.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Pre-deployment job is configured correctly
+    template: job.yaml
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-predeployment-job
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: Sync
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
+          value: BeforeHookCreation,HookSucceeded
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-1"
+      - equal:
+          path: spec.backoffLimit
+          value: 6
+      - equal:
+          path: spec.parallelism
+          value: 1
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: test-repo/test-predeployment-job-image:2.0.0
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["sh", "-c"]
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["echo", "running", "before", "deployment"]
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: job
+      - exists:
+          path: spec.template.spec.containers[0].resources
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            limits:
+              cpu: 20m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+      - exists:
+          path: spec.template.spec.containers[0].securityContext
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+      - exists:
+          path: spec.template.spec.securityContext
+      - isSubset:
+          path: spec.template.spec.securityContext
+          content:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+  - it: Post-deployment job is configured correctly
+    template: job.yaml
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-postdeployment-job
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: Sync
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
+          value: BeforeHookCreation,HookSucceeded
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "1"
+      - equal:
+          path: spec.backoffLimit
+          value: 6
+      - equal:
+          path: spec.parallelism
+          value: 1
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: test-repo/test-postdeployment-job-image:3.0.0
+      - equal:
+          path: spec.template.spec.containers[0].command
+          value: ["sh", "-c"]
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: ["echo", "running", "after", "deployment"]
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: job
+      - exists:
+          path: spec.template.spec.containers[0].resources
+      - isSubset:
+          path: spec.template.spec.containers[0].resources
+          content:
+            limits:
+              cpu: 20m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+      - exists:
+          path: spec.template.spec.containers[0].securityContext
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+      - exists:
+          path: spec.template.spec.securityContext
+      - isSubset:
+          path: spec.template.spec.securityContext
+          content:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault

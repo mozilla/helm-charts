@@ -175,8 +175,8 @@ workloads:
       # for your applications. See the link below for more details:
       # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1695449473/How+to+Configuring+your+tenant+to+use+ArgoCD
       image:
-        repository:
-        tag:
+        repository: ''
+        tag: ''
 
       # Optionally configure a custom port for your container. The default
       # value is 8000.

@@ -1,0 +1,102 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-ingress
+    spec:
+      logging:
+        enable: true
+        sampleRate: 0.1
+  2: |
+    apiVersion: networking.gke.io/v1beta1
+    kind: FrontendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-ingress
+    spec:
+      redirectToHttps:
+        enabled: true
+      sslPolicy: mozilla-intermediate
+  3: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: gce
+        kubernetes.io/ingress.global-static-ip-name: mozcloud-test-dev-ip-v4
+        networking.gke.io/managed-certificates: mcrt-test-ingress-0
+        networking.gke.io/v1beta1.FrontendConfig: test-ingress
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-ingress
+    spec:
+      defaultBackend:
+        service:
+          name: test-ingress
+          port:
+            number: 8080
+  4: |
+    apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: mcrt-test-ingress-0
+    spec:
+      domains:
+        - test-service.dev.test-domain.com
+  5: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "test-ingress"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        realm: nonprod
+      name: test-ingress
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP

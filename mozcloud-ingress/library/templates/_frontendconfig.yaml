@@ -1,10 +1,11 @@
 {{- define "mozcloud-ingress-lib.frontendConfig" -}}
-{{- $frontend_config := include "mozcloud-ingress-lib.config.frontend" . | fromYaml }}
+{{- $frontends := include "mozcloud-ingress-lib.config.frontend" . | fromYaml }}
+{{- range $frontend_name, $frontend_config := $frontends }}
 ---
 apiVersion: networking.gke.io/v1beta1
 kind: FrontendConfig
 metadata:
-  name: {{ $frontend_config.name }}
+  name: {{ $frontend_name }}
   labels:
     {{- $label_params := mergeOverwrite ($ | deepCopy) (dict "labels" (default (dict) $frontend_config.labels)) }}
     {{- $labels := include "mozcloud-ingress-lib.labels" (mergeOverwrite . $label_params) | fromYaml }}
@@ -13,4 +14,5 @@ spec:
   redirectToHttps:
     {{- $frontend_config.redirectToHttps | toYaml | nindent 4 }}
   sslPolicy: {{ $frontend_config.sslPolicy }}
+{{- end }}
 {{- end -}}

@@ -1,0 +1,94 @@
+---
+configMaps:
+  # This is the name of your config map.
+  test-config-map:
+    data:
+      # Below are the key/value pairs that will be mounted as environment
+      # variables in containers.
+      FOO: bar
+      BAZ: qux
+
+externalSecrets:
+  # This is the name of your external secret. It will also be the name of your
+  # Kubernetes secret if "target" is not specified.
+  test-k8s-secret:
+    #target: test-k8s-secret
+    gsm:
+      # This is the name of the secret in Google Secret Manager used as the
+      # source for the Kubernetes secret.
+      #
+      # The default version is "latest", although that can be configured below
+      # if desired.
+      secret: test-gsm-secret
+      #version: latest
+
+serviceAccounts:
+  # This is the name of the Kubernetes service account to be created.
+  test-service-account:
+    # If the Kubernetes secret needs to map to a service account in GCP,
+    # configure it like we do below.
+    gcpServiceAccount:
+      # The name of the GCP service account (everything before "@" in the email
+      # address).
+      name: test-sa
+      # Your GCP project ID.
+      projectId: moz-fx-mozcloud-workload-nonprod
+
+deployments:
+  # This is the name of your deployment.
+  test-deployment:
+    containers:
+      - name: test-container
+        image: test-repo/test-image
+        tag: 1.0.0
+        envFrom:
+          - configMapRef:
+              # Use the name of the config map created above.
+              name: test-config-map
+            secretRef:
+              # Use the name of the (target) Kubernetes secret created above.
+              name: test-k8s-secret
+        ports:
+          - name: app
+            containerPort: 8000
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi
+
+podMonitorings:
+  # This is the name of your pod monitoring resource.
+  test-pod-monitoring:
+    endpoints:
+      # The port should match the container port created in the deployment
+      # container above.
+      - port: app
+        scheme: http
+        interval: 30s
+        path: /metrics
+
+hpas:
+  # This is the name of your HPA (horizontal pod autoscaler) resource. It is
+  # typical to use the same name as your deployment here.
+  test-deployment:
+    minReplicas: 1
+    maxReplicas: 5
+    # The section below specifies the resource the HPA will scale. In this
+    # case, it will be the deployment we created.
+    scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      # The name below should match the deployment name created above.
+      name: test-deployment
+    # Below, we determine that we should scale our deployment when average CPU
+    # utilization hits 70%.
+    metrics:
+      - type: Resource
+        resource:
+          name: cpu
+          target:
+            type: Utilization
+            averageUtilization: 70
