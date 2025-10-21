@@ -21,7 +21,7 @@ repos:
   - repo: local
     hooks:
       - id: helm-unittest
-        name: Run helm-unittest against charts
+        name: helm unittest
         entry: make unit-tests
         files: '^.*\/(application|library)\/.*(\.yaml|\.tpl)$'
         language: system

@@ -11,8 +11,13 @@ We use pre-commit to provide a useful signal that versions need to be bumped
 uv tool install pre-commit
 ```
 
+### `helm`
+[Helm](https://helm.sh/docs/intro/install/) must be installed for unit tests to run
+
 ## Setup
-Run `make install` to ensure both `uv` and `pre-commit` are installed.
+Run `make install` to ensure `uv`, `pre-commit`, and `helm` are installed.
+
+Additionally, this will install/update the `unittest` Helm plugin.
 
 ## Development Helpers
 
@@ -31,4 +36,17 @@ make bump-charts
 With arguments:
 ```sh
 make bump-charts mozcloud-preview-lib
+```
+
+### `make unit-tests`
+This will run the unit tests for all application charts. Run `make install` if the `unittest` Helm plugin is not installed.
+
+Run unit tests:
+```sh
+make unit-tests
+```
+
+Run unit tests and update snapshots:
+```sh
+make unit-tests UPDATE_SNAPSHOTS=1  # The following all translate as "true": 1, true, yes
 ```

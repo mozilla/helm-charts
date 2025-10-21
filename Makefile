@@ -9,8 +9,8 @@ else
 	DRY_RUN_ARG =
 endif
 
-NEW_SNAPSHOTS ?= 0
-NEW_SNAPSHOTS_FLAG := $(filter 1 true yes True Yes TRUE YES,$(NEW_SNAPSHOTS))
+UPDATE_SNAPSHOTS ?= 0
+UPDATE_SNAPSHOTS_FLAG := $(filter 1 true yes True Yes TRUE YES,$(UPDATE_SNAPSHOTS))
 
 %:
 	@:
@@ -44,7 +44,7 @@ update-dependencies:
 bump-charts:
 	$(CHART_KIT) version bump $(DRY_RUN_ARG) $(call args, '--staged')
 
-ifeq ($(NEW_SNAPSHOTS_FLAG),)
+ifeq ($(UPDATE_SNAPSHOTS_FLAG),)
 unit-tests:
 	@echo "Running unit tests for all charts..."
 	@bash -c 'find **/application -type f -name "Chart.yaml" -exec dirname {} \; | xargs -I {} helm unittest {} -s'
