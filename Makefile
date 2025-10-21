@@ -11,6 +11,13 @@ endif
 
 UPDATE_SNAPSHOTS ?= 0
 UPDATE_SNAPSHOTS_FLAG := $(filter 1 true yes True Yes TRUE YES,$(UPDATE_SNAPSHOTS))
+ifneq ($(UPDATE_SNAPSHOTS_FLAG),)
+	UNIT_TEST_MESSAGE = Running unit tests for all charts and creating new snapshots...
+	UPDATE_SNAPSHOTS_ARG = -u
+else
+	UNIT_TEST_MESSAGE = Running unit tests for all charts...
+	UPDATE_SNAPSHOTS_ARG =
+endif
 
 %:
 	@:
@@ -44,12 +51,6 @@ update-dependencies:
 bump-charts:
 	$(CHART_KIT) version bump $(DRY_RUN_ARG) $(call args, '--staged')
 
-ifeq ($(UPDATE_SNAPSHOTS_FLAG),)
 unit-tests:
-	@echo "Running unit tests for all charts..."
-	@bash -c 'find **/application -type f -name "Chart.yaml" -exec dirname {} \; | xargs -I {} helm unittest {} -s'
-else
-unit-tests:
-	@echo "Running unit tests for all charts and creating new snapshots..."
-	@bash -c 'find **/application -type f -name "Chart.yaml" -exec dirname {} \; | xargs -I {} helm unittest {} -s -u'
-endif
+	@echo "$(UNIT_TEST_MESSAGE)"
+	@bash -c 'find **/application -type f -name "Chart.yaml" -exec dirname {} \; | xargs -I {} helm unittest {} -s $(UPDATE_SNAPSHOTS_ARG)'
