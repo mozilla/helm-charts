@@ -40,7 +40,7 @@ jobs:
         with:
           script: |
             const all_changed_files = JSON.parse(process.env.ALL_CHANGED_FILES)
-            const regex = /mozcloud-[a-z]+\/(application|library)\//gm;
+            const regex = /mozcloud-[a-z\-]+\/(application|library)\//gm;
 
             const unique = new Set(all_changed_files
               .filter(path => path.toLowerCase().match(regex))
