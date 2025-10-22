@@ -68,7 +68,7 @@ Configuration matches entire snapshot:
                     - ALL
                 seccompProfile:
                   type: RuntimeDefault
-            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.22
+            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
               imagePullPolicy: IfNotPresent
               lifecycle:
                 preStop:

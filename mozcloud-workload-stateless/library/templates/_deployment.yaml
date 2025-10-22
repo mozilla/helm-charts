@@ -83,7 +83,7 @@ spec:
           {{- if hasKey ($deployment).nginx "image" }}
           image: {{ $deployment.nginx.image }}
           {{- else }}
-          image: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.22"
+          image: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"
           {{- end }}
           imagePullPolicy: IfNotPresent
           lifecycle:

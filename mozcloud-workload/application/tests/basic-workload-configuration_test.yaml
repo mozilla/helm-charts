@@ -159,7 +159,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[1].image
-          value: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.22
+          value: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
       - equal:
           path: spec.template.spec.containers[1].imagePullPolicy
           value: IfNotPresent
