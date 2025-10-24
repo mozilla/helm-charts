@@ -1,0 +1,35 @@
+---
+name: run unit tests
+on:
+  pull_request:
+    types:
+      - opened
+      - closed
+      - synchronize
+      - reopened
+
+jobs:
+  unit-tests:
+    permissions:
+      contents: write
+      id-token: write
+
+    runs-on:
+      - ubuntu-latest
+
+    steps:
+      - name: Checkout Commit
+        id: checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Helm
+        uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
+
+      - name: Update dependencies
+        run: |-
+          pip install uv
+          helm plugin install https://github.com/helm-unittest/helm-unittest.git
+          make update-dependencies
+
+      - name: Run unit tests
+        run: make unit-tests
