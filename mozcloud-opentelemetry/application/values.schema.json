@@ -3,6 +3,47 @@
   "title": "mozcloud-opentelemetry",
   "type": "object",
   "properties": {
+    "global": {
+      "description": "Global values dictionary",
+      "type": "object",
+      "properties": {
+        "mozcloud": {
+          "type": "object",
+          "properties": {
+            "app_code": {
+              "description": "Tenant's application code (eg. sumo, ads, remote-settings)",
+              "type": "string"
+            },
+            "chart": {
+              "description": "The name of the chart. This will match the app_code in single chart applications",
+              "type": "string"
+            },
+            "component_code": {
+              "description": "Application component's code (eg. web, shepherd, mars)",
+              "type": "string"
+            },
+            "env_code": {
+              "description": "Environment (ie. dev, stage, prod)",
+              "type": "string"
+            },
+            "projectId": {
+              "description": "GCP project ID",
+              "type": "string"
+            }
+          },
+          "required": [
+            "app_code",
+            "chart",
+            "component_code",
+            "env_code",
+            "projectId"
+          ]
+        }
+      }
+    },
+    "mozcloud-labels-lib": {
+      "type": "object"
+    },
     "collectors": {
       "type": "object",
       "properties": {

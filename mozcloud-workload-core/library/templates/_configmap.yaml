@@ -10,9 +10,11 @@ metadata:
   name: {{ $config_map.name }}
   labels:
     {{- $config_map.labels | toYaml | nindent 4 }}
-  {{- if $config_map.annotations }}
+  {{- $annotation_params := dict "annotations" (default (dict) $config_map.annotations) "context" ($ | deepCopy) "type" "configMap" }}
+  {{- $annotations := include "mozcloud-workload-core-lib.config.annotations" $annotation_params | fromYaml }}
+  {{- if $annotations }}
   annotations:
-    {{- $config_map.annotations | toYaml | nindent 4 }}
+    {{- $annotations | toYaml | nindent 4 }}
   {{- end }}
 data:
   {{- range $key, $value := $config_map.data }}

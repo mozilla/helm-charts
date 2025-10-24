@@ -19,9 +19,11 @@ metadata:
   labels:
     {{- $job.labels | toYaml | nindent 4 }}
   {{- $argo := ($job.argo) }}
-  {{- if $job.annotations }}
+  {{- $annotation_params := dict "annotations" (default (dict) $job.annotations) "context" ($ | deepCopy) "type" "job" }}
+  {{- $annotations := include "mozcloud-workload-core-lib.config.annotations" $annotation_params | fromYaml }}
+  {{- if $annotations }}
   annotations:
-    {{- $job.annotations | toYaml | nindent 4 }}
+    {{- $annotations | toYaml | nindent 4 }}
   {{- end }}
 spec:
   {{- $config := ($job.config) }}
@@ -41,6 +43,24 @@ spec:
   ttlSecondsAfterFinished: {{ $config.ttlSecondsAfterFinished }}
   {{- end }}
   template:
+    {{- /* If auto injection is enabled for OTEL, we should include those annotations */}}
+    {{- $otel_annotations := dict }}
+    {{- if and (($job.otel).autoInstrumentation).enabled (($job.otel).autoInstrumentation).language }}
+    {{- $container_names := list }}
+    {{- range $container := $job.containers }}
+      {{- $container_names = append $container_names $container.name }}
+    {{- end }}
+    {{- $otel_annotation_params := dict "containers" $container_names "language" $job.otel.autoInstrumentation.language }}
+    {{- $otel_annotations = include "mozcloud-workload-core-lib.config.annotations.otel.autoInjection" $otel_annotation_params | fromYaml }}
+    {{- end }}
+    {{- /* Note: pod annotations will automatically include resource annotations for OTEL */}}
+    {{- $annotation_params := dict "annotations" $otel_annotations "context" ($ | deepCopy) "type" "pod" }}
+    {{- $annotations := include "mozcloud-workload-core-lib.config.annotations" $annotation_params | fromYaml }}
+    {{- if $annotations }}
+    metadata:
+      annotations:
+        {{- $annotations | toYaml | nindent 8 }}
+    {{- end }}
     spec:
       containers:
         {{- range $container := $job.containers }}
