@@ -446,6 +446,33 @@
                 "type": "string"
               }
             }
+          },
+          "otel": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "autoInstrumentation": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "language": {
+                    "type": "string",
+                    "enum": [
+                      "",
+                      "dotnet",
+                      "go",
+                      "java",
+                      "nodejs",
+                      "python"
+                    ]
+                  }
+                }
+              }
+            }
           }
         }
       }

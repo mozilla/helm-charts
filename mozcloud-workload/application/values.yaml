@@ -595,6 +595,28 @@ workloads:
     #  # chart.
     #  #configMap:
 
+    # Configure auto instrumentation for the OTEL Collector.
+    #
+    # This can only be enabled for applications written in one of the supported
+    # languages. See below for a list of supported languages.
+    otel:
+      autoInstrumentation:
+        # By default, auto instrumentation is disabled. Set this to "true" to
+        # enable it.
+        enabled: false
+
+        # If the application was written in a supported language, specify it
+        # here to ensure auto instrumentation occurs successfully.
+        #
+        # Supported languages/options (case sensitive):
+        #
+        #   dotnet
+        #   go
+        #   java
+        #   nodejs
+        #   python
+        language: ''
+
 # We have additional features we will want to add in the coming releases.
 #
 # To do list:

@@ -104,6 +104,9 @@
         },
         "labels": {
           "type": "object"
+        },
+        "otel": {
+          "$ref": "#/$defs/otelConfig"
         }
       }
     },
@@ -127,6 +130,9 @@
         },
         "argo": {
           "$ref": "#/$defs/argoConfig"
+        },
+        "otel": {
+          "$ref": "#/$defs/otelConfig"
         },
         "labels": {
           "type": "object"
@@ -312,6 +318,32 @@
         },
         "syncWave": {
           "type": "integer"
+        }
+      }
+    },
+    "otelConfig": {
+      "type": "object",
+      "properties": {
+        "autoInstrumentation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "language": {
+              "type": "string",
+              "enum": [
+                "",
+                "dotnet",
+                "go",
+                "java",
+                "nodejs",
+                "python"
+              ]
+            }
+          }
         }
       }
     }

@@ -17,8 +17,10 @@ metadata:
   {{- end }}
   {{- if or $gateway.annotations (and (eq ($gateway.tls).type "certmap") (gt $https_listeners 0)) }}
   annotations:
-    {{- if $gateway.annotations }}
-    {{- $gateway.annotations | toYaml | nindent 4 }}
+    {{- $annotation_params := dict "annotations" (default (dict) $gateway.annotations) "type" "gateway" }}
+    {{- $annotations := include "mozcloud-labels-lib.annotations" (mergeOverwrite ($ | deepCopy) $annotation_params) | fromYaml }}
+    {{- if $annotations }}
+    {{- $annotations | toYaml | nindent 4 }}
     {{- end }}
     {{- if and (eq ($gateway.tls).type "certmap") (($gateway.tls).certs) }}
     networking.gke.io/certmap: {{ $gateway.tls.certs | first }}

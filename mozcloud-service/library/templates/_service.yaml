@@ -9,9 +9,11 @@ metadata:
   labels:
     {{- .labels | toYaml | nindent 4 }}
   {{- end }}
-  {{- if .annotations }}
+  {{- $annotation_params := dict "annotations" (default (dict) .annotations) "type" "service" }}
+  {{- $annotations := include "mozcloud-labels-lib.annotations" (mergeOverwrite ($ | deepCopy) $annotation_params) | fromYaml }}
+  {{- if $annotations }}
   annotations:
-    {{- .annotations | toYaml | nindent 4 }}
+    {{- $annotations | toYaml | nindent 4 }}
   {{- end }}
 spec:
   type: {{ $config.type }}
