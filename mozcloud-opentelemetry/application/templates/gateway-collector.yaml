@@ -151,11 +151,11 @@ spec:
           - regex: "host.name"
           # MozCloud operational labels
           - regex: "artifact_version"
-          - regex: "component_code"
-          - regex: "domain"
-          - regex: "env_code"
-          - regex: "realm"
-          - regex: "system"
+          {{- $mozcloud_annotation_params := .Values.global.mozcloud }}
+          {{- $mozcloud_annotations := include "mozcloud-labels-lib.annotations.otel.fields" $mozcloud_annotation_params | fromYaml }}
+          {{- range $name, $value := $mozcloud_annotations }}
+          - regex: {{ $name | quote }}
+          {{- end }}
         sending_queue:
           enabled: true
           num_consumers: 1

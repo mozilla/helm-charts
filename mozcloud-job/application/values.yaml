@@ -89,6 +89,9 @@ cronJobs: {}
   #
   #  # Labels to use for this cron job.
   #  #labels: {}
+  #
+  #  # This section follows the same format as jobs[].otel below.
+  #  #otel: {}
 
 # Define your jobs here. These are jobs intended to be run as single instances
 # or as part of a deployment workflow (eg. database migration jobs).
@@ -320,6 +323,28 @@ jobs: {}
   #    #
   #    # Sync waves can be used in conjunction with resource hooks.
   #    #syncWave:
+  #
+  #  # Configure auto instrumentation for the OTEL Collector.
+  #  #
+  #  # This can only be enabled for applications written in one of the supported
+  #  # languages. See below for a list of supported languages.
+  #  otel:
+  #    autoInstrumentation:
+  #      # By default, auto instrumentation is disabled. Set this to "true" to
+  #      # enable it.
+  #      enabled: false
+  #
+  #      # If the application was written in a supported language, specify it
+  #      # here to ensure auto instrumentation occurs successfully.
+  #      #
+  #      # Supported languages/options (case sensitive):
+  #      #
+  #      #   dotnet
+  #      #   go
+  #      #   java
+  #      #   nodejs
+  #      #   python
+  #      language: ''
   #
   #  # Labels to use for this job.
   #  #labels: {}

@@ -18,6 +18,13 @@ Configuration matches entire snapshot:
       backoffLimit: 6
       parallelism: 1
       template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/component_code: test-service
+            resource.opentelemetry.io/domain: null
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+            resource.opentelemetry.io/system: null
         spec:
           containers:
             - args:

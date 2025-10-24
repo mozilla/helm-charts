@@ -1,0 +1,25 @@
+{{- define "mozcloud-labels-lib.annotations" -}}
+{{- if eq (.type) "pod" -}}
+{{- include "mozcloud-labels-lib.annotations.otel" . }}
+{{- end }}
+{{- if .annotations }}
+{{ .annotations | toYaml }}
+{{- end }}
+{{- end -}}
+
+{{- /* OTEL annotations */ -}}
+{{- define "mozcloud-labels-lib.annotations.otel.fields" -}}
+{{- $labels := include "mozcloud-labels-lib.labels" . | fromYaml -}}
+component_code: {{ $labels.component_code }}
+domain: {{ $labels.domain }}
+env_code: {{ $labels.env_code }}
+realm: {{ $labels.realm }}
+system: {{ $labels.system }}
+{{- end -}}
+
+{{- define "mozcloud-labels-lib.annotations.otel" -}}
+{{- $fields := include "mozcloud-labels-lib.annotations.otel.fields" . | fromYaml -}}
+{{- range $name, $value := $fields }}
+resource.opentelemetry.io/{{ $name }}: {{ $value }}
+{{- end }}
+{{- end -}}

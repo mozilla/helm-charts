@@ -51,6 +51,17 @@ Common labels
 {{/*
 Template helpers
 */}}
+{{- define "mozcloud-workload-core-lib.config.annotations" -}}
+{{- $params := dict "annotations" .annotations "type" .type -}}
+{{- $annotations := include "mozcloud-labels-lib.annotations" (mergeOverwrite .context $params) }}
+{{- $annotations }}
+{{- end -}}
+
+{{- define "mozcloud-workload-core-lib.config.annotations.otel.autoInjection" -}}
+instrumentation.opentelemetry.io/inject-{{ .language }}: "true"
+instrumentation.opentelemetry.io/container-names: {{ join "," .containers | quote }}
+{{- end -}}
+
 {{- define "mozcloud-workload-core-lib.config.common" -}}
 {{- $output := dict -}}
 {{- /* Generate labels */ -}}
