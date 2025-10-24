@@ -302,6 +302,19 @@ httpRoute:
               # If set to 0, no traffic will be sent to that backend service.
               #weight:
 
+              # You can also specify a kind to use for your backendRef. This is
+              # useful if you need to route to a backend that is not a
+              # Kubernetes service (eg. a ServiceImport for a multi-cluster
+              # Gateway setup). The only options here are "Service" or
+              # "ServiceImport".
+              #
+              # Example:
+              #   kind: ServiceImport
+              #
+              # Default:
+              #   kind: Service
+              #kind: Service
+
           # Configures paths or headers to match against when sending traffic to
           # a backend service. Matches are independent, meaning the rule will
           # be matched if any matches below are true.

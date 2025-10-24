@@ -80,11 +80,47 @@ Backends and backend policies
 backends:
   {{- range $workload_name, $workload_config := $workloads }}
   {{- range $host_name, $host_config := $workload_config.hosts }}
+  {{- if $host_config.backends }}
+  {{- range $backend := (default (list) $host_config.backends) }}
+  {{ $backend.name }}:
+    {{- if $backend.service }}
+    service:
+      {{- $backend.service | toYaml | nindent 6 }}
+    {{- end }}
+    {{- if $backend.backendPolicy }}
+    backendPolicy:
+      targetRef:
+        {{- if and $backend.backendPolicy.targetRef.kind (eq $backend.backendPolicy.targetRef.kind "ServiceImport" )}}
+        {{- $_ := set $backend.backendPolicy.targetRef "group" "net.gke.io" }}
+        {{- end }}
+        group: {{ default "" $backend.backendPolicy.targetRef.group | quote }}
+        kind: {{ $backend.backendPolicy.targetRef.kind }}
+        name: {{ $backend.backendPolicy.targetRef.name }}
+    {{- end }}
+    {{- if $backend.healthCheck }}
+    healthCheck:
+      path: {{ $backend.healthCheck.path }}
+      targetRef:
+        {{- if and $backend.healthCheck.targetRef.kind (eq $backend.healthCheck.targetRef.kind "ServiceImport" )}}
+        {{- $_ := set $backend.healthCheck.targetRef "group" "net.gke.io" }}
+        {{- end }}
+        group: {{ default "" $backend.healthCheck.targetRef.group | quote }}
+        kind: {{ default "Service" $backend.healthCheck.targetRef.kind }}
+        name: {{ $backend.healthCheck.targetRef.name }}
+    {{- end }}
+  {{- end }}
+  {{- else }}
   {{ $workload_name }}:
     service:
       port: 8080
       targetPort: http
     backendPolicy:
+      logging:
+        enabled: true
+      {{- if ($host_config.options).logSampleRate }}
+        {{- $sampleRate := $host_config.options.logSampleRate | float64 }}
+        sampleRate: {{ mulf $sampleRate 10000 | round | int }}
+      {{- end }}
       {{- if ($host_config.options).iap }}
       iap:
         {{- if $host_config.options.iap.enabled }}
@@ -97,19 +133,13 @@ backends:
         oauth2ClientSecret: {{ $host_config.options.iap.oauth2ClientSecret }}
         {{- end }}
       {{- end }}
-      {{- if ($host_config.options).logSampleRate }}
-      logging:
-        {{- $sampleRate := $host_config.options.logSampleRate | float64 }}
-        sampleRate: {{ mulf $sampleRate 10000 | round | int }}
-      {{- end }}
       {{- if ($host_config.options).timeoutSec }}
       timeoutSec: {{ $host_config.options.timeoutSec | int }}
       {{- end }}
-    {{- if ($host_config.healthCheckEndpoints).loadBalancer }}
     healthCheck:
-      path: {{ $host_config.healthCheckEndpoints.loadBalancer }}
+      path: {{ default "/__lbheartbeat__" (($host_config).healthCheckEndpoints).loadBalancer }}
       protocol: HTTP
-    {{- end }}
+  {{- end }}
   {{- end }}
   {{- end }}
 {{- end -}}
@@ -130,8 +160,12 @@ Gateways
 gateways:
   {{- range $workload_name, $workload_config := $workloads }}
   {{- range $host_name, $host_config := $workload_config.hosts }}
+  {{- if not (default false $host_config.disableGateway) }}
   {{ $host_name }}:
     type: {{ $host_config.type }}
+    {{- if ($host_config).multiCluster }}
+    className: gke-l7-global-external-managed-mc
+    {{- end }}
     addresses:
       {{- if $host_config.addresses }}
       {{- range $address := $host_config.addresses }}
@@ -159,6 +193,7 @@ gateways:
     {{- end }}
   {{- end }}
   {{- end }}
+  {{- end }}
 {{- end -}}
 
 {{/*
@@ -169,6 +204,7 @@ HTTPRoute
 httpRoutes:
   {{- range $workload_name, $workload_config := $workloads }}
   {{- range $host_name, $host_config := $workload_config.hosts }}
+  {{- if (($host_config).httpRoutes).createHttpRoutes }}
   {{ $host_name }}:
     gatewayRefs:
       - name: {{ $host_name }}
@@ -190,10 +226,34 @@ httpRoutes:
     {{- if eq $host_config.type "internal" }}
     httpToHttpsRedirect: false
     {{- end }}
+      {{/*
+      Some tenants might want to pass HTTPRoute rules in from values. A rules Array item
+      has a high number of possible combinations of values, so we currently only want to
+      support weighted backends here (e.g. for Multi-Cluster Scenarios)
+      */}}
     rules:
+    {{- if (($host_config).httpRoutes).rules }}
+      {{- range $rule := (default (list) $host_config.httpRoutes.rules) }}
+      - backendRefs:
+          {{- range $backend_ref := (default (list) $rule.backendRefs) }}
+          {{- if and $backend_ref.kind (eq $backend_ref.kind "ServiceImport") }}
+          {{- $_ := set $backend_ref "group" "net.gke.io" }}
+          {{- end }}
+          - group: {{ default "" $backend_ref.group | quote }}
+            kind: {{ default "Service" $backend_ref.kind }}
+            name: {{ $backend_ref.name }}
+            port: {{ default 8000 $backend_ref.port }}
+            {{- if $backend_ref.weight }}
+            weight: {{ $backend_ref.weight }}
+            {{- end }}
+          {{- end }}
+      {{- end }}
+    {{- else }}
       - backendRefs:
           - name: {{ $workload_name }}
             port: 8080
+    {{- end }}
+  {{- end }}
   {{- end }}
   {{- end }}
 {{- end -}}

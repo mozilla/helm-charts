@@ -22,7 +22,7 @@ Configuration matches entire snapshot:
         kind: Service
         name: test-service
   2: |
-    apiVersion: gateway.networking.k8s.io/v1beta1
+    apiVersion: gateway.networking.k8s.io/v1
     kind: Gateway
     metadata:
       annotations:
@@ -98,7 +98,7 @@ Configuration matches entire snapshot:
         kind: Service
         name: test-service
   5: |
-    apiVersion: gateway.networking.k8s.io/v1beta1
+    apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
       labels:
@@ -125,7 +125,7 @@ Configuration matches entire snapshot:
               name: test-service
               port: 8080
   6: |
-    apiVersion: gateway.networking.k8s.io/v1beta1
+    apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
       labels:

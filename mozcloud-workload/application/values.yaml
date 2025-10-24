@@ -282,6 +282,69 @@ workloads:
         # Gateway API. Do not use "ingress" for new tenants!
         api: gateway
 
+        # Enable / Disable Multi-Cluster mode
+        #
+        # Default: false
+        #
+        # When Gateway API is in use, this switch sets the Gateway Class to a 
+        # Multi-Cluster Class, which makes it possible to bind HTTPRoutes to 
+        # ServiceImport resources on GKE clusters in different regions (e.g.
+        # us-west1 & europe-west1).
+        #
+        #multiCluster: false
+
+        #
+        # Options for HTTPRoutes.
+        #
+        # * createHttpRoutes: boolean, disable building HTTPRoutes completely.
+        # * rules: add a custom rules array to your workload's HTTPRoute.
+        #
+        httpRoutes:
+          createHttpRoutes: true
+        #  #rules:
+        #    #- backendRefs:
+        #        #- kind: ServiceImport
+        #        #  name: my-custom-backend-us-west1
+        #        #  port: 8080
+        #        #  weight: 80
+        #        #- kind: ServiceImport
+        #        #  name: my-custom-backend-europe-west1
+        #        #  port: 8080
+        #        #  weight: 20
+
+        # Use this array to specify custom backends for your Gateway API-based workloads.
+        #
+        # Enabling this array will not render the default backend anymore. Using this with Ingress will
+        # not have any effect.
+        #
+        # A custom backend can build different kinds of resources:
+        #
+        # * if the service dictionary is set, we build a Service for this backend.
+        # * if the service dictionary contains createServiceExport: true, we also build a ServiceExport.
+        # * if the backendPolicy dictionary is set, we build a GCPBackendPolicy for this backend.
+        # * if the healthCheck dictionary is set, we build a HealthCheckPolicy for this backend.
+        #
+        # This is handy in situations where you want a MultiCluster Gateway, for example. E.g., in cases where
+        # you want to apply split traffic scenarios across regions, you want a region-based Service per region,
+        # as well as a ServicExport, but you only want HealthCheckPolicies and GCPPBBackendPolicies to exist
+        # on the primary region that holds your Gateway.
+        #
+        #backends:
+        #  - name: my-custom-backend
+        #    service:
+        #      portName: http
+        #      port: 8000
+        #      targetPort: http
+        #      createServiceExport: true
+        #    backendPolicy:
+        #      targetRef:
+        #        kind: ServiceImport
+        #        name: my-custom-backend
+        #    healthCheck:
+        #      targetRef:
+        #        kind: ServiceImport
+        #        name: my-custom-backend
+
         # Configure the type of load balancer to use for your host.
         #
         # Options include:

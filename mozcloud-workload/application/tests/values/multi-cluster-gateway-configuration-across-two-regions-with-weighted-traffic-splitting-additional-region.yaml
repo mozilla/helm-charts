@@ -1,0 +1,14 @@
+workloads:
+  mozcloud-test:
+    hosts:
+      mozcloud-test:
+        disableGateway: true
+        httpRoutes:
+          createHttpRoutes: false
+        backends:
+          - name: mozcloud-test-europe-west1
+            service:
+              portName: http
+              port: 8080
+              targetPort: http
+              createServiceExport: true

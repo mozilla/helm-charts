@@ -13,6 +13,7 @@ workloads:
       image:
         repository: test-repo/test-image
         tag: 1.0.0
+
     hosts:
       # This is the name of the host to be created. The name is also used for
       # the Gateway, HTTPRoutes, and GCPGatewayPolicy. For simplicity sake, we

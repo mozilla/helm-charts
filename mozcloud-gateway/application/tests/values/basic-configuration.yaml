@@ -4,6 +4,8 @@ backends:
   test-service:
     service:
       port: 8080
+backendPolicy:
+  enabled: true
 gateway:
   gateways:
     # This names the Gateway "test-gateway".

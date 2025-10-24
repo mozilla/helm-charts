@@ -2,7 +2,7 @@
 {{- $gateways := include "mozcloud-gateway-lib.config.gateways" . | fromYaml }}
 {{- range $gateway := $gateways.gateways }}
 ---
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: Gateway
 metadata:
   name: {{ $gateway.name }}

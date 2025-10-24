@@ -2,7 +2,7 @@
 {{- $http_routes := include "mozcloud-gateway-lib.config.httpRoutes" . | fromYaml }}
 {{- range $http_route := $http_routes.httpRoutes }}
 ---
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: {{ $http_route.name }}
@@ -29,11 +29,14 @@ spec:
     {{- range $rule := $http_route.rules }}
     - backendRefs:
       {{- range $backend_ref := $rule.backendRefs }}
-      - group: ''
-        kind: Service
+        {{- if and $backend_ref.kind (eq $backend_ref.kind "ServiceImport") }}
+        {{- $_ := set $backend_ref "group" "net.gke.io" }}
+        {{- end }}
+      - group: {{ default "" $backend_ref.group | quote }}
+        kind: {{ default "Service" $backend_ref.kind }}
         name: {{ $backend_ref.name }}
         port: {{ $backend_ref.port }}
-        {{- if $backend_ref.weight }}
+        {{- if or (eq (toString $backend_ref.weight) "0") (gt (int $backend_ref.weight) 0) }}
         weight: {{ $backend_ref.weight }}
         {{- end }}
       {{- end }}
@@ -92,7 +95,7 @@ spec:
     {{- end }}
 {{- if $http_route.httpToHttpsRedirect }}
 ---
-apiVersion: gateway.networking.k8s.io/v1beta1
+apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
   name: {{ $http_route.name }}-http-redirect

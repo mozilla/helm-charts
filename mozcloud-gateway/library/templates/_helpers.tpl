@@ -95,6 +95,7 @@ BackendPolicy template helpers
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $name, $backend := $backends -}}
+  {{- if or $backend.backendPolicy $backend_policy }}
   {{- $backend_policy_config := dict -}}
   {{- /* Merge service backend policy, default backend policy, and library defaults */ -}}
   {{- $default_policy := mergeOverwrite ($defaults | deepCopy) $backend_policy -}}
@@ -114,6 +115,7 @@ BackendPolicy template helpers
   {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
   {{- $_ = set $backend_policy_config "labels" $labels -}}
   {{- $output = append $output $backend_policy_config -}}
+  {{- end -}}
 {{- end -}}
 {{- $all_policies := dict "backendPolicies" $output -}}
 {{ $all_policies | toYaml }}
@@ -133,7 +135,7 @@ Gateway template helpers
 
 {{- define "mozcloud-gateway-lib.config.gateways" -}}
 {{- $defaults := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
-{{- $gateways := default (dict (include "mozcloud-gateway-lib.config.name" .) $defaults) (.gatewayConfig).gateways -}}
+{{- $gateways := default (dict) (.gatewayConfig).gateways -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $name, $gateway := $gateways -}}
@@ -164,7 +166,7 @@ GatewayPolicy template helpers
 {{- define "mozcloud-gateway-lib.config.gatewayPolicies" -}}
 {{- $defaults := include "mozcloud-gateway-lib.defaults.gateway.config" . | fromYaml -}}
 {{- $gateway_policy := default (dict) .gatewayPolicyConfig -}}
-{{- $gateways := default (dict (include "mozcloud-gateway-lib.config.name" .) $defaults) (.gatewayConfig).gateways -}}
+{{- $gateways := default (dict) (.gatewayConfig).gateways -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $name, $gateway := $gateways -}}
@@ -210,6 +212,7 @@ HealthCheckPolicy template helpers
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $name, $backend := $backends -}}
+  {{- if $backend.healthCheck }}
   {{- $health_check_policy_config := dict -}}
   {{- /* Configure health check spec */ -}}
   {{- $backend_health_check_policy := default (dict) $backend.healthCheck -}}
@@ -229,6 +232,7 @@ HealthCheckPolicy template helpers
   {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
   {{- $_ = set $health_check_policy_config "labels" $labels -}}
   {{- $output = append $output $health_check_policy_config -}}
+  {{- end -}}
 {{- end -}}
 {{- $all_policies := dict "healthCheckPolicies" $output -}}
 {{ $all_policies | toYaml }}
@@ -238,8 +242,7 @@ HealthCheckPolicy template helpers
 HTTPRoute template helpers
 */}}
 {{- define "mozcloud-gateway-lib.config.httpRoutes" -}}
-{{- $defaults := include "mozcloud-gateway-lib.defaults.httpRoute.config" . | fromYaml -}}
-{{- $http_routes := default (dict (include "mozcloud-gateway-lib.config.name" .) $defaults) (.httpRouteConfig).httpRoutes }}
+{{- $http_routes := default (dict) (.httpRouteConfig).httpRoutes }}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $name, $http_route := $http_routes -}}
@@ -307,6 +310,7 @@ Service template helpers
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $name, $backend := $backends -}}
+  {{- if $backend.service }}
   {{- $defaults := include "mozcloud-gateway-lib.defaults.service.config" . | fromYaml -}}
   {{- $service_config := dict -}}
   {{- $backend_service := $backend.service | deepCopy -}}
@@ -340,6 +344,7 @@ Service template helpers
   {{- $_ = set $service_config "config" $config -}}
   {{- $output = append $output $service_config -}}
 {{- end -}}
+{{- end -}}
 {{- $services := dict "services" $output -}}
 {{ $services | toYaml }}
 {{- end -}}
@@ -353,6 +358,7 @@ ports:
     protocol: {{ default $defaults.protocol .protocol }}
     name: {{ default $defaults.portName .portName }}
 type: {{ default $defaults.type .type }}
+createServiceExport: {{ default $defaults.createServiceExport .createServiceExport }}
 {{- end -}}
 
 {{/*
@@ -431,6 +437,7 @@ portName: http
 protocol: TCP
 targetPort: http
 type: ClusterIP
+createServiceExport: false
 {{- end -}}
 
 {{/*

@@ -31,8 +31,12 @@ spec:
         {{- end }}
         requestPath: {{ $config.path }}
   targetRef:
+    {{- if ($health_check_policy.config.targetRef ) }}
+    {{- $health_check_policy.config.targetRef | toYaml | nindent 4  }}
+    {{- else }}
     group: ""
     kind: Service
     name: {{ $health_check_policy.targetService }}
+    {{- end }}
 {{- end }}
 {{- end -}}

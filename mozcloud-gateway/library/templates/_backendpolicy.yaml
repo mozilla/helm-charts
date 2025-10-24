@@ -35,8 +35,12 @@ spec:
     timeoutSec: {{ $config.timeoutSec }}
     {{- end }}
   targetRef:
+  {{- if $backend_policy.config.targetRef  }}
+    {{- $backend_policy.config.targetRef | toYaml | nindent 4 }}
+  {{- else }}
     group: ""
     kind: Service
     name: {{ $backend_policy.targetService }}
+  {{- end }}
 {{- end }}
 {{- end -}}

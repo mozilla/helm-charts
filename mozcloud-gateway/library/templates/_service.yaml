@@ -3,9 +3,16 @@
 {{- /* Prevent the creation of duplicate services */}}
 {{- $services := list }}
 {{- range $service := $service_config.services }}
-{{- if and (not (has $service.fullNameOverride $services)) $service.create }}
+{{- if and (not (has $service.fullnameOverride $services)) $service.create }}
 {{- include "mozcloud-service-lib.service" $service }}
-{{- $services = append $services $service.fullNameOverride }}
+{{- if $service.config.createServiceExport }}
+---
+apiVersion: net.gke.io/v1
+kind: ServiceExport
+metadata:
+  name: {{ $service.fullnameOverride }}
+{{- end }}
+{{- $services = append $services $service.fullnameOverride }}
 {{- end }}
 {{- end }}
 {{- end -}}

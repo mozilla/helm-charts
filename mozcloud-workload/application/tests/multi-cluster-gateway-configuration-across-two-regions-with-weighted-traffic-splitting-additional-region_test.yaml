@@ -1,0 +1,20 @@
+---
+suite: "mozcloud-workload: Multi Cluster Gateway API Configuration across two regions with weighted traffic splitting (additional region)"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/multi-cluster-gateway-configuration-across-two-regions-with-weighted-traffic-splitting-primary-region.yaml
+  - values/multi-cluster-gateway-configuration-across-two-regions-with-weighted-traffic-splitting-additional-region.yaml
+templates:
+  - gateway.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}

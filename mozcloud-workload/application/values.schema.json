@@ -306,6 +306,9 @@
               "type": "object",
               "additionalProperties": false,
               "properties": {
+                "disableGateway": {
+                  "type": "boolean"
+                },
                 "domains": {
                   "type": "array",
                   "items": {
@@ -318,10 +321,134 @@
                     "type": "string"
                   }
                 },
+                "httpRoutes": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "createHttpRoutes": {
+                      "type": "boolean"
+                    },
+                    "rules": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "backendRefs": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "additionalProperties": false,
+                              "properties": {
+                                "kind": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "port": {
+                                  "anyOf": [
+                                    { "type": "string" },
+                                    { "type": "number" }
+                                  ]
+                                },
+                                "weight": {
+                                  "type": "number"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "backends": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "service": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "portName": {
+                            "type": "string"
+                          },
+                          "port": {
+                            "type": "number"
+                          },
+                          "targetPort": {
+                            "anyOf": [
+                              {"type": "number"},
+                              {"type": "string"}
+                            ]
+                          },
+                          "createServiceExport": {
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      "disableBackendPolicy": {
+                        "type": "boolean"
+                      },
+                      "disableHealthCheck": {
+                        "type": "boolean"
+                      },
+                      "backendPolicy": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "targetRef": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "kind": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "healthCheck": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "path": {
+                            "type": "string"
+                          },
+                          "targetRef": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "kind": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
                 "api": {
                   "type": "string",
                   "enum": ["gateway", "ingress"],
                   "default": "gateway"
+                },
+                "multiCluster": {
+                  "type": "boolean",
+                  "default": false
                 },
                 "type": {
                   "type": "string",
@@ -353,6 +480,9 @@
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
+                    "createBackendPolicy": {
+                      "type": "boolean"
+                    },
                     "iap": {
                       "type": "object",
                       "additionalProperties": false,
