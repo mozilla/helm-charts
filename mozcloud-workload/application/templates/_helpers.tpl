@@ -243,7 +243,7 @@ httpRoutes:
             kind: {{ default "Service" $backend_ref.kind }}
             name: {{ $backend_ref.name }}
             port: {{ default 8000 $backend_ref.port }}
-            {{- if $backend_ref.weight }}
+            {{- if or (eq (toString $backend_ref.weight) "0") (gt (int $backend_ref.weight) 0) }}
             weight: {{ $backend_ref.weight }}
             {{- end }}
           {{- end }}

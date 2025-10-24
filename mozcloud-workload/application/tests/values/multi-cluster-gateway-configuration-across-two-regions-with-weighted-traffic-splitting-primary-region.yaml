@@ -9,7 +9,7 @@ workloads:
         multiCluster: true
         domains:
           - dev.mozcloud-test.nonprod.webservices.mozgcp.net
-          - acme.allizom.org
+          - mozcloud-test.allizom.org
         addresses:
           - mozcloud-test-dev-ip-v4
         tls:

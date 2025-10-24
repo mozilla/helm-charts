@@ -18,3 +18,36 @@ tests:
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
+  - it: Resource count matches expectations
+    asserts:
+      - hasDocuments:
+          count: 2
+  - it: Service is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: mozcloud-test-europe-west1
+    asserts:
+      - lengthEqual:
+          path: spec.ports
+          count: 1
+      - contains:
+          path: spec.ports
+          count: 1
+          content:
+            name: http
+            port: 8080
+            protocol: TCP
+            targetPort: http
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/component: test-service
+            app.kubernetes.io/name: mozcloud-test
+            env_code: dev
+  - it: ServiceExport exists
+    documentSelector:
+      path: $[?(@.kind == "ServiceExport")].metadata.name
+      value: mozcloud-test-europe-west1
+    asserts:
+      - isAPIVersion:
+          of: net.gke.io/v1
