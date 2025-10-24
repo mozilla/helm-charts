@@ -67,7 +67,6 @@ jobs:
     strategy:
       matrix:
         charts: ${{ fromJson(needs.detect.outputs.charts) }}
-      max-parallel: 1
       fail-fast: false
 
     steps:
