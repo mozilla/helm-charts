@@ -28,19 +28,25 @@ class MermaidDiagram:
         edges = chart_graph.edges
 
         if root_chart:
-            subcharts = { c.name: c for c in chart_graph.find_subtree(
-                root_chart, chart_graph.dependency_selector()
-            ).flatten()}
+            subcharts = {
+                c.name: c
+                for c in chart_graph.find_subtree(
+                    root_chart, chart_graph.dependency_selector()
+                ).flatten()
+            }
             charts = subcharts
             # filter edges to those that connect to subcharts
             edges = {e for e in edges if e.parent in subcharts}
 
         self.mermaid_str = self.generate(charts, edges, include_attrs)
 
-
-    def generate(self, charts: Dict[str, ChartInfo], edges: Set[ChartEdge], include_attrs: bool) -> str:
+    def generate(
+        self, charts: Dict[str, ChartInfo], edges: Set[ChartEdge], include_attrs: bool
+    ) -> str:
         # Build identifier map
-        id_map: Dict[str, str] = {name: self.sanitize_identifier(name) for name in charts.keys()}
+        id_map: Dict[str, str] = {
+            name: self.sanitize_identifier(name) for name in charts.keys()
+        }
 
         lines: List[str] = [self.MERMAID_HEADER]
         # Emit entities
@@ -84,18 +90,18 @@ class MermaidDiagram:
             ident = f"_{ident}"
         return ident or "_unnamed_"
 
-
     def write_mermaid_to_file(self, output_path: str) -> None:
         """Write the Mermaid diagram string to the specified file."""
         with open(output_path, "w") as f:
             f.write(self.mermaid_str)
         click.echo(f"Mermaid diagram written to {output_path}")
 
-
     def write_mermaid_to_svg(self, output_path: str) -> None:
         """Write the Mermaid diagram as an SVG file using the mermaid CLI tool."""
 
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".mmd", delete=False) as temp_mmd:
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".mmd", delete=False
+        ) as temp_mmd:
             temp_mmd.write(self.mermaid_str)
             temp_mmd_path = temp_mmd.name
 
