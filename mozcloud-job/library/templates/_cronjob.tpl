@@ -35,6 +35,24 @@ spec:
       ttlSecondsAfterFinished: {{ $job_config.ttlSecondsAfterFinished }}
       {{- end }}
       template:
+        {{- /* If auto injection is enabled for OTEL, we should include those annotations */}}
+        {{- $otel_annotations := dict }}
+        {{- if and (($cron_job.otel).autoInstrumentation).enabled (($cron_job.otel).autoInstrumentation).language }}
+        {{- $container_names := list }}
+        {{- range $container := $cron_job.containers }}
+          {{- $container_names = append $container_names $container.name }}
+        {{- end }}
+        {{- $otel_annotation_params := dict "containers" $container_names "language" $cron_job.otel.autoInstrumentation.language }}
+        {{- $otel_annotations = include "mozcloud-workload-core-lib.config.annotations.otel.autoInjection" $otel_annotation_params | fromYaml }}
+        {{- end }}
+        {{- /* Note: pod annotations will automatically include resource annotations for OTEL */}}
+        {{- $annotation_params := dict "annotations" $otel_annotations "context" ($ | deepCopy) "type" "pod" }}
+        {{- $annotations := include "mozcloud-workload-core-lib.config.annotations" $annotation_params | fromYaml }}
+        {{- if $annotations }}
+        metadata:
+          annotations:
+            {{- $annotations | toYaml | nindent 14 }}
+        {{- end }}
         spec:
           containers:
             {{- range $container := $cron_job.containers }}

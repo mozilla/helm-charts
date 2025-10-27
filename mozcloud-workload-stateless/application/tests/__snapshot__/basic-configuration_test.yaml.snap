@@ -38,6 +38,12 @@ Configuration matches entire snapshot:
           env_code: dev
       template:
         metadata:
+          annotations:
+            resource.opentelemetry.io/component_code: test-service
+            resource.opentelemetry.io/domain: null
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+            resource.opentelemetry.io/system: null
           labels:
             app.kubernetes.io/component: test-service
             app.kubernetes.io/managed-by: argocd
