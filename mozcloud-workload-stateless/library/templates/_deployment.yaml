@@ -77,14 +77,14 @@ spec:
             {{- $container.livenessProbe | toYaml | nindent 12 }}
             failureThreshold: 5
             initialDelaySeconds: 10
-            periodSecondS: 6
+            periodSeconds: 6
             timeoutSeconds: 5
           {{- end }}
           {{- if $container.readinessProbe }}
           readinessProbe:
             {{- $container.readinessProbe | toYaml | nindent 12 }}
             initialDelaySeconds: 10
-            periodSecondS: 6
+            periodSeconds: 6
             timeoutSeconds: 5
           {{- end }}
           resources:

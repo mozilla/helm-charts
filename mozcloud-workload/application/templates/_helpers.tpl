@@ -137,7 +137,11 @@ backends:
       timeoutSec: {{ $host_config.options.timeoutSec | int }}
       {{- end }}
     healthCheck:
+      {{- if kindIs "string" (($host_config).healthCheckEndpoints).loadBalancer }}
       path: {{ default "/__lbheartbeat__" (($host_config).healthCheckEndpoints).loadBalancer }}
+      {{- else if kindIs "map" (($host_config).healthCheckEndpoints).loadBalancer }}
+      path: {{ default "/__lbheartbeat__" ($host_config.healthCheckEndpoints.loadBalancer).path }}
+      {{- end }}
       protocol: HTTP
   {{- end }}
   {{- end }}
@@ -451,11 +455,33 @@ deployments:
           {{- end }}
         livenessProbe:
           httpGet:
-            path: {{ default "/__heartbeat__" ($container.healthCheckEndpoints).application }}
+            {{- if kindIs "map" (($workload_config).healthCheckEndpoints).application }}
+            {{- if ($workload_config.healthCheckEndpoints.application).httpHeaders }}
+            httpHeaders:
+              {{- range $header := $workload_config.healthCheckEndpoints.application.httpHeaders }}
+              - name: {{ $header.name }}
+                value: {{ $header.value }}
+              {{- end }}
+            {{- end }}
+            path: {{ default "/__heartbeat__" ($workload_config.healthCheckEndpoints.application).path }}
+            {{- else if or (kindIs "string" (($workload_config).healthCheckEndpoints).application) (not (($workload_config).healthCheckEndpoints).application) }}
+            path: {{ default "/__heartbeat__" ($workload_config.healthCheckEndpoints).application }}
+            {{- end }}
             port: app
         readinessProbe:
           httpGet:
-            path: {{ default "/__lbheartbeat__" ($container.healthCheckEndpoints).loadBalancer }}
+            {{- if kindIs "map" (($workload_config).healthCheckEndpoints).loadBalancer }}
+            {{- if ($workload_config.healthCheckEndpoints.loadBalancer).httpHeaders }}
+            httpHeaders:
+              {{- range $header := $workload_config.healthCheckEndpoints.loadBalancer.httpHeaders }}
+              - name: {{ $header.name }}
+                value: {{ $header.value }}
+              {{- end }}
+            {{- end }}
+            path: {{ default "/__lbheartbeat__" ($workload_config.healthCheckEndpoints.loadBalancer).path }}
+            {{- else if or (kindIs "string" (($workload_config).healthCheckEndpoints).loadBalancer) (not (($workload_config).healthCheckEndpoints).loadBalancer) }}
+            path: {{ default "/__lbheartbeat__" ($workload_config.healthCheckEndpoints).loadBalancer }}
+            {{- end }}
             port: app
         ports:
           - name: app

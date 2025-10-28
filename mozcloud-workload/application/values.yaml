@@ -252,11 +252,29 @@ workloads:
     # Optionally specify health check endpoints for the application, metrics
     # collection, and NGINX. The default values are listed next each of the
     # options below.
+    #
     #healthCheckEndpoints:
     #  application: /__heartbeat__
     #  loadBalancer: /__lbheartbeat__
     #  # Custom PodMonitoring metrics not yet supported.
     #  #metrics: /metrics
+    #
+    # Note:
+    # healthCheckEndpoints.application & healthCheckEndpoints.loadBalancer can both be
+    # strings, in which case the value is taken as the healthCheck's path directly, or
+    # a map, allowing you to set a path and httpHeaders, like shown below:
+    #
+    #healthCheckPolicies:
+    #  application:
+    #    path: /healthz/
+    #    httpHeaders:
+    #      - name: Host
+    #        value: dev.my-tenant.nonprod.webservices.mozgcp.net
+    #  loadBalancer:
+    #    path: /readiness/
+    #    httpHeaders:
+    #      - name: Host
+    #        value: dev.my-tenant.nonprod.webservices.mozgcp.net
 
     # Define host details in this section.
     hosts:

@@ -351,7 +351,7 @@ Configuration matches entire snapshot:
                   path: /__heartbeat__
                   port: app
                 initialDelaySeconds: 10
-                periodSecondS: 6
+                periodSeconds: 6
                 timeoutSeconds: 5
               name: app
               ports:
@@ -362,7 +362,7 @@ Configuration matches entire snapshot:
                   path: /__lbheartbeat__
                   port: app
                 initialDelaySeconds: 10
-                periodSecondS: 6
+                periodSeconds: 6
                 timeoutSeconds: 5
               resources:
                 limits:

@@ -111,7 +111,7 @@ tests:
               path: /__lbheartbeat__
               port: app
             initialDelaySeconds: 10
-            periodSecondS: 6
+            periodSeconds: 6
             timeoutSeconds: 5
       - isSubset:
           path: spec.template.spec.containers[0].livenessProbe
@@ -121,7 +121,7 @@ tests:
               path: /__heartbeat__
               port: app
             initialDelaySeconds: 10
-            periodSecondS: 6
+            periodSeconds: 6
             timeoutSeconds: 5
       - equal:
           path: spec.template.spec.containers[0].name
