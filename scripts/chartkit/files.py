@@ -26,6 +26,8 @@ def files_to_chart_files(file_paths: List[str]) -> Set[str]:
             continue
         if os.path.isdir(path):
             chart_yaml = Path(path) / "Chart.yaml"
+        elif path.name == "Chart.yaml":
+            chart_yaml = path
         elif path.name == "values.yaml":
             chart_yaml = Path(path).parent / "Chart.yaml"
         elif path.suffix == ".tpl" or "templates" in path.parts:
