@@ -3,10 +3,6 @@
 {{- $deployments := include "mozcloud-workload-stateless-lib.config.deployments" . | fromYaml }}
 {{- $files := .Files }}
 {{- range $deployment := $deployments.deployments }}
-{{- $nginx_enabled := false }}
-{{- if and ($deployment).nginx "enabled" ($deployment.nginx).enabled }}
-{{- $nginx_enabled = true }}
-{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -92,7 +88,7 @@ spec:
           securityContext:
             {{- include "mozcloud-workload-core-lib.pod.container.securityContext" ($container).securityContext | nindent 12 }}
         {{- end }}
-        {{- if $nginx_enabled }}
+        {{- if ($deployment.nginx).enabled }}
         - name: nginx
           securityContext:
             runAsUser: 101
@@ -100,11 +96,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-          {{- if hasKey ($deployment).nginx "image" }}
-          image: {{ $deployment.nginx.image }}
-          {{- else }}
-          image: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"
-          {{- end }}
+          image: {{ default "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29" ($deployment.nginx).image }}
           imagePullPolicy: IfNotPresent
           lifecycle:
             preStop:
@@ -123,7 +115,16 @@ spec:
               cpu: 100m
           readinessProbe:
             httpGet:
+              {{- if le (len $deployment.containers) 1 }}
+              {{- $container := first $deployment.containers }}
+              {{- if (($container.readinessProbe).httpGet).httpHeaders }}
+              httpHeaders:
+                {{- $container.readinessProbe.httpGet.httpHeaders | toYaml | nindent 16 }}
+              {{- end }}
+              path: {{ default "/__lbheartbeat__" (($container.readinessProbe).httpGet).path }}
+              {{- else }}
               path: /__lbheartbeat__
+              {{- end }}
               port: http
             periodSeconds: 6
             timeoutSeconds: 5
@@ -152,7 +153,7 @@ spec:
       {{- if $deployment.serviceAccount }}
       serviceAccountName: {{ $deployment.serviceAccount }}
       {{- end }}
-      {{- if $nginx_enabled }}
+      {{- if ($deployment.nginx).enabled }}
       volumes:
         - name: nginx-conf
           configMap:
@@ -161,7 +162,7 @@ spec:
             {{- else }}
             name: {{ $deployment.name }}-nginx
       {{- end }}
-{{- if and $nginx_enabled (not (hasKey ($deployment).nginx "configMap")) }}
+{{- if and ($deployment.nginx).enabled (not ($deployment.nginx).configMap) }}
 ---
 apiVersion: v1
 kind: ConfigMap
