@@ -848,7 +848,7 @@ serviceAccounts:
     {{- end -}}
     {{- $_ := set $config "hosts" $hosts -}}
     {{- $defaults := omit (index $workload_values "mozcloud-workload") "hosts" -}}
-    {{- $_ = set $workloads $name (mergeOverwrite $defaults $config) -}}
+    {{- $_ = set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
 {{- end -}}
 {{ $workloads | toYaml }}
