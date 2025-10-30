@@ -249,6 +249,17 @@ workloads:
       #  #  # .Values.global.mozcloud.projectId will be used.
       #  #  projectId:
 
+    # Optionally disable HorizontalPodAutoscaler creation for workload (useful when 
+    # automatic scaling is not necessary / wanted)
+    #
+    #disableHorizontalPodAutoscaler: true
+
+    # Optionally disable adding livenessProbe / readinessProbe to deployments created
+    # for workloads. This is useful when adding worker workloads (e.g. celery).
+    #
+    #disableLivenessProbe: false
+    #disableReadinessProbe: false
+
     # Optionally specify health check endpoints for the application, metrics
     # collection, and NGINX. The default values are listed next each of the
     # options below.
@@ -359,6 +370,9 @@ workloads:
         #        kind: ServiceImport
         #        name: my-custom-backend
         #    healthCheck:
+        #      host: my-custom-host.local
+        #      port: 8080
+        #      path: /readiness/
         #      targetRef:
         #        kind: ServiceImport
         #        name: my-custom-backend
@@ -435,6 +449,12 @@ workloads:
         #
         #  # Backend service timeout period in seconds.
         #  #timeoutSec: 30
+        #  #
+        #  # Custom config for backend health check
+        #  #healthCheck:
+        #  #  #path: /readiness/
+        #  #  #port: 8000
+        #  #  #host: my-custom-backend-host
 
     # Configure jobs to run before or after the rest of the deployment.
     #jobs:
@@ -507,8 +527,8 @@ workloads:
     #      # your job.
     #      #externalSecrets:
     #      #  # Configure whether or not to use the external secrets used for
-    #      #  # your app container. Default is "true".
-    #      #  useAppExternalSecrets: true
+    #      #  # your app container. Default is "false".
+    #      #  disableAppExternalSecrets: false
     #      #
     #      #  # Define custom external secrets.
     #      #  customExternalSecrets:

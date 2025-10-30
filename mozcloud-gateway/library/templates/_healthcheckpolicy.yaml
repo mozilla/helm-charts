@@ -26,6 +26,9 @@ spec:
     config:
       type: {{ $config.protocol }}
       {{ $config.protocolProperty }}:
+        {{- if $config.host }}
+        host: {{ $config.host }}
+        {{- end }}
         {{- if $config.port }}
         port: {{ $config.port }}
         {{- end }}

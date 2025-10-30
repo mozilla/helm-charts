@@ -217,7 +217,9 @@ Configuration matches entire snapshot:
               command:
                 - sh
                 - -c
-              envFrom: null
+              envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
               image: test-repo/test-predeployment-job-image:2.0.0
               name: job
               resources:
@@ -279,7 +281,9 @@ Configuration matches entire snapshot:
               command:
                 - sh
                 - -c
-              envFrom: null
+              envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
               image: test-repo/test-postdeployment-job-image:3.0.0
               name: job
               resources:

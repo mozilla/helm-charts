@@ -100,6 +100,12 @@ backends:
     {{- if $backend.healthCheck }}
     healthCheck:
       path: {{ $backend.healthCheck.path }}
+      {{- if ($backend.healthCheck).port }}
+      port: {{ $backend.healthCheck.port }}
+      {{- end }}
+      {{- if ($backend.healthCheck).host }}
+      host: {{ $backend.healthCheck.host }}
+      {{- end }}
       targetRef:
         {{- if and $backend.healthCheck.targetRef.kind (eq $backend.healthCheck.targetRef.kind "ServiceImport" )}}
         {{- $_ := set $backend.healthCheck.targetRef "group" "net.gke.io" }}
@@ -137,7 +143,15 @@ backends:
       timeoutSec: {{ $host_config.options.timeoutSec | int }}
       {{- end }}
     healthCheck:
-      {{- if kindIs "string" (($host_config).healthCheckEndpoints).loadBalancer }}
+      {{- if (($host_config.options).healthCheck).host }}
+      host: {{ $host_config.options.healthCheck.host }}
+      {{- end }}
+      {{- if (($host_config.options).healthCheck).port }}
+      port: {{ $host_config.options.healthCheck.port }}
+      {{- end }}
+      {{- if (($host_config.options).healthCheck).path }}
+      path: {{ $host_config.options.healthCheck.path }}
+      {{- else if kindIs "string" (($host_config).healthCheckEndpoints).loadBalancer }}
       path: {{ default "/__lbheartbeat__" (($host_config).healthCheckEndpoints).loadBalancer }}
       {{- else if kindIs "map" (($host_config).healthCheckEndpoints).loadBalancer }}
       path: {{ default "/__lbheartbeat__" ($host_config.healthCheckEndpoints.loadBalancer).path }}
@@ -361,6 +375,7 @@ Autoscaling (HPAs)
 hpas:
   {{- range $workload_name, $workload_config := $workloads }}
   {{- $container := $workload_config.container }}
+  {{- if not (default false $workload_config.disableHorizontalPodAutoscaler) }}
   {{ $workload_name }}:
     minReplicas: {{ $container.autoscaling.replicas.min }}
     maxReplicas: {{ $container.autoscaling.replicas.max }}
@@ -394,6 +409,7 @@ hpas:
             averageUtilization: {{ $metric.threshold }}
       {{- end }}
       {{- end }}
+  {{- end }}
   {{- end }}
 {{- end -}}
 
@@ -453,6 +469,7 @@ deployments:
               name: {{ $external_secret.name }}
           {{- end }}
           {{- end }}
+        {{- if not (default false $workload_config.disableLivenessProbe) }}
         livenessProbe:
           httpGet:
             {{- if kindIs "map" (($workload_config).healthCheckEndpoints).application }}
@@ -468,6 +485,8 @@ deployments:
             path: {{ default "/__heartbeat__" ($workload_config.healthCheckEndpoints).application }}
             {{- end }}
             port: app
+        {{- end }}
+        {{- if not (default false $workload_config.disableReadinessProbe) }}
         readinessProbe:
           httpGet:
             {{- if kindIs "map" (($workload_config).healthCheckEndpoints).loadBalancer }}
@@ -483,6 +502,7 @@ deployments:
             path: {{ default "/__lbheartbeat__" ($workload_config.healthCheckEndpoints).loadBalancer }}
             {{- end }}
             port: app
+        {{- end }}
         ports:
           - name: app
             containerPort: {{ $container.port }}
@@ -668,7 +688,7 @@ jobs:
     containers:
       - name: job
         image: {{ $job_config.image.repository }}
-        tag: {{ $job_config.image.tag }}
+        tag: {{ default "latest" $job_config.image.tag }}
         {{- if $job_config.command }}
         command:
           {{- range $line := $job_config.command }}
@@ -697,7 +717,7 @@ jobs:
         {{- end }}
         {{- if or
           $job_config.configMaps
-          (default true ($job_config.externalSecrets).useAppExternalSecrets)
+          (not (default false ($job_config.externalSecrets).disableAppExternalSecrets))
           ($job_config.externalSecrets).customExternalSecrets
         }}
         envFrom:
@@ -708,10 +728,11 @@ jobs:
             {{- end }}
           {{- end }}
           {{- if or
-            (default true ($job_config.externalSecrets).useAppExternalSecrets)
+            (not (default false ($job_config.externalSecrets).disableAppExternalSecrets))
             ($job_config.externalSecrets).customExternalSecrets
           }}
           secrets:
+            - {{ $globals.app_code }}-secrets
             {{- range $external_secret := default (list) $workload_config.container.externalSecrets }}
             - {{ $external_secret.name }}
             {{- end }}

@@ -282,6 +282,19 @@
             },
             "required": ["image"]
           },
+          "disableLivenessProbe": {
+            "type": "boolean",
+            "default": false
+          },
+          "disableReadinessProbe": {
+            "type": "boolean",
+            "default": false
+          },
+          "disableHorizontalPodAutoscaler": {
+            "type": "boolean",
+            "default": false
+          },
+          "": {},
           "healthCheckEndpoints": {
             "type": "object",
             "additionalProperties": false,
@@ -480,6 +493,15 @@
                           "path": {
                             "type": "string"
                           },
+                          "host": {
+                            "type": "string"
+                          },
+                          "port": {
+                            "anyOf": [
+                              { "type": "string" },
+                              { "type": "number" }
+                            ]
+                          },
                           "targetRef": {
                             "type": "object",
                             "additionalProperties": false,
@@ -563,6 +585,24 @@
                       "type": "integer",
                       "minimum": 0,
                       "default": 30
+                    },
+                    "healthCheck": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "path": {
+                          "type": "string"
+                        },
+                        "port": {
+                          "anyOf": [
+                            { "type": "string" },
+                            { "type": "number" }
+                          ]
+                        },
+                        "host": {
+                          "type": "string"
+                        }
+                      }
                     }
                   }
                 }
@@ -575,25 +615,32 @@
             "additionalProperties": false,
             "properties": {
               "preDeployment": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object",
-                  "allOf": [{ "$ref": "#/$defs/job" }],
-                  "properties": {
-                    "argo": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": {
                       "type": "object",
-                      "additionalProperties": false,
+                      "allOf": [{ "$ref": "#/$defs/job" }],
                       "properties": {
-                        "syncWave": {
-                          "type": "integer",
-                          "minimum": -10,
-                          "maximum": -1,
-                          "default": -1
+                        "argo": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "syncWave": {
+                              "type": "integer",
+                              "minimum": -10,
+                              "maximum": -1,
+                              "default": -1
+                            }
+                          }
                         }
                       }
                     }
                   }
-                }
+                ]
               },
               "postDeployment": {
                 "type": "object",
@@ -746,9 +793,9 @@
           "type": "object",
           "additionalProperties": false,
           "properties": {
-            "useAppExternalSecrets": {
+            "disableAppExternalSecrets": {
               "type": "boolean",
-              "default": true
+              "default": false
             },
             "customExternalSecrets": {
               "type": "array",
