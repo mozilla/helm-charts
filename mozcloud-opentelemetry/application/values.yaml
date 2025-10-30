@@ -2,6 +2,14 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+global:
+  mozcloud:
+    app_code: mozcloud-opentelemetry
+    chart: mozcloud-opentelemetry
+    component_code: mozcloud-opentelemetry
+    env_code: cluster
+    projectId: default
+
 collectors:
   daemonset:
     securityContext:

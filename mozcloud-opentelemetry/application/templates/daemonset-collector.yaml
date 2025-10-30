@@ -25,7 +25,7 @@ spec:
     valueFrom:
       fieldRef:
         fieldPath: metadata.name
-  - name: MY_POD_IP
+  - name: POD_IP
     valueFrom:
       fieldRef:
         fieldPath: status.podIP
@@ -40,6 +40,13 @@ spec:
         protocols:
           grpc: {}
           http: {}
+
+      statsd:
+        endpoint: ${env:POD_IP}:8125
+        aggregation_interval: 30s
+        enable_metric_type: true
+        enable_simple_tags: true
+        is_monotonic_counter: true
 
     processors:
       k8sattributes:
@@ -113,7 +120,7 @@ spec:
 
     extensions:
       health_check:
-        endpoint: ${env:MY_POD_IP}:13133
+        endpoint: ${env:POD_IP}:13133
 
       googleclientauth: {}
 
@@ -125,6 +132,7 @@ spec:
         metrics:
           receivers:
           - otlp
+          - statsd
           processors:
           - k8sattributes
           - memory_limiter
