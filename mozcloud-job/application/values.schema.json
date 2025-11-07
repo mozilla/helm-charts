@@ -19,24 +19,19 @@
               "description": "The name of the chart. This will match the app_code in single chart applications",
               "type": "string"
             },
-            "component_code": {
-              "description": "Application component's code (eg. web, shepherd, mars)",
-              "type": "string"
-            },
             "env_code": {
               "description": "Environment (ie. dev, stage, prod)",
               "type": "string"
             },
-            "projectId": {
+            "project_id": {
               "description": "GCP project ID",
               "type": "string"
             }
           },
           "required": [
             "app_code",
-            "component_code",
             "env_code",
-            "projectId"
+            "project_id"
           ]
         }
       }

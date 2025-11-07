@@ -69,7 +69,7 @@ tests:
           path: metadata.annotations["iam.gke.io/gcp-service-account"]
       - equal:
           path: metadata.annotations["iam.gke.io/gcp-service-account"]
-          value: test-sa@moz-fx-mozcloud-workload-nonprod.iam.gserviceaccount.com
+          value: test-sa@moz-fx-mozcloud-test-nonprod.iam.gserviceaccount.com
   - it: Deployment is configured correctly
     template: deployment.yaml
     documentSelector:

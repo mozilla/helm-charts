@@ -1,4 +1,6 @@
 ---
+component: web
+
 configMaps:
   # This is the name of your config map.
   test-config-map:
@@ -32,7 +34,7 @@ serviceAccounts:
       # address).
       name: test-sa
       # Your GCP project ID.
-      projectId: moz-fx-mozcloud-workload-nonprod
+      project_id: moz-fx-mozcloud-workload-nonprod
 
 deployments:
   # This is the name of your deployment.

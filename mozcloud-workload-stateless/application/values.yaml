@@ -1,30 +1,18 @@
 # Flag to enable / disable rendering of all templates this chart provides
 enabled: true
 
+# Component
 #
-# global
+# The specific unit within an application that performs a distinct function,
+# typically aligned to a microservice or deployable artifact.
 #
-# app_code, chart, component_code, env_code, and projectId should all be
-# defined as global values in the parent Helm chart's values file(s) outside the
-# scope of this Helm chart.
+# The value for "component" will typically match "component_code" in legacy
+# values files.
 #
-# For example:
+# Example values: api-server, web-frontend, etc.
 #
-#   # my-app/values.yaml
-#   global:
-#     mozcloud:
-#       app_code: my-app                 # should match app_code in tenant file
-#       chart: my-chart                  # the name of the chart
-#       component_code: web              # should match component_code in tenant file
-#
-#   # my-app/values-dev.yaml
-#   global:
-#     mozcloud:
-#       env_code: dev                    # should match .Values.environment
-#       projectId: moz-fx-my-app-nonprod # should match realms.<realm>.project_id in tenant file
-#
-# These are used to populate labels and metadata in MozCloud charts.
-#
+# This is a required field.
+component: ''
 
 #
 # ConfigMaps

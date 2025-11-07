@@ -1,5 +1,9 @@
 {{- define "mozcloud-job-lib.cronJob" -}}
 {{- if gt (keys (default (dict) (.cronJobConfig).cronJobs) | len) 0 }}
+{{- $context := . | deepCopy }}
+{{- if not $context.component_code }}
+  {{- $_ := set $context "component_code" "cronjob" }}
+{{- end }}
 {{- $cron_jobs := include "mozcloud-job-lib.config.cronJobs" . | fromYaml }}
 {{- $service_accounts := list }}
 {{- range $cron_job := $cron_jobs.cronJobs }}
@@ -46,7 +50,7 @@ spec:
         {{- $otel_annotations = include "mozcloud-workload-core-lib.config.annotations.otel.autoInjection" $otel_annotation_params | fromYaml }}
         {{- end }}
         {{- /* Note: pod annotations will automatically include resource annotations for OTEL */}}
-        {{- $annotation_params := dict "annotations" $otel_annotations "context" ($ | deepCopy) "type" "pod" }}
+        {{- $annotation_params := dict "annotations" $otel_annotations "context" ($context | deepCopy) "type" "pod" }}
         {{- $annotations := include "mozcloud-workload-core-lib.config.annotations" $annotation_params | fromYaml }}
         {{- if $annotations }}
         metadata:

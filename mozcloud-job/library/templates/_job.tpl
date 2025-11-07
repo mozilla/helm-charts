@@ -1,5 +1,9 @@
 {{- define "mozcloud-job-lib.job" -}}
 {{- if gt (keys (default (dict) (.jobConfig).jobs) | len) 0 }}
+{{- $context := . | deepCopy }}
+{{- if not $context.component_code }}
+  {{- $_ := set $context "component_code" "job" -}}
+{{- end }}
 {{- $jobs := include "mozcloud-job-lib.config.jobs" . | fromYaml }}
 {{- $service_accounts := list }}
 {{- range $job := $jobs.jobs }}
@@ -19,7 +23,7 @@ metadata:
   labels:
     {{- $job.labels | toYaml | nindent 4 }}
   {{- $argo := ($job.argo) }}
-  {{- $annotation_params := dict "annotations" (default (dict) $job.annotations) "context" ($ | deepCopy) "type" "job" }}
+  {{- $annotation_params := dict "annotations" (default (dict) $job.annotations) "context" ($context | deepCopy) "type" "job" }}
   {{- $annotations := include "mozcloud-workload-core-lib.config.annotations" $annotation_params | fromYaml }}
   {{- if $annotations }}
   annotations:
@@ -54,7 +58,7 @@ spec:
     {{- $otel_annotations = include "mozcloud-workload-core-lib.config.annotations.otel.autoInjection" $otel_annotation_params | fromYaml }}
     {{- end }}
     {{- /* Note: pod annotations will automatically include resource annotations for OTEL */}}
-    {{- $annotation_params := dict "annotations" $otel_annotations "context" ($ | deepCopy) "type" "pod" }}
+    {{- $annotation_params := dict "annotations" $otel_annotations "context" ($context | deepCopy) "type" "pod" }}
     {{- $annotations := include "mozcloud-workload-core-lib.config.annotations" $annotation_params | fromYaml }}
     {{- if $annotations }}
     metadata:

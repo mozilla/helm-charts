@@ -41,7 +41,7 @@ tests:
       - equal:
           path: spec.selector
           value:
-            app.kubernetes.io/component: test-service
+            app.kubernetes.io/component: web
             app.kubernetes.io/name: mozcloud-test
             env_code: dev
   - it: ServiceExport exists

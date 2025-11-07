@@ -181,6 +181,9 @@ ServiceAccount template helpers
   {{- $service_account_config = mergeOverwrite $service_account_config $common -}}
   {{- /* Generate gcpServiceAccount, if applicable */ -}}
   {{- if $service_account_config.gcpServiceAccount -}}
+    {{- if and (not $service_account_config.gcpServiceAccount.projectId) $.project_id -}}
+      {{- $_ := set $service_account_config.gcpServiceAccount "projectId" $.project_id -}}
+    {{- end -}}
     {{- $gcp_service_account := include "mozcloud-workload-core-lib.config.serviceAccount.gcpServiceAccount" $service_account_config.gcpServiceAccount -}}
     {{- /* Only set if either .fullName is specified or .name and .projectId are both specified */ -}}
     {{- if $gcp_service_account -}}

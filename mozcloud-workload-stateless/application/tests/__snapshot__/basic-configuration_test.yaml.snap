@@ -9,10 +9,10 @@ Configuration matches entire snapshot:
       annotations:
         argocd.argoproj.io/sync-wave: "-2"
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod
@@ -22,10 +22,10 @@ Configuration matches entire snapshot:
     kind: Deployment
     metadata:
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod
@@ -33,22 +33,22 @@ Configuration matches entire snapshot:
     spec:
       selector:
         matchLabels:
-          app.kubernetes.io/component: test-service
+          app.kubernetes.io/component: web
           app.kubernetes.io/name: mozcloud-test
           env_code: dev
       template:
         metadata:
           annotations:
-            resource.opentelemetry.io/component_code: test-service
+            resource.opentelemetry.io/component_code: web
             resource.opentelemetry.io/domain: null
             resource.opentelemetry.io/env_code: dev
             resource.opentelemetry.io/realm: nonprod
             resource.opentelemetry.io/system: null
           labels:
-            app.kubernetes.io/component: test-service
+            app.kubernetes.io/component: web
             app.kubernetes.io/managed-by: argocd
             app.kubernetes.io/name: mozcloud-test
-            component_code: test-service
+            component_code: web
             env_code: dev
             helm.sh/chart: test-chart
             realm: nonprod
@@ -92,10 +92,10 @@ Configuration matches entire snapshot:
       annotations:
         argocd.argoproj.io/sync-wave: "-2"
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod
@@ -117,10 +117,10 @@ Configuration matches entire snapshot:
     kind: HorizontalPodAutoscaler
     metadata:
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod
@@ -144,10 +144,10 @@ Configuration matches entire snapshot:
     kind: PodMonitoring
     metadata:
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod
@@ -160,7 +160,7 @@ Configuration matches entire snapshot:
           scheme: http
       selector:
         matchLabels:
-          app.kubernetes.io/component: test-service
+          app.kubernetes.io/component: web
           app.kubernetes.io/name: mozcloud-test
           env_code: dev
   6: |
@@ -169,12 +169,12 @@ Configuration matches entire snapshot:
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "-2"
-        iam.gke.io/gcp-service-account: test-sa@moz-fx-mozcloud-workload-nonprod.iam.gserviceaccount.com
+        iam.gke.io/gcp-service-account: test-sa@moz-fx-mozcloud-test-nonprod.iam.gserviceaccount.com
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod

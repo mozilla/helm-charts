@@ -92,7 +92,8 @@ Template helpers
 {{- end -}}
 
 {{- define "mozcloud-preview-lib.config.labels" -}}
-{{- $labels := include "mozcloud-labels-lib.labels" . | fromYaml -}}
+{{- $component_code := dict "component_code" "preview" -}}
+{{- $labels := include "mozcloud-labels-lib.labels" (mergeOverwrite (. | deepCopy) $component_code) | fromYaml -}}
 {{- if .labels -}}
   {{- $labels = mergeOverwrite $labels .labels -}}
 {{- end }}

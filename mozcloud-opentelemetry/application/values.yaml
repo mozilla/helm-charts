@@ -8,7 +8,7 @@ global:
     chart: mozcloud-opentelemetry
     component_code: mozcloud-opentelemetry
     env_code: cluster
-    projectId: default
+    project_id: default
 
 collectors:
   daemonset:

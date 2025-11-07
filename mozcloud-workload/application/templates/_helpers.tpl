@@ -35,7 +35,7 @@ Create label parameters to be used in library chart if defined as values.
 */}}
 {{- define "mozcloud-workload.labelParams" -}}
 {{- $params := dict "chart" (include "mozcloud-workload.name" .) -}}
-{{- $label_params := list "app_code" "chart" "component_code" "env_code" -}}
+{{- $label_params := list "app_code" "chart" "env_code" "project_id" -}}
 {{- range $label_param := $label_params -}}
   {{- if index $.Values.global.mozcloud $label_param -}}
     {{- $_ := set $params $label_param (index $.Values.global.mozcloud $label_param) -}}
@@ -83,6 +83,7 @@ backends:
   {{- if $host_config.backends }}
   {{- range $backend := (default (list) $host_config.backends) }}
   {{ $backend.name }}:
+    component: {{ $workload_config.component }}
     {{- if $backend.service }}
     service:
       {{- $backend.service | toYaml | nindent 6 }}
@@ -180,6 +181,7 @@ gateways:
   {{- range $host_name, $host_config := $workload_config.hosts }}
   {{- if not (default false $host_config.disableGateway) }}
   {{ $host_name }}:
+    component: {{ $workload_config.component }}
     type: {{ $host_config.type }}
     {{- if ($host_config).multiCluster }}
     className: gke-l7-global-external-managed-mc
@@ -224,6 +226,7 @@ httpRoutes:
   {{- range $host_name, $host_config := $workload_config.hosts }}
   {{- if (($host_config).httpRoutes).createHttpRoutes }}
   {{ $host_name }}:
+    component: {{ $workload_config.component }}
     gatewayRefs:
       - name: {{ $host_name }}
         {{- /*
@@ -290,6 +293,7 @@ frontendConfigs:
   {{- range $host_name, $host_config := $workload_config.hosts }}
   {{- if eq $host_config.type "external" }}
   {{ $host_name }}:
+    component: {{ $workload_config.component }}
     redirectToHttps:
       enabled: true
       responseCodeName: MOVED_PERMANENTLY_DEFAULT
@@ -310,6 +314,7 @@ ingresses:
   {{- range $host_name, $host_config := $workload_config.hosts }}
   {{- if eq $host_config.type "external" }}
   {{ $host_name }}:
+    component: {{ $workload_config.component }}
     hosts:
       - domains:
           {{- range $domain := $host_config.domains }}
@@ -377,6 +382,7 @@ hpas:
   {{- $container := $workload_config.container }}
   {{- if not (default false $workload_config.disableHorizontalPodAutoscaler) }}
   {{ $workload_name }}:
+    component: {{ $workload_config.component }}
     minReplicas: {{ $container.autoscaling.replicas.min }}
     maxReplicas: {{ $container.autoscaling.replicas.max }}
     scaleTargetRef:
@@ -427,6 +433,7 @@ deployments:
   {{- end }}
   {{- $container := $workload_config.container }}
   {{ $workload_name }}:
+    component: {{ $workload_config.component }}
     labels:
       {{- range $k, $v := (default (list) ($workload_config.labels)) }}
       {{ $k }}: {{ $v }}
@@ -564,6 +571,7 @@ externalSecrets:
   {{- $external_secrets := include "mozcloud-workload.formatter.externalSecrets" $workload_config | fromYaml }}
   {{- range $external_secret := $external_secrets.secrets }}
   {{ $external_secret.name }}:
+    component: {{ $workload_config.component }}
     {{- /*
     ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
     other resources
@@ -617,6 +625,7 @@ Service accounts
 serviceAccounts:
   {{- range $workload_name, $workload_config := $workloads }}
   {{ $globals.app_code }}:
+    component: serviceaccount
     {{- /*
     ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
     other resources
@@ -625,11 +634,12 @@ serviceAccounts:
       syncWave: -11
     gcpServiceAccount:
       name: gke-{{ $globals.env_code }}
-      projectId: {{ $globals.projectId }}
+      projectId: {{ $globals.project_id }}
   {{- $service_accounts := include "mozcloud-workload.formatter.serviceAccounts" (dict "workload" $workload_config) | fromYaml }}
   {{- range $service_account_name, $service_account_config := $service_accounts.serviceAccounts }}
   {{- if not (eq $service_account_name $globals.app_code) }}
   {{ $service_account_name }}:
+    component: {{ $workload_config.component }}
     {{- /*
     ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
     other resources
@@ -639,7 +649,7 @@ serviceAccounts:
     {{- if and ($service_account_config.gcpServiceAccount).name ($service_account_config.gcpServiceAccount).projectId }}
     gcpServiceAccount:
       name: {{ $service_account_config.gcpServiceAccount.name }}
-      projectId: {{ default $globals.projectId $service_account_config.gcpServiceAccount.projectId }}
+      projectId: {{ default $globals.project_id $service_account_config.gcpServiceAccount.projectId }}
     {{- end }}
   {{- end }}
   {{- end }}
@@ -665,6 +675,7 @@ jobs:
   {{- /* Ensure job names are unique */}}
   {{- if not (has $name $job_list) }}
   {{ $name }}:
+    component: {{ $workload_config.component }}
     argo:
       {{- $sync_wave := "" }}
       {{- if eq $job_type "preDeployment" }}
@@ -870,6 +881,12 @@ serviceAccounts:
     {{- $_ := set $config "hosts" $hosts -}}
     {{- $defaults := omit (index $workload_values "mozcloud-workload") "hosts" -}}
     {{- $_ = set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
+  {{- end -}}
+{{- end -}}
+{{- range $name, $config := $workloads -}}
+  {{- if not $config.component -}}
+    {{- $fail_message := printf "A component was not defined for workload \"%s\". You must define a component in \".Values.mozcloud-workload.workloads.%s.component\". See values.yaml in the mozcloud-workload chart for more details." $name $name -}}
+    {{- fail $fail_message -}}
   {{- end -}}
 {{- end -}}
 {{ $workloads | toYaml }}

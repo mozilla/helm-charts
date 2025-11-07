@@ -33,7 +33,8 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "mozcloud-ingress-lib.labels" -}}
-{{- $labels := include "mozcloud-labels-lib.labels" . | fromYaml -}}
+{{- $component_code := dict "component_code" (default "ingress" .component_code) -}}
+{{- $labels := include "mozcloud-labels-lib.labels" (mergeOverwrite (. | deepCopy) $component_code) | fromYaml -}}
 {{- if .labels -}}
   {{- $labels = mergeOverwrite $labels .labels -}}
 {{- end }}
@@ -44,7 +45,8 @@ Common labels
 Selector labels
 */}}
 {{- define "mozcloud-ingress-lib.selectorLabels" -}}
-{{- $selector_labels := include "mozcloud-labels-lib.selectorLabels" . | fromYaml -}}
+{{- $component_code := dict "component_code" (default "ingress" .component_code) -}}
+{{- $selector_labels := include "mozcloud-labels-lib.selectorLabels" (mergeOverwrite (. | deepCopy) $component_code) | fromYaml -}}
 {{- if .selectorLabels -}}
   {{- $selector_labels = mergeOverwrite $selector_labels .selector_labels -}}
 {{- end }}
@@ -294,11 +296,12 @@ Service template helpers
       {{- /* Service fullnameOverride */}}
       {{- $_ = set $service "fullnameOverride" $service_name -}}
       {{- /* Service labels */}}
-      {{- $label_params := mergeOverwrite $context (dict "labels" (default (dict) $backend_service.labels)) -}}
-      {{- $labels := include "mozcloud-ingress-lib.labels" (mergeOverwrite $ $label_params) | fromYaml -}}
+      {{- $label_params := mergeOverwrite ($context | deepCopy) (dict "labels" (default (dict) $backend_service.labels)) -}}
+      {{- $labels := include "mozcloud-ingress-lib.labels" $label_params | fromYaml -}}
       {{- $_ = set $service "labels" $labels -}}
       {{- /* Service selectorLabels */}}
-      {{- $selector_labels := default (include "mozcloud-ingress-lib.selectorLabels" $ | fromYaml) $backend_service.selectorLabels -}}
+      {{- $selector_label_params := mergeOverwrite ($context | deepCopy) (dict "selectorLabels" (default (dict) $backend_service.selectorLabels)) -}}
+      {{- $selector_labels := include "mozcloud-ingress-lib.selectorLabels" $selector_label_params | fromYaml -}}
       {{- $_ = set $service "selectorLabels" $selector_labels -}}
       {{- /* Append to services list */}}
       {{- $services = append $services $service -}}

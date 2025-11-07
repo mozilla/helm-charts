@@ -17,19 +17,21 @@ Only include Ingress and related resources if we have Ingress hosts defined
 {{- if gt (len $hosts) 0 -}}
 
 {{- /* We will build $params as we go */}}
-{{- $_ := "" }}
 {{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
 {{- $params := $label_params -}}
 
 {{- /*
 Ingresses and related resources
 */}}
-{{- $ingress_config := (include "mozcloud-workload.config.ingresses" $helper_params | fromYaml).ingresses }}
-{{- $_ = set $params "ingressConfig" $ingress_config }}
+{{- $ingresses := include "mozcloud-workload.config.ingresses" $helper_params | fromYaml }}
+{{- range $ingress_name, $ingress_config := $ingresses.ingresses }}
+{{- $_ := set $label_params "component_code" $ingress_config.component }}
+{{- $_ = set $params "ingressConfig" (dict $ingress_name (omit $ingress_config "component")) }}
 {{ include "mozcloud-ingress-lib.ingress" (mergeOverwrite $params $label_params) }}
 {{ include "mozcloud-ingress-lib.backendConfig" (mergeOverwrite $params $label_params) }}
 {{ include "mozcloud-ingress-lib.managedCertificate" (mergeOverwrite $params $label_params) }}
 {{ include "mozcloud-ingress-lib.service" (mergeOverwrite $params $label_params) }}
+{{- end }}
 
 {{- /*
 Frontend Config
@@ -37,7 +39,8 @@ Frontend Config
 {{- $frontends := (include "mozcloud-workload.config.frontendConfigs" $helper_params | fromYaml).frontendConfigs }}
 {{- range $frontend_name, $frontend_config := $frontends }}
   {{- $_ := set $frontend_config "name" $frontend_name }}
-  {{- $_ = set $params "frontendConfig" $frontend_config }}
+  {{- $_ = set $label_params "component_code" $frontend_config.component }}
+  {{- $_ = set $params "frontendConfig" (omit $frontend_config "component") }}
 {{ include "mozcloud-ingress-lib.frontendConfig" (mergeOverwrite $params $label_params) }}
 {{- end }}
 {{- end -}}

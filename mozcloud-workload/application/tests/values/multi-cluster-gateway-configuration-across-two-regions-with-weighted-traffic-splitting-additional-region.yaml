@@ -1,5 +1,6 @@
 workloads:
   mozcloud-test:
+    component: web
     hosts:
       mozcloud-test:
         disableGateway: true

@@ -33,7 +33,8 @@ Create chart name and version as used by the chart label.
 Common labels
 */}}
 {{- define "mozcloud-gateway-lib.labels" -}}
-{{- $labels := include "mozcloud-labels-lib.labels" . | fromYaml -}}
+{{- $component_code := dict "component_code" (default "gateway" .component_code) -}}
+{{- $labels := include "mozcloud-labels-lib.labels" (mergeOverwrite (. | deepCopy) $component_code) | fromYaml -}}
 {{- if .labels -}}
   {{- $labels = mergeOverwrite $labels .labels -}}
 {{- end }}
@@ -44,7 +45,8 @@ Common labels
 Selector labels
 */}}
 {{- define "mozcloud-gateway-lib.selectorLabels" -}}
-{{- $selector_labels := include "mozcloud-labels-lib.selectorLabels" . | fromYaml -}}
+{{- $component_code := dict "component_code" (default "gateway" .component_code) -}}
+{{- $selector_labels := include "mozcloud-labels-lib.selectorLabels" (mergeOverwrite (. | deepCopy) $component_code) | fromYaml -}}
 {{- if .selectorLabels -}}
   {{- $selector_labels = mergeOverwrite $selector_labels .selectorLabels -}}
 {{- end }}

@@ -9,6 +9,7 @@ workloads:
   # Additionally, this name will be used for Deployments, HPAs, and all other
   # workload-related Kubernetes resources.
   test-service:
+    component: web
     container:
       image:
         repository: test-repo/test-image

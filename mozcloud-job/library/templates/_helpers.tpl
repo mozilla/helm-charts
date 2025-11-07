@@ -92,6 +92,9 @@ CronJob template helpers
   {{- /* Configure labels */ -}}
   {{- $labels := default (dict) $cron_job_config.labels -}}
   {{- $params := dict "config" $cron_job_config "context" ($ | deepCopy) "labels" $labels -}}
+  {{- if not $params.context.component_code -}}
+    {{- $_ := set $params.context "component_code" "cronjob" -}}
+  {{- end -}}
   {{- $common := include "mozcloud-job-lib.config.common" $params | fromYaml -}}
   {{- $cron_job_config = mergeOverwrite $cron_job_config $common -}}
   {{- /* Configure job defaults */ -}}
@@ -153,6 +156,9 @@ Job template helpers
   {{- /* Configure labels */ -}}
   {{- $labels := default (dict) $job_config.labels -}}
   {{- $params := dict "config" $job_config "context" ($ | deepCopy) "labels" $labels -}}
+  {{- if not $params.context.component_code -}}
+    {{- $_ := set $params.context "component_code" "job" -}}
+  {{- end -}}
   {{- $common := include "mozcloud-job-lib.config.common" $params | fromYaml -}}
   {{- $job_config = mergeOverwrite $job_config $common -}}
   {{- /* Configure pod securityContext */ -}}

@@ -9,10 +9,10 @@ Configuration matches entire snapshot:
         networking.gke.io/managed-certificates: mcrt-test-service-dev-test-domain-com
         networking.gke.io/v1beta1.FrontendConfig: test-service
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod
@@ -28,10 +28,10 @@ Configuration matches entire snapshot:
     kind: BackendConfig
     metadata:
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod
@@ -45,10 +45,10 @@ Configuration matches entire snapshot:
     kind: ManagedCertificate
     metadata:
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod
@@ -64,10 +64,10 @@ Configuration matches entire snapshot:
         cloud.google.com/backend-config: '{"default": "test-service"}'
         cloud.google.com/neg: '{"ingress": true}'
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod
@@ -79,7 +79,7 @@ Configuration matches entire snapshot:
           protocol: TCP
           targetPort: http
       selector:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/name: mozcloud-test
         env_code: dev
       type: ClusterIP
@@ -88,10 +88,10 @@ Configuration matches entire snapshot:
     kind: FrontendConfig
     metadata:
       labels:
-        app.kubernetes.io/component: test-service
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
-        component_code: test-service
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         realm: nonprod

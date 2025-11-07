@@ -1,26 +1,5 @@
 # See values.yaml.example for example configurations.
 
-# app_code, chart, component_code, env_code, and projectId should all be
-# defined as global values in the parent Helm chart's values file(s) outside the
-# scope of this Helm chart.
-#
-# For example:
-#
-#   # my-app/values.yaml
-#   global:
-#     mozcloud:
-#       app_code: my-app                 # should match app_code in tenant file
-#       chart: my-chart                  # the name of the chart
-#       component_code: web              # should match component_code in tenant file
-#
-#   # my-app/values-dev.yaml
-#   global:
-#     mozcloud:
-#       env_code: dev                    # should match .Values.environment
-#       projectId: moz-fx-my-app-nonprod # should match realms.<realm>.project_id in tenant file
-#
-# These are used to populate labels and metadata in MozCloud charts.
-
 # If disabled, no resources in the chart will be created.
 enabled: true
 
@@ -59,6 +38,17 @@ workloads:
   # Each workload should be specified in this dictionary format, where the key
   # is the name of the workload and the values are the configurations.
   mozcloud-workload:
+    # The specific unit within an application that performs a distinct function,
+    # typically aligned to a microservice or deployable artifact.
+    #
+    # The value for "component" will typically match "component_code" in legacy
+    # values files.
+    #
+    # Example values: api-server, web-frontend, etc.
+    #
+    # This is a required field.
+    component: ''
+
     # Labels to pass down to workload resources, e.g. Deployments and Pods. In some scenarios,
     # this can be useful to apply, e.g. when you spawn multiple workloads, but only want the main
     # workload with default labels to match the selector of your Ingress / Gateway resources.
@@ -245,8 +235,8 @@ workloads:
       #  #  # email address).
       #  #  name:
 
-      #  #  # GCP project ID. If not specified, the value in
-      #  #  # .Values.global.mozcloud.projectId will be used.
+      #  #  # GCP project ID. If not specified, the value automatically set in
+      #  #  # .Values.global.mozcloud.project_id will be used.
       #  #  projectId:
 
     # Optionally disable HorizontalPodAutoscaler creation for workload (useful when 
@@ -722,7 +712,6 @@ workloads:
 #
 # To do list:
 #   - Add support for additional PodMonitoring definitions
-#   - Add support for the OTEL Collector (defaults, optional overrides)
 #   - Add support for Rollout steps (enabling canary deployments through Argo
 #     Rollouts)
 #   - Add support for Nimbus/Experimenter sidecars

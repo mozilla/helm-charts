@@ -4,6 +4,7 @@
 {{- $helper_params := dict "configMaps" $config_maps }}
 {{- $params := include "mozcloud-workload.config.configMap" $helper_params | fromYaml }}
 {{- $label_params := include "mozcloud-workload.labelParams" . | fromYaml }}
+{{- $_ := set $label_params "component_code" "configmap" -}}
 {{- include "mozcloud-workload-stateless-lib.configMap" (mergeOverwrite $params $label_params) }}
 {{- end -}}
 {{- end -}}
