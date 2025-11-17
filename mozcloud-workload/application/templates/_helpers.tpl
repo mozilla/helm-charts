@@ -561,6 +561,7 @@ deployments:
     {{- else }}
     serviceAccount: {{ $globals.app_code }}
     {{- end }}
+    strategy: {{ $container.strategy }}
 {{- end }}
 {{- end -}}
 

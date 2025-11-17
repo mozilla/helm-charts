@@ -416,6 +416,13 @@
         },
         "serviceAccount": {
           "type": "string"
+        },
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "Recreate",
+            "RollingUpdate"
+          ]
         }
       }
     },

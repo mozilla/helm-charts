@@ -20,6 +20,8 @@ spec:
   selector:
     matchLabels:
       {{- $deployment.selectorLabels | toYaml | nindent 6 }}
+  strategy:
+    type: {{ default "RollingUpdate" $deployment.strategy }}
   template:
     metadata:
       {{- /* If auto injection is enabled for OTEL, we should include those annotations */}}

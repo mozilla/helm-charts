@@ -299,6 +299,13 @@
                   }
                 }
               },
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "Recreate",
+                  "RollingUpdate"
+                ]
+              },
               "volumes": {
                 "type": "array",
                 "items": {

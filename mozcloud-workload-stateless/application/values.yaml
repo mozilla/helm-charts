@@ -361,6 +361,20 @@ deployments: {}
 #    #
 #    serviceAccount:
 #
+#    #
+#    # Define the strategy Kubernetes should use when replacing pods. Below are
+#    # the options:
+#    #
+#    #   Recreate: All existing pods will be removed before replacement pods
+#    #             are deployed.
+#    #
+#    #   RollingUpdate: Pods are gradually replaced when a new version of the
+#    #                  deployment is created.
+#    #
+#    # The default value is "RollingUpdate".
+#    #
+#    strategy: RollingUpdate
+#
 
 #
 # PodMonitorings
