@@ -29,6 +29,18 @@
               "description": "Environment (ie. dev, stage, prod)",
               "type": "string"
             },
+            "image": {
+              "description": "The container image repository and tag",
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              }
+            },
             "project_id": {
               "description": "GCP project ID",
               "type": "string"
@@ -240,6 +252,9 @@
                   },
                   "group": {
                     "type": "number"
+                  },
+                  "addCapabilities": {
+                    "type": "array"
                   }
                 }
               },
@@ -315,6 +330,32 @@
                     }
                   }
                 }
+              },
+              "volumes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["configMap", "secret"]
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "readOnly": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["name", "type", "path"]
+                }
               }
             }
           }
@@ -334,6 +375,17 @@
             },
             "configMap": {
               "type": "string"
+            },
+            "resources": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
             }
           }
         },
@@ -378,6 +430,13 @@
         },
         "serviceAccount": {
           "type": "string"
+        },
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "Recreate",
+            "RollingUpdate"
+          ]
         }
       }
     },

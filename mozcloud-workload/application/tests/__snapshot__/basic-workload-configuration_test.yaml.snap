@@ -18,6 +18,8 @@ Configuration matches entire snapshot:
           app.kubernetes.io/component: web
           app.kubernetes.io/name: mozcloud-test
           env_code: dev
+      strategy:
+        type: RollingUpdate
       template:
         metadata:
           annotations:
@@ -36,6 +38,55 @@ Configuration matches entire snapshot:
             realm: nonprod
         spec:
           containers:
+            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
+              imagePullPolicy: IfNotPresent
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/bash
+                      - -c
+                      - /bin/sleep 25 && /usr/sbin/nginx -s quit
+              livenessProbe:
+                httpGet:
+                  path: /__nginxheartbeat__
+                  port: http
+                initialDelaySeconds: 5
+                periodSeconds: 6
+                timeoutSeconds: 2
+              name: nginx
+              ports:
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 101
+                runAsUser: 101
+              volumeMounts:
+                - mountPath: /etc/nginx/nginx.conf
+                  name: nginx-conf
+                  readOnly: true
+                  subPath: nginx.conf
             - envFrom:
                 - secretRef:
                     name: mozcloud-test-secrets
@@ -74,55 +125,6 @@ Configuration matches entire snapshot:
                     - ALL
                 seccompProfile:
                   type: RuntimeDefault
-            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
-              imagePullPolicy: IfNotPresent
-              lifecycle:
-                preStop:
-                  exec:
-                    command:
-                      - /bin/bash
-                      - -c
-                      - /bin/sleep 25 && /usr/sbin/nginx -s quit
-              livenessProbe:
-                httpGet:
-                  path: /__nginxheartbeat__
-                  port: http
-                initialDelaySeconds: 5
-                periodSeconds: 6
-                timeoutSeconds: 2
-              name: nginx
-              ports:
-                - containerPort: 8080
-                  name: http
-                  protocol: TCP
-              readinessProbe:
-                failureThreshold: 5
-                httpGet:
-                  path: /__lbheartbeat__
-                  port: http
-                initialDelaySeconds: 10
-                periodSeconds: 6
-                successThreshold: 1
-                timeoutSeconds: 5
-              resources:
-                limits:
-                  cpu: 100m
-                  memory: 256Mi
-                requests:
-                  cpu: 50m
-                  memory: 15Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                runAsGroup: 101
-                runAsUser: 101
-              volumeMounts:
-                - mountPath: /etc/nginx/nginx.conf
-                  name: nginx-conf
-                  readOnly: true
-                  subPath: nginx.conf
           securityContext:
             runAsGroup: 10001
             runAsNonRoot: true

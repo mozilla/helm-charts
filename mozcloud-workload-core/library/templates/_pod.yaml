@@ -99,7 +99,14 @@ CPU resources can only be integers/floats for an entire CPU or millicpu (m)
 {{- define "mozcloud-workload-core-lib.pod.container.securityContext" -}}
 allowPrivilegeEscalation: false
 capabilities:
-  drop: ["ALL"]
+  {{- if gt (len (default (list) .addCapabilities)) 0 }}
+  add:
+    {{- range $capability := .addCapabilities }}
+    - {{ $capability }}
+    {{- end }}
+  {{- end }}
+  drop:
+    - ALL
 {{- if .user }}
 runAsUser: {{ .user }}
 {{- end }}

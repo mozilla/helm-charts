@@ -1,7 +1,25 @@
+# If disabled, no resources in the chart will be created.
+enabled: true
+
 # Name to be used for all resources if not specified at the resource level.
 # This overrides the chart name set in .Values.global.mozcloud.chart but is
 # overridden by names defined at the resource level.
 #nameOverride:
+
+# Here, you can define common configurations you want to share between all jobs
+# and cron jobs. These values will be overridden if defined at the job or cron
+# job level.
+common:
+  # Common container configurations. These can be used as defaults for all job
+  # and cron job containers. See jobs[].containers below for options.
+  container: {}
+
+  # Common cron job configurations. See cronJobs.cronjob-name.config below for
+  # options.
+  cronJob: {}
+
+  # Common job configurations. See jobs.job-name.config below for options.
+  job: {}
 
 # Define your cron jobs here. These are jobs intended to be run on a schedule.
 cronJobs: {}
@@ -91,14 +109,19 @@ jobs: {}
   #
   #  # Details about the container(s) that need to be run for this job.
   #  containers:
-  #    - name: ""
+  #    - image:
+  #        # The repository should be specified in the "repo/image" format.
+  #        # This is a required field if
+  #        # .Values.global.mozcloud.image.repository is not set.
+  #        repository:
   #
-  #      # The image should be specified in the "repo/image" format. This is
-  #      # a required field.
-  #      image: ""
+  #        # The tag to use for this image. The default is "latest" if
+  #        # .Values.global.mozcloud.image.repository is not set.
+  #        tag: latest
   #
-  #      # The tag to use for this image. The default is "latest".
-  #      tag: latest
+  #      # Optionally set a name for the container. If no name is set, the
+  #      # container will be named "job".
+  #      #name: ""
   #
   #      # A command in the form of an array/list that serves as an entrypoint
   #      # to the container. This command is the default command that runs once
@@ -147,19 +170,70 @@ jobs: {}
   #      # Memory requests and limits must be positive numbers and use any of
   #      # the following unit types: K, Ki, M, Mi, G, Gi.
   #      resources:
-  #        cpu:
-  #          requests: 10m
-  #          #limits: 20m
-  #        memory:
-  #          requests: 64Mi
-  #          #limits: 128Mi
+  #        requests:
+  #          cpu: 10m
+  #          memory: 64Mi
+  #        limits:
+  #          cpu: 20m
+  #          memory: 128Mi
   #
   #       # User and/or group to use for the container SecurityContext, if
   #       # applicable. Defaults to 10001 for both user and group. Only change
   #       # this if you know what you are doing.
+  #       #
+  #       # Additionally, by default, all OS capabilities are dropped. If
+  #       # needed, you can list one or more capabilities to add to the
+  #       # container in "addCapabilities".
   #       #securityContext:
   #       #  user:
   #       #  group:
+  #       #  addCapabilities:
+  #       #    - NET_BIND_SERVICE
+  #
+  #       # Optionally mount volumes to the container. The supported volume
+  #       # types are "configMap" (default) and "secret".
+  #       #
+  #       # Volumes using types "configMap" and "secret" should use names that
+  #       # match either config map and external secret names created as part of
+  #       # this chart or reference ConfigMap and Secret resources created
+  #       # independently of this chart.
+  #       #
+  #       # With "configMap" volumes, you can also specify the following
+  #       # options:
+  #       #
+  #       #   "key": A key within the config map. The value of the key will be
+  #       #          used as the contents of the file.
+  #       #
+  #       #   "path": The path within the container to which the volume should
+  #       #           be mounted.
+  #       #
+  #       #   "readOnly": Whether or not the volume should be mounted as read
+  #       #               only. Options are "true" or "false", with the default
+  #       #               being "false".
+  #       #
+  #       # "secret" volumes use the same options above that "configMap" volumes
+  #       # use with the exception of "readOnly" which is always "true" here.
+  #       # Any value set for "readOnly" will be ignored in this case.
+  #       #
+  #       # Example:
+  #       #
+  #       #   volumes:
+  #       #     - name: my-config-map
+  #       #       type: configMap
+  #       #       path: /path/to/my_file.txt
+  #       #     - name: another-config-map
+  #       #       type: configMap
+  #       #       path: /path/to/another_file.txt
+  #       #       key: another_file.txt
+  #       #       readOnly: false
+  #       #     - name: my-secret  # Should match an external secret/secret name.
+  #       #       type: secret
+  #       #       path: /path/to/secret_file.txt
+  #       #     - name: another-secret
+  #       #       type: secret
+  #       #       path: /path/to/another_secret_file.txt
+  #       #       key: another_secret_file.txt
+  #       #volumes: []
   #
   #
   #  # Configuration settings for jobs.

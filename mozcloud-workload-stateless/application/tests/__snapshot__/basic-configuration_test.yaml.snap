@@ -36,6 +36,8 @@ Configuration matches entire snapshot:
           app.kubernetes.io/component: web
           app.kubernetes.io/name: mozcloud-test
           env_code: dev
+      strategy:
+        type: RollingUpdate
       template:
         metadata:
           annotations:

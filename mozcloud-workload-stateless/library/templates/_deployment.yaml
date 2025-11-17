@@ -3,6 +3,7 @@
 {{- $deployments := include "mozcloud-workload-stateless-lib.config.deployments" . | fromYaml }}
 {{- $files := .Files }}
 {{- range $deployment := $deployments.deployments }}
+{{- $volumes := dict }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -20,6 +21,8 @@ spec:
   selector:
     matchLabels:
       {{- $deployment.selectorLabels | toYaml | nindent 6 }}
+  strategy:
+    type: {{ default "RollingUpdate" $deployment.strategy }}
   template:
     metadata:
       {{- /* If auto injection is enabled for OTEL, we should include those annotations */}}
@@ -43,51 +46,6 @@ spec:
         {{- $deployment.labels | toYaml | nindent 8 }}
     spec:
       containers:
-        {{- range $container := $deployment.containers }}
-        - name: {{ $container.name }}
-          image: {{ printf "%s:%s" $container.image $container.tag }}
-          imagePullPolicy: IfNotPresent
-          {{- if $container.command }}
-          command:
-            {{- $container.command | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if $container.args }}
-          args:
-            {{- $container.args | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if $container.env }}
-          env:
-            {{- range $env_var := $container.env }}
-            - name: {{ $env_var.name }}
-              value: {{ $env_var.value | quote }}
-            {{- end }}
-          {{- end }}
-          {{- if $container.envFrom }}
-          envFrom:
-            {{- $container.envFrom | toYaml | nindent 12 }}
-          {{- end }}
-          ports:
-            {{- $container.ports | toYaml | nindent 12 }}
-          {{- if $container.livenessProbe }}
-          livenessProbe:
-            {{- $container.livenessProbe | toYaml | nindent 12 }}
-            failureThreshold: 5
-            initialDelaySeconds: 10
-            periodSeconds: 6
-            timeoutSeconds: 5
-          {{- end }}
-          {{- if $container.readinessProbe }}
-          readinessProbe:
-            {{- $container.readinessProbe | toYaml | nindent 12 }}
-            initialDelaySeconds: 10
-            periodSeconds: 6
-            timeoutSeconds: 5
-          {{- end }}
-          resources:
-            {{- include "mozcloud-workload-core-lib.pod.container.resources" ($container).resources | nindent 12 }}
-          securityContext:
-            {{- include "mozcloud-workload-core-lib.pod.container.securityContext" ($container).securityContext | nindent 12 }}
-        {{- end }}
         {{- if ($deployment.nginx).enabled }}
         - name: nginx
           securityContext:
@@ -107,12 +65,10 @@ spec:
               containerPort: 8080
               protocol: TCP
           resources:
-            requests:
-              memory: 15Mi
-              cpu: 50m
-            limits:
-              memory: 256Mi
-              cpu: 100m
+            {{- $cpu := default "50m" ($deployment.nginx.resources).cpu }}
+            {{- $memory := default "128Mi" ($deployment.nginx.resources).memory }}
+            {{- $resources := dict "requests" (dict "cpu" $cpu "memory" $memory) }}
+            {{- include "mozcloud-workload-core-lib.pod.container.resources" $resources | nindent 12 }}
           readinessProbe:
             httpGet:
               {{- if le (len $deployment.containers) 1 }}
@@ -144,23 +100,100 @@ spec:
               subPath: nginx.conf
               readOnly: true
         {{- end }}
+        {{- range $container := $deployment.containers }}
+        - name: {{ $container.name }}
+          image: {{ printf "%s:%s" $container.image $container.tag }}
+          imagePullPolicy: IfNotPresent
+          {{- if $container.command }}
+          command:
+            {{- $container.command | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.args }}
+          args:
+            {{- $container.args | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.env }}
+          env:
+            {{- range $env_var := $container.env }}
+            - name: {{ $env_var.name }}
+              value: {{ $env_var.value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if $container.envFrom }}
+          envFrom:
+            {{- $container.envFrom | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.ports }}
+          ports:
+            {{- $container.ports | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.livenessProbe }}
+          livenessProbe:
+            {{- $container.livenessProbe | toYaml | nindent 12 }}
+            failureThreshold: 5
+            initialDelaySeconds: 10
+            periodSeconds: 6
+            timeoutSeconds: 5
+          {{- end }}
+          {{- if $container.readinessProbe }}
+          readinessProbe:
+            {{- $container.readinessProbe | toYaml | nindent 12 }}
+            initialDelaySeconds: 10
+            periodSeconds: 6
+            timeoutSeconds: 5
+          {{- end }}
+          resources:
+            {{- include "mozcloud-workload-core-lib.pod.container.resources" (default (dict) $container.resources) | nindent 12 }}
+          securityContext:
+            {{- include "mozcloud-workload-core-lib.pod.container.securityContext" (default (dict) $container.securityContext) | nindent 12 }}
+          {{- if $container.volumes }}
+          volumeMounts:
+            {{- range $volume := $container.volumes }}
+            - name: {{ $volume.name }}
+              mountPath: {{ $volume.path }}
+              {{- if $volume.key }}
+              subPath: {{ $volume.key }}
+              {{- end }}
+              {{- if eq $volume.type "secret" }}
+              readOnly: true
+              {{- else if $volume.readOnly }}
+              readOnly: {{ $volume.readOnly }}
+              {{- end }}
+              {{- if not (hasKey $volumes $volume.name) }}
+              {{- $_ := set $volumes $volume.name $volume }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
       securityContext:
         {{- $params := dict }}
-        {{- if hasKey ($deployment.securityContext).runAsNonRoot "runAsNonRoot" }}
+        {{- if hasKey (default (dict) ($deployment.securityContext).runAsNonRoot) "runAsNonRoot" }}
         {{- $_ := set $params "runAsNonRoot" $deployment.securityContext.runAsNonRoot }}
         {{- end }}
         {{- include "mozcloud-workload-core-lib.pod.securityContext" $params | nindent 8 }}
       {{- if $deployment.serviceAccount }}
       serviceAccountName: {{ $deployment.serviceAccount }}
       {{- end }}
-      {{- if ($deployment.nginx).enabled }}
+      {{- if or ($deployment.nginx).enabled (gt (keys $volumes | len) 0) }}
       volumes:
+        {{- if ($deployment.nginx).enabled }}
         - name: nginx-conf
           configMap:
-            {{- if (hasKey ($deployment).nginx "configMap") }}
+            {{- if (hasKey (default (dict) ($deployment).nginx) "configMap") }}
             name: {{ $deployment.nginx.configMap }}
             {{- else }}
             name: {{ $deployment.name }}-nginx
+            {{- end }}
+        {{- end }}
+        {{- range $volume_name, $volume_config := $volumes }}
+        - name: {{ $volume_name }}
+          {{- if eq $volume_config.type "configMap" }}
+          configMap:
+          {{- else if eq $volume_config.type "secret" }}
+          secret:
+          {{- end }}
+            name: {{ $volume_name }}
+        {{- end }}
       {{- end }}
 {{- if and ($deployment.nginx).enabled (not ($deployment.nginx).configMap) }}
 ---
@@ -173,7 +206,6 @@ metadata:
 data:
   nginx.conf: |
     {{ include "mozcloud-workload-stateless.nginx.conf" . | nindent 4 }}
-{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

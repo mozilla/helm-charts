@@ -4,10 +4,11 @@
 {{- if not $context.component_code }}
   {{- $_ := set $context "component_code" "cronjob" }}
 {{- end }}
+{{- $global_image := default (dict) .image }}
 {{- $cron_jobs := include "mozcloud-job-lib.config.cronJobs" . | fromYaml }}
 {{- $service_accounts := list }}
 {{- range $cron_job := $cron_jobs.cronJobs }}
-{{- $failed_message := printf "Failed to create cron job \"%s\": " $cron_job.name }}
+{{- $volumes := dict }}
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -19,7 +20,7 @@ spec:
   {{- $config := $cron_job.config }}
   successfulJobsHistoryLimit: {{ $config.jobHistory.successful }}
   failedJobsHistoryLimit: {{ $config.jobHistory.failed }}
-  schedule: '{{ required (printf "%sSchedule (schedule) is required!" $failed_message) $config.schedule }}'
+  schedule: '{{ $config.schedule }}'
   {{- if $config.suspend }}
   suspend: {{ $config.suspend }}
   {{- end }}
@@ -60,8 +61,11 @@ spec:
         spec:
           containers:
             {{- range $container := $cron_job.containers }}
-            - name: {{ required (printf "%sContainer name (cronJobs[].containers[].name) is required!" $failed_message) $container.name }}
-              image: {{ required (printf "%sContainer image (cronJobs[].containers[].image) is required!" $failed_message) $container.image }}:{{ $container.tag }}
+            - name: {{ default "job" $container.name }}
+              {{- if and (not ($container.image).repository) (not $global_image.repository) }}
+              {{- fail (printf "%sContainer image repository must be set! You can set this in either .Values.mozcloud-job.cronJobs.%s.containers[].image.repository or .Values.global.mozcloud.image.repository" $cron_job.name) }}
+              {{- end }}
+              image: {{ default ($global_image).repository ($container.image).repository }}:{{ $container.image.tag }}
               {{- if $container.command }}
               command:
                 {{- range $line := $container.command }}
@@ -101,6 +105,24 @@ spec:
                   memory: {{ $container.resources.limits.memory | quote }}
               securityContext:
                 {{- $container.securityContext | toYaml | nindent 16 }}
+              {{- if $container.volumes }}
+              volumeMounts:
+                {{- range $volume := $container.volumes }}
+                - name: {{ $volume.name }}
+                  mountPath: {{ $volume.path }}
+                  {{- if $volume.key }}
+                  subPath: {{ $volume.key }}
+                  {{- end }}
+                  {{- if eq $volume.type "secret" }}
+                  readOnly: true
+                  {{- else if $volume.readOnly }}
+                  readOnly: {{ $volume.readOnly }}
+                  {{- end }}
+                  {{- if not (hasKey $volumes $volume.name) }}
+                  {{- $_ := set $volumes $volume.name $volume }}
+                  {{- end }}
+                {{- end }}
+              {{- end }}
             {{- end }}
           {{- if $job_config.restartPolicy }}
           restartPolicy: {{ $job_config.restartPolicy }}
@@ -109,6 +131,18 @@ spec:
             {{- $job_config.securityContext | toYaml | nindent 12 }}
           {{- if ($job_config.serviceAccount).name }}
           serviceAccountName: {{ $job_config.serviceAccount.name }}
+          {{- end }}
+          {{- if gt (keys $volumes | len) 0 }}
+          volumes:
+            {{- range $volume_name, $volume_config := $volumes }}
+            - name: {{ $volume_name }}
+              {{- if eq $volume_config.type "configMap" }}
+              configMap:
+              {{- else if eq $volume_config.type "secret" }}
+              secret:
+              {{- end }}
+                name: {{ $volume_name }}
+            {{- end }}
           {{- end }}
 {{- if ($job_config.serviceAccount).create }}
 {{- $service_account := omit $job_config.serviceAccount "create" -}}

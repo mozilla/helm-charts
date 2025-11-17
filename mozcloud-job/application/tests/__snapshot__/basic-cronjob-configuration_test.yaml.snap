@@ -36,7 +36,7 @@ Configuration matches entire snapshot:
                     - sh
                     - -c
                   image: test-repo/test-image:latest
-                  name: app
+                  name: job
                   resources:
                     limits:
                       cpu: 20m

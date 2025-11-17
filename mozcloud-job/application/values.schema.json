@@ -23,6 +23,18 @@
               "description": "Environment (ie. dev, stage, prod)",
               "type": "string"
             },
+            "image": {
+              "description": "The container image repository and tag",
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              }
+            },
             "project_id": {
               "description": "GCP project ID",
               "type": "string"
@@ -38,6 +50,10 @@
     },
     "mozcloud-job-lib": {
       "type": "object"
+    },
+    "enabled": {
+      "type": "boolean",
+      "default": true
     },
     "nameOverride": {
       "type": "string"
@@ -60,6 +76,23 @@
     }
   },
   "$defs": {
+    "common": {
+      "type": "object",
+      "properties": {
+        "container": {
+          "type": "object",
+          "$ref": "#/$defs/container"
+        },
+        "cronJob": {
+          "type": "object",
+          "$ref": "#/$defs/cronJobConfig"
+        },
+        "job": {
+          "type": "object",
+          "$ref": "#/$defs/jobConfig"
+        }
+      }
+    },
     "cronjob": {
       "type": "object",
       "properties": {
@@ -68,25 +101,8 @@
         },
         "config": {
           "type": "object",
-          "properties": {
-            "jobHistory": {
-              "type": "object",
-              "properties": {
-                "successful": {
-                  "type": "integer"
-                },
-                "failed": {
-                  "type": "integer"
-                }
-              }
-            },
-            "schedule": {
-              "type": "string"
-            },
-            "suspend": {
-              "type": "boolean"
-            }
-          }
+          "$ref": "#/$defs/cronJobConfig",
+          "required": ["schedule"]
         },
         "containers": {
           "type": "array",
@@ -141,10 +157,15 @@
           "type": "string"
         },
         "image": {
-          "type": "string"
-        },
-        "tag": {
-          "type": "string"
+          "type": "object",
+          "properties": {
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          }
         },
         "command": {
           "oneOf": [
@@ -206,24 +227,24 @@
         "resources": {
           "type": "object",
           "properties": {
-            "cpu": {
+            "requests": {
               "type": "object",
               "properties": {
-                "requests": {
+                "cpu": {
                   "type": "string"
                 },
-                "limits": {
+                "memory": {
                   "type": "string"
                 }
               }
             },
-            "memory": {
+            "limits": {
               "type": "object",
               "properties": {
-                "requests": {
+                "cpu": {
                   "type": "string"
                 },
-                "limits": {
+                "memory": {
                   "type": "string"
                 }
               }
@@ -238,8 +259,59 @@
             },
             "user": {
               "type": "string"
+            },
+            "addCapabilities": {
+              "type": "array"
             }
           }
+        },
+        "volumes": {
+           "type": "array",
+           "items": {
+             "type": "object",
+             "additionalProperties": false,
+             "properties": {
+               "name": {
+                 "type": "string"
+               },
+               "type": {
+                 "type": "string",
+                 "enum": ["configMap", "secret"]
+               },
+               "path": {
+                 "type": "string"
+               },
+               "key": {
+                 "type": "string"
+               },
+               "readOnly": {
+                 "type": "boolean"
+               }
+             },
+             "required": ["name", "type", "path"]
+           }
+         }
+      }
+    },
+    "cronJobConfig": {
+      "type": "object",
+      "properties": {
+        "jobHistory": {
+          "type": "object",
+          "properties": {
+            "successful": {
+              "type": "integer"
+            },
+            "failed": {
+              "type": "integer"
+            }
+          }
+        },
+        "schedule": {
+          "type": "string"
+        },
+        "suspend": {
+          "type": "boolean"
         }
       }
     },

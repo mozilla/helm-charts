@@ -207,12 +207,18 @@ deployments: {}
 #              name: some-secret
 #
 #        #
-#        # Containers shouldn't be running with elevated privileges. This section
-#        # defines a UID & GID the container should run with.
+#        # Containers shouldn't be running with elevated privileges. This
+#        # section defines a UID & GID the container should run with.
+#        #
+#        # Additionally, by default, all OS capabilities are dropped. If
+#        # needed, you can list one or more capabilities to add to the container
+#        # in "addCapabilities".
 #        #
 #        securityContext:
 #          user: 10001
 #          group: 10001
+#          addCapabilities:
+#            - NET_BIND_SERVICE
 #
 #        #
 #        # Container resources. k8s spawns new containers only when enough room is left
@@ -262,11 +268,64 @@ deployments: {}
 #            path: /__lbheartbeat__
 #            port: unset
 #
+#        # Optionally mount volumes to the container. The supported volume types
+#        # are "configMap" (default) and "secret".
+#        #
+#        # Volumes using types "configMap" and "secret" should use names that
+#        # match either config map and external secret names created as part of
+#        # this chart or reference ConfigMap and Secret resources created
+#        # independently of this chart.
+#        #
+#        # With "configMap" volumes, you can also specify the following options:
+#        #
+#        #   "key": A key within the config map. The value of the key will be
+#        #          used as the contents of the file.
+#        #
+#        #   "path": The path within the container to which the volume should be
+#        #           mounted.
+#        #
+#        #   "readOnly": Whether or not the volume should be mounted as read
+#        #               only. Options are "true" or "false", with the default
+#        #               being "false".
+#        #
+#        # "secret" volumes use the same options above that "configMap" volumes
+#        # use with the exception of "readOnly" which is always "true" here. Any
+#        # value set for "readOnly" will be ignored in this case.
+#        #
+#        # Example:
+#        #
+#        #   volumes:
+#        #     - name: my-config-map
+#        #       type: configMap
+#        #       path: /path/to/my_file.txt
+#        #     - name: another-config-map
+#        #       type: configMap
+#        #       path: /path/to/another_file.txt
+#        #       key: another_file.txt
+#        #       readOnly: false
+#        #     - name: my-secret  # Should match an external secret/secret name.
+#        #       type: secret
+#        #       path: /path/to/secret_file.txt
+#        #     - name: another-secret
+#        #       type: secret
+#        #       path: /path/to/another_secret_file.txt
+#        #       key: another_secret_file.txt
+#        #volumes: []
+#
 #    #
 #    # Enable or disable NGINX for the deployment. If enabled, an NGINX
 #    # container will be deployed to the pod alongside the application
 #    # container. You can also specify a custom image and/or custom
 #    # ConfigMap to use for the container.
+#    #
+#    # To customize the resource allocation for the NGINX container, use the
+#    # "resources" dictionary.
+#    #
+#    # Example:
+#    #
+#    #   resources:
+#    #     cpu: 100m
+#    #     memory: 512Mi
 #    #
 #    # NGINX is enabled by default.
 #    #
@@ -274,6 +333,9 @@ deployments: {}
 #      enabled: true
 #      image: unset
 #      configMap: unset
+#      resources:
+#        cpu: 50m
+#        memory: 128Mi
 #
 #    #
 #    # Configure auto instrumentation for the OTEL Collector.
@@ -316,6 +378,20 @@ deployments: {}
 #    # specify it here.
 #    #
 #    serviceAccount:
+#
+#    #
+#    # Define the strategy Kubernetes should use when replacing pods. Below are
+#    # the options:
+#    #
+#    #   Recreate: All existing pods will be removed before replacement pods
+#    #             are deployed.
+#    #
+#    #   RollingUpdate: Pods are gradually replaced when a new version of the
+#    #                  deployment is created.
+#    #
+#    # The default value is "RollingUpdate".
+#    #
+#    strategy: RollingUpdate
 #
 
 #

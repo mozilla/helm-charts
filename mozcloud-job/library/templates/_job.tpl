@@ -4,10 +4,11 @@
 {{- if not $context.component_code }}
   {{- $_ := set $context "component_code" "job" -}}
 {{- end }}
+{{- $global_image := default (dict) .image }}
 {{- $jobs := include "mozcloud-job-lib.config.jobs" . | fromYaml }}
 {{- $service_accounts := list }}
 {{- range $job := $jobs.jobs }}
-{{- $failed_message := printf "Failed to create job \"%s\": " $job.name }}
+{{- $volumes := dict }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -68,8 +69,11 @@ spec:
     spec:
       containers:
         {{- range $container := $job.containers }}
-        - name: {{ required (printf "%sContainer name (containers[].name) is required!" $failed_message) $container.name }}
-          image: {{ required (printf "%sContainer image (containers[].image) is required!" $failed_message) $container.image }}:{{ $container.tag }}
+        - name: {{ default "job" $container.name }}
+          {{- if and (not ($container.image).repository) (not $global_image.repository) }}
+          {{- fail (printf "%sContainer image repository must be set! You can set this in either .Values.mozcloud-job.jobs.%s.containers[].image.repository or .Values.global.mozcloud.image.repository" $job.name) }}
+          {{- end }}
+          image: {{ default ($global_image).repository ($container.image).repository }}:{{ $container.image.tag }}
           {{- if $container.command }}
           command:
             {{- range $line := $container.command }}
@@ -109,6 +113,24 @@ spec:
               memory: {{ $container.resources.limits.memory | quote }}
           securityContext:
             {{- $container.securityContext | toYaml | nindent 12 }}
+          {{- if $container.volumes }}
+          volumeMounts:
+            {{- range $volume := $container.volumes }}
+            - name: {{ $volume.name }}
+              mountPath: {{ $volume.path }}
+              {{- if $volume.key }}
+              subPath: {{ $volume.key }}
+              {{- end }}
+              {{- if eq $volume.type "secret" }}
+              readOnly: true
+              {{- else if $volume.readOnly }}
+              readOnly: {{ $volume.readOnly }}
+              {{- end }}
+              {{- if not (hasKey $volumes $volume.name) }}
+              {{- $_ := set $volumes $volume.name $volume }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
         {{- end }}
       {{- if $config.restartPolicy }}
       restartPolicy: {{ $config.restartPolicy }}
@@ -117,6 +139,18 @@ spec:
         {{- $config.securityContext | toYaml | nindent 8 }}
       {{- if ($config.serviceAccount).name }}
       serviceAccountName: {{ $config.serviceAccount.name }}
+      {{- end }}
+      {{- if gt (keys $volumes | len) 0 }}
+      volumes:
+        {{- range $volume_name, $volume_config := $volumes }}
+        - name: {{ $volume_name }}
+          {{- if eq $volume_config.type "configMap" }}
+          configMap:
+          {{- else if eq $volume_config.type "secret" }}
+          secret:
+          {{- end }}
+            name: {{ $volume_name }}
+        {{- end }}
       {{- end }}
 {{- if ($config.serviceAccount).create }}
 {{- $service_account := omit $config.serviceAccount "create" -}}

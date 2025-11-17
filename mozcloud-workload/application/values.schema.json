@@ -23,6 +23,18 @@
               "description": "Environment (ie. dev, stage, prod)",
               "type": "string"
             },
+            "image": {
+              "description": "The container image repository and tag",
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              }
+            },
             "project_id": {
               "description": "GCP project ID",
               "type": "string"
@@ -75,7 +87,10 @@
           "data": {
             "type": "object",
             "additionalProperties": {
-              "type": "string"
+              "oneOf": [
+                { "type": "string" },
+                { "type": "number" }
+              ]
             }
           }
         }
@@ -192,6 +207,13 @@
                     "name": {
                       "type": "string"
                     },
+                    "k8sSecretName": {
+                      "type": "string"
+                    },
+                    "create": {
+                      "type": "boolean",
+                      "default": true
+                    },
                     "version": {
                       "type": "string",
                       "default": "latest"
@@ -246,6 +268,9 @@
                     "type": "integer",
                     "minimum": 0
                   },
+                  "addCapabilities": {
+                    "type": "array"
+                  },
                   "runAsRoot": {
                     "type": "boolean",
                     "default": false
@@ -276,9 +301,41 @@
                     }
                   }
                 }
+              },
+              "strategy": {
+                "type": "string",
+                "enum": [
+                  "Recreate",
+                  "RollingUpdate"
+                ]
+              },
+              "volumes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["configMap", "secret"]
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "readOnly": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["name", "type", "path"]
+                }
               }
-            },
-            "required": ["image"]
+            }
           },
           "disableLivenessProbe": {
             "type": "boolean",
@@ -675,6 +732,20 @@
               },
               "configMap": {
                 "type": "string"
+              },
+              "resources": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "cpu": {
+                    "type": "string",
+                    "pattern": "^(\\d+|\\d+m)$"
+                  },
+                  "memory": {
+                    "type": "string",
+                    "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+                  }
+                }
               }
             }
           },
@@ -707,8 +778,7 @@
           }
         },
         "required": [
-          "container",
-          "hosts"
+          "container"
         ]
       }
     }
@@ -807,6 +877,13 @@
                 "properties": {
                   "name": {
                     "type": "string"
+                  },
+                  "k8sSecretName": {
+                    "type": "string"
+                  },
+                  "create": {
+                    "type": "boolean",
+                    "default": true
                   },
                   "version": {
                     "type": "string",
