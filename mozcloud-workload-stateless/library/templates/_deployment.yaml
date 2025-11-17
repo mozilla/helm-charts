@@ -3,6 +3,7 @@
 {{- $deployments := include "mozcloud-workload-stateless-lib.config.deployments" . | fromYaml }}
 {{- $files := .Files }}
 {{- range $deployment := $deployments.deployments }}
+{{- $volumes := dict }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -158,39 +159,40 @@ spec:
               {{- else if $volume.readOnly }}
               readOnly: {{ $volume.readOnly }}
               {{- end }}
+              {{- if not (hasKey $volumes $volume.name) }}
+              {{- $_ := set $volumes $volume.name $volume }}
+              {{- end }}
             {{- end }}
           {{- end }}
         {{- end }}
       securityContext:
         {{- $params := dict }}
-        {{- if hasKey ($deployment.securityContext).runAsNonRoot "runAsNonRoot" }}
+        {{- if hasKey (default (dict) ($deployment.securityContext).runAsNonRoot) "runAsNonRoot" }}
         {{- $_ := set $params "runAsNonRoot" $deployment.securityContext.runAsNonRoot }}
         {{- end }}
         {{- include "mozcloud-workload-core-lib.pod.securityContext" $params | nindent 8 }}
       {{- if $deployment.serviceAccount }}
       serviceAccountName: {{ $deployment.serviceAccount }}
       {{- end }}
-      {{- if ($deployment.nginx).enabled }}
+      {{- if or ($deployment.nginx).enabled (gt (keys $volumes | len) 0) }}
       volumes:
+        {{- if ($deployment.nginx).enabled }}
         - name: nginx-conf
           configMap:
-            {{- if (hasKey ($deployment).nginx "configMap") }}
+            {{- if (hasKey (default (dict) ($deployment).nginx) "configMap") }}
             name: {{ $deployment.nginx.configMap }}
             {{- else }}
             name: {{ $deployment.name }}-nginx
-        {{- range $container := $deployment.containers }}
-        {{- $volumes := list }}
-        {{- range $volume := $container.volumes }}
-        {{- if not (has $volume.name $volumes) }}
-        - name: {{ $volume.name }}
-          {{- if eq $volume.type "configMap" }}
+            {{- end }}
+        {{- end }}
+        {{- range $volume_name, $volume_config := $volumes }}
+        - name: {{ $volume_name }}
+          {{- if eq $volume_config.type "configMap" }}
           configMap:
-          {{- else if eq $volume.type "secret" }}
+          {{- else if eq $volume_config.type "secret" }}
           secret:
           {{- end }}
-            name: {{ $volume.name }}
-        {{- end }}
-        {{- end }}
+            name: {{ $volume_name }}
         {{- end }}
       {{- end }}
 {{- if and ($deployment.nginx).enabled (not ($deployment.nginx).configMap) }}
@@ -204,7 +206,6 @@ metadata:
 data:
   nginx.conf: |
     {{ include "mozcloud-workload-stateless.nginx.conf" . | nindent 4 }}
-{{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
