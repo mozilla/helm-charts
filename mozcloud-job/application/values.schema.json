@@ -240,7 +240,33 @@
               "type": "string"
             }
           }
-        }
+        },
+        "volumes": {
+           "type": "array",
+           "items": {
+             "type": "object",
+             "additionalProperties": false,
+             "properties": {
+               "name": {
+                 "type": "string"
+               },
+               "type": {
+                 "type": "string",
+                 "enum": ["configMap", "secret"]
+               },
+               "path": {
+                 "type": "string"
+               },
+               "key": {
+                 "type": "string"
+               },
+               "readOnly": {
+                 "type": "boolean"
+               }
+             },
+             "required": ["name", "type", "path"]
+           }
+         }
       }
     },
     "jobConfig": {

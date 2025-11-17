@@ -8,6 +8,7 @@
 {{- $service_accounts := list }}
 {{- range $job := $jobs.jobs }}
 {{- $failed_message := printf "Failed to create job \"%s\": " $job.name }}
+{{- $volumes := dict }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -109,6 +110,24 @@ spec:
               memory: {{ $container.resources.limits.memory | quote }}
           securityContext:
             {{- $container.securityContext | toYaml | nindent 12 }}
+          {{- if $container.volumes }}
+          volumeMounts:
+            {{- range $volume := $container.volumes }}
+            - name: {{ $volume.name }}
+              mountPath: {{ $volume.path }}
+              {{- if $volume.key }}
+              subPath: {{ $volume.key }}
+              {{- end }}
+              {{- if eq $volume.type "secret" }}
+              readOnly: true
+              {{- else if $volume.readOnly }}
+              readOnly: {{ $volume.readOnly }}
+              {{- end }}
+              {{- if not (hasKey $volumes $volume.name) }}
+              {{- $_ := set $volumes $volume.name $volume }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
         {{- end }}
       {{- if $config.restartPolicy }}
       restartPolicy: {{ $config.restartPolicy }}
@@ -117,6 +136,18 @@ spec:
         {{- $config.securityContext | toYaml | nindent 8 }}
       {{- if ($config.serviceAccount).name }}
       serviceAccountName: {{ $config.serviceAccount.name }}
+      {{- end }}
+      {{- if gt (keys $volumes | len) 0 }}
+      volumes:
+        {{- range $volume_name, $volume_config := $volumes }}
+        - name: {{ $volume_name }}
+          {{- if eq $volume_config.type "configMap" }}
+          configMap:
+          {{- else if eq $volume_config.type "secret" }}
+          secret:
+          {{- end }}
+            name: {{ $volume_name }}
+        {{- end }}
       {{- end }}
 {{- if ($config.serviceAccount).create }}
 {{- $service_account := omit $config.serviceAccount "create" -}}
