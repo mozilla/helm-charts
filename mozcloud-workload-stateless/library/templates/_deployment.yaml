@@ -123,8 +123,10 @@ spec:
           envFrom:
             {{- $container.envFrom | toYaml | nindent 12 }}
           {{- end }}
+          {{- if $container.ports }}
           ports:
             {{- $container.ports | toYaml | nindent 12 }}
+          {{- end }}
           {{- if $container.livenessProbe }}
           livenessProbe:
             {{- $container.livenessProbe | toYaml | nindent 12 }}

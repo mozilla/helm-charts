@@ -522,9 +522,11 @@ deployments:
             {{- end }}
             port: app
         {{- end }}
+        {{- if $container.port }}
         ports:
           - name: app
             containerPort: {{ $container.port }}
+        {{- end }}
         resources:
           requests:
             cpu: {{ $container.resources.cpu }}
