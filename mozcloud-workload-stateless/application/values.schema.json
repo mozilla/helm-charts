@@ -29,6 +29,18 @@
               "description": "Environment (ie. dev, stage, prod)",
               "type": "string"
             },
+            "image": {
+              "description": "The container image repository and tag",
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              }
+            },
             "project_id": {
               "description": "GCP project ID",
               "type": "string"
@@ -314,6 +326,32 @@
                       "type": "integer"
                     }
                   }
+                }
+              },
+              "volumes": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": ["configMap", "secret"]
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "readOnly": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": ["name", "type", "path"]
                 }
               }
             }

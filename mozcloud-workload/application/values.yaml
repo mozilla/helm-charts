@@ -101,8 +101,9 @@ workloads:
       # The command a container should run as its entrypoint.
       #command: []
 
-      # A list of config map names to mount into the container. These should be
-      # defined higher up in the file under the "configMaps" key.
+      # A list of config map names to mount into the container as environment
+      # variables. These should be defined higher up in the file under the
+      # "configMaps" key.
       #
       # Format:
       #
@@ -111,7 +112,7 @@ workloads:
       #     - a-different-configmap-name
       #
       # Important: The last config map in the list will always take
-      #            precendence.
+      #            precedence.
       #configMaps: []
 
       # A dictionary of environment variables to pass to this container. This
@@ -131,9 +132,18 @@ workloads:
       #
       #   externalSecets:
       #
-      #     # The secret name should match the name of the secret in Google
-      #     # Secret Manager (GSM).
+      #       # The secret name should match the name of the secret in Google
+      #       # Secret Manager (GSM).
       #     - name: external-secret-name
+      #
+      #       # By default, the Kubernetes secret name will match the name of
+      #       # the secret in GSM. If you wish to use a different Kubernetes
+      #       # secret name, specify it here.
+      #       #k8sSecretName:
+      #
+      #       # If enabled, the ExternalSecret resource will be created. The
+      #       # default value is "true".
+      #       create: true
       #
       #       # The version of the secret to pull from GSM. The default value
       #       # is "latest".
@@ -164,6 +174,16 @@ workloads:
       # We recommend you allow Image Updater to automatically manage image tags
       # for your applications. See the link below for more details:
       # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1695449473/How+to+Configuring+your+tenant+to+use+ArgoCD
+      #
+      # If multiple workloads share an image that is managed by Image Updater,
+      # either omit this section or configure empty values, then configure your
+      # tenant file so that "image_name" and "image_tag" reflect the following:
+      #
+      #   image_name: global.mozcloud.image.repository
+      #   image_tag: global.mozcloud.image.tag
+      #
+      # See the tenant definition document for details:
+      # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/588742735/Tenant+Definition
       image:
         repository: ''
         tag: ''
@@ -239,6 +259,50 @@ workloads:
       #  #  # .Values.global.mozcloud.project_id will be used.
       #  #  projectId:
 
+      # Optionally mount volumes to the container. The supported volume types
+      # are "configMap" (default) and "secret".
+      #
+      # Volumes using types "configMap" and "secret" should use names that
+      # match either config map and external secret names created as part of
+      # this chart or reference ConfigMap and Secret resources created
+      # independently of this chart.
+      #
+      # With "configMap" volumes, you can also specify the following options:
+      #
+      #   "key": A key within the config map. The value of the key will be used
+      #          as the contents of the file.
+      #
+      #   "path": The path within the container to which the volume should be
+      #           mounted.
+      #
+      #   "readOnly": Whether or not the volume should be mounted as read only.
+      #               Options are "true" or "false", with the default being
+      #               "false".
+      #
+      # "secret" volumes use the same options above that "configMap" volumes
+      # use with the exception of "readOnly" which is always "true" here. Any
+      # value set for "readOnly" will be ignored in this case.
+      #
+      # Example:
+      #
+      #   volumes:
+      #     - name: my-config-map
+      #       type: configMap
+      #       path: /path/to/my_file.txt
+      #     - name: another-config-map
+      #       type: configMap
+      #       path: /path/to/another_file.txt
+      #       key: another_file.txt
+      #       readOnly: false
+      #     - name: my-secret  # Should match an external secret/secret name.
+      #       type: secret
+      #       path: /path/to/secret_file.txt
+      #     - name: another-secret
+      #       type: secret
+      #       path: /path/to/another_secret_file.txt
+      #       key: another_secret_file.txt
+      #volumes: []
+
     # Optionally disable HorizontalPodAutoscaler creation for workload (useful when 
     # automatic scaling is not necessary / wanted)
     #
@@ -277,7 +341,8 @@ workloads:
     #      - name: Host
     #        value: dev.my-tenant.nonprod.webservices.mozgcp.net
 
-    # Define host details in this section.
+    # Define host details in this section. This section can be omitted or set
+    # to an empty dictionary if your workload does not handle inbound traffic.
     hosts:
       # The name to use for the Gateway/Ingress and related resources. If this
       # is not changed, the workload name will be used instead.
@@ -478,8 +543,9 @@ workloads:
     #        cpu:
     #        memory:
     #
-    #      # A list of Config map names to mount into the container. These
-    #      # should be defined higher up in the file under the "configMaps" key.
+    #      # A list of config map names to mount into the container as
+    #      # environment variables. These should be defined higher up in the
+    #      # file under the "configMaps" key.
     #      #
     #      # Format:
     #      #
@@ -488,7 +554,7 @@ workloads:
     #      #     - a-different-configmap
     #      #
     #      # Important: The last config map in the list will always take
-    #      #            precendence.
+    #      #            precedence.
     #      #configMaps: []
     #
     #      # Optionally configure environment variables for your job. By
@@ -522,9 +588,18 @@ workloads:
     #      #
     #      #  # Define custom external secrets.
     #      #  customExternalSecrets:
-    #      #    # The secret name should match the name of the secret in Google
-    #      #    # Secret Manager (GSM).
+    #      #      # The secret name should match the name of the secret in
+    #      #      # Google Secret Manager (GSM).
     #      #    - name:
+    #      #
+    #      #      # By default, the Kubernetes secret name will match the name
+    #      #      # of the secret in GSM. If you wish to use a different
+    #      #      # Kubernetes secret name, specify it here.
+    #      #      #k8sSecretName:
+    #      #
+    #      #      # If enabled, the ExternalSecret resource will be created. The
+    #      #      # default value is "true".
+    #      #      create: true
     #      #
     #      #      # The version of the secret to pull from GSM. The default
     #      #      # value is "latest".
@@ -586,8 +661,9 @@ workloads:
     #        cpu:
     #        memory:
     #
-    #      # A list of Config map names to mount into the container. These
-    #      # should be defined higher up in the file under the "configMaps" key.
+    #      # A list of config map names to mount into the container as
+    #      # environment variables. These should be defined higher up in the
+    #      # file under the "configMaps" key.
     #      #
     #      # Format:
     #      #
@@ -596,7 +672,7 @@ workloads:
     #      #     - a-different-configmap
     #      #
     #      # Important: The last config map in the list will always take
-    #      #            precendence.
+    #      #            precedence.
     #      #configMaps: []
     #
     #      # Optionally configure environment variables for your job. By
@@ -630,9 +706,18 @@ workloads:
     #      #
     #      #  # Define custom external secrets.
     #      #  customExternalSecrets:
-    #      #    # The secret name should match the name of the secret in Google
-    #      #    # Secret Manager (GSM).
+    #      #      # The secret name should match the name of the secret in
+    #      #      # Google Secret Manager (GSM).
     #      #    - name:
+    #      #
+    #      #      # By default, the Kubernetes secret name will match the name
+    #      #      # of the secret in GSM. If you wish to use a different
+    #      #      # Kubernetes secret name, specify it here.
+    #      #      #k8sSecretName:
+    #      #
+    #      #      # If enabled, the ExternalSecret resource will be created. The
+    #      #      # default value is "true".
+    #      #      create: true
     #      #
     #      #      # The version of the secret to pull from GSM. The default
     #      #      # value is "latest".
