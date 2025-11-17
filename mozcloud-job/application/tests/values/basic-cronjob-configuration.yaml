@@ -4,7 +4,7 @@ cronJobs:
     config:
       schedule: '0 * * * *'  # can also be '@hourly'
     containers:
-      - name: app
-        image: test-repo/test-image
+      - image: test-repo/test-image
+        tag: latest
         command: ["sh", "-c"]
         args: ["echo", "foo", "bar"]

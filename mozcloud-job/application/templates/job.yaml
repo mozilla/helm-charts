@@ -1,5 +1,5 @@
 {{- if gt (keys (default (dict) .Values.jobs) | len) 0 }}
-{{- $params := dict "jobConfig" (dict "jobs" .Values.jobs) "Chart" .Chart "Release" .Release }}
+{{- $params := dict "common" .Values.common "jobConfig" (dict "jobs" .Values.jobs) "Chart" .Chart "Release" .Release }}
 {{- if .Values.nameOverride }}
   {{- $_ := set $params "nameOverride" .Values.nameOverride }}
 {{- end }}

@@ -45,7 +45,7 @@ tests:
           value: ["echo", "foo", "bar"]
       - equal:
           path: spec.template.spec.containers[0].name
-          value: app
+          value: job
       - exists:
           path: spec.template.spec.containers[0].resources
       - isSubset:

@@ -4,10 +4,10 @@
 {{- if not $context.component_code }}
   {{- $_ := set $context "component_code" "job" -}}
 {{- end }}
+{{- $global_image := default (dict) .image }}
 {{- $jobs := include "mozcloud-job-lib.config.jobs" . | fromYaml }}
 {{- $service_accounts := list }}
 {{- range $job := $jobs.jobs }}
-{{- $failed_message := printf "Failed to create job \"%s\": " $job.name }}
 {{- $volumes := dict }}
 ---
 apiVersion: batch/v1
@@ -69,8 +69,11 @@ spec:
     spec:
       containers:
         {{- range $container := $job.containers }}
-        - name: {{ required (printf "%sContainer name (containers[].name) is required!" $failed_message) $container.name }}
-          image: {{ required (printf "%sContainer image (containers[].image) is required!" $failed_message) $container.image }}:{{ $container.tag }}
+        - name: {{ default "job" $container.name }}
+          {{- if and (not $container.image) (not $global_image.repository) }}
+          {{- fail (printf "%sContainer image must be set! You can set this in either .Values.mozcloud-job.jobs.%s.containers[].image or .Values.global.mozcloud.image.repository" $job.name) }}
+          {{- end }}
+          image: {{ default ($global_image).repository $container.image }}:{{ $container.tag }}
           {{- if $container.command }}
           command:
             {{- range $line := $container.command }}

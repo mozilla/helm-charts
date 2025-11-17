@@ -4,4 +4,7 @@ global:
     app_code: mozcloud-test
     chart: test-chart
     env_code: dev
+    image:
+      repository: repo/path/image
+      tag: development
     project_id: moz-fx-mozcloud-test-nonprod

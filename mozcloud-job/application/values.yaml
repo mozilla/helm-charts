@@ -3,6 +3,21 @@
 # overridden by names defined at the resource level.
 #nameOverride:
 
+# Here, you can define common configurations you want to share between all jobs
+# and cron jobs. These values will be overridden if defined at the job or cron
+# job level.
+common:
+  # Common container configurations. These can be used as defaults for all job
+  # and cron job containers. See jobs[].containers below for options.
+  container: {}
+
+  # Common cron job configurations. See cronJobs.cronjob-name.config below for
+  # options.
+  cronJob: {}
+
+  # Common job configurations. See jobs.job-name.config below for options.
+  job: {}
+
 # Define your cron jobs here. These are jobs intended to be run on a schedule.
 cronJobs: {}
   # The name of your cron job. Each cron job should be specified in this
@@ -91,14 +106,18 @@ jobs: {}
   #
   #  # Details about the container(s) that need to be run for this job.
   #  containers:
-  #    - name: ""
-  #
   #      # The image should be specified in the "repo/image" format. This is
-  #      # a required field.
-  #      image: ""
+  #      # a required field if .Values.global.mozcloud.image.repository is not
+  #      # set.
+  #    - image: ""
   #
-  #      # The tag to use for this image. The default is "latest".
+  #      # The tag to use for this image. The default is "latest" if
+  #      # .Values.global.mozcloud.image.repository is not set.
   #      tag: latest
+  #
+  #      # Optionally set a name for the container. If no name is set, the
+  #      # container will be named "job".
+  #      #name: ""
   #
   #      # A command in the form of an array/list that serves as an entrypoint
   #      # to the container. This command is the default command that runs once
@@ -157,9 +176,15 @@ jobs: {}
   #       # User and/or group to use for the container SecurityContext, if
   #       # applicable. Defaults to 10001 for both user and group. Only change
   #       # this if you know what you are doing.
+  #       #
+  #       # Additionally, by default, all OS capabilities are dropped. If
+  #       # needed, you can list one or more capabilities to add to the
+  #       # container in "addCapabilities".
   #       #securityContext:
   #       #  user:
   #       #  group:
+  #       #  addCapabilities:
+  #       #    - NET_BIND_SERVICE
   #
   #       # Optionally mount volumes to the container. The supported volume
   #       # types are "configMap" (default) and "secret".

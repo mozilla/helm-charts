@@ -143,9 +143,9 @@ spec:
             timeoutSeconds: 5
           {{- end }}
           resources:
-            {{- include "mozcloud-workload-core-lib.pod.container.resources" ($container).resources | nindent 12 }}
+            {{- include "mozcloud-workload-core-lib.pod.container.resources" (default (dict) $container.resources) | nindent 12 }}
           securityContext:
-            {{- include "mozcloud-workload-core-lib.pod.container.securityContext" ($container).securityContext | nindent 12 }}
+            {{- include "mozcloud-workload-core-lib.pod.container.securityContext" (default (dict) $container.securityContext) | nindent 12 }}
           {{- if $container.volumes }}
           volumeMounts:
             {{- range $volume := $container.volumes }}

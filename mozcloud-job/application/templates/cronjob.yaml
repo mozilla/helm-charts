@@ -1,5 +1,5 @@
 {{- if gt (keys (default (dict) .Values.cronJobs) | len) 0 }}
-{{- $params := dict "cronJobConfig" (dict "cronJobs" .Values.cronJobs) "Chart" .Chart "Release" .Release }}
+{{- $params := dict "common" .Values.common "cronJobConfig" (dict "cronJobs" .Values.cronJobs) "Chart" .Chart "Release" .Release }}
 {{- if .Values.nameOverride }}
   {{- $_ := set $params "nameOverride" .Values.nameOverride }}
 {{- end }}

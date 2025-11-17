@@ -23,6 +23,18 @@
               "description": "Environment (ie. dev, stage, prod)",
               "type": "string"
             },
+            "image": {
+              "description": "The container image repository and tag",
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              }
+            },
             "project_id": {
               "description": "GCP project ID",
               "type": "string"
@@ -60,6 +72,23 @@
     }
   },
   "$defs": {
+    "common": {
+      "type": "object",
+      "properties": {
+        "container": {
+          "type": "object",
+          "$ref": "#/$defs/container"
+        },
+        "cronJob": {
+          "type": "object",
+          "$ref": "#/$defs/cronJobConfig"
+        },
+        "job": {
+          "type": "object",
+          "$ref": "#/$defs/jobConfig"
+        }
+      }
+    },
     "cronjob": {
       "type": "object",
       "properties": {
@@ -68,25 +97,8 @@
         },
         "config": {
           "type": "object",
-          "properties": {
-            "jobHistory": {
-              "type": "object",
-              "properties": {
-                "successful": {
-                  "type": "integer"
-                },
-                "failed": {
-                  "type": "integer"
-                }
-              }
-            },
-            "schedule": {
-              "type": "string"
-            },
-            "suspend": {
-              "type": "boolean"
-            }
-          }
+          "$ref": "#/$defs/cronJobConfig",
+          "required": ["schedule"]
         },
         "containers": {
           "type": "array",
@@ -238,6 +250,9 @@
             },
             "user": {
               "type": "string"
+            },
+            "addCapabilities": {
+              "type": "array"
             }
           }
         },
@@ -267,6 +282,28 @@
              "required": ["name", "type", "path"]
            }
          }
+      }
+    },
+    "cronJobConfig": {
+      "type": "object",
+      "properties": {
+        "jobHistory": {
+          "type": "object",
+          "properties": {
+            "successful": {
+              "type": "integer"
+            },
+            "failed": {
+              "type": "integer"
+            }
+          }
+        },
+        "schedule": {
+          "type": "string"
+        },
+        "suspend": {
+          "type": "boolean"
+        }
       }
     },
     "jobConfig": {

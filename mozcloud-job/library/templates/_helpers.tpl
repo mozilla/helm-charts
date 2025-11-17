@@ -79,10 +79,16 @@ Template helpers
 CronJob template helpers
 */}}
 {{- define "mozcloud-job-lib.config.cronJobs" -}}
+{{- $common_config := .common -}}
 {{- $cron_jobs := .cronJobConfig.cronJobs -}}
+{{- $global_image := default (dict) .image }}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $name, $cron_job := $cron_jobs -}}
+  {{- /* Merge cron job config with common config, if defined */ -}}
+  {{- if or $cron_job.config $common_config.cronJob -}}
+    {{- $_ := set $cron_job "config" (mergeOverwrite (default (dict) $common_config.cronJob) (default (dict) $cron_job.config)) -}}
+  {{- end -}}
   {{- $cron_job_defaults := include "mozcloud-job-lib.defaults.cronJob.config" . | fromYaml -}}
   {{- $cron_job_config := mergeOverwrite $cron_job_defaults $cron_job -}}
   {{- if $name_override -}}
@@ -99,6 +105,10 @@ CronJob template helpers
   {{- $cron_job_config = mergeOverwrite $cron_job_config $common -}}
   {{- /* Configure job defaults */ -}}
   {{- $job_defaults := include "mozcloud-job-lib.defaults.job.config" . | fromYaml -}}
+  {{- /* Merge job config with common config, if defined */ -}}
+  {{- if or $cron_job.jobConfig $common_config.job -}}
+    {{- $_ := set $cron_job "jobConfig" (mergeOverwrite (default (dict) $common_config.job) (default (dict) $cron_job.jobConfig)) -}}
+  {{- end -}}
   {{- $job_config := mergeOverwrite $job_defaults.config (default (dict) $cron_job.jobConfig) -}}
   {{- /* Configure pod securityContext */ -}}
   {{- $pod_security_context_params := dict -}}
@@ -116,8 +126,13 @@ CronJob template helpers
   {{- $containers := default (list) $cron_job_config.containers -}}
   {{- $container_output := list -}}
   {{- range $container := $containers -}}
+    {{- /* Merge container config with common config, if defined */ -}}
+    {{- $container = mergeOverwrite (default (dict) $common_config.container) $container -}}
     {{- $container_defaults := include "mozcloud-job-lib.defaults.job.container.config" . | fromYaml -}}
     {{- $container_config := mergeOverwrite $container_defaults $container -}}
+    {{- if or $container.tag ($global_image).tag -}}
+      {{- $_ = set $container_config "tag" (default (($global_image).tag) ($container.tag)) -}}
+    {{- end -}}
     {{- $resource_params := $container_config.resources -}}
     {{- $resources := include "mozcloud-workload-core-lib.pod.container.resources" $resource_params | fromYaml -}}
     {{- $_ = set $container_config "resources" $resources -}}
@@ -128,6 +143,9 @@ CronJob template helpers
     {{- end -}}
     {{- if ($container_config.securityContext).group -}}
       {{- $_ = set $container_security_context_params "group" $container_config.securityContext.group -}}
+    {{- end -}}
+    {{- if ($container_config.securityContext).addCapabilities -}}
+      {{- $_ = set $container_security_context_params "addCapabilities" $container_config.securityContext.addCapabilities -}}
     {{- end -}}
     {{- $_ = set $container_config "securityContext" (include "mozcloud-workload-core-lib.pod.container.securityContext" $container_security_context_params | fromYaml) -}}
     {{- $container_output = append $container_output $container_config -}}
@@ -143,10 +161,16 @@ CronJob template helpers
 Job template helpers
 */}}
 {{- define "mozcloud-job-lib.config.jobs" -}}
+{{- $common_config := .common -}}
 {{- $jobs := .jobConfig.jobs -}}
+{{- $global_image := default (dict) .image }}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $name, $job := $jobs -}}
+  {{- /* Merge job config with common config, if defined */ -}}
+  {{- if or $job.config $common_config.job -}}
+    {{- $_ := set $job "config" (mergeOverwrite (default (dict) $common_config.job) (default (dict) $job.config)) -}}
+  {{- end -}}
   {{- $defaults := include "mozcloud-job-lib.defaults.job.config" . | fromYaml -}}
   {{- $job_config := mergeOverwrite $defaults $job -}}
   {{- if $name_override -}}
@@ -176,8 +200,13 @@ Job template helpers
   {{- $containers := default (list) $job_config.containers -}}
   {{- $container_output := list -}}
   {{- range $container := $containers -}}
+    {{- /* Merge container config with common config, if defined */ -}}
+    {{- $container = mergeOverwrite (default (dict) $common_config.container) $container -}}
     {{- $container_defaults := include "mozcloud-job-lib.defaults.job.container.config" . | fromYaml -}}
     {{- $container_config := mergeOverwrite $container_defaults $container -}}
+    {{- if or $container.tag ($global_image).tag -}}
+      {{- $_ = set $container_config "tag" (default (($global_image).tag) ($container.tag)) -}}
+    {{- end -}}
     {{- $resource_params := $container_config.resources -}}
     {{- $resources := include "mozcloud-workload-core-lib.pod.container.resources" $resource_params | fromYaml -}}
     {{- $_ = set $container_config "resources" $resources -}}
@@ -188,6 +217,9 @@ Job template helpers
     {{- end -}}
     {{- if ($container_config.securityContext).group -}}
       {{- $_ = set $container_security_context_params "group" $container_config.securityContext.group -}}
+    {{- end -}}
+    {{- if ($container_config.securityContext).addCapabilities -}}
+      {{- $_ = set $container_security_context_params "addCapabilities" $container_config.securityContext.addCapabilities -}}
     {{- end -}}
     {{- $_ = set $container_config "securityContext" (include "mozcloud-workload-core-lib.pod.container.securityContext" $container_security_context_params | fromYaml) -}}
     {{- $container_output = append $container_output $container_config -}}

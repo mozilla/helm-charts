@@ -4,10 +4,10 @@
 {{- if not $context.component_code }}
   {{- $_ := set $context "component_code" "cronjob" }}
 {{- end }}
+{{- $global_image := default (dict) .image }}
 {{- $cron_jobs := include "mozcloud-job-lib.config.cronJobs" . | fromYaml }}
 {{- $service_accounts := list }}
 {{- range $cron_job := $cron_jobs.cronJobs }}
-{{- $failed_message := printf "Failed to create cron job \"%s\": " $cron_job.name }}
 {{- $volumes := dict }}
 ---
 apiVersion: batch/v1
@@ -20,7 +20,7 @@ spec:
   {{- $config := $cron_job.config }}
   successfulJobsHistoryLimit: {{ $config.jobHistory.successful }}
   failedJobsHistoryLimit: {{ $config.jobHistory.failed }}
-  schedule: '{{ required (printf "%sSchedule (schedule) is required!" $failed_message) $config.schedule }}'
+  schedule: '{{ $config.schedule }}'
   {{- if $config.suspend }}
   suspend: {{ $config.suspend }}
   {{- end }}
@@ -61,8 +61,11 @@ spec:
         spec:
           containers:
             {{- range $container := $cron_job.containers }}
-            - name: {{ required (printf "%sContainer name (cronJobs[].containers[].name) is required!" $failed_message) $container.name }}
-              image: {{ required (printf "%sContainer image (cronJobs[].containers[].image) is required!" $failed_message) $container.image }}:{{ $container.tag }}
+            - name: {{ default "job" $container.name }}
+              {{- if and (not $container.image) (not $global_image.repository) }}
+              {{- fail (printf "%sContainer image must be set! You can set this in either .Values.mozcloud-job.cronJobs.%s.containers[].image or .Values.global.mozcloud.image.repository" $cron_job.name) }}
+              {{- end }}
+              image: {{ default ($global_image).repository $container.image }}:{{ $container.tag }}
               {{- if $container.command }}
               command:
                 {{- range $line := $container.command }}
