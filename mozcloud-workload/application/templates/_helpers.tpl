@@ -793,13 +793,12 @@ jobs:
         {{- end }}
         {{- if or ($job_config.resources).cpu ($job_config.resources).memory }}
         resources:
+          requests:
           {{- if ($job_config.resources).cpu }}
-          cpu:
-            requests: {{ $job_config.resources.cpu }}
+            cpu: {{ $job_config.resources.cpu }}
           {{- end }}
           {{- if ($job_config.resources).memory }}
-          memory:
-            requests: {{ $job_config.resources.memory }}
+            memory: {{ $job_config.resources.memory }}
           {{- end }}
         {{- end }}
     {{- if or ($job_config.serviceAccount).useAppServiceAccount (($job_config.serviceAccount).customServiceAccount).name }}

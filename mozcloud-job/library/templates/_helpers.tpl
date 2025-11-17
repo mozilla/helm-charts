@@ -87,10 +87,10 @@ CronJob template helpers
 {{- range $name, $cron_job := $cron_jobs -}}
   {{- /* Merge cron job config with common config, if defined */ -}}
   {{- if or $cron_job.config $common_config.cronJob -}}
-    {{- $_ := set $cron_job "config" (mergeOverwrite (default (dict) $common_config.cronJob) (default (dict) $cron_job.config)) -}}
+    {{- $_ := set $cron_job "config" (mergeOverwrite ((default (dict) $common_config.cronJob) | deepCopy) ((default (dict) $cron_job.config) | deepCopy)) -}}
   {{- end -}}
   {{- $cron_job_defaults := include "mozcloud-job-lib.defaults.cronJob.config" . | fromYaml -}}
-  {{- $cron_job_config := mergeOverwrite $cron_job_defaults $cron_job -}}
+  {{- $cron_job_config := mergeOverwrite ($cron_job_defaults | deepCopy) ($cron_job | deepCopy) -}}
   {{- if $name_override -}}
     {{- $name = $name_override -}}
   {{- end -}}
@@ -107,7 +107,7 @@ CronJob template helpers
   {{- $job_defaults := include "mozcloud-job-lib.defaults.job.config" . | fromYaml -}}
   {{- /* Merge job config with common config, if defined */ -}}
   {{- if or $cron_job.jobConfig $common_config.job -}}
-    {{- $_ := set $cron_job "jobConfig" (mergeOverwrite (default (dict) $common_config.job) (default (dict) $cron_job.jobConfig)) -}}
+    {{- $_ := set $cron_job "jobConfig" (mergeOverwrite ((default (dict) $common_config.job) | deepCopy) ((default (dict) $cron_job.jobConfig) | deepCopy)) -}}
   {{- end -}}
   {{- $job_config := mergeOverwrite $job_defaults.config (default (dict) $cron_job.jobConfig) -}}
   {{- /* Configure pod securityContext */ -}}
@@ -127,9 +127,9 @@ CronJob template helpers
   {{- $container_output := list -}}
   {{- range $container := $containers -}}
     {{- /* Merge container config with common config, if defined */ -}}
-    {{- $container = mergeOverwrite (default (dict) $common_config.container) $container -}}
+    {{- $container = mergeOverwrite ((default (dict) $common_config.container) | deepCopy) $container -}}
     {{- $container_defaults := include "mozcloud-job-lib.defaults.job.container.config" . | fromYaml -}}
-    {{- $container_config := mergeOverwrite $container_defaults $container -}}
+    {{- $container_config := mergeOverwrite ($container_defaults | deepCopy) $container -}}
     {{- if or $container.tag ($global_image).tag -}}
       {{- $_ = set $container_config "tag" (default (($global_image).tag) ($container.tag)) -}}
     {{- end -}}
@@ -169,10 +169,10 @@ Job template helpers
 {{- range $name, $job := $jobs -}}
   {{- /* Merge job config with common config, if defined */ -}}
   {{- if or $job.config $common_config.job -}}
-    {{- $_ := set $job "config" (mergeOverwrite (default (dict) $common_config.job) (default (dict) $job.config)) -}}
+    {{- $_ := set $job "config" (mergeOverwrite ((default (dict) $common_config.job) | deepCopy) ((default (dict) $job.config) | deepCopy)) -}}
   {{- end -}}
   {{- $defaults := include "mozcloud-job-lib.defaults.job.config" . | fromYaml -}}
-  {{- $job_config := mergeOverwrite $defaults $job -}}
+  {{- $job_config := mergeOverwrite ($defaults | deepCopy) ($job | deepCopy) -}}
   {{- if $name_override -}}
     {{- $name = $name_override -}}
   {{- end -}}
@@ -201,9 +201,9 @@ Job template helpers
   {{- $container_output := list -}}
   {{- range $container := $containers -}}
     {{- /* Merge container config with common config, if defined */ -}}
-    {{- $container = mergeOverwrite (default (dict) $common_config.container) $container -}}
+    {{- $container = mergeOverwrite ((default (dict) $common_config.container) | deepCopy) $container -}}
     {{- $container_defaults := include "mozcloud-job-lib.defaults.job.container.config" . | fromYaml -}}
-    {{- $container_config := mergeOverwrite $container_defaults $container -}}
+    {{- $container_config := mergeOverwrite ($container_defaults | deepCopy) $container -}}
     {{- if or $container.tag ($global_image).tag -}}
       {{- $_ = set $container_config "tag" (default (($global_image).tag) ($container.tag)) -}}
     {{- end -}}

@@ -166,12 +166,12 @@ jobs: {}
   #      # Memory requests and limits must be positive numbers and use any of
   #      # the following unit types: K, Ki, M, Mi, G, Gi.
   #      resources:
-  #        cpu:
-  #          requests: 10m
-  #          #limits: 20m
-  #        memory:
-  #          requests: 64Mi
-  #          #limits: 128Mi
+  #        requests:
+  #          cpu: 10m
+  #          memory: 64Mi
+  #        limits:
+  #          cpu: 20m
+  #          memory: 128Mi
   #
   #       # User and/or group to use for the container SecurityContext, if
   #       # applicable. Defaults to 10001 for both user and group. Only change

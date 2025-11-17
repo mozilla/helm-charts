@@ -218,24 +218,24 @@
         "resources": {
           "type": "object",
           "properties": {
-            "cpu": {
+            "requests": {
               "type": "object",
               "properties": {
-                "requests": {
+                "cpu": {
                   "type": "string"
                 },
-                "limits": {
+                "memory": {
                   "type": "string"
                 }
               }
             },
-            "memory": {
+            "limits": {
               "type": "object",
               "properties": {
-                "requests": {
+                "cpu": {
                   "type": "string"
                 },
-                "limits": {
+                "memory": {
                   "type": "string"
                 }
               }
