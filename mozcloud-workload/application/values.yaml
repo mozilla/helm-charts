@@ -230,6 +230,18 @@ workloads:
       #  uid: 10001
       #  gid: 10001
       #
+      #  # By default, all OS capabilities are dropped. If needed, you can list
+      #  # one or more capabilities to add to the container here.
+      #  #
+      #  # Example:
+      #  #
+      #  #   addCapabilities:
+      #  #     - NET_BIND_SERVICE
+      #  #
+      #  # For more details, visit the page below:
+      #  # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+      #  #addCapabilities: []
+      #
       #  # By default, no containers should run as root. The few exceptions to
       #  # this rule can configure this by setting "runAsRoot" to "true".
       #  #

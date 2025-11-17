@@ -207,12 +207,18 @@ deployments: {}
 #              name: some-secret
 #
 #        #
-#        # Containers shouldn't be running with elevated privileges. This section
-#        # defines a UID & GID the container should run with.
+#        # Containers shouldn't be running with elevated privileges. This
+#        # section defines a UID & GID the container should run with.
+#        #
+#        # Additionally, by default, all OS capabilities are dropped. If
+#        # needed, you can list one or more capabilities to add to the container
+#        # in "addCapabilities".
 #        #
 #        securityContext:
 #          user: 10001
 #          group: 10001
+#          addCapabilities:
+#            - NET_BIND_SERVICE
 #
 #        #
 #        # Container resources. k8s spawns new containers only when enough room is left

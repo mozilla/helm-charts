@@ -531,11 +531,17 @@ deployments:
           requests:
             cpu: {{ $container.resources.cpu }}
             memory: {{ $container.resources.memory }}
-        {{- if or ($container.security).uid ($container.security).gid }}
+        {{- if or ($container.security).uid ($container.security).gid ($container.security).addCapabilities }}
         securityContext:
           {{- $security_context := include "mozcloud-workload.config.securityContext" $container.security | fromYaml }}
           uid: {{ $security_context.user }}
           gid: {{ $security_context.group }}
+          {{- if gt (len $container.security.addCapabilities) 0 }}
+          addCapabilities:
+            {{- range $capability := $container.security.addCapabilities }}
+            - {{ $capability }}
+            {{- end }}
+          {{- end }}
         {{- end }}
         {{- if $container.volumes }}
         volumes:
