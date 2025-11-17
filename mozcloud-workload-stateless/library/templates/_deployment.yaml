@@ -43,51 +43,6 @@ spec:
         {{- $deployment.labels | toYaml | nindent 8 }}
     spec:
       containers:
-        {{- range $container := $deployment.containers }}
-        - name: {{ $container.name }}
-          image: {{ printf "%s:%s" $container.image $container.tag }}
-          imagePullPolicy: IfNotPresent
-          {{- if $container.command }}
-          command:
-            {{- $container.command | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if $container.args }}
-          args:
-            {{- $container.args | toYaml | nindent 12 }}
-          {{- end }}
-          {{- if $container.env }}
-          env:
-            {{- range $env_var := $container.env }}
-            - name: {{ $env_var.name }}
-              value: {{ $env_var.value | quote }}
-            {{- end }}
-          {{- end }}
-          {{- if $container.envFrom }}
-          envFrom:
-            {{- $container.envFrom | toYaml | nindent 12 }}
-          {{- end }}
-          ports:
-            {{- $container.ports | toYaml | nindent 12 }}
-          {{- if $container.livenessProbe }}
-          livenessProbe:
-            {{- $container.livenessProbe | toYaml | nindent 12 }}
-            failureThreshold: 5
-            initialDelaySeconds: 10
-            periodSeconds: 6
-            timeoutSeconds: 5
-          {{- end }}
-          {{- if $container.readinessProbe }}
-          readinessProbe:
-            {{- $container.readinessProbe | toYaml | nindent 12 }}
-            initialDelaySeconds: 10
-            periodSeconds: 6
-            timeoutSeconds: 5
-          {{- end }}
-          resources:
-            {{- include "mozcloud-workload-core-lib.pod.container.resources" ($container).resources | nindent 12 }}
-          securityContext:
-            {{- include "mozcloud-workload-core-lib.pod.container.securityContext" ($container).securityContext | nindent 12 }}
-        {{- end }}
         {{- if ($deployment.nginx).enabled }}
         - name: nginx
           securityContext:
@@ -143,6 +98,51 @@ spec:
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
               readOnly: true
+        {{- end }}
+        {{- range $container := $deployment.containers }}
+        - name: {{ $container.name }}
+          image: {{ printf "%s:%s" $container.image $container.tag }}
+          imagePullPolicy: IfNotPresent
+          {{- if $container.command }}
+          command:
+            {{- $container.command | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.args }}
+          args:
+            {{- $container.args | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.env }}
+          env:
+            {{- range $env_var := $container.env }}
+            - name: {{ $env_var.name }}
+              value: {{ $env_var.value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if $container.envFrom }}
+          envFrom:
+            {{- $container.envFrom | toYaml | nindent 12 }}
+          {{- end }}
+          ports:
+            {{- $container.ports | toYaml | nindent 12 }}
+          {{- if $container.livenessProbe }}
+          livenessProbe:
+            {{- $container.livenessProbe | toYaml | nindent 12 }}
+            failureThreshold: 5
+            initialDelaySeconds: 10
+            periodSeconds: 6
+            timeoutSeconds: 5
+          {{- end }}
+          {{- if $container.readinessProbe }}
+          readinessProbe:
+            {{- $container.readinessProbe | toYaml | nindent 12 }}
+            initialDelaySeconds: 10
+            periodSeconds: 6
+            timeoutSeconds: 5
+          {{- end }}
+          resources:
+            {{- include "mozcloud-workload-core-lib.pod.container.resources" ($container).resources | nindent 12 }}
+          securityContext:
+            {{- include "mozcloud-workload-core-lib.pod.container.securityContext" ($container).securityContext | nindent 12 }}
         {{- end }}
       securityContext:
         {{- $params := dict }}

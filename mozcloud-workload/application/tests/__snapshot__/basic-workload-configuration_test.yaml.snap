@@ -36,44 +36,6 @@ Configuration matches entire snapshot:
             realm: nonprod
         spec:
           containers:
-            - envFrom:
-                - secretRef:
-                    name: mozcloud-test-secrets
-              image: test-repo/test-image:1.0.0
-              imagePullPolicy: IfNotPresent
-              livenessProbe:
-                failureThreshold: 5
-                httpGet:
-                  path: /__heartbeat__
-                  port: app
-                initialDelaySeconds: 10
-                periodSeconds: 6
-                timeoutSeconds: 5
-              name: app
-              ports:
-                - containerPort: 8000
-                  name: app
-              readinessProbe:
-                httpGet:
-                  path: /__lbheartbeat__
-                  port: app
-                initialDelaySeconds: 10
-                periodSeconds: 6
-                timeoutSeconds: 5
-              resources:
-                limits:
-                  cpu: 200m
-                  memory: 128Mi
-                requests:
-                  cpu: 100m
-                  memory: 64Mi
-              securityContext:
-                allowPrivilegeEscalation: false
-                capabilities:
-                  drop:
-                    - ALL
-                seccompProfile:
-                  type: RuntimeDefault
             - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
               imagePullPolicy: IfNotPresent
               lifecycle:
@@ -123,6 +85,44 @@ Configuration matches entire snapshot:
                   name: nginx-conf
                   readOnly: true
                   subPath: nginx.conf
+            - envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
+              image: test-repo/test-image:1.0.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__heartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                timeoutSeconds: 5
+              name: app
+              ports:
+                - containerPort: 8000
+                  name: app
+              readinessProbe:
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
           securityContext:
             runAsGroup: 10001
             runAsNonRoot: true
