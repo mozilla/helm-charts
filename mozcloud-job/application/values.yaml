@@ -161,29 +161,30 @@ jobs: {}
   #       #  user:
   #       #  group:
   #
-  #       # Optionally mount volumes to the container. The supported volume types
-  #       # are "configMap" (default) and "secret".
+  #       # Optionally mount volumes to the container. The supported volume
+  #       # types are "configMap" (default) and "secret".
   #       #
   #       # Volumes using types "configMap" and "secret" should use names that
   #       # match either config map and external secret names created as part of
   #       # this chart or reference ConfigMap and Secret resources created
   #       # independently of this chart.
   #       #
-  #       # With "configMap" volumes, you can also specify the following options:
+  #       # With "configMap" volumes, you can also specify the following
+  #       # options:
   #       #
   #       #   "key": A key within the config map. The value of the key will be
   #       #          used as the contents of the file.
   #       #
-  #       #   "path": The path within the container to which the volume should be
-  #       #           mounted.
+  #       #   "path": The path within the container to which the volume should
+  #       #           be mounted.
   #       #
   #       #   "readOnly": Whether or not the volume should be mounted as read
   #       #               only. Options are "true" or "false", with the default
   #       #               being "false".
   #       #
   #       # "secret" volumes use the same options above that "configMap" volumes
-  #       # use with the exception of "readOnly" which is always "true" here. Any
-  #       # value set for "readOnly" will be ignored in this case.
+  #       # use with the exception of "readOnly" which is always "true" here.
+  #       # Any value set for "readOnly" will be ignored in this case.
   #       #
   #       # Example:
   #       #
