@@ -145,6 +145,21 @@ spec:
             {{- include "mozcloud-workload-core-lib.pod.container.resources" ($container).resources | nindent 12 }}
           securityContext:
             {{- include "mozcloud-workload-core-lib.pod.container.securityContext" ($container).securityContext | nindent 12 }}
+          {{- if $container.volumes }}
+          volumeMounts:
+            {{- range $volume := $container.volumes }}
+            - name: {{ $volume.name }}
+              mountPath: {{ $volume.path }}
+              {{- if $volume.key }}
+              subPath: {{ $volume.key }}
+              {{- end }}
+              {{- if eq $volume.type "secret" }}
+              readOnly: true
+              {{- else if $volume.readOnly }}
+              readOnly: {{ $volume.readOnly }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
         {{- end }}
       securityContext:
         {{- $params := dict }}
@@ -163,6 +178,20 @@ spec:
             name: {{ $deployment.nginx.configMap }}
             {{- else }}
             name: {{ $deployment.name }}-nginx
+        {{- range $container := $deployment.containers }}
+        {{- $volumes := list }}
+        {{- range $volume := $container.volumes }}
+        {{- if not (has $volume.name $volumes) }}
+        - name: {{ $volume.name }}
+          {{- if eq $volume.type "configMap" }}
+          configMap:
+          {{- else if eq $volume.type "secret" }}
+          secret:
+          {{- end }}
+            name: {{ $volume.name }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
       {{- end }}
 {{- if and ($deployment.nginx).enabled (not ($deployment.nginx).configMap) }}
 ---
