@@ -547,6 +547,15 @@ deployments:
       {{- if ($workload_config.nginx).configMap }}
       configMap: {{ $workload_config.nginx.configMap }}
       {{- end }}
+      {{- if or (($workload_config.nginx).resources).cpu (($workload_config.nginx).resources).memory }}
+      resources:
+        {{- if $workload_config.nginx.resources.cpu }}
+        cpu: {{ $workload_config.nginx.resources.cpu }}
+        {{- end }}
+        {{- if $workload_config.nginx.resources.memory }}
+        memory: {{ $workload_config.nginx.resources.memory }}
+        {{- end }}
+      {{- end }}
     {{- end }}
     {{- if and (($workload_config.otel).autoInstrumentation).enabled (($workload_config.otel).autoInstrumentation).language }}
     otel:

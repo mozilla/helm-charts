@@ -783,6 +783,20 @@ workloads:
     #  # should refer to a template created outside the scope of this Helm
     #  # chart.
     #  #configMap:
+    #
+    #  # To customize the resource allocation for the NGINX container, use the
+    #  # "resources" dictionary.
+    #  #
+    #  # Example:
+    #  #
+    #  #   resources:
+    #  #     cpu: 100m
+    #  #     memory: 512Mi
+    #  #
+    #  # By default, we will allocate "50m" CPU and "128Mi" of memory.
+    #  #resources:
+    #  #  cpu: 50m
+    #  #  memory: 128Mi
 
     # Configure auto instrumentation for the OTEL Collector.
     #

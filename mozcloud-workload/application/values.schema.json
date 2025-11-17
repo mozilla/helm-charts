@@ -729,6 +729,20 @@
               },
               "configMap": {
                 "type": "string"
+              },
+              "resources": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "cpu": {
+                    "type": "string",
+                    "pattern": "^(\\d+|\\d+m)$"
+                  },
+                  "memory": {
+                    "type": "string",
+                    "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+                  }
+                }
               }
             }
           },

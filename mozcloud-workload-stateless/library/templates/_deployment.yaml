@@ -65,12 +65,10 @@ spec:
               containerPort: 8080
               protocol: TCP
           resources:
-            requests:
-              memory: 15Mi
-              cpu: 50m
-            limits:
-              memory: 256Mi
-              cpu: 100m
+            {{- $cpu := default "50m" ($deployment.nginx.resources).cpu }}
+            {{- $memory := default "128Mi" ($deployment.nginx.resources).memory }}
+            {{- $resources := dict "requests" (dict "cpu" $cpu "memory" $memory) }}
+            {{- include "mozcloud-workload-core-lib.pod.container.resources" $resources | nindent 12 }}
           readinessProbe:
             httpGet:
               {{- if le (len $deployment.containers) 1 }}

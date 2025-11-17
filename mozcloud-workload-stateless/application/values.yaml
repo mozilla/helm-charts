@@ -312,12 +312,24 @@ deployments: {}
 #    # container. You can also specify a custom image and/or custom
 #    # ConfigMap to use for the container.
 #    #
+#    # To customize the resource allocation for the NGINX container, use the
+#    # "resources" dictionary.
+#    #
+#    # Example:
+#    #
+#    #   resources:
+#    #     cpu: 100m
+#    #     memory: 512Mi
+#    #
 #    # NGINX is enabled by default.
 #    #
 #    nginx:
 #      enabled: true
 #      image: unset
 #      configMap: unset
+#      resources:
+#        cpu: 50m
+#        memory: 128Mi
 #
 #    #
 #    # Configure auto instrumentation for the OTEL Collector.

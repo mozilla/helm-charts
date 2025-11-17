@@ -212,7 +212,7 @@ tests:
               memory: 256Mi
             requests:
               cpu: 50m
-              memory: 15Mi
+              memory: 128Mi
       - isSubset:
           path: spec.template.spec.containers[0].securityContext
           content:

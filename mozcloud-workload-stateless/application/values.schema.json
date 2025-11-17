@@ -372,6 +372,17 @@
             },
             "configMap": {
               "type": "string"
+            },
+            "resources": {
+              "type": "object",
+              "properties": {
+                "cpu": {
+                  "type": "string"
+                },
+                "memory": {
+                  "type": "string"
+                }
+              }
             }
           }
         },
