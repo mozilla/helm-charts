@@ -118,6 +118,7 @@ backends:
   {{- end }}
   {{- else }}
   {{ $workload_name }}:
+    component: {{ $workload_config.component }}
     service:
       port: 8080
       targetPort: http

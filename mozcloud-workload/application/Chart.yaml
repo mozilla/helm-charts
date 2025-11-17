@@ -2,7 +2,7 @@ apiVersion: v2
 name: mozcloud-workload
 description: Opinionated application chart used to deploy MozCloud workloads and
   supporting resources
-version: 0.2.6
+version: 0.2.7
 type: application
 dependencies:
   - name: mozcloud-gateway-lib
