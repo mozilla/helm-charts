@@ -243,7 +243,7 @@ httpRoutes:
         {{- end }}
     hostnames:
       {{- range $domain := $host_config.domains }}
-      - {{ $domain }}
+      - {{ $domain | quote }}
       {{- end }}
     {{- if eq $host_config.type "internal" }}
     httpToHttpsRedirect: false
@@ -319,7 +319,7 @@ ingresses:
     hosts:
       - domains:
           {{- range $domain := $host_config.domains }}
-          - {{ $domain }}
+          - {{ $domain | quote }}
           {{- end }}
         paths:
           - path: /

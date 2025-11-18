@@ -52,7 +52,7 @@ spec:
     rules:
       {{- range $host := $ingress.hosts }}
       {{- range $domain := $host.domains }}
-      - host: {{ $domain }}
+      - host: {{ $domain | quote }}
         http:
           paths:
             {{- range $path := $host.paths }}

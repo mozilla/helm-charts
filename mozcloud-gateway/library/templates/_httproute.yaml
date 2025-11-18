@@ -22,7 +22,7 @@ spec:
   {{- if $http_route.hostnames }}
   hostnames:
     {{- range $hostname := $http_route.hostnames }}
-    - {{ $hostname }}
+    - {{ $hostname | quote }}
     {{- end }}
   {{- end }}
   rules:
@@ -69,7 +69,7 @@ spec:
       filters:
         - type: URLRewrite
           urlRewrite:
-            hostname: {{ $rule.rewrite.hostname }}
+            hostname: {{ $rule.rewrite.hostname | quote }}
             {{- if $rule.rewrite.path }}
             path:
               type: {{ $rule.rewrite.path.type }}
@@ -115,7 +115,7 @@ spec:
   {{- if $http_route.hostnames }}
   hostnames:
     {{- range $hostname := $http_route.hostnames }}
-    - {{ $hostname }}
+    - {{ $hostname | quote }}
     {{- end }}
   {{- end }}
   rules:
