@@ -118,14 +118,6 @@ spec:
             probabilistic:
               sampling_percentage: 10.0
 
-      groupbyattrs:
-        keys:
-        - job
-        - instance
-        - namespace
-        - cluster
-        - location
-
       resourcedetection:
         detectors: [env, gcp]
         timeout: 10s
@@ -155,9 +147,7 @@ spec:
           - regex: {{ $name | quote }}
           {{- end }}
         sending_queue:
-          enabled: true
-          num_consumers: 1
-          queue_size: 10000
+          batch:
       otlphttp:
         encoding: proto
         endpoint: https://telemetry.googleapis.com
@@ -179,7 +169,6 @@ spec:
           - otlp
           processors:
           - memory_limiter
-          - groupbyattrs
           - transform/collision
           - transform/aco-gke
           - batch
