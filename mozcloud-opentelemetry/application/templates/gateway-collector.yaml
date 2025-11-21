@@ -120,6 +120,8 @@ spec:
 
       groupbyattrs:
         keys:
+        - job
+        - instance
         - namespace
         - cluster
         - location
