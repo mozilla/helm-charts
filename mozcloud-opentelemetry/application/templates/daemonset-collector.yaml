@@ -108,7 +108,12 @@ spec:
           insecure: true
 
       loadbalancing/otlp:
-        routing_key: traceID
+        timeout: 10s
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
         protocol:
           otlp:
             tls:
@@ -138,7 +143,7 @@ spec:
           - memory_limiter
           - resourcedetection
           exporters:
-          - otlp
+          - loadbalancing/otlp
         traces:
           receivers:
           - otlp
