@@ -443,7 +443,7 @@ deployments:
       {{ $k }}: {{ $v }}
       {{- end }}
     containers:
-      - name: app
+      - name: {{ default "app" $container.name }}
         {{- if and (not ($container.image).repository) (not ($globals.image).repository) }}
         {{- $fail_message := printf "A fully qualified image path must be configured in either \".Values.mozcloud-workload.workloads.%s.container.image.repository\" or \".Values.global.mozcloud.image.repository\"." $workload_config.component }}
         {{- fail $fail_message }}
@@ -736,7 +736,7 @@ jobs:
       {{- end }}
       syncWave: {{ $sync_wave }}
     containers:
-      - name: job
+      - name: {{ default "job" $job_config.containerName }}
         image:
           repository: {{ default ($globals.image).repository ($job_config.image).repository }}
           tag: {{ default "latest" (default (($globals.image).tag) ($job_config.image).tag) }}

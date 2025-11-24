@@ -110,6 +110,10 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
+              "name": {
+                "type": "string",
+                "default": "app"
+              },
               "args": {
                 "oneOf": [
                   {
@@ -787,6 +791,10 @@
     "job": {
       "type": "object",
       "properties": {
+        "containerName": {
+          "type": "string",
+          "default": "job"
+        },
         "image": {
           "type": "object",
           "additionalProperties": false,

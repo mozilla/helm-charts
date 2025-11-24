@@ -56,6 +56,9 @@ workloads:
     #  my-custom-label: my-custom-value
 
     container:
+      # The name of the container. The default value is "app".
+      name: app
+
       # Arguments to pass to a container. This can be an array or a string.
       #args: []
 
@@ -674,6 +677,9 @@ workloads:
     #      # If no values are specified, a default of 1 will be applied.
     #      argo:
     #        syncWave: 1
+    #
+    #      # The name of the container. The default value is "job".
+    #      containerName: job
     #
     #      # See image, command, args, and resources configurations for
     #      # containers as a reference.
