@@ -116,7 +116,7 @@ spec:
           - name: default_probabilistic
             type: probabilistic
             probabilistic:
-              sampling_percentage: 10.0
+              sampling_percentage: 1.0
 
       resourcedetection:
         detectors: [env, gcp]
@@ -137,8 +137,13 @@ spec:
           #   instance: service.instance.id
           # Code below adds additional labels from attributes
           resource_filters:
+          - prefix: "cloud"
+          - prefix: "k8s"
           - prefix: "faas"
+          - regex: "container.id"
+          - regex: "process.pid"
           - regex: "host.name"
+          - regex: "host.id"
           # MozCloud operational labels
           - regex: "artifact_version"
           {{- $mozcloud_annotation_params := .Values.global.mozcloud }}
