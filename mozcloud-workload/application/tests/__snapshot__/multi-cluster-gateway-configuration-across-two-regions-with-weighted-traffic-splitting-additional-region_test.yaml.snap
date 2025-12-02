@@ -7,6 +7,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart

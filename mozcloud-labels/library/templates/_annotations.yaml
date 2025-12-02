@@ -10,11 +10,10 @@
 {{- /* OTEL annotations */ -}}
 {{- define "mozcloud-labels-lib.annotations.otel.fields" -}}
 {{- $labels := include "mozcloud-labels-lib.labels" . | fromYaml -}}
+app_code: {{ $labels.app_code }}
 component_code: {{ $labels.component_code }}
-domain: {{ $labels.domain }}
 env_code: {{ $labels.env_code }}
 realm: {{ $labels.realm }}
-system: {{ $labels.system }}
 {{- end -}}
 
 {{- define "mozcloud-labels-lib.annotations.otel" -}}

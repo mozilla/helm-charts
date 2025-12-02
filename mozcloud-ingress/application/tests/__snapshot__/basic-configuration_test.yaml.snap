@@ -7,6 +7,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: ingress
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
@@ -24,6 +25,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: ingress
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
@@ -46,6 +48,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: ingress
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
@@ -65,6 +68,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: ingress
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
@@ -84,6 +88,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: ingress
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart

@@ -13,18 +13,13 @@
   {{- $_ := set $context "chart" $chart -}}
 {{- end }}
 {{- $additional_labels := include "mozcloud-labels-lib.additional_labels" $context | fromYaml -}}
-{{- /*
-Change "precedence" to "shared" once we are ready to go live with the data in
-mozcloud-shared-data.
-*/}}
-{{- $params := dict "context" $context "appCode" .app_code "dataKey" "labels" "customData" $additional_labels "precedence" "local" -}}
-{{- $shared_data := include "mozcloud-shared-data-lib.smartMergeData" $params | fromYaml -}}
-{{- $kubernetes_labels := include "mozcloud-labels-lib.kubernetes_labels" (mergeOverwrite $context $shared_data) | fromYaml -}}
-{{- $merged_labels := mergeOverwrite $shared_data $kubernetes_labels -}}
+{{- $kubernetes_labels := include "mozcloud-labels-lib.kubernetes_labels" $context | fromYaml -}}
+{{- $merged_labels := mergeOverwrite $kubernetes_labels $additional_labels -}}
 {{ $merged_labels | toYaml }}
 {{- end -}}
 
 {{- define "mozcloud-labels-lib.additional_labels" -}}
+app_code: {{ .app_code }}
 component_code: {{ .component_code }}
 env_code: {{ .env_code }}
 {{- if eq .env_code "prod" }}
@@ -35,7 +30,7 @@ realm: nonprod
 {{- end -}}
 
 {{- define "mozcloud-labels-lib.kubernetes_labels" -}}
-app.kubernetes.io/name: {{ default .app_code .system }}
+app.kubernetes.io/name: {{ .app_code }}
 app.kubernetes.io/component: {{ .component_code }}
 app.kubernetes.io/managed-by: argocd
 {{- if .appVersion }}

@@ -7,6 +7,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
@@ -23,15 +24,15 @@ Configuration matches entire snapshot:
       template:
         metadata:
           annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
             resource.opentelemetry.io/component_code: web
-            resource.opentelemetry.io/domain: null
             resource.opentelemetry.io/env_code: dev
             resource.opentelemetry.io/realm: nonprod
-            resource.opentelemetry.io/system: null
           labels:
             app.kubernetes.io/component: web
             app.kubernetes.io/managed-by: argocd
             app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
             component_code: web
             env_code: dev
             helm.sh/chart: test-chart
@@ -234,6 +235,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
@@ -249,6 +251,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: externalsecret
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: externalsecret
         env_code: dev
         helm.sh/chart: test-chart
@@ -277,6 +280,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: serviceaccount
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: serviceaccount
         env_code: dev
         helm.sh/chart: test-chart
@@ -290,6 +294,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
