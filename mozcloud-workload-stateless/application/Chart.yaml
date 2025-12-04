@@ -1,7 +1,7 @@
 apiVersion: v2
 name: mozcloud-workload-stateless
 description: helm chart for building stateless workloads
-version: 0.4.12
+version: 0.4.13
 type: application
 dependencies:
   - name: mozcloud-workload-stateless-lib

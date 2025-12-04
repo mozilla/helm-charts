@@ -207,8 +207,12 @@ gateways:
     {{- if eq $host_config.type "external" }}
     tls:
       certs:
+        {{- if gt (len (default (list) $host_config.tls.certs)) 0 }}
         {{- range $cert := $host_config.tls.certs }}
         - {{ $cert }}
+        {{- end }}
+        {{- else }}
+        - {{ $globals.app_code }}-{{ $globals.realm }}-{{ $globals.env_code }}
         {{- end }}
       type: certmap
     {{- end }}

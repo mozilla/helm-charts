@@ -5,3 +5,4 @@ global:
     chart: test-chart
     env_code: dev
     project_id: moz-fx-mozcloud-test-nonprod
+    realm: nonprod

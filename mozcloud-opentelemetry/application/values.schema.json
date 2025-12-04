@@ -11,11 +11,15 @@
           "type": "object",
           "properties": {
             "app_code": {
-              "description": "Tenant's application code (eg. sumo, ads, remote-settings)",
+              "description": "Tenant's application code (eg. sumo, ads, remote-settings). This is automatically populated by Argo CD.",
+              "type": "string"
+            },
+            "artifact_id": {
+              "description": "The 8 character short revision of the Helm chart deployed by Argo CD. This is automatically populated by Argo CD.",
               "type": "string"
             },
             "chart": {
-              "description": "The name of the chart. This will match the app_code in single chart applications",
+              "description": "The name of the chart. This will match the app_code in single chart applications. This is automatically populated by Argo CD.",
               "type": "string"
             },
             "component_code": {
@@ -23,11 +27,27 @@
               "type": "string"
             },
             "env_code": {
-              "description": "Environment (ie. dev, stage, prod)",
+              "description": "Environment (ie. dev, stage, prod). This is automatically populated by Argo CD.",
               "type": "string"
             },
+            "image": {
+              "description": "The container image repository and tag. This can be managed by Argo Image Updater.",
+              "type": "object",
+              "properties": {
+                "repository": {
+                  "type": "string"
+                },
+                "tag": {
+                  "type": "string"
+                }
+              }
+            },
             "project_id": {
-              "description": "GCP project ID",
+              "description": "GCP project ID. This is automatically populated by Argo CD.",
+              "type": "string"
+            },
+            "realm": {
+              "description": "A high-level grouping of infrastructure environments that share common networking and management boundaries (ie. nonprod, prod). This is automatically populated by Argo CD.",
               "type": "string"
             }
           },
@@ -36,7 +56,8 @@
             "chart",
             "component_code",
             "env_code",
-            "project_id"
+            "project_id",
+            "realm"
           ]
         }
       }

@@ -8,3 +8,4 @@ global:
       repository: repo/path/image
       tag: development
     project_id: moz-fx-mozcloud-test-nonprod
+    realm: nonprod

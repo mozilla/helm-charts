@@ -4,3 +4,4 @@ global:
     chart: mock-chart
     env_code: dev
     project_id: moz-fx-mock-nonprod
+    realm: nonprod

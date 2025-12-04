@@ -11,8 +11,8 @@ yaml = YAML()
 
 def files_to_chart_files(file_paths: List[str]) -> Set[str]:
     """Find chart names (in Chart.yaml files) from a list of file paths.
-    - If a path is a Chart.yaml file include it directly.
-    - If the path is a values.yaml file, look for Chart.yaml in the same directory.
+    - If a path is a Chart.yaml file, include it directly.
+    - If the path is a values.yaml or values.schema.json file, look for Chart.yaml in the same directory.
     - If the path is a template file or in the templates directory, look for Chart.yaml in the parent directory.
     """
     charts: Set[Path] = set()
@@ -28,7 +28,7 @@ def files_to_chart_files(file_paths: List[str]) -> Set[str]:
             chart_yaml = Path(path) / "Chart.yaml"
         elif path.name == "Chart.yaml":
             chart_yaml = path
-        elif path.name == "values.yaml":
+        elif path.name in ["values.yaml", "values.schema.json"]:
             chart_yaml = Path(path).parent / "Chart.yaml"
         elif path.suffix == ".tpl" or "templates" in path.parts:
             chart_yaml = Path(path).parent.parent / "Chart.yaml"
