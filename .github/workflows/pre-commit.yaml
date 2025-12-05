@@ -27,11 +27,12 @@ jobs:
       - name: Update dependencies
         run: make update-dependencies
         shell: bash
+      - name: Install helm-docs
+        run: go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.14.2
+        shell: bash
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-4|${{ env.pythonLocation }}|${{ hashFiles('.pre-commit-config.yaml') }}
-      - run: uvx pre-commit install && uvx pre-commit install-hooks
-        shell: bash
       - run: uvx pre-commit run --show-diff-on-failure --color=always --all-files
         shell: bash
