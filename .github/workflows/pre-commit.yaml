@@ -28,7 +28,7 @@ jobs:
         run: make update-dependencies
         shell: bash
       - name: Install helm-docs
-        run: go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.14.2
+        run: go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.14.2 && which helm-docs
         shell: bash
       - uses: actions/cache@v4
         with:
