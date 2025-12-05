@@ -21,6 +21,10 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
+      - name: Install Helm unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git #--verify=false
+      - name: Update dependencies
+        run: make update-dependencies
       - uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
