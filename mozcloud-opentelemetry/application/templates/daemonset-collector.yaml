@@ -94,11 +94,6 @@ spec:
         limit_percentage: 65
         spike_limit_percentage: 20
 
-      batch:
-        send_batch_max_size: 200
-        send_batch_size: 200
-        timeout: 5s
-
     exporters:
       debug:
         verbosity: detailed
@@ -161,7 +156,6 @@ spec:
           - k8sattributes
           - memory_limiter
           - resourcedetection
-          - batch
           exporters:
           - loadbalancing/metrics-otlp
         traces:
@@ -172,7 +166,6 @@ spec:
           - memory_limiter
           - filter
           - resourcedetection
-          - batch
           exporters:
           - loadbalancing/traces-otlp
       telemetry:

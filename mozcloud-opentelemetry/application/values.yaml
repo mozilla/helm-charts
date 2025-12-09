@@ -9,6 +9,7 @@ global:
     component_code: mozcloud-opentelemetry
     env_code: cluster
     project_id: default
+    realm: cluster
 
 collectors:
   daemonset:

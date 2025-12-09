@@ -91,11 +91,6 @@ spec:
           # podmonitoring uses 'pod' label, so we'll standardize on that
           - set(attributes["pod"], resource.attributes["k8s.pod.name"]) where resource.attributes["k8s.pod.name"] != nil
 
-      batch:
-        send_batch_max_size: 200
-        send_batch_size: 200
-        timeout: 5s
-
       resource/gcp_project_id:
         attributes:
         - key: gcp.project_id
@@ -126,6 +121,7 @@ spec:
     exporters:
       debug:
         verbosity: detailed
+
       googlemanagedprometheus:
         metric:
           # GMP exporter automatically adds the following labels from the listed attributes
@@ -152,12 +148,15 @@ spec:
           - regex: {{ $name | quote }}
           {{- end }}
         sending_queue:
-          batch:
+          batch: {}
+
       otlphttp:
         encoding: proto
         endpoint: https://telemetry.googleapis.com
         auth:
           authenticator: googleclientauth
+        sending_queue:
+          batch: {}
 
     extensions:
       health_check:
@@ -176,7 +175,6 @@ spec:
           - memory_limiter
           - transform/collision
           - transform/aco-gke
-          - batch
           exporters:
           - googlemanagedprometheus
         metrics/collectors:
@@ -187,7 +185,6 @@ spec:
           - resourcedetection
           - transform/collision
           - transform/aco-gke
-          - batch
           exporters:
           - googlemanagedprometheus
         traces:
@@ -197,7 +194,6 @@ spec:
           - memory_limiter
           - resource/gcp_project_id
           - tail_sampling
-          - batch
           exporters:
           - otlphttp
       telemetry:
