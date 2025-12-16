@@ -64,6 +64,10 @@ workloads:
 
       # A list of optional autoscaling configurations for stateless workloads.
       autoscaling:
+        # If enabled, configure autoscaling via a HorizontalPodAutoscaler
+        # (HPA). If disabled, only 1 replica of this pod will run.
+        enabled: true
+
         # By default, we will scale pods at 60% CPU utilization, but users can
         # also configure memory and network metrics, as well thresholds for
         # each.
@@ -287,6 +291,13 @@ workloads:
       #
       strategy: RollingUpdate
 
+      # The number of seconds a pod should be retained after transitioning
+      # to the Terminating state. This is useful if one or more containers
+      # needs to perform cleanup or graceful termination before deletion.
+      #
+      # Default: 30, min: 1
+      #terminationGracePeriodSeconds: 30
+
       # Optionally mount volumes to the container. The supported volume types
       # are "configMap" (default) and "secret".
       #
@@ -331,43 +342,97 @@ workloads:
       #       key: another_secret_file.txt
       #volumes: []
 
-    # Optionally disable HorizontalPodAutoscaler creation for workload (useful when 
-    # automatic scaling is not necessary / wanted)
-    #
-    #disableHorizontalPodAutoscaler: true
+    # Health check configurations for the pod.
+    healthCheck:
+      # This section is used to configure readinessProbe section of a pod.
+      # Readiness probes are used to determine when a pod is ready to begin
+      # receiving traffic.
+      readiness:
+        # If enabled, perform health checks for the application container.
+        # Disable for worker workloads that do not require health checks (eg.
+        # celery).
+        enabled: true
 
-    # Optionally disable adding livenessProbe / readinessProbe to deployments created
-    # for workloads. This is useful when adding worker workloads (e.g. celery).
-    #
-    #disableLivenessProbe: false
-    #disableReadinessProbe: false
+        # This is typically configured to match the application container's
+        # load balancer heartbeat health check endpoint.
+        #
+        # Default: /__lbheartbeat__
+        path: /__lbheartbeat__
 
-    # Optionally specify health check endpoints for the application, metrics
-    # collection, and NGINX. The default values are listed next each of the
-    # options below.
-    #
-    #healthCheckEndpoints:
-    #  application: /__heartbeat__
-    #  loadBalancer: /__lbheartbeat__
-    #  # Custom PodMonitoring metrics not yet supported.
-    #  #metrics: /metrics
-    #
-    # Note:
-    # healthCheckEndpoints.application & healthCheckEndpoints.loadBalancer can both be
-    # strings, in which case the value is taken as the healthCheck's path directly, or
-    # a map, allowing you to set a path and httpHeaders, like shown below:
-    #
-    #healthCheckPolicies:
-    #  application:
-    #    path: /healthz/
-    #    httpHeaders:
-    #      - name: Host
-    #        value: dev.my-tenant.nonprod.webservices.mozgcp.net
-    #  loadBalancer:
-    #    path: /readiness/
-    #    httpHeaders:
-    #      - name: Host
-    #        value: dev.my-tenant.nonprod.webservices.mozgcp.net
+        # Optionally configure HTTP headers to use in health checks.
+        #
+        # Example:
+        #
+        #   httpHeaders:
+        #     - name: Host
+        #       value: dev.my-tenant.nonprod.webservices.mozgcp.net
+        httpHeaders: []
+
+        # Probe configurations for health checks. Here, you can fine tune your
+        # health checks based on the needs of your application.
+        probes:
+          # The number of seconds after a container has started before
+          # attempting to perform health checks.
+          #
+          # Default: 10
+          initialDelaySeconds: 10
+
+          # How often (in seconds) to perform the probe.
+          #
+          # Default: 6, min: 1
+          periodSeconds: 6
+
+          # The number of seconds after which the probe times out.
+          #
+          # Default: 5, min: 1
+          timeoutSeconds: 5
+
+          # Minimum consecutive successful probes for the health check to be
+          # considered successful/healthy after having failed.
+          #
+          # Default: 1, min: 1
+          successThreshold: 1
+
+          # The number of consecutive failed probes required for the health
+          # check to be considered failed/not healthy.
+          #
+          # Default: 3, min: 1
+          failureThreshold: 3
+
+      # This section is used to configure livenessProbe section of a pod.
+      # Liveness probes are used to determine that a pod that was already marked
+      # as ready continues to remain healthy and ready to receive traffic.
+      liveness:
+        # If enabled, perform health checks for the application container.
+        # Disable for worker workloads that do not require health checks (eg.
+        # celery).
+        enabled: true
+
+        # This is typically configured to match the application container's
+        # load balancer heartbeat health check endpoint.
+        #
+        # Default: /__lbheartbeat__
+        path: /__lbheartbeat__
+
+        # Optionally configure HTTP headers to use in health checks. The format
+        # matches the readiness httpHeaders above.
+        #
+        # By default, these will match the httpHeaders used in the readiness
+        # configuration section, if defined.
+        httpHeaders: []
+
+        # Probe configurations for health checks. The format matches the
+        # readiness probes above, although the values differ slightly.
+        probes:
+          initialDelaySeconds: 10
+          periodSeconds: 6
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 5
+
+      # Custom PodMonitoring metrics not yet supported.
+      #metrics:
+      #  path: /metrics
 
     # Define host details in this section. This section can be omitted or set
     # to an empty dictionary if your workload does not handle inbound traffic.

@@ -107,21 +107,24 @@ tests:
       - isSubset:
           path: spec.template.spec.containers[1].readinessProbe
           content:
+            failureThreshold: 3
             httpGet:
               path: /__lbheartbeat__
               port: app
             initialDelaySeconds: 10
             periodSeconds: 6
+            successThreshold: 1
             timeoutSeconds: 5
       - isSubset:
           path: spec.template.spec.containers[1].livenessProbe
           content:
             failureThreshold: 5
             httpGet:
-              path: /__heartbeat__
+              path: /__lbheartbeat__
               port: app
             initialDelaySeconds: 10
             periodSeconds: 6
+            successThreshold: 1
             timeoutSeconds: 5
       - equal:
           path: spec.template.spec.containers[1].name
@@ -175,7 +178,7 @@ tests:
       - isSubset:
           path: spec.template.spec.containers[0].readinessProbe
           content:
-            failureThreshold: 5
+            failureThreshold: 3
             httpGet:
               path: /__lbheartbeat__
               port: http
@@ -186,12 +189,14 @@ tests:
       - isSubset:
           path: spec.template.spec.containers[0].livenessProbe
           content:
+            failureThreshold: 5
             httpGet:
               path: /__nginxheartbeat__
               port: http
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 6
-            timeoutSeconds: 2
+            successThreshold: 1
+            timeoutSeconds: 5
       - equal:
           path: spec.template.spec.containers[0].name
           value: nginx

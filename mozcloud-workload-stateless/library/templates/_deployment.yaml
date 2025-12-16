@@ -70,30 +70,31 @@ spec:
             {{- $resources := dict "requests" (dict "cpu" $cpu "memory" $memory) }}
             {{- include "mozcloud-workload-core-lib.pod.container.resources" $resources | nindent 12 }}
           readinessProbe:
+            {{- $container := dict }}
+            {{- if ge (len $deployment.containers) 1 }}
+            {{- $container = first $deployment.containers }}
+            {{- end }}
             httpGet:
-              {{- if le (len $deployment.containers) 1 }}
-              {{- $container := first $deployment.containers }}
               {{- if (($container.readinessProbe).httpGet).httpHeaders }}
               httpHeaders:
                 {{- $container.readinessProbe.httpGet.httpHeaders | toYaml | nindent 16 }}
               {{- end }}
               path: {{ default "/__lbheartbeat__" (($container.readinessProbe).httpGet).path }}
-              {{- else }}
-              path: /__lbheartbeat__
-              {{- end }}
               port: http
-            periodSeconds: 6
-            timeoutSeconds: 5
-            successThreshold: 1
-            failureThreshold: 5
-            initialDelaySeconds: 10
+            initialDelaySeconds: {{ default 10 ($container.readinessProbe).initialDelaySeconds }}
+            periodSeconds: {{ default 6 ($container.readinessProbe).periodSeconds }}
+            timeoutSeconds: {{ default 5 ($container.readinessProbe).timeoutSeconds }}
+            successThreshold: {{ default 1 ($container.readinessProbe).successThreshold }}
+            failureThreshold: {{ default 5 ($container.readinessProbe).failureThreshold }}
           livenessProbe:
             httpGet:
               path: /__nginxheartbeat__
               port: http
-            initialDelaySeconds: 5
-            periodSeconds: 6
-            timeoutSeconds: 2
+            initialDelaySeconds: {{ default 5 ($container.livenessProbe).initialDelaySeconds }}
+            periodSeconds: {{ default 6 ($container.livenessProbe).periodSeconds }}
+            timeoutSeconds: {{ default 2 ($container.livenessProbe).timeoutSeconds }}
+            successThreshold: {{ default 1 ($container.livenessProbe).successThreshold }}
+            failureThreshold: {{ default 5 ($container.livenessProbe).failureThreshold }}
           volumeMounts:
             - name: nginx-conf
               mountPath: /etc/nginx/nginx.conf
@@ -130,17 +131,10 @@ spec:
           {{- if $container.livenessProbe }}
           livenessProbe:
             {{- $container.livenessProbe | toYaml | nindent 12 }}
-            failureThreshold: 5
-            initialDelaySeconds: 10
-            periodSeconds: 6
-            timeoutSeconds: 5
           {{- end }}
           {{- if $container.readinessProbe }}
           readinessProbe:
             {{- $container.readinessProbe | toYaml | nindent 12 }}
-            initialDelaySeconds: 10
-            periodSeconds: 6
-            timeoutSeconds: 5
           {{- end }}
           resources:
             {{- include "mozcloud-workload-core-lib.pod.container.resources" (default (dict) $container.resources) | nindent 12 }}
@@ -173,6 +167,9 @@ spec:
         {{- include "mozcloud-workload-core-lib.pod.securityContext" $params | nindent 8 }}
       {{- if $deployment.serviceAccount }}
       serviceAccountName: {{ $deployment.serviceAccount }}
+      {{- end }}
+      {{- if $deployment.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ $deployment.terminationGracePeriodSeconds }}
       {{- end }}
       {{- if or ($deployment.nginx).enabled (gt (keys $volumes | len) 0) }}
       volumes:
