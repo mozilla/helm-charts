@@ -30,6 +30,7 @@ jobs:
           pip install uv
           helm plugin install https://github.com/helm-unittest/helm-unittest.git
           make update-dependencies
+        shell: bash
 
       - name: Run unit tests
         run: make unit-tests
