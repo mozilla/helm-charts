@@ -34,7 +34,7 @@ jobs:
           enable-cache: true
 
       - name: Install Helm unittest
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version=v1.0.3 --verify=false
         shell: bash
 
       - name: Update dependencies
