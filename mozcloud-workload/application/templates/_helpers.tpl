@@ -541,7 +541,11 @@ deployments:
           {{- end }}
           {{- end }}
         {{- end }}
-        {{- if $container.port }}
+        {{- if or
+            $workload_config.hosts
+            (($workload_config.healthCheck).readiness).enabled
+            (($workload_config.healthCheck).liveness).enabled
+        }}
         ports:
           - name: app
             containerPort: {{ $container.port }}
