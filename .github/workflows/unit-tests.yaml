@@ -25,12 +25,22 @@ jobs:
       - name: Setup Helm
         uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
 
+      - name: Setup Python
+        uses: actions/setup-python@v3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Install Helm unittest
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git #--verify=false
+        shell: bash
+
       - name: Update dependencies
-        run: |-
-          pip install uv
-          helm plugin install https://github.com/helm-unittest/helm-unittest.git
-          make update-dependencies
+        run: make update-dependencies
         shell: bash
 
       - name: Run unit tests
         run: make unit-tests
+        shell: bash
