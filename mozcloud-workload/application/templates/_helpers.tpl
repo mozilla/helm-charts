@@ -388,8 +388,8 @@ hpas:
   {{- if (dig "autoscaling" "enabled" true $container) }}
   {{ $workload_name }}:
     component: {{ $workload_config.component }}
-    minReplicas: {{ $container.autoscaling.replicas.min }}
-    maxReplicas: {{ $container.autoscaling.replicas.max }}
+    minReplicas: {{ default 1 (($container.autoscaling).replicas).min }}
+    maxReplicas: {{ default 30 (($container.autoscaling).replicas).max }}
     scaleTargetRef:
       {{/*
       The following 3 lines will need to be tweaked when we officially support
@@ -399,7 +399,7 @@ hpas:
       kind: Deployment
       name: {{ $workload_name }}
     metrics:
-      {{- range $metric := $container.autoscaling.metrics }}
+      {{- range $metric := (default (list) ($container.autoscaling).metrics) }}
       {{- if eq $metric.type "network" }}
       - type: Object
         object:
