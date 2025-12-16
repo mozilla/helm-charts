@@ -922,8 +922,9 @@ serviceAccounts:
 }}
   {{- $workloads = omit $workloads "mozcloud-workload" -}}
   {{- range $name, $config := $workloads -}}
+    {{- $default_workload := index $workload_values "mozcloud-workload" -}}
     {{- /* Merge host configs with defaults */}}
-    {{- $host_values := index $workload_values "mozcloud-workload" "hosts" -}}
+    {{- $host_values := $default_workload.hosts -}}
     {{- $hosts := dict -}}
     {{- $config_hosts := default (dict) $config.hosts -}}
     {{- range $host_name, $host_config := $config_hosts -}}
@@ -939,9 +940,9 @@ serviceAccounts:
         {{- $hosts = include "mozcloud-workload.formatter.host" $helper_params | fromYaml -}}
       {{- end -}}
       {{- $_ := set $config "hosts" $hosts -}}
-      {{- $defaults := omit (index $workload_values "mozcloud-workload") "hosts" -}}
-      {{- $_ = set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
     {{- end -}}
+    {{- $defaults := omit $default_workload "hosts" -}}
+    {{- $_ := set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
 {{- end -}}
 {{- range $name, $config := $workloads -}}
