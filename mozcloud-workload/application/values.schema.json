@@ -140,6 +140,10 @@
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
+                  },
                   "metrics": {
                     "type": "array",
                     "items": {
@@ -322,6 +326,11 @@
                   "RollingUpdate"
                 ]
               },
+              "terminationGracePeriodSeconds": {
+                "type": "integer",
+                "minimum": 1,
+                "default": 30
+              },
               "volumes": {
                 "type": "array",
                 "items": {
@@ -350,90 +359,139 @@
               }
             }
           },
-          "disableLivenessProbe": {
-            "type": "boolean",
-            "default": false
-          },
-          "disableReadinessProbe": {
-            "type": "boolean",
-            "default": false
-          },
-          "disableHorizontalPodAutoscaler": {
-            "type": "boolean",
-            "default": false
-          },
-          "": {},
-          "healthCheckEndpoints": {
+          "healthCheck": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "application": {
-                "anyOf": [
-                  {
-                    "type": "string"
+              "readiness": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
                   },
-                  {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "path": {
-                        "type": "string"
-                      },
-                      "httpHeaders": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "properties": {
-                            "name": {
-                              "type": "string"
-                            },
-                            "value": {
-                              "type": "string"
-                            }
-                          }
+                  "path": {
+                    "type": "string",
+                    "default": "/__lbheartbeat__"
+                  },
+                  "httpHeaders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
                         }
                       }
                     }
+                  },
+                  "probes": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "initialDelaySeconds": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 10
+                      },
+                      "periodSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 6
+                      },
+                      "timeoutSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 5
+                      },
+                      "successThreshold": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 1
+                      },
+                      "failureThreshold": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 3
+                      }
+                    }
                   }
-                ],
-                "default": "/__heartbeat__"
+                }
               },
-              "loadBalancer": {
-                "anyOf": [
-                  {
-                    "type": "string"
+              "liveness": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
                   },
-                  {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "path": {
-                        "type": "string"
-                      },
-                      "httpHeaders": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "properties": {
-                            "name": {
-                              "type": "string"
-                            },
-                            "value": {
-                              "type": "string"
-                            }
-                          }
+                  "path": {
+                    "type": "string",
+                    "default": "/__lbheartbeat__"
+                  },
+                  "httpHeaders": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "value": {
+                          "type": "string"
                         }
                       }
                     }
+                  },
+                  "probes": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "initialDelaySeconds": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "default": 10
+                      },
+                      "periodSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 6
+                      },
+                      "timeoutSeconds": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 5
+                      },
+                      "successThreshold": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 1
+                      },
+                      "failureThreshold": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "default": 5
+                      }
+                    }
                   }
-                ],
-                "default": "/__lbheartbeat__"
+                }
               },
               "metrics": {
-                "type": "string",
-                "default": "/metrics"
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "path": {
+                    "type": "string",
+                    "default": "/metrics"
+                  }
+                }
               }
             }
           },

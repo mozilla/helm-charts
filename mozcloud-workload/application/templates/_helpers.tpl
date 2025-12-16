@@ -385,11 +385,11 @@ Autoscaling (HPAs)
 hpas:
   {{- range $workload_name, $workload_config := $workloads }}
   {{- $container := $workload_config.container }}
-  {{- if not (default false $workload_config.disableHorizontalPodAutoscaler) }}
+  {{- if (dig "autoscaling" "enabled" true $container) }}
   {{ $workload_name }}:
     component: {{ $workload_config.component }}
-    minReplicas: {{ $container.autoscaling.replicas.min }}
-    maxReplicas: {{ $container.autoscaling.replicas.max }}
+    minReplicas: {{ default 1 (($container.autoscaling).replicas).min }}
+    maxReplicas: {{ default 30 (($container.autoscaling).replicas).max }}
     scaleTargetRef:
       {{/*
       The following 3 lines will need to be tweaked when we officially support
@@ -399,7 +399,7 @@ hpas:
       kind: Deployment
       name: {{ $workload_name }}
     metrics:
-      {{- range $metric := $container.autoscaling.metrics }}
+      {{- range $metric := (default (list) ($container.autoscaling).metrics) }}
       {{- if eq $metric.type "network" }}
       - type: Object
         object:
@@ -446,6 +446,9 @@ deployments:
       {{- range $k, $v := (default (list) ($workload_config.labels)) }}
       {{ $k }}: {{ $v }}
       {{- end }}
+    {{- if $container.terminationGracePeriodSeconds }}
+    terminationGracePeriodSeconds: {{ $container.terminationGracePeriodSeconds }}
+    {{- end }}
     containers:
       - name: {{ default "app" $container.name }}
         {{- if and (not ($container.image).repository) (not ($globals.image).repository) }}
@@ -492,41 +495,57 @@ deployments:
               name: {{ $external_secret.name }}
           {{- end }}
           {{- end }}
-        {{- if not (default false $workload_config.disableLivenessProbe) }}
+        {{- if (dig "healthCheck" "liveness" "enabled" true $workload_config) }}
         livenessProbe:
           httpGet:
-            {{- if kindIs "map" (($workload_config).healthCheckEndpoints).application }}
-            {{- if ($workload_config.healthCheckEndpoints.application).httpHeaders }}
+            {{- if (($workload_config.healthCheck).liveness).httpHeaders }}
             httpHeaders:
-              {{- range $header := $workload_config.healthCheckEndpoints.application.httpHeaders }}
+              {{- range $header := $workload_config.healthCheck.liveness.httpHeaders }}
+              - name: {{ $header.name }}
+                value: {{ $header.value }}
+              {{- end }}
+            {{- else if (($workload_config.healthCheck).readiness).httpHeaders }}
+            httpHeaders:
+              {{- range $header := $workload_config.healthCheck.readiness.httpHeaders }}
               - name: {{ $header.name }}
                 value: {{ $header.value }}
               {{- end }}
             {{- end }}
-            path: {{ default "/__heartbeat__" ($workload_config.healthCheckEndpoints.application).path }}
-            {{- else if or (kindIs "string" (($workload_config).healthCheckEndpoints).application) (not (($workload_config).healthCheckEndpoints).application) }}
-            path: {{ default "/__heartbeat__" ($workload_config.healthCheckEndpoints).application }}
-            {{- end }}
+            path: {{ default "/__lbheartbeat__" $workload_config.healthCheck.liveness.path }}
             port: app
+          {{- if (($workload_config.healthCheck).liveness).probes }}
+          {{- range $k, $v := $workload_config.healthCheck.liveness.probes }}
+          {{ $k }}: {{ $v }}
+          {{- end }}
+          {{- else if (($workload_config.healthCheck).readiness).probes }}
+          {{- range $k, $v := $workload_config.healthCheck.readiness.probes }}
+          {{ $k }}: {{ $v }}
+          {{- end }}
+          {{- end }}
         {{- end }}
-        {{- if not (default false $workload_config.disableReadinessProbe) }}
+        {{- if (dig "healthCheck" "readiness" "enabled" true $workload_config) }}
         readinessProbe:
           httpGet:
-            {{- if kindIs "map" (($workload_config).healthCheckEndpoints).loadBalancer }}
-            {{- if ($workload_config.healthCheckEndpoints.loadBalancer).httpHeaders }}
+            {{- if (($workload_config.healthCheck).readiness).httpHeaders }}
             httpHeaders:
-              {{- range $header := $workload_config.healthCheckEndpoints.loadBalancer.httpHeaders }}
+              {{- range $header := $workload_config.healthCheck.readiness.httpHeaders }}
               - name: {{ $header.name }}
                 value: {{ $header.value }}
               {{- end }}
             {{- end }}
-            path: {{ default "/__lbheartbeat__" ($workload_config.healthCheckEndpoints.loadBalancer).path }}
-            {{- else if or (kindIs "string" (($workload_config).healthCheckEndpoints).loadBalancer) (not (($workload_config).healthCheckEndpoints).loadBalancer) }}
-            path: {{ default "/__lbheartbeat__" ($workload_config.healthCheckEndpoints).loadBalancer }}
-            {{- end }}
+            path: {{ default "/__lbheartbeat__" $workload_config.healthCheck.readiness.path }}
             port: app
+          {{- if (($workload_config.healthCheck).readiness).probes }}
+          {{- range $k, $v := $workload_config.healthCheck.readiness.probes }}
+          {{ $k }}: {{ $v }}
+          {{- end }}
+          {{- end }}
         {{- end }}
-        {{- if $container.port }}
+        {{- if or
+            $workload_config.hosts
+            (($workload_config.healthCheck).readiness).enabled
+            (($workload_config.healthCheck).liveness).enabled
+        }}
         ports:
           - name: app
             containerPort: {{ $container.port }}
@@ -907,8 +926,9 @@ serviceAccounts:
 }}
   {{- $workloads = omit $workloads "mozcloud-workload" -}}
   {{- range $name, $config := $workloads -}}
+    {{- $default_workload := index $workload_values "mozcloud-workload" -}}
     {{- /* Merge host configs with defaults */}}
-    {{- $host_values := index $workload_values "mozcloud-workload" "hosts" -}}
+    {{- $host_values := $default_workload.hosts -}}
     {{- $hosts := dict -}}
     {{- $config_hosts := default (dict) $config.hosts -}}
     {{- range $host_name, $host_config := $config_hosts -}}
@@ -924,9 +944,9 @@ serviceAccounts:
         {{- $hosts = include "mozcloud-workload.formatter.host" $helper_params | fromYaml -}}
       {{- end -}}
       {{- $_ := set $config "hosts" $hosts -}}
-      {{- $defaults := omit (index $workload_values "mozcloud-workload") "hosts" -}}
-      {{- $_ = set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
     {{- end -}}
+    {{- $defaults := omit $default_workload "hosts" -}}
+    {{- $_ := set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
 {{- end -}}
 {{- range $name, $config := $workloads -}}

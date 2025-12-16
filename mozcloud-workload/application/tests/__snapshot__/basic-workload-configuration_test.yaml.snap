@@ -49,19 +49,21 @@ Configuration matches entire snapshot:
                       - -c
                       - /bin/sleep 25 && /usr/sbin/nginx -s quit
               livenessProbe:
+                failureThreshold: 5
                 httpGet:
                   path: /__nginxheartbeat__
                   port: http
-                initialDelaySeconds: 5
+                initialDelaySeconds: 10
                 periodSeconds: 6
-                timeoutSeconds: 2
+                successThreshold: 1
+                timeoutSeconds: 5
               name: nginx
               ports:
                 - containerPort: 8080
                   name: http
                   protocol: TCP
               readinessProbe:
-                failureThreshold: 5
+                failureThreshold: 3
                 httpGet:
                   path: /__lbheartbeat__
                   port: http
@@ -96,21 +98,24 @@ Configuration matches entire snapshot:
               livenessProbe:
                 failureThreshold: 5
                 httpGet:
-                  path: /__heartbeat__
+                  path: /__lbheartbeat__
                   port: app
                 initialDelaySeconds: 10
                 periodSeconds: 6
+                successThreshold: 1
                 timeoutSeconds: 5
               name: app
               ports:
                 - containerPort: 8000
                   name: app
               readinessProbe:
+                failureThreshold: 3
                 httpGet:
                   path: /__lbheartbeat__
                   port: app
                 initialDelaySeconds: 10
                 periodSeconds: 6
+                successThreshold: 1
                 timeoutSeconds: 5
               resources:
                 limits:
