@@ -64,7 +64,7 @@ Configuration matches entire snapshot:
                   secretRef:
                     name: test-k8s-secret
               image: test-repo/test-image:1.0.0
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               name: test-container
               ports:
                 - containerPort: 8000

@@ -228,6 +228,7 @@ Configuration matches entire snapshot:
                 - secretRef:
                     name: mozcloud-test-secrets
               image: test-repo/test-predeployment-job-image:2.0.0
+              imagePullPolicy: Always
               name: job
               resources:
                 limits:
@@ -292,6 +293,7 @@ Configuration matches entire snapshot:
                 - secretRef:
                     name: mozcloud-test-secrets
               image: test-repo/test-postdeployment-job-image:3.0.0
+              imagePullPolicy: Always
               name: job
               resources:
                 limits:
@@ -355,7 +357,7 @@ Configuration matches entire snapshot:
         spec:
           containers:
             - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               lifecycle:
                 preStop:
                   exec:
@@ -409,7 +411,7 @@ Configuration matches entire snapshot:
                 - secretRef:
                     name: mozcloud-test-secrets
               image: test-repo/test-image:1.0.0
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: Always
               livenessProbe:
                 failureThreshold: 5
                 httpGet:

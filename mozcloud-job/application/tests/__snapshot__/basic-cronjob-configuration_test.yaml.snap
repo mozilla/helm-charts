@@ -36,6 +36,7 @@ Configuration matches entire snapshot:
                     - sh
                     - -c
                   image: test-repo/test-image:latest
+                  imagePullPolicy: Always
                   name: job
                   resources:
                     limits:

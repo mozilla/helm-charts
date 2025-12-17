@@ -74,6 +74,7 @@ spec:
           {{- fail (printf "%sContainer image repository must be set! You can set this in either .Values.mozcloud-job.jobs.%s.containers[].image.repository or .Values.global.mozcloud.image.repository" $job.name) }}
           {{- end }}
           image: {{ default ($global_image).repository ($container.image).repository }}:{{ $container.image.tag }}
+          imagePullPolicy: Always
           {{- if $container.command }}
           command:
             {{- range $line := $container.command }}

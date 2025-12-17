@@ -55,7 +55,7 @@ spec:
             capabilities:
               drop: ["ALL"]
           image: {{ default "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29" ($deployment.nginx).image }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           lifecycle:
             preStop:
               exec:
@@ -104,7 +104,7 @@ spec:
         {{- range $container := $deployment.containers }}
         - name: {{ $container.name }}
           image: {{ printf "%s:%s" $container.image $container.tag }}
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           {{- if $container.command }}
           command:
             {{- $container.command | toYaml | nindent 12 }}

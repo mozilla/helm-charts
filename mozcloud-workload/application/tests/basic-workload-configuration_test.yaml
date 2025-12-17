@@ -103,7 +103,7 @@ tests:
           value: test-repo/test-image:1.0.0
       - equal:
           path: spec.template.spec.containers[1].imagePullPolicy
-          value: IfNotPresent
+          value: Always
       - isSubset:
           path: spec.template.spec.containers[1].readinessProbe
           content:
@@ -165,7 +165,7 @@ tests:
           value: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
-          value: IfNotPresent
+          value: Always
       - isSubset:
           path: spec.template.spec.containers[0].lifecycle
           content:
