@@ -121,6 +121,31 @@ ConfigMap template helpers
 {{- end -}}
 
 {{/*
+PersistentVolumeClaim template helpers
+*/}}
+{{- define "mozcloud-workload-core-lib.config.persistentVolumes" -}}
+{{- $persistent_volume_claims := .persistentVolumes -}}
+{{- $name_override := default "" .nameOverride -}}
+{{- $output := list -}}
+{{- range $name, $pvc := $persistent_volume_claims -}}
+  {{- $pvc_config := $pvc | deepCopy -}}
+  {{- /* Configure name and labels */ -}}
+  {{- $labels := default (dict) $pvc_config.labels -}}
+  {{- $params := dict "config" $pvc_config "context" ($ | deepCopy) "labels" $labels -}}
+  {{- $common := include "mozcloud-workload-core-lib.config.common" $params | fromYaml -}}
+  {{- $pvc_config = mergeOverwrite $pvc_config $common -}}
+  {{- if $name_override }}
+    {{- $name = $name_override }}
+  {{- end }}
+  {{- $_ := set $pvc_config "name" $name }}
+  {{- $output = append $output $pvc_config -}}
+{{- end -}}
+{{- $persistent_volume_claims = dict "persistentVolumes" $output -}}
+{{ $persistent_volume_claims | toYaml }}
+{{- end -}}
+
+
+{{/*
 ExternalSecret template helpers
 */}}
 {{- define "mozcloud-workload-core-lib.config.externalSecrets" -}}

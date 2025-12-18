@@ -20,3 +20,6 @@ dependencies:
   - name: mozcloud-workload-stateless-lib
     version: 0.4.31
     repository: file://../../mozcloud-workload-stateless/library
+  - name: mozcloud-workload-core-lib
+    version: 0.6.15
+    repository: file://../../mozcloud-workload-core/library

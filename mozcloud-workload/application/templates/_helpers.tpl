@@ -841,6 +841,28 @@ jobs:
 {{- end -}}
 
 {{/*
+Persistent volume claims
+*/}}
+{{- define "mozcloud-workload.config.persistentVolumes" -}}
+{{- $globals := .Values.global.mozcloud -}}
+{{- $workloads := .workloads -}}
+persistentVolumes:
+  {{- range $workload_name, $workload_config := $workloads }}
+  {{- $volumes := include "mozcloud-workload.formatter.volumes" (dict "workload" $workload_config) | fromYaml }}
+  {{- range $volume_name, $volume_config := $volumes.volumes }}
+  {{- if and (eq $volume_config.type "persistentVolumeClaim") $volume_config.create }}
+  {{ $volume_name }}:
+    component: {{ $workload_config.component }}
+    size: {{ $volume_config.size }}
+    storageClassName: {{ $volume_config.storageClassName }}
+    accessModes: 
+    {{ $volume_config.accessModes | toYaml | nindent 6 }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+{{- end }}
+
+{{/*
 Formatting helpers
 */}}
 {{- define "mozcloud-workload.formatter.host" -}}
@@ -956,6 +978,34 @@ serviceAccounts:
   {{- end -}}
 {{- end -}}
 {{ $workloads | toYaml }}
+{{- end -}}
+
+{{/* Volume config formatter */}}
+{{- define "mozcloud-workload.formatter.volumes" -}}
+{{- $volumes := dict -}}
+{{- $workload := .workload -}}
+{{- /* First, pull volumes from workload */ -}}
+{{- range $container_volume := default (list) $workload.container.volumes -}}
+  {{- if not (hasKey $volumes $container_volume.name) -}}
+    {{- $_ := set $volumes $container_volume.name $container_volume -}}
+  {{- end -}}
+{{- end -}}
+{{- /* Next, pull volumes from jobs */ -}}
+{{- range $job_type := list "preDeployment" "postDeployment" -}}
+  {{- $jobs := default (dict) $workload.jobs -}}
+  {{- if index $jobs $job_type -}}
+    {{- $job := index $workload.jobs $job_type -}}
+    {{- $job_volumes := default (list) ($job.volumes) -}}
+    {{- range $job_volume := $job_volumes -}}
+      {{- if not (hasKey $volumes $job_volume.name) -}}
+        {{- $_ := set $volumes $job_volume.name $job_volume -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- /* Finally, reformat back into the expected format for the parent function */ -}}
+volumes:
+  {{- $volumes | toYaml | nindent 2 }}
 {{- end -}}
 
 {{/*

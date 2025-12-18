@@ -299,12 +299,12 @@ workloads:
       #terminationGracePeriodSeconds: 30
 
       # Optionally mount volumes to the container. The supported volume types
-      # are "configMap" (default) and "secret".
+      # are "configMap" (default), "secret" and "persistentVolumeClaim".
       #
-      # Volumes using types "configMap" and "secret" should use names that
-      # match either config map and external secret names created as part of
-      # this chart or reference ConfigMap and Secret resources created
-      # independently of this chart.
+      # Volumes should use names that match either config map, external secret, 
+      # or persistent volume claim names created as part of and external secret 
+      # names created as part of this chart or reference ConfigMap, PersistentVolumeClaim 
+      # and Secret resources created independently of this chart.
       #
       # With "configMap" volumes, you can also specify the following options:
       #
@@ -322,6 +322,21 @@ workloads:
       # use with the exception of "readOnly" which is always "true" here. Any
       # value set for "readOnly" will be ignored in this case.
       #
+      # "persistentVolumeClaim" volumes support additional options that allow the creation
+      # of PVCs as part of the workload definition. These options include:
+      # 
+      #   "create": Boolean value that indicates whether a PVC should be created
+      #             for this volume. Default is "false".
+      # 
+      #   "size": The size of the volume to create (e.g. "10Gi"). Required if
+      #           "create" is set to "true".
+      # 
+      #   "accessModes": A list of access modes for the volume. Required if
+      #                  "create" is set to "true". Example values include:
+      #                  "ReadWriteOnce", "ReadOnlyMany", and "ReadWriteMany".
+      # 
+      #   "storageClassName": The storage class to use for the volume. Optional.
+      #
       # Example:
       #
       #   volumes:
@@ -336,10 +351,15 @@ workloads:
       #     - name: my-secret  # Should match an external secret/secret name.
       #       type: secret
       #       path: /path/to/secret_file.txt
-      #     - name: another-secret
-      #       type: secret
-      #       path: /path/to/another_secret_file.txt
-      #       key: another_secret_file.txt
+      #     - name: my-pvc-volume
+      #       type: persistentVolumeClaim
+      #       path: /path/to/mount
+      #       create: true
+      #       size: 10Gi
+      #       accessModes:
+      #         - ReadWriteOnce
+      #       storageClassName: standard
+      # 
       #volumes: []
 
     # Health check configurations for the pod.

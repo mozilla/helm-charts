@@ -145,12 +145,17 @@ spec:
       volumes:
         {{- range $volume_name, $volume_config := $volumes }}
         - name: {{ $volume_name }}
+          {{- if eq $volume_config.type "persistentVolumeClaim" }}
+          persistentVolumeClaim:
+            claimName: {{ $volume_name }}
+          {{- else }}
           {{- if eq $volume_config.type "configMap" }}
           configMap:
           {{- else if eq $volume_config.type "secret" }}
           secret:
           {{- end }}
             name: {{ $volume_name }}
+          {{- end }}
         {{- end }}
       {{- end }}
 {{- if ($config.serviceAccount).create }}

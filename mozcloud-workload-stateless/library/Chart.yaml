@@ -9,5 +9,5 @@ dependencies:
     repository: file://../../mozcloud-labels/library
 
   - name: mozcloud-workload-core-lib
-    version: 0.6.14
+    version: 0.6.15
     repository: file://../../mozcloud-workload-core/library

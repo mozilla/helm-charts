@@ -57,4 +57,15 @@ Pod Monitorings
 {{- $_ := set $label_params "component_code" "podmonitoring" }}
 {{- $_ = set $params "podMonitorings" $pod_monitorings.podMonitorings }}
 {{ include "mozcloud-workload-stateless-lib.podMonitoring" (mergeOverwrite $params $label_params) }}
+
+{{- /*
+Persistent Volumes
+*/}}
+{{- $persistent_volumes := include "mozcloud-workload.config.persistentVolumes" $helper_params | fromYaml }}
+{{- range $volume_name, $volume_config := $persistent_volumes.persistentVolumes }}
+{{- $_ := set $label_params "component_code" $volume_config.component }}
+{{- $_ = set $params "persistentVolumes" (mergeOverwrite (dict $volume_name (omit $volume_config "component")) (default (dict) $params.persistentVolumes)) }}
+{{- end }}
+{{ include "mozcloud-workload-core-lib.persistentVolumes" (mergeOverwrite $params $label_params) }}
+
 {{- end }}

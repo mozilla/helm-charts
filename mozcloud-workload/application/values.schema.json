@@ -97,8 +97,12 @@
             "type": "object",
             "additionalProperties": {
               "oneOf": [
-                { "type": "string" },
-                { "type": "number" }
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
               ]
             }
           }
@@ -169,7 +173,10 @@
                           "description": "Only applicable when type=network"
                         }
                       },
-                      "required": ["type", "threshold"]
+                      "required": [
+                        "type",
+                        "threshold"
+                      ]
                     }
                   },
                   "replicas": {
@@ -236,7 +243,9 @@
                       "default": "latest"
                     }
                   },
-                  "required": ["name"]
+                  "required": [
+                    "name"
+                  ]
                 }
               },
               "image": {
@@ -342,7 +351,11 @@
                     },
                     "type": {
                       "type": "string",
-                      "enum": ["configMap", "secret"]
+                      "enum": [
+                        "configMap",
+                        "secret",
+                        "persistentVolumeClaim"
+                      ]
                     },
                     "path": {
                       "type": "string"
@@ -352,9 +365,49 @@
                     },
                     "readOnly": {
                       "type": "boolean"
+                    },
+                    "create": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "accessModes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "enum": [
+                          "ReadWriteOnce",
+                          "ReadOnlyMany",
+                          "ReadWriteMany"
+                        ]
+                      },
+                      "default": "ReadWriteOnce"
+                    },
+                    "size": {
+                      "type": "string",
+                      "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+                    },
+                    "storageClassName": {
+                      "type": "string"
                     }
                   },
-                  "required": ["name", "type", "path"]
+                  "required": [
+                    "name",
+                    "type",
+                    "path"
+                  ],
+                  "if": {
+                    "properties": {
+                      "type": {
+                        "const": "persistentVolumeClaim"
+                      }
+                    }
+                  },
+                  "then": {
+                    "required": [
+                      "accessModes",
+                      "size"
+                    ]
+                  }
                 }
               }
             }
@@ -543,8 +596,12 @@
                                 },
                                 "port": {
                                   "anyOf": [
-                                    { "type": "string" },
-                                    { "type": "number" }
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    }
                                   ]
                                 },
                                 "weight": {
@@ -579,8 +636,12 @@
                           },
                           "targetPort": {
                             "anyOf": [
-                              {"type": "number"},
-                              {"type": "string"}
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              }
                             ]
                           },
                           "createServiceExport": {
@@ -624,8 +685,12 @@
                           },
                           "port": {
                             "anyOf": [
-                              { "type": "string" },
-                              { "type": "number" }
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "number"
+                              }
                             ]
                           },
                           "targetRef": {
@@ -647,7 +712,10 @@
                 },
                 "api": {
                   "type": "string",
-                  "enum": ["gateway", "ingress"],
+                  "enum": [
+                    "gateway",
+                    "ingress"
+                  ],
                   "default": "gateway"
                 },
                 "multiCluster": {
@@ -656,7 +724,10 @@
                 },
                 "type": {
                   "type": "string",
-                  "enum": ["internal", "external"],
+                  "enum": [
+                    "internal",
+                    "external"
+                  ],
                   "default": "external"
                 },
                 "tls": {
@@ -675,7 +746,11 @@
                     },
                     "type": {
                       "type": "string",
-                      "enum": ["certmap", "ManagedCertificate", "pre-shared"],
+                      "enum": [
+                        "certmap",
+                        "ManagedCertificate",
+                        "pre-shared"
+                      ],
                       "default": "certmap"
                     }
                   }
@@ -704,7 +779,11 @@
                       }
                     },
                     "logSampleRate": {
-                      "type": ["number", "integer", "string"],
+                      "type": [
+                        "number",
+                        "integer",
+                        "string"
+                      ],
                       "default": 10
                     },
                     "timeoutSec": {
@@ -721,8 +800,12 @@
                         },
                         "port": {
                           "anyOf": [
-                            { "type": "string" },
-                            { "type": "number" }
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "number"
+                            }
                           ]
                         },
                         "host": {
@@ -733,7 +816,9 @@
                   }
                 }
               },
-              "required": ["domains"]
+              "required": [
+                "domains"
+              ]
             }
           },
           "jobs": {
@@ -749,7 +834,11 @@
                     "type": "object",
                     "additionalProperties": {
                       "type": "object",
-                      "allOf": [{ "$ref": "#/$defs/job" }],
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/job"
+                        }
+                      ],
                       "properties": {
                         "argo": {
                           "type": "object",
@@ -772,7 +861,11 @@
                 "type": "object",
                 "additionalProperties": {
                   "type": "object",
-                  "allOf": [{ "$ref": "#/$defs/job" }],
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/job"
+                    }
+                  ],
                   "properties": {
                     "argo": {
                       "type": "object",
@@ -850,6 +943,36 @@
         },
         "required": [
           "container"
+        ]
+      }
+    },
+    "persistentVolumes": {
+      "type": "object",
+      "description": "PersistentVolumeClaims available to workloads/jobs",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "accessModes": {
+            "type": "string",
+            "enum": [
+              "ReadWriteOnce",
+              "ReadOnlyMany",
+              "ReadWriteMany"
+            ],
+            "default": "ReadWriteOnce"
+          },
+          "size": {
+            "type": "string",
+            "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+          },
+          "storageClassName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessModes",
+          "size"
         ]
       }
     }
@@ -965,7 +1088,9 @@
                     "default": "latest"
                   }
                 },
-                "required": ["name"]
+                "required": [
+                  "name"
+                ]
               }
             }
           }
@@ -986,7 +1111,8 @@
                   "type": "string"
                 },
                 "create": {
-                  "type": "boolean", "default": true
+                  "type": "boolean",
+                  "default": true
                 },
                 "gcpServiceAccount": {
                   "type": "object",

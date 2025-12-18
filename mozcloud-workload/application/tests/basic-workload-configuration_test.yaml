@@ -81,13 +81,31 @@ tests:
           value: mozcloud-test
       - lengthEqual:
           path: spec.template.spec.volumes
-          count: 1
+          count: 4
       - isSubset:
           path: spec.template.spec.volumes[0]
           content:
             configMap:
               name: test-service-nginx
             name: nginx-conf
+      - isSubset:
+          path: spec.template.spec.volumes[1]
+          content:
+            configMap:
+              name: test-service-configmap
+            name: test-service-configmap
+      - isSubset:
+          path: spec.template.spec.volumes[2]
+          content:
+            persistentVolumeClaim:
+              claimName: test-service-pvc
+            name: test-service-pvc
+      - isSubset:
+          path: spec.template.spec.volumes[3]
+          content:
+            secret:
+              name: test-service-secret
+            name: test-service-secret
   - it: Deployment (app container) is configured correctly
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
