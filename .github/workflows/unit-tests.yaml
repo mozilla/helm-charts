@@ -1,12 +1,10 @@
 ---
 name: run unit tests
 on:
-  pull_request:
-    types:
-      - opened
-      - closed
-      - synchronize
-      - reopened
+  pull_request: {}
+  push:
+    branches: main
+    tags: '*'
 
 jobs:
   unit-tests:
@@ -41,6 +39,5 @@ jobs:
         run: make update-dependencies
         shell: bash
 
-      - name: Run unit tests
-        run: make unit-tests
+      - run: uvx pre-commit run --show-diff-on-failure --color=always --all-files
         shell: bash
