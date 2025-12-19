@@ -1,6 +1,8 @@
 # mozcloud-workload
 
-This chart can be used to build a MozCloud workload. It's an opinionated bundle that loads a bunch of templates from other MozCloud library charts, e.g. from [mozcloud-workload-stateless-lib](../../mozcloud-workload-stateless/library) or [mozcloud-gateway-lib](../../mozcloud-gateway/library), enabling developers to deploy workloads to MozCloud fast, while maintaining best practices and secure defaults.
+![Version: 0.3.4](https://img.shields.io/badge/Version-0.3.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+
+Opinionated application chart used to deploy MozCloud workloads and supporting resources
 
 ## Usage
 
@@ -17,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-workload
-    version: ~0.1.3
+    version: ~0.3.4
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -28,3 +30,63 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 > [!TIP]
 > We're building OCI artifacts automatically with [GHA](/.github/workflows/auto-push-tag-helm-charts.yaml). When a new artifact has been built, we add a matching [tag](https://github.com/mozilla/helm-charts/tags) to this repo as well. Use this to find out about available chart versions and/or to browse the chart's code for a specific version.
+
+## Requirements
+
+| Repository | Name | Version |
+|------------|------|---------|
+| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.20 |
+| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.4.15 |
+| file://../../mozcloud-job/library | mozcloud-job-lib | 0.5.5 |
+| file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.11 |
+| file://../../mozcloud-workload-core/library | mozcloud-workload-core-lib | 0.6.15 |
+| file://../../mozcloud-workload-stateless/library | mozcloud-workload-stateless-lib | 0.4.31 |
+
+## Values
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| configMaps | object | `{}` |  |
+| enabled | bool | `true` |  |
+| workloads.mozcloud-workload.component | string | `""` |  |
+| workloads.mozcloud-workload.container.autoscaling.enabled | bool | `true` |  |
+| workloads.mozcloud-workload.container.autoscaling.metrics[0].threshold | int | `60` |  |
+| workloads.mozcloud-workload.container.autoscaling.metrics[0].type | string | `"cpu"` |  |
+| workloads.mozcloud-workload.container.autoscaling.replicas.max | int | `30` |  |
+| workloads.mozcloud-workload.container.autoscaling.replicas.min | int | `1` |  |
+| workloads.mozcloud-workload.container.image.repository | string | `""` |  |
+| workloads.mozcloud-workload.container.image.tag | string | `""` |  |
+| workloads.mozcloud-workload.container.name | string | `"app"` |  |
+| workloads.mozcloud-workload.container.port | int | `8000` |  |
+| workloads.mozcloud-workload.container.resources.cpu | string | `"100m"` |  |
+| workloads.mozcloud-workload.container.resources.memory | string | `"64Mi"` |  |
+| workloads.mozcloud-workload.container.strategy | string | `"RollingUpdate"` |  |
+| workloads.mozcloud-workload.healthCheck.liveness.enabled | bool | `true` |  |
+| workloads.mozcloud-workload.healthCheck.liveness.httpHeaders | list | `[]` |  |
+| workloads.mozcloud-workload.healthCheck.liveness.path | string | `"/__lbheartbeat__"` |  |
+| workloads.mozcloud-workload.healthCheck.liveness.probes.failureThreshold | int | `5` |  |
+| workloads.mozcloud-workload.healthCheck.liveness.probes.initialDelaySeconds | int | `10` |  |
+| workloads.mozcloud-workload.healthCheck.liveness.probes.periodSeconds | int | `6` |  |
+| workloads.mozcloud-workload.healthCheck.liveness.probes.successThreshold | int | `1` |  |
+| workloads.mozcloud-workload.healthCheck.liveness.probes.timeoutSeconds | int | `5` |  |
+| workloads.mozcloud-workload.healthCheck.readiness.enabled | bool | `true` |  |
+| workloads.mozcloud-workload.healthCheck.readiness.httpHeaders | list | `[]` |  |
+| workloads.mozcloud-workload.healthCheck.readiness.path | string | `"/__lbheartbeat__"` |  |
+| workloads.mozcloud-workload.healthCheck.readiness.probes.failureThreshold | int | `3` |  |
+| workloads.mozcloud-workload.healthCheck.readiness.probes.initialDelaySeconds | int | `10` |  |
+| workloads.mozcloud-workload.healthCheck.readiness.probes.periodSeconds | int | `6` |  |
+| workloads.mozcloud-workload.healthCheck.readiness.probes.successThreshold | int | `1` |  |
+| workloads.mozcloud-workload.healthCheck.readiness.probes.timeoutSeconds | int | `5` |  |
+| workloads.mozcloud-workload.hosts.name.addresses | list | `[]` |  |
+| workloads.mozcloud-workload.hosts.name.api | string | `"gateway"` |  |
+| workloads.mozcloud-workload.hosts.name.domains[0] | string | `"example.com"` |  |
+| workloads.mozcloud-workload.hosts.name.httpRoutes.createHttpRoutes | bool | `true` |  |
+| workloads.mozcloud-workload.hosts.name.tls.certs | list | `[]` |  |
+| workloads.mozcloud-workload.hosts.name.tls.create | bool | `true` |  |
+| workloads.mozcloud-workload.hosts.name.tls.type | string | `"certmap"` |  |
+| workloads.mozcloud-workload.hosts.name.type | string | `"external"` |  |
+| workloads.mozcloud-workload.otel.autoInstrumentation.enabled | bool | `false` |  |
+| workloads.mozcloud-workload.otel.autoInstrumentation.language | string | `""` |  |
+
+----------------------------------------------
+Autogenerated from chart metadata using [helm-docs v1.14.2](https://github.com/norwoodj/helm-docs/releases/v1.14.2)

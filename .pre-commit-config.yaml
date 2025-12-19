@@ -26,3 +26,9 @@ repos:
         files: '^.*\/(application|library)\/.*(\.yaml|\.tpl)$'
         language: system
         pass_filenames: false
+  - repo: https://github.com/norwoodj/helm-docs
+    rev: v1.14.2
+    hooks:
+      - id: helm-docs
+        args:
+          - --template-files=./_README.md.gotmpl

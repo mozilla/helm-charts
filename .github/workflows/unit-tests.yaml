@@ -31,6 +31,16 @@ jobs:
         with:
           enable-cache: true
 
+      - name: Install helm-docs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo norwoodj/helm-docs v1.14.2 --pattern 'helm-docs_*_Linux_x86_64.tar.gz' --output /tmp/helm-docs.tar.gz
+          tar -xzf /tmp/helm-docs.tar.gz --directory /usr/local/bin helm-docs
+          chmod +x /usr/local/bin/helm-docs
+          rm /tmp/helm-docs.tar.gz
+        shell: bash
+
       - name: Install Helm unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version=v1.0.3 --verify=false
         shell: bash
