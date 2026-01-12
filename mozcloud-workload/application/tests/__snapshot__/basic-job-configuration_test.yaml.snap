@@ -462,7 +462,7 @@ Configuration matches entire snapshot:
   11: |
     apiVersion: v1
     data:
-      nginx.conf: |
+      nginx.conf: |2
         # The nginx docker container has ln -sf /dev/stderr /var/log/nginx/error.log
         error_log  /var/log/nginx/error.log warn;
         pid        /tmp/nginx.pid;
@@ -582,7 +582,10 @@ Configuration matches entire snapshot:
     spec:
       dataFrom:
         - extract:
+            conversionStrategy: Default
+            decodingStrategy: None
             key: dev-gke-app-secrets
+            metadataPolicy: None
             version: latest
       refreshInterval: 5m
       secretStoreRef:
