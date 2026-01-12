@@ -582,7 +582,10 @@ Configuration matches entire snapshot:
     spec:
       dataFrom:
         - extract:
+            conversionStrategy: Default
+            decodingStrategy: None
             key: dev-gke-app-secrets
+            metadataPolicy: None
             version: latest
       refreshInterval: 5m
       secretStoreRef:

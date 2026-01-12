@@ -30,7 +30,10 @@ tests:
           path: spec.dataFrom
           content:
             extract:
+              conversionStrategy: Default
+              decodingStrategy: None
               key: dev-gke-app-secrets
+              metadataPolicy: None
               version: latest
       - equal:
           path: spec.refreshInterval
