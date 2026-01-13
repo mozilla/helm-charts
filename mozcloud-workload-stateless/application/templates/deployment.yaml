@@ -10,7 +10,7 @@
     {{- $_ := set $deployments $name (mergeOverwrite (index $.Values.deployments "name") $config) }}
   {{- end }}
 {{- end }}
-{{- $params := dict "deployments" $deployments }}
+{{- $params := dict "deployments" $deployments "configMaps" .Values.configMaps }}
 {{- $label_params := include "mozcloud-workload-stateless.labelParams" . | fromYaml }}
 {{- include "mozcloud-workload-stateless-lib.deployment" (mergeOverwrite $params $label_params) }}
 {{- end }}

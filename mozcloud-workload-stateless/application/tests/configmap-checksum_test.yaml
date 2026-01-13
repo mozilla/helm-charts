@@ -1,0 +1,47 @@
+---
+suite: "mozcloud-workload-stateless: ConfigMap checksum annotation"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+  appVersion: 1.16.0
+values:
+  - values/globals.yaml
+  - values/configmap-checksum.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Deployment pod template has checksum annotation for configMap volume
+    template: deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-deployment
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+          pattern: ^[a-f0-9]{64}$
+  - it: Checksum annotation changes when configMap data changes
+    template: deployment.yaml
+    set:
+      configMaps:
+        test-config-volume:
+          data:
+            config.json: |
+              {
+                "key": "different-value",
+                "number": 99
+              }
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-deployment
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+      - notEqual:
+          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+          # This is the checksum from the original values
+          value: 8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4
