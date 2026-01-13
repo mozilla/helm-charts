@@ -1,0 +1,35 @@
+---
+component: web
+
+configMaps:
+  # This is a config map that will be mounted as a volume
+  test-config-volume:
+    data:
+      config.json: |
+        {
+          "key": "value",
+          "number": 42
+        }
+
+deployments:
+  test-deployment:
+    containers:
+      - name: test-container
+        image: test-repo/test-image
+        tag: 1.0.0
+        # Mount the configMap as a volume
+        volumes:
+          - name: test-config-volume
+            type: configMap
+            path: /etc/config
+            readOnly: true
+        ports:
+          - name: app
+            containerPort: 8000
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: "1"
+            memory: 1Gi

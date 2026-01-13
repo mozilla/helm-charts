@@ -1,0 +1,67 @@
+---
+suite: "mozcloud-workload: ConfigMap checksum annotation"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+  appVersion: 1.16.0
+values:
+  - values/globals.yaml
+  - values/configmap-checksum.yaml
+templates:
+  - workload.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Deployment pod template has checksum annotation for configMap volume
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-service-configmap"]
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/configmap-test-service-configmap"]
+          pattern: ^[a-f0-9]{64}$
+  - it: Checksum annotation changes when configMap data changes
+    set:
+      configMaps:
+        test-service-configmap:
+          data:
+            config.json: |
+              {
+                "key": "different-value",
+                "number": 99
+              }
+            settings.txt: |
+              FOO=changed
+              BAZ=modified
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-service-configmap"]
+      - notEqual:
+          path: spec.template.metadata.annotations["checksum/configmap-test-service-configmap"]
+          # This is the checksum from the original values
+          value: 8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4
+  - it: Deployment without configMap volumes should not have checksum annotations
+    set:
+      workloads:
+        test-service:
+          component: web
+          container:
+            image:
+              repository: test-repo/test-image
+              tag: 1.0.0
+            volumes: []
+      configMaps: {}
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-service-configmap"]

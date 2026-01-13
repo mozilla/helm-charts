@@ -16,6 +16,7 @@ Deployments
 {{- range $deployment_name, $deployment_config := $deployments.deployments }}
 {{- $_ := set $label_params "component_code" $deployment_config.component }}
 {{- $_ = set $params "deployments" (dict $deployment_name (omit $deployment_config "component")) }}
+{{- $_ = set $params "configMaps" $.Values.configMaps }}
 {{ include "mozcloud-workload-stateless-lib.deployment" (mergeOverwrite $params $label_params) }}
 {{- end }}
 
