@@ -4,6 +4,14 @@
 {{- $files := .Files }}
 {{- range $deployment := $deployments.deployments }}
 {{- $volumes := dict }}
+{{- /* Pre-populate volumes from all containers for annotation checksum calculation */}}
+{{- range $container := $deployment.containers }}
+  {{- range $volume := $container.volumes }}
+    {{- if not (hasKey $volumes $volume.name) }}
+      {{- $_ := set $volumes $volume.name $volume }}
+    {{- end }}
+  {{- end }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -37,7 +45,21 @@ spec:
       {{- end }}
       {{- /* Note: pod annotations will automatically include resource annotations for OTEL */}}
       {{- $annotation_params := dict "annotations" $otel_annotations "context" ($ | deepCopy) "type" "pod" }}
-      {{- $annotations := include "mozcloud-workload-core-lib.config.annotations" $annotation_params | fromYaml }}
+      {{- $base_annotations := include "mozcloud-workload-core-lib.config.annotations" $annotation_params | fromYaml }}
+      {{- /* Add checksum annotation for configmaps to trigger rolling updates when configmap changes */}}
+      {{- $configmap_checksums := dict }}
+      {{- if gt (keys $volumes | len) 0 }}
+        {{- range $volume_name, $volume_config := $volumes }}
+          {{- if eq $volume_config.type "configMap" }}
+            {{- $configmap_data := index (default (dict) $.configMaps) $volume_name }}
+            {{- if $configmap_data }}
+              {{- $checksum_key := printf "checksum/configmap-%s" $volume_name }}
+              {{- $_ := set $configmap_checksums $checksum_key ($configmap_data | toYaml | sha256sum) }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- $annotations := mergeOverwrite (default (dict) $base_annotations) $configmap_checksums }}
       {{- if $annotations }}
       annotations:
         {{- $annotations | toYaml | nindent 8 }}
