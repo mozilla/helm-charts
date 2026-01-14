@@ -12,6 +12,12 @@
     {{- end }}
   {{- end }}
 {{- end }}
+{{- /* Add nginx configmap volume if nginx is enabled */}}
+{{- if ($deployment.nginx).enabled }}
+  {{- $nginx_configmap_name := default (printf "%s-nginx" $deployment.name) ($deployment.nginx).configMap }}
+  {{- $nginx_volume := dict "type" "configMap" }}
+  {{- $_ := set $volumes $nginx_configmap_name $nginx_volume }}
+{{- end }}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -194,6 +200,10 @@ spec:
       terminationGracePeriodSeconds: {{ $deployment.terminationGracePeriodSeconds }}
       {{- end }}
       {{- if or ($deployment.nginx).enabled (gt (keys $volumes | len) 0) }}
+      {{- $nginx_configmap_name := dict "value" "" }}
+      {{- if ($deployment.nginx).enabled }}
+        {{- $_ := set $nginx_configmap_name "value" (default (printf "%s-nginx" $deployment.name) ($deployment.nginx).configMap) }}
+      {{- end }}
       volumes:
         {{- if ($deployment.nginx).enabled }}
         - name: nginx-conf
@@ -205,6 +215,15 @@ spec:
             {{- end }}
         {{- end }}
         {{- range $volume_name, $volume_config := $volumes }}
+        {{- /* Skip nginx configmap volume since it's already added as nginx-conf above */}}
+        {{- $skip := dict "value" false }}
+        {{- if and ($deployment.nginx).enabled (eq $volume_config.type "configMap") }}
+          {{- $nginx_name := default (printf "%s-nginx" $deployment.name) ($deployment.nginx).configMap }}
+          {{- if eq $volume_name $nginx_name }}
+            {{- $_ := set $skip "value" true }}
+          {{- end }}
+        {{- end }}
+        {{- if not $skip.value }}
         - name: {{ $volume_name }}
           {{- if eq $volume_config.type "persistentVolumeClaim" }}
           persistentVolumeClaim:
@@ -217,6 +236,7 @@ spec:
           {{- end }}
             name: {{ $volume_name }}
           {{- end }}
+        {{- end }}
         {{- end }}
       {{- end }}
 {{- if and ($deployment.nginx).enabled (not ($deployment.nginx).configMap) }}

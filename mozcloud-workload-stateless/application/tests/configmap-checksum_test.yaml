@@ -8,12 +8,23 @@ chart:
   appVersion: 1.16.0
 values:
   - values/globals.yaml
-  - values/configmap-checksum.yaml
+  - values/configmap-checksum-nginx.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
       - notFailedTemplate: {}
-  - it: Deployment pod template has checksum annotation for configMap volume
+  - it: Deployment pod template has checksum annotation for nginx configMap
+    template: deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-deployment
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
+          pattern: ^[a-f0-9]{64}$
+  - it: Deployment pod template has checksum annotation for regular container configMap
     template: deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
@@ -24,7 +35,45 @@ tests:
       - matchRegex:
           path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
           pattern: ^[a-f0-9]{64}$
-  - it: Checksum annotation changes when configMap data changes
+  - it: Both nginx and container configMap checksums are present
+    template: deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-deployment
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+  - it: Nginx configMap checksum changes when nginx config data changes
+    template: deployment.yaml
+    set:
+      configMaps:
+        my-nginx-configmap:
+          data:
+            nginx.conf: |
+              events {
+                  worker_connections 2048;
+              }
+              http {
+                  server {
+                      listen 8080;
+                      location / {
+                          proxy_pass http://localhost:9000;
+                      }
+                  }
+              }
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-deployment
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
+      - notEqual:
+          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
+          # This should be different from the original checksum
+          value: da39a3ee5e6b4b0d3255bfef95601890afd80709
+  - it: Container configMap checksum changes when configMap data changes
     template: deployment.yaml
     set:
       configMaps:
@@ -44,4 +93,4 @@ tests:
       - notEqual:
           path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
           # This is the checksum from the original values
-          value: 8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4
+          value: 51cab7485bdc05cda8793deab66f191d4b4f5bf6d4d9176ee5145dc948324449

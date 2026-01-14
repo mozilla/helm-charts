@@ -1,8 +1,9 @@
 ---
+enabled: true
 component: web
 
 configMaps:
-  # This is a config map that will be mounted as a volume
+  # This is a config map that will be mounted as a volume by a regular container
   test-config-volume:
     data:
       config.json: |
@@ -10,9 +11,28 @@ configMaps:
           "key": "value",
           "number": 42
         }
+  # This is a custom nginx configmap
+  my-nginx-configmap:
+    data:
+      nginx.conf: |
+        events {
+            worker_connections 1024;
+        }
+        http {
+            server {
+                listen 8080;
+                location / {
+                    proxy_pass http://localhost:8000;
+                }
+            }
+        }
 
 deployments:
   test-deployment:
+    nginx:
+      enabled: "true"
+      # Using a custom configmap for nginx
+      configMap: my-nginx-configmap
     containers:
       - name: test-container
         image: test-repo/test-image
