@@ -492,7 +492,7 @@ deployments:
           {{- if $container.externalSecrets }}
           {{- range $external_secret := $container.externalSecrets }}
           - secretRef:
-              name: {{ $external_secret.name }}
+              name: {{ default $external_secret.name $external_secret.k8sSecretName }}
           {{- end }}
           {{- end }}
         {{- if (dig "healthCheck" "liveness" "enabled" true $workload_config) }}
@@ -625,7 +625,7 @@ externalSecrets:
     gsm:
       secret: {{ .Values.global.mozcloud.env_code }}-gke-app-secrets
   {{- range $workload_name, $workload_config := $workloads }}
-  {{- $external_secrets := include "mozcloud-workload.formatter.externalSecrets" $workload_config | fromYaml }}
+  {{- $external_secrets := include "mozcloud-workload.formatter.externalSecrets" (dict "workload" $workload_config) | fromYaml }}
   {{- range $external_secret := $external_secrets.secrets }}
   {{- if (default true $external_secret.create) }}
   {{- $k8s_secret_name := default $external_secret.name $external_secret.k8sSecretName }}
@@ -889,9 +889,9 @@ Formatting helpers
 {{- $secrets := dict -}}
 {{- $workload := .workload -}}
 {{- /* First, pull secrets from workload */ -}}
-{{- range $workload_secret := default (list) $workload.externalSecrets -}}
-  {{- if not hasKey $secrets $workload_secret.name -}}
-    {{- $_ := set $secrets $workload_secret.name $workload_secret.version -}}
+{{- range $workload_secret := default (list) $workload.container.externalSecrets -}}
+  {{- if not (hasKey $secrets $workload_secret.name) -}}
+    {{- $_ := set $secrets $workload_secret.name $workload_secret -}}
   {{- end -}}
 {{- end -}}
 {{- /* Next, pull secrets from jobs */ -}}
@@ -902,16 +902,15 @@ Formatting helpers
     {{- $job_secrets := default (list) ($job.externalSecrets).customExternalSecrets -}}
     {{- range $job_secret := $job_secrets -}}
       {{- if not hasKey $secrets $job_secret.name -}}
-        {{- $_ := set $secrets $job_secret.name $job_secret.version -}}
+        {{- $_ := set $secrets $job_secret.name $job_secret -}}
       {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- /* Finally, reformat back into the expected format for the parent function */ -}}
 secrets:
-  {{- range $secret_name, $secret_version := $secrets }}
-  - name: {{ $secret_name }}
-    version: {{ $secret_version }}
+  {{- range $secret_name, $secret_config := $secrets }}
+  - {{ $secret_config | toYaml | nindent 4 }}
   {{- end }}
 {{- end -}}
 
