@@ -758,73 +758,73 @@ jobs:
       {{- end }}
       {{- end }}
       syncWave: {{ $sync_wave }}
-    containers:
-      - name: {{ default "job" $job_config.containerName }}
-        image:
-          repository: {{ default ($globals.image).repository ($job_config.image).repository }}
-          tag: {{ default "latest" (default (($globals.image).tag) ($job_config.image).tag) }}
-        {{- if $job_config.command }}
-        command:
-          {{- range $line := $job_config.command }}
-          - {{ $line | quote }}
-          {{- end }}
+    container:
+      name: {{ default "job" $job_config.containerName }}
+      image:
+        repository: {{ default ($globals.image).repository ($job_config.image).repository }}
+        tag: {{ default "latest" (default (($globals.image).tag) ($job_config.image).tag) }}
+      {{- if $job_config.command }}
+      command:
+        {{- range $line := $job_config.command }}
+        - {{ $line | quote }}
         {{- end }}
-        {{- if $job_config.args }}
-        args:
-          {{- range $line := $job_config.args }}
-          - {{ $line | quote }}
+      {{- end }}
+      {{- if $job_config.args }}
+      args:
+        {{- range $line := $job_config.args }}
+        - {{ $line | quote }}
+        {{- end }}
+      {{- end }}
+      {{- if or
+        ($job_config.envVars).customVars
+        (default true ($job_config.envVars).useAppEnvVars)
+      }}
+      {{- $merged_vars := mergeOverwrite
+        (default (dict) $workload_config.container.envVars)
+        (default (dict) ($job_config.envVars).customVars)
+      }}
+      env:
+        {{- range $env_var_key, $env_var_val := $merged_vars }}
+        - name: {{ $env_var_key }}
+          value: {{ $env_var_val }}
+        {{- end }}
+      {{- end }}
+      {{- if or
+        $job_config.configMaps
+        (not (default false ($job_config.externalSecrets).disableAppExternalSecrets))
+        ($job_config.externalSecrets).customExternalSecrets
+      }}
+      envFrom:
+        {{- if $job_config.configMaps }}
+        configMaps:
+          {{- range $config_map := $job_config.configMaps }}
+          - {{ $config_map }}
           {{- end }}
         {{- end }}
         {{- if or
-          ($job_config.envVars).customVars
-          (default true ($job_config.envVars).useAppEnvVars)
-        }}
-        {{- $merged_vars := mergeOverwrite
-          (default (dict) $workload_config.container.envVars)
-          (default (dict) ($job_config.envVars).customVars)
-        }}
-        env:
-          {{- range $env_var_key, $env_var_val := $merged_vars }}
-          - name: {{ $env_var_key }}
-            value: {{ $env_var_val }}
-          {{- end }}
-        {{- end }}
-        {{- if or
-          $job_config.configMaps
           (not (default false ($job_config.externalSecrets).disableAppExternalSecrets))
           ($job_config.externalSecrets).customExternalSecrets
         }}
-        envFrom:
-          {{- if $job_config.configMaps }}
-          configMaps:
-            {{- range $config_map := $job_config.configMaps }}
-            - {{ $config_map }}
-            {{- end }}
+        secrets:
+          - {{ $globals.app_code }}-secrets
+          {{- range $external_secret := default (list) $workload_config.container.externalSecrets }}
+          - {{ $external_secret.name }}
           {{- end }}
-          {{- if or
-            (not (default false ($job_config.externalSecrets).disableAppExternalSecrets))
-            ($job_config.externalSecrets).customExternalSecrets
-          }}
-          secrets:
-            - {{ $globals.app_code }}-secrets
-            {{- range $external_secret := default (list) $workload_config.container.externalSecrets }}
-            - {{ $external_secret.name }}
-            {{- end }}
-            {{- range $external_secret := default (list) ($job_config.externalSecrets).customExternalSecrets }}
-            - {{ $external_secret.name }}
-            {{- end }}
+          {{- range $external_secret := default (list) ($job_config.externalSecrets).customExternalSecrets }}
+          - {{ $external_secret.name }}
           {{- end }}
         {{- end }}
-        {{- if or ($job_config.resources).cpu ($job_config.resources).memory }}
-        resources:
-          requests:
-          {{- if ($job_config.resources).cpu }}
-            cpu: {{ $job_config.resources.cpu }}
-          {{- end }}
-          {{- if ($job_config.resources).memory }}
-            memory: {{ $job_config.resources.memory }}
-          {{- end }}
+      {{- end }}
+      {{- if or ($job_config.resources).cpu ($job_config.resources).memory }}
+      resources:
+        requests:
+        {{- if ($job_config.resources).cpu }}
+          cpu: {{ $job_config.resources.cpu }}
         {{- end }}
+        {{- if ($job_config.resources).memory }}
+          memory: {{ $job_config.resources.memory }}
+        {{- end }}
+      {{- end }}
     {{- if or ($job_config.serviceAccount).useAppServiceAccount (($job_config.serviceAccount).customServiceAccount).name }}
     config:
       serviceAccount:

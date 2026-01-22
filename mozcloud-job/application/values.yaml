@@ -77,8 +77,8 @@ cronJobs: {}
   #    # This is unset/disabled by default.
   #    #suspend: false
   #
-  #  # This section follows the same format as jobs[].containers below.
-  #  containers: []
+  #  # This section follows the same format as jobs[].container below.
+  #  container: {}
   #
   #  # This section follows the same format as jobs[].config below, with the
   #  # exception of "suspend", which is up above in "config".
@@ -107,133 +107,133 @@ jobs: {}
   #  # already set.
   #  #generateName: false
   #
-  #  # Details about the container(s) that need to be run for this job.
-  #  containers:
-  #    - image:
-  #        # The repository should be specified in the "repo/image" format.
-  #        # This is a required field if
-  #        # .Values.global.mozcloud.image.repository is not set.
-  #        repository:
+  #  # Details about the container that need to be run for this job.
+  #  container:
+  #    image:
+  #      # The repository should be specified in the "repo/image" format.
+  #      # This is a required field if
+  #      # .Values.global.mozcloud.image.repository is not set.
+  #      repository:
   #
-  #        # The tag to use for this image. The default is "latest" if
-  #        # .Values.global.mozcloud.image.repository is not set.
-  #        tag: latest
+  #      # The tag to use for this image. The default is "latest" if
+  #      # .Values.global.mozcloud.image.repository is not set.
+  #      tag: latest
   #
-  #      # Optionally set a name for the container. If no name is set, the
-  #      # container will be named "job".
-  #      #name: ""
+  #    # Optionally set a name for the container. If no name is set, the
+  #    # container will be named "job".
+  #    #name: ""
   #
-  #      # A command in the form of an array/list that serves as an entrypoint
-  #      # to the container. This command is the default command that runs once
-  #      # the container is started. This is not necessary if your image is
-  #      # already configured to use your desired entrypoint.
-  #      #command:
+  #    # A command in the form of an array/list that serves as an entrypoint
+  #    # to the container. This command is the default command that runs once
+  #    # the container is started. This is not necessary if your image is
+  #    # already configured to use your desired entrypoint.
+  #    #command:
   #
-  #      # Arguments in the form of an array/list to pass to the
-  #      # command/entrypoint. This is not necessary if the full command is
-  #      # specified via your entrypoint or in "command" above.
-  #      #args:
+  #    # Arguments in the form of an array/list to pass to the
+  #    # command/entrypoint. This is not necessary if the full command is
+  #    # specified via your entrypoint or in "command" above.
+  #    #args:
   #
-  #      # Expose environment variables directly into the container. This will
-  #      # override duplicate values mounted via ConfigMaps or secrets in the
-  #      # envFrom section.
-  #      #env:
-  #      #  - name: KEY
-  #      #    value: value
+  #    # Expose environment variables directly into the container. This will
+  #    # override duplicate values mounted via ConfigMaps or secrets in the
+  #    # envFrom section.
+  #    #env:
+  #    #  - name: KEY
+  #    #    value: value
   #
-  #      # ConfigMap or Secret resources can be mounted to the container
-  #      # environment as well.
-  #      #envFrom:
-  #      #  configMaps:
-  #      #    - some-configmap
-  #      #  secrets:
-  #      #    - some-secret
+  #    # ConfigMap or Secret resources can be mounted to the container
+  #    # environment as well.
+  #    #envFrom:
+  #    #  configMaps:
+  #    #    - some-configmap
+  #    #  secrets:
+  #    #    - some-secret
   #
-  #      # Resource allocation for job container.
-  #      #
-  #      # Requests are required, however, if they are no specified, defaults
-  #      # of "10m" (cpu) and "64Mi" (memory) will be used.
-  #      #
-  #      # For both CPU and memory, limits must be greater than or equal to
-  #      # requests.
-  #      #
-  #      # If no limits are specified, they will be set to double the requests
-  #      # values.
-  #      #
-  #      # CPU requests and limits must be positive numbers and use one of the
-  #      # following formats:
-  #      #
-  #      #   int               (eg. 1)
-  #      #   float             (eg. 1.0)
-  #      #   millicpu notation (eg. 1000m)
-  #      #
-  #      # Memory requests and limits must be positive numbers and use any of
-  #      # the following unit types: K, Ki, M, Mi, G, Gi.
-  #      resources:
-  #        requests:
-  #          cpu: 10m
-  #          memory: 64Mi
-  #        limits:
-  #          cpu: 20m
-  #          memory: 128Mi
+  #    # Resource allocation for job container.
+  #    #
+  #    # Requests are required, however, if they are no specified, defaults
+  #    # of "10m" (cpu) and "64Mi" (memory) will be used.
+  #    #
+  #    # For both CPU and memory, limits must be greater than or equal to
+  #    # requests.
+  #    #
+  #    # If no limits are specified, they will be set to double the requests
+  #    # values.
+  #    #
+  #    # CPU requests and limits must be positive numbers and use one of the
+  #    # following formats:
+  #    #
+  #    #   int               (eg. 1)
+  #    #   float             (eg. 1.0)
+  #    #   millicpu notation (eg. 1000m)
+  #    #
+  #    # Memory requests and limits must be positive numbers and use any of
+  #    # the following unit types: K, Ki, M, Mi, G, Gi.
+  #    resources:
+  #      requests:
+  #        cpu: 10m
+  #        memory: 64Mi
+  #      limits:
+  #        cpu: 20m
+  #        memory: 128Mi
   #
-  #       # User and/or group to use for the container SecurityContext, if
-  #       # applicable. Defaults to 10001 for both user and group. Only change
-  #       # this if you know what you are doing.
-  #       #
-  #       # Additionally, by default, all OS capabilities are dropped. If
-  #       # needed, you can list one or more capabilities to add to the
-  #       # container in "addCapabilities".
-  #       #securityContext:
-  #       #  user:
-  #       #  group:
-  #       #  addCapabilities:
-  #       #    - NET_BIND_SERVICE
+  #     # User and/or group to use for the container SecurityContext, if
+  #     # applicable. Defaults to 10001 for both user and group. Only change
+  #     # this if you know what you are doing.
+  #     #
+  #     # Additionally, by default, all OS capabilities are dropped. If
+  #     # needed, you can list one or more capabilities to add to the
+  #     # container in "addCapabilities".
+  #     #securityContext:
+  #     #  user:
+  #     #  group:
+  #     #  addCapabilities:
+  #     #    - NET_BIND_SERVICE
   #
-  #       # Optionally mount volumes to the container. The supported volume
-  #       # types are "configMap", "secret" and "persistentVolumeClaim".
-  #       #
-  #       # Volumes should use names that match either config map, external
-  #       # secret, or persistent volume claim names created as part of and
-  #       # external secret names created as part of this chart or reference
-  #       # ConfigMap, PersistentVolumeClaim and Secret resources created
-  #       # independently of this chart.
-  #       #
-  #       # With "configMap" volumes, you can also specify the following
-  #       # options:
-  #       #
-  #       #   "key": A key within the config map. The value of the key will be
-  #       #          used as the contents of the file.
-  #       #
-  #       #   "path": The path within the container to which the volume should
-  #       #           be mounted.
-  #       #
-  #       #   "readOnly": Whether or not the volume should be mounted as read
-  #       #               only. Options are "true" or "false", with the default
-  #       #               being "false".
-  #       #
-  #       # "secret" volumes use the same options above that "configMap" volumes
-  #       # use with the exception of "readOnly" which is always "true" here.
-  #       # Any value set for "readOnly" will be ignored in this case.
-  #       #
-  #       # Example:
-  #       #
-  #       #   volumes:
-  #       #     - name: my-config-map
-  #       #       type: configMap
-  #       #       path: /path/to/my_file.txt
-  #       #     - name: another-config-map
-  #       #       type: configMap
-  #       #       path: /path/to/another_file.txt
-  #       #       key: another_file.txt
-  #       #       readOnly: false
-  #       #     - name: my-secret  # Should match an external secret/secret name.
-  #       #       type: secret
-  #       #       path: /path/to/secret_file.txt
-  #       #     - name: my-pvc-volume
-  #       #       type: persistentVolumeClaim
-  #       #       path: /path/to/mount
-  #       #volumes: []
+  #     # Optionally mount volumes to the container. The supported volume
+  #     # types are "configMap", "secret" and "persistentVolumeClaim".
+  #     #
+  #     # Volumes should use names that match either config map, external
+  #     # secret, or persistent volume claim names created as part of and
+  #     # external secret names created as part of this chart or reference
+  #     # ConfigMap, PersistentVolumeClaim and Secret resources created
+  #     # independently of this chart.
+  #     #
+  #     # With "configMap" volumes, you can also specify the following
+  #     # options:
+  #     #
+  #     #   "key": A key within the config map. The value of the key will be
+  #     #          used as the contents of the file.
+  #     #
+  #     #   "path": The path within the container to which the volume should
+  #     #           be mounted.
+  #     #
+  #     #   "readOnly": Whether or not the volume should be mounted as read
+  #     #               only. Options are "true" or "false", with the default
+  #     #               being "false".
+  #     #
+  #     # "secret" volumes use the same options above that "configMap" volumes
+  #     # use with the exception of "readOnly" which is always "true" here.
+  #     # Any value set for "readOnly" will be ignored in this case.
+  #     #
+  #     # Example:
+  #     #
+  #     #   volumes:
+  #     #     - name: my-config-map
+  #     #       type: configMap
+  #     #       path: /path/to/my_file.txt
+  #     #     - name: another-config-map
+  #     #       type: configMap
+  #     #       path: /path/to/another_file.txt
+  #     #       key: another_file.txt
+  #     #       readOnly: false
+  #     #     - name: my-secret  # Should match an external secret/secret name
+  #     #       type: secret
+  #     #       path: /path/to/secret_file.txt
+  #     #     - name: my-pvc-volume
+  #     #       type: persistentVolumeClaim
+  #     #       path: /path/to/mount
+  #     #volumes: []
   #
   #
   #  # Configuration settings for jobs.

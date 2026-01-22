@@ -114,11 +114,9 @@
           "$ref": "#/$defs/cronJobConfig",
           "required": ["schedule"]
         },
-        "containers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/container"
-          }
+        "container": {
+          "type": "object",
+          "$ref": "#/$defs/container"
         },
         "jobConfig": {
           "$ref": "#/$defs/jobConfig"
@@ -140,11 +138,9 @@
         "generateName": {
           "type": "boolean"
         },
-        "containers": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/container"
-          }
+        "container": {
+          "type": "object",
+          "$ref": "#/$defs/container"
         },
         "config": {
           "$ref": "#/$defs/jobConfig"
