@@ -68,7 +68,7 @@ spec:
     {{- end }}
     spec:
       containers:
-        {{- range $container := $job.containers }}
+        {{- $container := $job.container }}
         - name: {{ default "job" $container.name }}
           {{- if and (not ($container.image).repository) (not $global_image.repository) }}
           {{- fail (printf "%sContainer image repository must be set! You can set this in either .Values.mozcloud-job.jobs.%s.containers[].image.repository or .Values.global.mozcloud.image.repository" $job.name) }}
@@ -132,7 +132,6 @@ spec:
               {{- end }}
             {{- end }}
           {{- end }}
-        {{- end }}
       {{- if $config.restartPolicy }}
       restartPolicy: {{ $config.restartPolicy }}
       {{- end }}

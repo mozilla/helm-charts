@@ -3,9 +3,9 @@ cronJobs:
   test-cronjob:
     config:
       schedule: '0 * * * *'  # can also be '@hourly'
-    containers:
-      - image:
-          repository: test-repo/test-image
-          tag: latest
-        command: ["sh", "-c"]
-        args: ["echo", "foo", "bar"]
+    container:
+      image:
+        repository: test-repo/test-image
+        tag: latest
+      command: ["sh", "-c"]
+      args: ["echo", "foo", "bar"]

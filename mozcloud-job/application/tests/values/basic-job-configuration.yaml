@@ -1,9 +1,9 @@
 ---
 jobs:
   test-job:
-    containers:
-      - image:
-          repository: test-repo/test-image
-          tag: latest
-        command: ["sh", "-c"]
-        args: ["echo", "foo", "bar"]
+    container:
+      image:
+        repository: test-repo/test-image
+        tag: latest
+      command: ["sh", "-c"]
+      args: ["echo", "foo", "bar"]

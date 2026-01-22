@@ -123,35 +123,30 @@ CronJob template helpers
   {{- /*
   Configure default tag and container settings.
   */ -}}
-  {{- $containers := default (list) $cron_job_config.containers -}}
-  {{- $container_output := list -}}
-  {{- range $container := $containers -}}
-    {{- /* Merge container config with common config, if defined */ -}}
-    {{- $container = mergeOverwrite ((default (dict) $common_config.container) | deepCopy) $container -}}
-    {{- $container_defaults := include "mozcloud-job-lib.defaults.job.container.config" . | fromYaml -}}
-    {{- $container_config := mergeOverwrite ($container_defaults | deepCopy) $container -}}
-    {{- if or ($container.image).tag ($global_image).tag -}}
-      {{- $_ = set $container_config "image" (default (dict) $container.image) -}}
-      {{- $_ = set $container_config.image "tag" (default (($global_image).tag) (($container.image).tag)) -}}
-    {{- end -}}
-    {{- $resource_params := $container_config.resources -}}
-    {{- $resources := include "mozcloud-workload-core-lib.pod.container.resources" $resource_params | fromYaml -}}
-    {{- $_ = set $container_config "resources" $resources -}}
-    {{/* Configure container securityContext */ -}}
-    {{- $container_security_context_params := dict -}}
-    {{- if ($container_config.securityContext).user -}}
-      {{- $_ = set $container_security_context_params "user" $container_config.securityContext.user -}}
-    {{- end -}}
-    {{- if ($container_config.securityContext).group -}}
-      {{- $_ = set $container_security_context_params "group" $container_config.securityContext.group -}}
-    {{- end -}}
-    {{- if ($container_config.securityContext).addCapabilities -}}
-      {{- $_ = set $container_security_context_params "addCapabilities" $container_config.securityContext.addCapabilities -}}
-    {{- end -}}
-    {{- $_ = set $container_config "securityContext" (include "mozcloud-workload-core-lib.pod.container.securityContext" $container_security_context_params | fromYaml) -}}
-    {{- $container_output = append $container_output $container_config -}}
+  {{- $container_common := default (dict) $common_config.container -}}
+  {{- $container := mergeOverwrite ($container_common | deepCopy) $cron_job_config.container -}}
+  {{- $container_defaults := include "mozcloud-job-lib.defaults.job.container.config" . | fromYaml -}}
+  {{- $container_config := mergeOverwrite ($container_defaults | deepCopy) $container -}}
+  {{- if or ($container.image).tag ($global_image).tag -}}
+    {{- $_ = set $container_config "image" (default (dict) $container.image) -}}
+    {{- $_ = set $container_config.image "tag" (default (($global_image).tag) (($container.image).tag)) -}}
   {{- end -}}
-  {{- $_ = set $cron_job_config "containers" $container_output -}}
+  {{- $resource_params := $container_config.resources -}}
+  {{- $resources := include "mozcloud-workload-core-lib.pod.container.resources" $resource_params | fromYaml -}}
+  {{- $_ = set $container_config "resources" $resources -}}
+  {{/* Configure container securityContext */ -}}
+  {{- $container_security_context_params := dict -}}
+  {{- if ($container_config.securityContext).user -}}
+    {{- $_ = set $container_security_context_params "user" $container_config.securityContext.user -}}
+  {{- end -}}
+  {{- if ($container_config.securityContext).group -}}
+    {{- $_ = set $container_security_context_params "group" $container_config.securityContext.group -}}
+  {{- end -}}
+  {{- if ($container_config.securityContext).addCapabilities -}}
+    {{- $_ = set $container_security_context_params "addCapabilities" $container_config.securityContext.addCapabilities -}}
+  {{- end -}}
+  {{- $_ = set $container_config "securityContext" (include "mozcloud-workload-core-lib.pod.container.securityContext" $container_security_context_params | fromYaml) -}}
+  {{- $_ = set $cron_job_config "container" $container_config -}}
   {{- $output = append $output $cron_job_config -}}
 {{- end -}}
 {{- $cron_jobs = dict "cronJobs" $output -}}
@@ -198,35 +193,30 @@ Job template helpers
   {{- /*
   Configure default tag and container settings.
   */ -}}
-  {{- $containers := default (list) $job_config.containers -}}
-  {{- $container_output := list -}}
-  {{- range $container := $containers -}}
-    {{- /* Merge container config with common config, if defined */ -}}
-    {{- $container = mergeOverwrite ((default (dict) $common_config.container) | deepCopy) $container -}}
-    {{- $container_defaults := include "mozcloud-job-lib.defaults.job.container.config" . | fromYaml -}}
-    {{- $container_config := mergeOverwrite ($container_defaults | deepCopy) $container -}}
-    {{- if or ($container.image).tag ($global_image).tag -}}
-      {{- $_ = set $container_config "image" (default (dict) $container.image) -}}
-      {{- $_ = set $container_config.image "tag" (default (($global_image).tag) (($container.image).tag)) -}}
-    {{- end -}}
-    {{- $resource_params := $container_config.resources -}}
-    {{- $resources := include "mozcloud-workload-core-lib.pod.container.resources" $resource_params | fromYaml -}}
-    {{- $_ = set $container_config "resources" $resources -}}
-    {{/* Configure container securityContext */ -}}
-    {{- $container_security_context_params := dict -}}
-    {{- if ($container_config.securityContext).user -}}
-      {{- $_ = set $container_security_context_params "user" $container_config.securityContext.user -}}
-    {{- end -}}
-    {{- if ($container_config.securityContext).group -}}
-      {{- $_ = set $container_security_context_params "group" $container_config.securityContext.group -}}
-    {{- end -}}
-    {{- if ($container_config.securityContext).addCapabilities -}}
-      {{- $_ = set $container_security_context_params "addCapabilities" $container_config.securityContext.addCapabilities -}}
-    {{- end -}}
-    {{- $_ = set $container_config "securityContext" (include "mozcloud-workload-core-lib.pod.container.securityContext" $container_security_context_params | fromYaml) -}}
-    {{- $container_output = append $container_output $container_config -}}
+  {{- $container_common := default (dict) $common_config.container -}}
+  {{- $container := mergeOverwrite ($container_common | deepCopy) $job_config.container -}}
+  {{- $container_defaults := include "mozcloud-job-lib.defaults.job.container.config" . | fromYaml -}}
+  {{- $container_config := mergeOverwrite ($container_defaults | deepCopy) $container -}}
+  {{- if or ($container.image).tag ($global_image).tag -}}
+    {{- $_ = set $container_config "image" (default (dict) $container.image) -}}
+    {{- $_ = set $container_config.image "tag" (default (($global_image).tag) (($container.image).tag)) -}}
   {{- end -}}
-  {{- $_ = set $job_config "containers" $container_output -}}
+  {{- $resource_params := $container_config.resources -}}
+  {{- $resources := include "mozcloud-workload-core-lib.pod.container.resources" $resource_params | fromYaml -}}
+  {{- $_ = set $container_config "resources" $resources -}}
+  {{/* Configure container securityContext */ -}}
+  {{- $container_security_context_params := dict -}}
+  {{- if ($container_config.securityContext).user -}}
+    {{- $_ = set $container_security_context_params "user" $container_config.securityContext.user -}}
+  {{- end -}}
+  {{- if ($container_config.securityContext).group -}}
+    {{- $_ = set $container_security_context_params "group" $container_config.securityContext.group -}}
+  {{- end -}}
+  {{- if ($container_config.securityContext).addCapabilities -}}
+    {{- $_ = set $container_security_context_params "addCapabilities" $container_config.securityContext.addCapabilities -}}
+  {{- end -}}
+  {{- $_ = set $container_config "securityContext" (include "mozcloud-workload-core-lib.pod.container.securityContext" $container_security_context_params | fromYaml) -}}
+  {{- $_ = set $job_config "container" $container_config -}}
   {{- /*
   Configure Argo CD annotations for the job and serviceAccount, if applicable.
   Job annotations should always be determined before service account annotations
