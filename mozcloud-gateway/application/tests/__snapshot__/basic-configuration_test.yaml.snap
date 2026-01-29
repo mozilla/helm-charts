@@ -8,9 +8,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-gateway
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-service
     spec:
@@ -33,9 +36,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-gateway
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-gateway
     spec:
@@ -65,9 +71,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-gateway
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-gateway
     spec:
@@ -86,9 +95,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-gateway
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-service
     spec:
@@ -110,9 +122,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-gateway
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-httproute
     spec:
@@ -138,9 +153,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-gateway
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-httproute-http-redirect
     spec:
@@ -170,9 +188,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-gateway
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-service
     spec:

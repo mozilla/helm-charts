@@ -3,9 +3,11 @@ suite: "mozcloud-workload: ConfigMap checksum annotation"
 release:
   name: mozcloud-test
   namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
 chart:
   version: 1.0.0
-  appVersion: 1.16.0
 values:
   - values/globals.yaml
   - values/configmap-checksum.yaml
@@ -70,9 +72,11 @@ suite: "mozcloud-workload: ConfigMap checksum annotation for nginx"
 release:
   name: mozcloud-test
   namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
 chart:
   version: 1.0.0
-  appVersion: 1.16.0
 values:
   - values/globals.yaml
   - values/configmap-checksum-nginx.yaml

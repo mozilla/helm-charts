@@ -1,6 +1,6 @@
 # mozcloud-workload-stateless
 
-![Version: 0.4.18](https://img.shields.io/badge/Version-0.4.18-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.4.20](https://img.shields.io/badge/Version-0.4.20-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 helm chart for building stateless workloads
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-workload-stateless
-    version: ~0.4.18
+    version: ~0.4.20
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -35,7 +35,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../library | mozcloud-workload-stateless-lib | 0.4.34 |
+| file://../library | mozcloud-workload-stateless-lib | 0.4.36 |
 
 ## Values
 

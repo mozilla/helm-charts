@@ -2,6 +2,7 @@
 global:
   mozcloud:
     app_code: mozcloud-test
+    artifact_id: abcd1234
     chart: test-chart
     env_code: dev
     project_id: moz-fx-mozcloud-test-nonprod

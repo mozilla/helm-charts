@@ -1,6 +1,20 @@
 {{- define "mozcloud-labels-lib.labels" -}}
-{{- /* We do not need the full context here */ -}}
-{{- $context := dict "app_code" .app_code "component_code" .component_code "env_code" .env_code  -}}
+{{- /*
+We do not need the full context here, so we will only look for select labels:
+
+app_code
+artifact_id
+component_code
+env_code
+
+*/ -}}
+{{- $context_labels := list "app_code" "artifact_id" "component_code" "env_code" "mozcloud_chart" "mozcloud_chart_version" -}}
+{{- $context := dict -}}
+{{- range $context_label := $context_labels -}}
+  {{- if index $ $context_label -}}
+    {{- $_ := set $context $context_label (index $ $context_label) -}}
+  {{- end -}}
+{{- end -}}
 {{- $chart := "" }}
 {{- if .chart }}
   {{- $chart = .chart }}
@@ -20,8 +34,13 @@
 
 {{- define "mozcloud-labels-lib.additional_labels" -}}
 app_code: {{ .app_code }}
+{{- if .artifact_id }}
+artifact_id: {{ .artifact_id }}
+{{- end }}
 component_code: {{ .component_code }}
 env_code: {{ .env_code }}
+mozcloud_chart: {{ .mozcloud_chart }}
+mozcloud_chart_version: {{ .mozcloud_chart_version }}
 {{- if eq .env_code "prod" }}
 realm: prod
 {{- else }}
