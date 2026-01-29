@@ -8,9 +8,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-ingress
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-ingress
     spec:
@@ -26,9 +29,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-ingress
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-ingress
     spec:
@@ -49,9 +55,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-ingress
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-ingress
     spec:
@@ -69,9 +78,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-ingress
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: mcrt-test-ingress-0
     spec:
@@ -89,9 +101,12 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
+        artifact_id: abcd1234
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-ingress
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-ingress
     spec:
