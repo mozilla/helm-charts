@@ -12,7 +12,7 @@ Configuration matches entire snapshot:
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud-gateway
-        mozcloud_chart_version: 0.4.25
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-service
     spec:
@@ -39,7 +39,7 @@ Configuration matches entire snapshot:
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud-gateway
-        mozcloud_chart_version: 0.4.25
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-gateway
     spec:
@@ -73,7 +73,7 @@ Configuration matches entire snapshot:
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud-gateway
-        mozcloud_chart_version: 0.4.25
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-gateway
     spec:
@@ -96,7 +96,7 @@ Configuration matches entire snapshot:
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud-gateway
-        mozcloud_chart_version: 0.4.25
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-service
     spec:
@@ -122,7 +122,7 @@ Configuration matches entire snapshot:
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud-gateway
-        mozcloud_chart_version: 0.4.25
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-httproute
     spec:
@@ -152,7 +152,7 @@ Configuration matches entire snapshot:
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud-gateway
-        mozcloud_chart_version: 0.4.25
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-httproute-http-redirect
     spec:
@@ -186,7 +186,7 @@ Configuration matches entire snapshot:
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud-gateway
-        mozcloud_chart_version: 0.4.25
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-service
     spec:

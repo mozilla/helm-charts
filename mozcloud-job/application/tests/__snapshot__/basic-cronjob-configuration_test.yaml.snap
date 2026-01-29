@@ -12,7 +12,7 @@ Configuration matches entire snapshot:
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud-job
-        mozcloud_chart_version: 0.5.9
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-cronjob
     spec:

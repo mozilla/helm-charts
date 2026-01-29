@@ -13,7 +13,7 @@ Configuration matches entire snapshot:
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud-workload
-        mozcloud_chart_version: 0.3.10
+        mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: mozcloud-test-europe-west1
     spec:
