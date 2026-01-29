@@ -17,6 +17,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service
     spec:
@@ -38,6 +40,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service
     spec:
@@ -57,6 +61,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: mcrt-test-service-dev-test-domain-com
     spec:
@@ -78,6 +84,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service
     spec:
@@ -104,6 +112,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service
     spec:

@@ -11,6 +11,8 @@ Configuration matches entire snapshot:
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-ingress
+        mozcloud_chart_version: 0.4.20
         realm: nonprod
       name: test-ingress
     spec:
@@ -29,6 +31,8 @@ Configuration matches entire snapshot:
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-ingress
+        mozcloud_chart_version: 0.4.20
         realm: nonprod
       name: test-ingress
     spec:
@@ -52,6 +56,8 @@ Configuration matches entire snapshot:
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-ingress
+        mozcloud_chart_version: 0.4.20
         realm: nonprod
       name: test-ingress
     spec:
@@ -72,6 +78,8 @@ Configuration matches entire snapshot:
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-ingress
+        mozcloud_chart_version: 0.4.20
         realm: nonprod
       name: mcrt-test-ingress-0
     spec:
@@ -92,6 +100,8 @@ Configuration matches entire snapshot:
         component_code: ingress
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-ingress
+        mozcloud_chart_version: 0.4.20
         realm: nonprod
       name: test-ingress
     spec:

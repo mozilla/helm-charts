@@ -14,6 +14,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service
     spec:
@@ -47,6 +49,8 @@ Configuration matches entire snapshot:
         component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service
     spec:
@@ -69,6 +73,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service
     spec:
@@ -98,6 +104,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service-http-redirect
     spec:
@@ -131,6 +139,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service
     spec:
@@ -157,6 +167,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service
     spec:
@@ -181,6 +193,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-workload
+        mozcloud_chart_version: 0.3.10
         realm: nonprod
       name: test-service
     spec:

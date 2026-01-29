@@ -11,6 +11,8 @@ Configuration matches entire snapshot:
         component_code: cronjob
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud-job
+        mozcloud_chart_version: 0.5.9
         realm: nonprod
       name: test-cronjob
     spec:

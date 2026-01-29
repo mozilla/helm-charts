@@ -8,7 +8,7 @@ component_code
 env_code
 
 */ -}}
-{{- $context_labels := list "app_code" "artifact_id" "component_code" "env_code" -}}
+{{- $context_labels := list "app_code" "artifact_id" "component_code" "env_code" "mozcloud_chart" "mozcloud_chart_version" -}}
 {{- $context := dict -}}
 {{- range $context_label := $context_labels -}}
   {{- if index $ $context_label -}}
@@ -39,6 +39,8 @@ artifact_id: {{ .artifact_id }}
 {{- end }}
 component_code: {{ .component_code }}
 env_code: {{ .env_code }}
+mozcloud_chart: {{ .mozcloud_chart }}
+mozcloud_chart_version: {{ .mozcloud_chart_version }}
 {{- if eq .env_code "prod" }}
 realm: prod
 {{- else }}

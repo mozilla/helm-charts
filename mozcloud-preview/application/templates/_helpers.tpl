@@ -52,5 +52,7 @@ Create label parameters to be used in library chart if defined as values.
     {{- $_ := set $params $label_param (index $.Values.global.mozcloud $label_param) -}}
   {{- end }}
 {{- end }}
+{{- $mozcloud_chart_labels := dict "mozcloud_chart" .Chart.Name "mozcloud_chart_version" .Chart.Version -}}
+{{- $params = mergeOverwrite $params $mozcloud_chart_labels -}}
 {{- $params | toYaml }}
 {{- end }}

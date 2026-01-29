@@ -3,9 +3,6 @@ suite: "mozcloud-ingress: Basic configuration"
 release:
   name: mozcloud-test
   namespace: mozcloud-test-dev
-chart:
-  version: 1.0.0
-  appVersion: 1.16.0
 values:
   - values/globals.yaml
   - values/basic-configuration.yaml

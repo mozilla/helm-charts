@@ -16,6 +16,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: null
+        mozcloud_chart_version: null
         realm: nonprod
       name: test-config-map
   2: |
@@ -30,6 +32,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: null
+        mozcloud_chart_version: null
         realm: nonprod
       name: test-deployment
     spec:
@@ -55,6 +59,8 @@ Configuration matches entire snapshot:
             component_code: web
             env_code: dev
             helm.sh/chart: test-chart
+            mozcloud_chart: null
+            mozcloud_chart_version: null
             realm: nonprod
         spec:
           containers:
@@ -103,6 +109,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: null
+        mozcloud_chart_version: null
         realm: nonprod
       name: test-k8s-secret
     spec:
@@ -132,6 +140,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: null
+        mozcloud_chart_version: null
         realm: nonprod
       name: test-deployment
     spec:
@@ -160,6 +170,8 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: null
+        mozcloud_chart_version: null
         realm: nonprod
       name: test-pod-monitoring
     spec:
@@ -188,5 +200,7 @@ Configuration matches entire snapshot:
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
+        mozcloud_chart: null
+        mozcloud_chart_version: null
         realm: nonprod
       name: test-service-account
