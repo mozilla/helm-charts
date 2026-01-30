@@ -1,0 +1,263 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        artifact_id: abcd1234
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: web
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev
+      strategy:
+        type: RollingUpdate
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: web
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: web
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            artifact_id: abcd1234
+            component_code: web
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            realm: nonprod
+        spec:
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
+              image: test-repo/image1:1.0.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: container-1
+              ports:
+                - containerPort: 8000
+                  name: app
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+            - envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
+              image: test-repo/image2:2.0.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: container-2
+              ports:
+                - containerPort: 8000
+                  name: app
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          initContainers:
+            - envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
+              image: test-repo/image3:3.0.0
+              imagePullPolicy: Always
+              name: init-container-1
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+              restartPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+            - envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
+              image: test-repo/image4:4.0.0
+              imagePullPolicy: Always
+              name: init-container-2
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 128Mi
+                requests:
+                  cpu: 100m
+                  memory: 64Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+  2: |
+    apiVersion: external-secrets.io/v1beta1
+    kind: ExternalSecret
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-11"
+      labels:
+        app.kubernetes.io/component: externalsecret
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        artifact_id: abcd1234
+        component_code: externalsecret
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mozcloud-test-secrets
+    spec:
+      dataFrom:
+        - extract:
+            conversionStrategy: Default
+            decodingStrategy: None
+            key: dev-gke-app-secrets
+            metadataPolicy: None
+            version: latest
+      refreshInterval: 5m
+      secretStoreRef:
+        kind: SecretStore
+        name: secret-store
+      target:
+        creationPolicy: Owner
+        name: mozcloud-test-secrets
+  3: |
+    apiVersion: v1
+    kind: ServiceAccount
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-11"
+        iam.gke.io/gcp-service-account: gke-dev@moz-fx-mozcloud-test-nonprod.iam.gserviceaccount.com
+      labels:
+        app.kubernetes.io/component: serviceaccount
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        artifact_id: abcd1234
+        component_code: serviceaccount
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mozcloud-test
+  4: |
+    apiVersion: autoscaling/v2
+    kind: HorizontalPodAutoscaler
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        artifact_id: abcd1234
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service
+    spec:
+      maxReplicas: 30
+      metrics:
+        - resource:
+            name: cpu
+            target:
+              averageUtilization: 60
+              type: Utilization
+          type: Resource
+      minReplicas: 1
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: test-service

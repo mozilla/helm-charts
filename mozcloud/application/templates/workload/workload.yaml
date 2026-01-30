@@ -1,0 +1,72 @@
+{{- if .Values.enabled }}
+{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
+{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- /* Call a helper function that merges user data with defaults */}}
+{{- $formatter_params := dict "component" "containers" "workloads" (.Values.workloads | deepCopy) }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
+
+{{- /* We will build $params as we go */}}
+{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $params := $label_params -}}
+
+{{- /*
+Deployments
+*/}}
+{{- $deployments := include "mozcloud.config.deployments" $helper_params | fromYaml }}
+{{- range $deployment_name, $deployment_config := $deployments.deployments }}
+{{- $_ := set $label_params "component_code" $deployment_config.component }}
+{{- $_ = set $params "deployments" (dict $deployment_name (omit $deployment_config "component")) }}
+{{- $_ = set $params "configMaps" $.Values.configMaps }}
+{{ include "workload.deployment" (mergeOverwrite $params $label_params) }}
+{{- end }}
+
+{{- /*
+External Secrets
+*/}}
+{{- $external_secrets := include "mozcloud.config.externalSecrets" $helper_params | fromYaml }}
+{{- range $external_secret_name, $external_secret_config := $external_secrets.externalSecrets }}
+{{- $component := default "externalsecret" $external_secret_config.component }}
+{{- $_ := set $label_params "component_code" $component }}
+{{- $_ = set $params "externalSecrets" (dict $external_secret_name (omit $external_secret_config "component")) }}
+{{ include "workload.externalSecret" (mergeOverwrite $params $label_params) }}
+{{- end }}
+
+{{- /*
+Service Accounts
+*/}}
+{{- $service_accounts := include "mozcloud.config.serviceAccounts" $helper_params | fromYaml }}
+{{- range $service_account_name, $service_account_config := $service_accounts.serviceAccounts }}
+{{- $_ := set $label_params "component_code" $service_account_config.component }}
+{{- $_ = set $params "serviceAccounts" (dict $service_account_name (omit $service_account_config "component")) }}
+{{ include "workload.serviceAccount" (mergeOverwrite $params $label_params) }}
+{{- end }}
+
+{{- /*
+HPAs
+*/}}
+{{- $hpas := include "mozcloud.config.autoscaling" $helper_params | fromYaml }}
+{{- range $hpa_name, $hpa_config := $hpas.hpas }}
+{{- $_ := set $label_params "component_code" $hpa_config.component }}
+{{- $_ = set $params "hpas" (dict $hpa_name (omit $hpa_config "component")) }}
+{{ include "workload.hpa" (mergeOverwrite $params $label_params) }}
+{{- end }}
+
+{{- /*
+Pod Monitorings
+*/}}
+{{- $pod_monitorings := include "mozcloud.config.podMonitorings" $helper_params | fromYaml }}
+{{- $_ := set $label_params "component_code" "podmonitoring" }}
+{{- $_ = set $params "podMonitorings" $pod_monitorings.podMonitorings }}
+{{ include "workload.podMonitoring" (mergeOverwrite $params $label_params) }}
+
+{{- /*
+Persistent Volumes
+*/}}
+{{- $persistent_volumes := include "mozcloud.config.persistentVolumes" $helper_params | fromYaml }}
+{{- range $volume_name, $volume_config := $persistent_volumes.persistentVolumes }}
+{{- $_ := set $label_params "component_code" $volume_config.component }}
+{{- $_ = set $params "persistentVolumes" (mergeOverwrite (dict $volume_name (omit $volume_config "component")) (default (dict) $params.persistentVolumes)) }}
+{{- end }}
+{{ include "common.persistentVolumes" (mergeOverwrite $params $label_params) }}
+
+{{- end }}

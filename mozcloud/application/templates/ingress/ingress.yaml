@@ -1,0 +1,47 @@
+{{- if .Values.enabled }}
+{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
+{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- /* Call a helper function that merges user data with defaults */}}
+{{- $formatter_params := dict "component" "ingress" "workloads" (.Values.workloads | deepCopy) }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
+
+{{- /*
+Only include Ingress and related resources if we have Ingress hosts defined
+*/}}
+{{- $hosts := list }}
+{{- range $workload_name, $workload_config := $workloads }}
+  {{- range $host_name, $host_config := $workload_config.hosts }}
+    {{- $hosts = append $hosts $host_name }}
+  {{- end }}
+{{- end }}
+{{- if gt (len $hosts) 0 -}}
+
+{{- /* We will build $params as we go */}}
+{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $params := $label_params -}}
+
+{{- /*
+Ingresses and related resources
+*/}}
+{{- $ingresses := include "mozcloud.config.ingresses" $helper_params | fromYaml }}
+{{- range $ingress_name, $ingress_config := $ingresses.ingresses }}
+{{- $_ := set $label_params "component_code" $ingress_config.component }}
+{{- $_ = set $params "ingressConfig" (dict $ingress_name (omit $ingress_config "component")) }}
+{{ include "mozcloud-ingress-lib.ingress" (mergeOverwrite $params $label_params) }}
+{{ include "mozcloud-ingress-lib.backendConfig" (mergeOverwrite $params $label_params) }}
+{{ include "mozcloud-ingress-lib.managedCertificate" (mergeOverwrite $params $label_params) }}
+{{ include "mozcloud-ingress-lib.service" (mergeOverwrite $params $label_params) }}
+{{- end }}
+
+{{- /*
+Frontend Config
+*/}}
+{{- $frontends := (include "mozcloud.config.frontendConfigs" $helper_params | fromYaml).frontendConfigs }}
+{{- range $frontend_name, $frontend_config := $frontends }}
+  {{- $_ := set $frontend_config "name" $frontend_name }}
+  {{- $_ = set $label_params "component_code" $frontend_config.component }}
+  {{- $_ = set $params "frontendConfig" (omit $frontend_config "component") }}
+{{ include "mozcloud-ingress-lib.frontendConfig" (mergeOverwrite $params $label_params) }}
+{{- end }}
+{{- end -}}
+{{- end -}}

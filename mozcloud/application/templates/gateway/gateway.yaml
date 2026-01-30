@@ -1,0 +1,62 @@
+{{- if .Values.enabled }}
+{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
+{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- /* Call a helper function that merges user data with defaults */}}
+{{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
+
+{{- /*
+Only include Gateway and related resources if we have Gateway hosts defined
+*/}}
+{{- $hosts := list }}
+{{- range $workload_name, $workload_config := $workloads }}
+  {{- range $host_name, $host_config := $workload_config.hosts }}
+    {{- $hosts = append $hosts $host_name }}
+  {{- end }}
+{{- end }}
+{{- if gt (len $hosts) 0 -}}
+
+{{- /* We will build $params as we go */}}
+{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $params := $label_params -}}
+
+{{- /*
+Gateways and Gateway policies
+
+Delete this section when it is time to move to shared gateways.
+*/}}
+{{- $gateways := include "mozcloud.config.gateways" $helper_params | fromYaml }}
+{{- range $gateway_name, $gateway_config := $gateways.gateways }}
+{{- $_ := set $label_params "component_code" $gateway_config.component }}
+{{- $_ = set $params "gatewayConfig" (dict "gateways" (dict $gateway_name (omit $gateway_config "component"))) }}
+{{ include "mozcloud-gateway-lib.gateway" (mergeOverwrite $params $label_params) }}
+{{- end }}
+{{- $gateway_policy_config := include "mozcloud.config.gatewayPolicy" . | fromYaml }}
+{{- $_ := set $label_params "component_code" "gateway" }}
+{{- $_ = set $params "gatewayPolicyConfig" $gateway_policy_config }} 
+{{ include "mozcloud-gateway-lib.gatewayPolicy" (mergeOverwrite $params $label_params) -}}
+
+{{- /*
+HTTPRoutes
+*/}}
+{{- $http_routes := include "mozcloud.config.httpRoutes" $helper_params | fromYaml }}
+{{- range $http_route_name, $http_route_config := $http_routes.httpRoutes }}
+{{- $_ := set $label_params "component_code" $http_route_config.component }}
+{{- $_ = set $params "httpRouteConfig" (dict "httpRoutes" (dict $http_route_name (omit $http_route_config "component"))) }}
+{{ include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite $params $label_params) -}}
+{{- end }}
+
+{{- /*
+Backend services, backend policies, and health check policies
+*/}}
+{{- $backends := include "mozcloud.config.backends" $helper_params | fromYaml }}
+{{- range $backend_name, $backend_config := $backends.backends }}
+{{- $_ := set $label_params "component_code" $backend_config.component }}
+{{- $_ := set $params "backendConfig" (dict "backends" (dict $backend_name (omit $backend_config "component"))) }}
+{{ include "mozcloud-gateway-lib.service" (mergeOverwrite $params $label_params) }}
+{{ include "mozcloud-gateway-lib.backendPolicy" (mergeOverwrite $params $label_params) }}
+{{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $label_params) }}
+{{- end }}
+
+{{- end -}}
+{{- end -}}

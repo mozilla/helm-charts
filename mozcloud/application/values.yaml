@@ -1,0 +1,1219 @@
+# See values.yaml.example for example configurations.
+
+# If disabled, no resources in the chart will be created.
+enabled: true
+
+# Name to be used for all resources if not specified at the resource level.
+# This overrides the chart name set in .Values.global.mozcloud.chart but is
+# overridden by names defined at the resource level.
+#nameOverride:
+
+# In this section, you can create ConfigMap resources that can be used
+# by all workloads and jobs. To use ConfigMaps created here in a workload,
+# you must list the ConfigMap name you wish to include in each workload or
+# job's "configMaps" section.
+#
+# ConfigMaps defined here will be overridden by a workload or job's environment
+# variables defined in the "envVars" configurations.
+#
+# Format:
+#   configMaps:
+#     my-configmap-name:
+#       annotations:
+#         foo.io/bar: baz
+#
+#       data:
+#         KEY1: VALUE1
+#         KEY2: VALUE2
+#
+#     a-different-configmap-name:
+#       data:
+#         KEY3: VALUE3
+configMaps: {}
+
+workloads:
+  # The name of your workload and all related components. "mozcloud-workload"
+  # is the default if no names are specified.
+  #
+  # Each workload should be specified in this dictionary format, where the key
+  # is the name of the workload and the values are the configurations.
+  mozcloud-workload:
+    # The specific unit within an application that performs a distinct function,
+    # typically aligned to a microservice or deployable artifact.
+    #
+    # The value for "component" will typically match "component_code" in legacy
+    # values files.
+    #
+    # Example values: api-server, web-frontend, etc.
+    #
+    # This is a required field.
+    component: ''
+
+    # A list of optional autoscaling configurations for containerized workloads.
+    autoscaling:
+      # If enabled, configure autoscaling via a HorizontalPodAutoscaler
+      # (HPA). If disabled, only 1 replica of this pod will run.
+      enabled: true
+
+      # By default, we will scale pods at 60% CPU utilization, but users can
+      # also configure memory and network metrics, as well thresholds for
+      # each.
+      #
+      # Values for "threshold" will always be averages as percentages.
+      #
+      # Configuration options:
+      #
+      # metrics:
+      #   # Default CPU metric.
+      #   - type: cpu
+      #     threshold: 60 # percent
+      #
+      #   # Optionally configure memory-based autoscaling.
+      #   - type: memory
+      #     threshold: 80 # percent
+      #
+      #   # The "network" type allows us to configure traffic-based
+      #   # autoscaling with Gateway API.
+      #   - type: network
+      #
+      #     # We can configure custom metrics to use with the "network"
+      #     # autoscaling type. The default behavior to scale using the
+      #     # RequestsPerSecond metric.
+      #     #
+      #     # Visit this page for more info:
+      #     # https://cloud.google.com/kubernetes-engine/docs/how-to/horizontal-pod-autoscaling#autoscale-traffic
+      #     customMetric: "autoscaling.googleapis.com|gclb-capacity-fullness"
+      #     threshold: 70 # percent
+      metrics:
+        - type: cpu
+          threshold: 60 # percent
+
+      # Configure the minimum and maximum replica counts while autoscaling.
+      #
+      # Default values:
+      #
+      #   min: 1
+      #   max: 30
+      replicas:
+        min: 1
+        max: 30
+
+
+    # Labels to pass down to workload resources, e.g. Deployments and Pods. In
+    # some scenarios, this can be useful to apply, e.g. when you spawn multiple
+    # workloads, but only want the main workload with default labels to match
+    # the selector of your Ingress / Gateway resources.
+    #labels:
+    #  my-custom-label: my-custom-value
+
+    # All of the (non-init) containers you need to deploy for your work. Init
+    # containers can be specified in the initContainers section below.
+    #
+    # Containers is a dictionary where each key is the name of the container and
+    # value is the configuration for the container.
+    #
+    # Use the container configurations below as a reference for all containers
+    # you include here.
+    containers:
+      # This is the name of your container. "mozcloud-container" will be ignored
+      # as it contains default settings for containers.
+      mozcloud-container:
+        # Arguments to pass to a container. This can be an array or a string.
+        args: []
+
+        # The command a container should run as its entrypoint.
+        command: []
+
+        # A list of config map names to mount into the container as environment
+        # variables. These should be defined higher up in the file under the
+        # "configMaps" key.
+        #
+        # Format:
+        #
+        #   configMaps:
+        #     - my-configmap-name
+        #     - a-different-configmap-name
+        #
+        # Important: The last config map in the list will always take
+        #            precedence.
+        configMaps: []
+
+        # A dictionary of environment variables to pass to this container. This
+        # should not include secrets. These variables will override those
+        # defined in the "configMaps" section above.
+        #
+        # Format:
+        #
+        #   envVars:
+        #     KEY1: VALUE1
+        #     KEY2: VALUE2
+        envVars: {}
+
+        # A list of external secret names and versions to mount in containers.
+        #
+        # Format:
+        #
+        #   externalSecets:
+        #
+        #       # The secret name should match the name of the secret in Google
+        #       # Secret Manager (GSM).
+        #     - name: external-secret-name
+        #
+        #       # By default, the Kubernetes secret name will match the name of
+        #       # the secret in GSM. If you wish to use a different Kubernetes
+        #       # secret name, specify it here.
+        #       #k8sSecretName:
+        #
+        #       # If enabled, the ExternalSecret resource will be created. The
+        #       # default value is "true".
+        #       create: true
+        #
+        #       # The version of the secret to pull from GSM. The default value
+        #       # is "latest".
+        #       version: latest
+        #
+        # By default an external secret called "app-secrets" will be created.
+        # This will map to a GSM secret called "xxxx-gke-app-secrets" where
+        # "xxxx" is the value defined in `.Values.global.mozcloud.env_code`
+        # (ie. "dev", "stage", "prod"). There will be a corresponding Kubernetes
+        # secret called "app-secrets" which will automatically be mounted in
+        # your app container using the "latest" version.
+        #
+        # Any secrets you define here will be created IN ADDITION to that
+        # secret.
+        externalSecrets: []
+
+        # Health check configurations for the container.
+        healthCheck:
+          # This section is used to configure readinessProbe section of a pod.
+          # Readiness probes are used to determine when a pod is ready to begin
+          # receiving traffic.
+          readiness:
+            # If enabled, perform health checks for the application container.
+            # Disable for worker workloads that do not require health checks
+            # (eg. celery).
+            enabled: true
+
+            # This is typically configured to match the application container's
+            # load balancer heartbeat health check endpoint.
+            #
+            # Default: /__lbheartbeat__
+            path: /__lbheartbeat__
+
+            # Optionally configure HTTP headers to use in health checks.
+            #
+            # Example:
+            #
+            #   httpHeaders:
+            #     - name: Host
+            #       value: dev.my-tenant.nonprod.webservices.mozgcp.net
+            httpHeaders: []
+
+            # Probe configurations for health checks. Here, you can fine tune
+            # your health checks based on the needs of your application.
+            probes:
+              # The number of seconds after a container has started before
+              # attempting to perform health checks.
+              #
+              # Default: 10
+              initialDelaySeconds: 10
+
+              # How often (in seconds) to perform the probe.
+              #
+              # Default: 6, min: 1
+              periodSeconds: 6
+
+              # The number of seconds after which the probe times out.
+              #
+              # Default: 5, min: 1
+              timeoutSeconds: 5
+
+              # Minimum consecutive successful probes for the health check to be
+              # considered successful/healthy after having failed.
+              #
+              # Default: 1, min: 1
+              successThreshold: 1
+
+              # The number of consecutive failed probes required for the health
+              # check to be considered failed/not healthy.
+              #
+              # Default: 3, min: 1
+              failureThreshold: 3
+
+          # This section is used to configure livenessProbe section of a pod.
+          # Liveness probes are used to determine that a pod that was already
+          # marked as ready continues to remain healthy and ready to receive
+          # traffic.
+          liveness:
+            # If enabled, perform health checks for the application container.
+            # Disable for worker workloads that do not require health checks
+            # (eg. celery).
+            enabled: true
+
+            # This is typically configured to match the application container's
+            # load balancer heartbeat health check endpoint.
+            #
+            # Default: /__lbheartbeat__
+            path: /__lbheartbeat__
+
+            # Optionally configure HTTP headers to use in health checks. The
+            # format matches the readiness httpHeaders above.
+            #
+            # By default, these will match the httpHeaders used in the readiness
+            # configuration section, if defined.
+            httpHeaders: []
+
+            # Probe configurations for health checks. The format matches the
+            # readiness probes above, although the values differ slightly.
+            probes:
+              initialDelaySeconds: 10
+              periodSeconds: 6
+              timeoutSeconds: 5
+              successThreshold: 1
+              failureThreshold: 5
+
+          # Custom PodMonitoring metrics not yet supported.
+          #metrics:
+          #  path: /metrics
+
+        # The image repo, name, and tag to use for the container. The format is:
+        #
+        #   image:
+        #     repository: repo/image_name
+        #     tag: tag_name
+        #
+        # For example:
+        #
+        #   image:
+        #     repository: us-docker.pkg.dev/moz-fx-system-prod/system-prod/app
+        #     tag: 1.0.0
+        #
+        # We recommend you allow Image Updater to automatically manage image
+        # tags for your applications. See the link below for more details:
+        # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1695449473/How+to+Configuring+your+tenant+to+use+ArgoCD
+        #
+        # If multiple workloads share an image that is managed by Image Updater,
+        # either omit this section or configure empty values, then configure
+        # your tenant file so that "image_name" and "image_tag" reflect the
+        # following:
+        #
+        #   image_name: global.mozcloud.image.repository
+        #   image_tag: global.mozcloud.image.tag
+        #
+        # See the tenant definition document for details:
+        # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/588742735/Tenant+Definition
+        image:
+          repository: ''
+          tag: ''
+
+        # Optionally configure a custom port for your container. The default
+        # value is 8000.
+        #
+        # This value should be an integer.
+        port: 8000
+
+        # The "resources" section allows you to specify the amount of CPU and
+        # memory that your container needs to run. These are equivalent to
+        # requests values.
+        resources:
+          # CPU can be specified in either of the following formats:
+          #
+          #   Positive integer (eg. "2"):
+          #     - This represents an entire vCPU
+          #
+          #   Millicpu (eg. "200m"):
+          #     - This represents a fraction of a vCPU.
+          #     - For example, "200m" means 0.2 CPU.
+          #
+          # The default value is "100m".
+          cpu: 100m
+
+          # Memory can be specified using any of the following suffixes:
+          #
+          #   K (kilobytes), Ki (kibibytes)
+          #   M (megabytes), Mi (mebibytes)
+          #   G (gigabytes), Gi (gibibytes)
+          #
+          # We recommend using Binary (IEC) units, such as Ki, Mi, and Gi.
+          #
+          # The default value is 64Mi.
+          memory: 64Mi
+
+        # Optionally override some securityContext settings for the container.
+        # This section should not be configured unless the user knows what they
+        # are doing. Most tenants will not need to configure any of this.
+        #
+        # Configuration options:
+        #
+        # security:
+        #   # The 'uid' and 'gid' values to use for the container, if
+        #   # non-default.
+        #   #
+        #   # The default value for both is 10001.
+        #   uid: 10001
+        #   gid: 10001
+        #
+        #   # By default, all OS capabilities are dropped. If needed, you can
+        #   # list one or more capabilities to add to the container here.
+        #   #
+        #   # Example:
+        #   #
+        #   #   addCapabilities:
+        #   #     - NET_BIND_SERVICE
+        #   #
+        #   # For more details, visit the page below:
+        #   # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+        #   addCapabilities: []
+        security: {}
+
+        # Optionally mount volumes to the container. The supported volume types
+        # are "configMap" (default), "secret" and "persistentVolumeClaim".
+        #
+        # Volumes should use names that match either config map, external
+        # secret, or persistent volume claim names created as part of and
+        # external secret names created as part of this chart or reference
+        # ConfigMap, PersistentVolumeClaim and Secret resources created
+        # independently of this chart.
+        #
+        # With "configMap" volumes, you can also specify the following options:
+        #
+        #   "key": A key within the config map. The value of the key will be
+        #          used as the contents of the file.
+        #
+        #   "path": The path within the container to which the volume should be
+        #           mounted.
+        #
+        #   "readOnly": Whether or not the volume should be mounted as read
+        #               only. Options are "true" or "false", with the default
+        #               being "false".
+        #
+        # "secret" volumes use the same options above that "configMap" volumes
+        # use with the exception of "readOnly" which is always "true" here. Any
+        # value set for "readOnly" will be ignored in this case.
+        #
+        # "persistentVolumeClaim" volumes support additional options that allow
+        # the creation of PVCs as part of the workload definition. These options
+        # include:
+        #
+        #   "create": Boolean value that indicates whether a PVC should be
+        #             created for this volume. Default is "false".
+        #
+        #   "size": The size of the volume to create (e.g. "10Gi"). Required if
+        #           "create" is set to "true".
+        #
+        #   "accessModes": A list of access modes for the volume. Required if
+        #                  "create" is set to "true". Example values include:
+        #                  "ReadWriteOnce", "ReadOnlyMany", and "ReadWriteMany".
+        #
+        #   "storageClassName": The storage class to use for the volume.
+        #                       Optional.
+        #
+        # Example:
+        #
+        #   volumes:
+        #     - name: my-config-map
+        #       type: configMap
+        #       path: /path/to/my_file.txt
+        #     - name: another-config-map
+        #       type: configMap
+        #       path: /path/to/another_file.txt
+        #       key: another_file.txt
+        #       readOnly: false
+        #     - name: my-secret  # Should match an external secret/secret name.
+        #       type: secret
+        #       path: /path/to/secret_file.txt
+        #     - name: my-pvc-volume
+        #       type: persistentVolumeClaim
+        #       path: /path/to/mount
+        #       create: true
+        #       size: 10Gi
+        #       accessModes:
+        #         - ReadWriteOnce
+        #       storageClassName: standard
+        #
+        #volumes: []
+
+    # Define host details in this section. This section can be omitted or set
+    # to an empty dictionary if your workload does not handle inbound traffic.
+    hosts:
+      # The name to use for the Gateway/Ingress and related resources. If this
+      # is not changed, the workload name will be used instead.
+      name:
+        # A list of domains to use for each host.
+        domains:
+          - example.com
+
+        # A list of the named addresses to use on the Gateway. These should
+        # match the named addresses created for the tenant in GCP.
+        #
+        # If you are using the "ingress" API type, only the first address in
+        # the list will be used.
+        addresses: []
+
+        # Configure the API to use when building network resources. The default
+        # is "gateway", which will build Gateway API resources. This is the
+        # preferred API.
+        #
+        # Use "ingress" for legacy environments that have not yet migrated to
+        # Gateway API. Do not use "ingress" for new tenants!
+        api: gateway
+
+        # Enable / Disable Multi-Cluster mode
+        #
+        # Default: false
+        #
+        # When Gateway API is in use, this switch sets the Gateway Class to a
+        # Multi-Cluster Class, which makes it possible to bind HTTPRoutes to
+        # ServiceImport resources on GKE clusters in different regions (e.g.
+        # us-west1 & europe-west1).
+        #
+        #multiCluster: false
+
+        #
+        # Options for HTTPRoutes.
+        #
+        # * createHttpRoutes: boolean, disable building HTTPRoutes completely.
+        # * rules: add a custom rules array to your workload's HTTPRoute.
+        #
+        httpRoutes:
+          createHttpRoutes: true
+        #  #rules:
+        #    #- backendRefs:
+        #        #- kind: ServiceImport
+        #        #  name: my-custom-backend-us-west1
+        #        #  port: 8080
+        #        #  weight: 80
+        #        #- kind: ServiceImport
+        #        #  name: my-custom-backend-europe-west1
+        #        #  port: 8080
+        #        #  weight: 20
+
+        # Use this array to specify custom backends for your Gateway API-based
+        # workloads.
+        #
+        # Enabling this array will not render the default backend anymore. Using
+        # this with Ingress will not have any effect.
+        #
+        # A custom backend can build different kinds of resources:
+        #
+        # * if the service dictionary is set, we build a Service for this
+        #   backend.
+        #
+        # * if the service dictionary contains createServiceExport: true, we
+        #   also build a ServiceExport.
+        #
+        # * if the backendPolicy dictionary is set, we build a GCPBackendPolicy
+        #   for this backend.
+        #
+        # * if the healthCheck dictionary is set, we build a HealthCheckPolicy
+        #   for this backend.
+        #
+        # This is handy in situations where you want a MultiCluster Gateway, for
+        # example. E.g., in cases where you want to apply split traffic
+        # scenarios across regions, you want a region-based Service per region,
+        # as well as a ServiceExport, but you only want HealthCheckPolicies and
+        # GCPPBBackendPolicies to exist on the primary region that holds your
+        # Gateway.
+        #
+        #backends:
+        #  - name: my-custom-backend
+        #    service:
+        #      portName: http
+        #      port: 8000
+        #      targetPort: http
+        #      createServiceExport: true
+        #    backendPolicy:
+        #      targetRef:
+        #        kind: ServiceImport
+        #        name: my-custom-backend
+        #    healthCheck:
+        #      host: my-custom-host.local
+        #      port: 8080
+        #      path: /readiness/
+        #      targetRef:
+        #        kind: ServiceImport
+        #        name: my-custom-backend
+
+        # Configure the type of load balancer to use for your host.
+        #
+        # Options include:
+        #
+        #   internal: An internal load balancer. This is only available when
+        #             "api" is set to "gateway".
+        #
+        #   external: An external/public facing load balancer. This can be used
+        #             for both "gateway" and "ingress" APIs. If specified, TLS
+        #             certificates and an HTTP to HTTPS redirect will be
+        #             automatically configured.
+        #
+        # The default value is "external".
+        type: external
+
+        # Global certificate details for external gateways. Certificates MUST be
+        # specified if one or more listener(s) uses the HTTPS procotol.
+        #
+        # This section is not required if host type is "internal".
+        tls:
+          # A list of the certmap, pre-shared cert, or ManagedCertificate names
+          # to use on the Gateway or Ingress. Only the first entry is used if
+          # "type" is "certmap".
+          #
+          # Certificate maps and pre-shared certificates are created
+          # outside of Kubernetes either by tenant Terraform modules (certmaps)
+          # or manually (pre-shared).
+          #
+          # ManagedCertificate certificates will be automatically created by
+          # this chart if "create" is set to "true".
+          certs: []
+
+          # If enabled, certificates will be created.
+          #
+          # This is only applicable when the TLS type is "ManagedCertificate"
+          # and the type of API is "ingress".
+          #
+          # The default behavior is to create ManagedCertificate resources when
+          # using Ingress. This option is ignored for Gateway API resources.
+          create: true
+
+          # Can be "certmap", "ManagedCertificate", or "pre-shared". What you
+          # depends on the type of API used.
+          #
+          # Options (based on API):
+          #   Gateway: certmap
+          #   Ingress: ManagedCertificate (preferred), pre-shared
+          #
+          # As the default API is "gateway", the default TLS type is "certmap".
+          type: certmap
+
+        # Optionally configure the log sample rate for the load balancer, IAP
+        # details, or a custom backend timeout.
+        #options:
+        #  # Configures Identity-Aware Proxy for the service.
+        #  #iap:
+        #  #  # You must explicitly enable this feature.
+        #  #  enabled: false
+        #  #
+        #  #  # The OAuth2 client ID. Only used for Gateway API.
+        #  #  #oauth2ClientId:
+        #  #
+        #  #  # Name of the Kubernetes secret containing the OAuth2 client
+        #  #  # secret. Only used for Gateway API.
+        #  #  #oauth2ClientSecret:
+        #
+        #  # The sample rate at which HTTP access should be logged. This can be
+        #  # configured as a float, integer, or string. The default is 10 (10%).
+        #  #logSampleRate: 10
+        #
+        #  # Backend service timeout period in seconds.
+        #  #timeoutSec: 30
+        #  #
+        #  # Custom config for backend health check
+        #  #healthCheck:
+        #  #  #path: /readiness/
+        #  #  #port: 8000
+        #  #  #host: my-custom-backend-host
+
+    # All of the init containers you need to deploy for your workload.
+    #
+    # initContainers is a dictionary where each key is the name of the container
+    # and value is the configuration for the container.
+    #
+    # Use the init container configurations below as a reference for all
+    # init containers you include here.
+    initContainers:
+      # This is the name of your init container. "mozcloud-init-container" will
+      # be ignored as it contains default settings for init containers.
+      mozcloud-init-container:
+        # Arguments to pass to an init container. This can be an array or a
+        # string.
+        args: []
+
+        # The command a container should run as its entrypoint.
+        command: []
+
+        # A list of config map names to mount into the container as environment
+        # variables. These should be defined higher up in the file under the
+        # "configMaps" key.
+        #
+        # Format:
+        #
+        #   configMaps:
+        #     - my-configmap-name
+        #     - a-different-configmap-name
+        #
+        # Important: The last config map in the list will always take
+        #            precedence.
+        configMaps: []
+
+        # A dictionary of environment variables to pass to this container. This
+        # should not include secrets. These variables will override those
+        # defined in the "configMaps" section above.
+        #
+        # Format:
+        #
+        #   envVars:
+        #     KEY1: VALUE1
+        #     KEY2: VALUE2
+        envVars: {}
+
+        # A list of external secret names and versions to mount in containers.
+        #
+        # Format:
+        #
+        #   externalSecets:
+        #
+        #       # The secret name should match the name of the secret in Google
+        #       # Secret Manager (GSM).
+        #     - name: external-secret-name
+        #
+        #       # By default, the Kubernetes secret name will match the name of
+        #       # the secret in GSM. If you wish to use a different Kubernetes
+        #       # secret name, specify it here.
+        #       #k8sSecretName:
+        #
+        #       # If enabled, the ExternalSecret resource will be created. The
+        #       # default value is "true".
+        #       create: true
+        #
+        #       # The version of the secret to pull from GSM. The default value
+        #       # is "latest".
+        #       version: latest
+        #
+        # By default an external secret called "app-secrets" will be created.
+        # This will map to a GSM secret called "xxxx-gke-app-secrets" where
+        # "xxxx" is the value defined in `.Values.global.mozcloud.env_code` (ie.
+        # "dev", "stage", "prod"). There will be a corresponding Kubernetes
+        # secret called "app-secrets" which will automatically be mounted in
+        # your app container using the "latest" version.
+        #
+        # Any secrets you define here will be created IN ADDITION to that
+        # secret.
+        externalSecrets: []
+
+        # The image repo, name, and tag to use for the container. The format is:
+        #
+        #   image:
+        #     repository: repo/image_name
+        #     tag: tag_name
+        #
+        # For example:
+        #
+        #   image:
+        #     repository: us-docker.pkg.dev/moz-fx-system-prod/system-prod/app
+        #     tag: 1.0.0
+        #
+        # We recommend you allow Image Updater to automatically manage image
+        # tags for your applications. See the link below for more details:
+        # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1695449473/How+to+Configuring+your+tenant+to+use+ArgoCD
+        #
+        # If multiple workloads share an image that is managed by Image Updater,
+        # either omit this section or configure empty values, then configure
+        # your tenant file so that "image_name" and "image_tag" reflect the
+        # following:
+        #
+        #   image_name: global.mozcloud.image.repository
+        #   image_tag: global.mozcloud.image.tag
+        #
+        # See the tenant definition document for details:
+        # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/588742735/Tenant+Definition
+        image:
+          repository: ''
+          tag: ''
+
+        # Optionally configure a custom port for your container. The default
+        # value is none/unset.
+        #
+        # This value should be an integer.
+        #port:
+
+        # The "resources" section allows you to specify the amount of CPU and
+        # memory that your container needs to run. These are equivalent to
+        # requests values.
+        resources:
+          # CPU can be specified in either of the following formats:
+          #
+          #   Positive integer (eg. "2"):
+          #     - This represents an entire vCPU
+          #
+          #   Millicpu (eg. "200m"):
+          #     - This represents a fraction of a vCPU.
+          #     - For example, "200m" means 0.2 CPU.
+          #
+          # The default value is "100m".
+          cpu: 100m
+
+          # Memory can be specified using any of the following suffixes:
+          #
+          #   K (kilobytes), Ki (kibibytes)
+          #   M (megabytes), Mi (mebibytes)
+          #   G (gigabytes), Gi (gibibytes)
+          #
+          # We recommend using Binary (IEC) units, such as Ki, Mi, and Gi.
+          #
+          # The default value is 64Mi.
+          memory: 64Mi
+
+        # Optionally override some securityContext settings for the container.
+        # This section should not be configured unless the user knows what they
+        # are doing. Most tenants will not need to configure any of this.
+        #
+        # Configuration options:
+        #
+        # security:
+        #   # The 'uid' and 'gid' values to use for the container, if
+        #   # non-default.
+        #   #
+        #   # The default value for both is 10001.
+        #   uid: 10001
+        #   gid: 10001
+        #
+        #   # By default, all OS capabilities are dropped. If needed, you can
+        #   # list one or more capabilities to add to the container here.
+        #   #
+        #   # Example:
+        #   #
+        #   #   addCapabilities:
+        #   #     - NET_BIND_SERVICE
+        #   #
+        #   # For more details, visit the page below:
+        #   # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+        #   addCapabilities: []
+        security: {}
+
+        # If enabled, this init container will continue running as a sidecar
+        # container once all other init containers successfully complete. This
+        # is useful for situations where you want to start a specific sidecar
+        # container before all other containers begin running (eg.
+        # cloud-sql-proxy).
+        sidecar: false
+
+        # Optionally mount volumes to the container. The supported volume types
+        # are "configMap" (default), "secret" and "persistentVolumeClaim".
+        #
+        # Volumes should use names that match either config map, external
+        # secret, or persistent volume claim names created as part of and
+        # external secret names created as part of this chart or reference
+        # ConfigMap, PersistentVolumeClaim and Secret resources created
+        # independently of this chart.
+        #
+        # With "configMap" volumes, you can also specify the following options:
+        #
+        #   "key": A key within the config map. The value of the key will be
+        #          used as the contents of the file.
+        #
+        #   "path": The path within the container to which the volume should be
+        #           mounted.
+        #
+        #   "readOnly": Whether or not the volume should be mounted as read
+        #               only. Options are "true" or "false", with the default
+        #               being "false".
+        #
+        # "secret" volumes use the same options above that "configMap" volumes
+        # use with the exception of "readOnly" which is always "true" here. Any
+        # value set for "readOnly" will be ignored in this case.
+        #
+        # "persistentVolumeClaim" volumes support additional options that allow
+        # the creation of PVCs as part of the workload definition. These options
+        # include:
+        #
+        #   "create": Boolean value that indicates whether a PVC should be
+        #             created for this volume. Default is "false".
+        #
+        #   "size": The size of the volume to create (e.g. "10Gi"). Required if
+        #           "create" is set to "true".
+        #
+        #   "accessModes": A list of access modes for the volume. Required if
+        #                  "create" is set to "true". Example values include:
+        #                  "ReadWriteOnce", "ReadOnlyMany", and "ReadWriteMany".
+        #
+        #   "storageClassName": The storage class to use for the volume.
+        #                       Optional.
+        #
+        # Example:
+        #
+        #   volumes:
+        #     - name: my-config-map
+        #       type: configMap
+        #       path: /path/to/my_file.txt
+        #     - name: another-config-map
+        #       type: configMap
+        #       path: /path/to/another_file.txt
+        #       key: another_file.txt
+        #       readOnly: false
+        #     - name: my-secret  # Should match an external secret/secret name.
+        #       type: secret
+        #       path: /path/to/secret_file.txt
+        #     - name: my-pvc-volume
+        #       type: persistentVolumeClaim
+        #       path: /path/to/mount
+        #       create: true
+        #       size: 10Gi
+        #       accessModes:
+        #         - ReadWriteOnce
+        #       storageClassName: standard
+        #
+        #volumes: []
+
+    # Configure jobs to run before or after the rest of the deployment.
+    #jobs:
+    #  preDeployment:
+    #    # The name to use for the job. If this is not changed, the job will be
+    #    # named: "<workload_name>-predeployment".
+    #    name:
+    #      # Optionally define a Sync Wave value for ArgoCD.
+    #      #
+    #      # Sync waves are used to define an order in which resources are
+    #      # applied within a sync phase. Sync waves are configured using
+    #      # integers in ascending order, where resources with lower-value sync
+    #      # waves are applied first and resources with higher-value sync waves
+    #      # are applied last.
+    #      #
+    #      # This chart allows you to assign Sync Wave values for pre-deployment
+    #      # jobs ranging from -10 (run first) to -1 (run last).
+    #      #
+    #      # If no values are specified, a default of -1 will be applied.
+    #      argo:
+    #        syncWave: -1
+    #
+    #      # See image, command, args, and resources configurations for
+    #      # containers as a reference.
+    #      image:
+    #        repository:
+    #        tag:
+    #      command: []
+    #      args: []
+    #      resources:
+    #        cpu:
+    #        memory:
+    #
+    #      # A list of config map names to mount into the container as
+    #      # environment variables. These should be defined higher up in the
+    #      # file under the "configMaps" key.
+    #      #
+    #      # Format:
+    #      #
+    #      #   configMaps:
+    #      #     - my-configmap
+    #      #     - a-different-configmap
+    #      #
+    #      # Important: The last config map in the list will always take
+    #      #            precedence.
+    #      configMaps: []
+    #
+    #      # A dictionary of environment variables to pass to this container.
+    #      # This should not include secrets. These variables will override
+    #      # those defined in the "configMaps" section above.
+    #      #
+    #      # Format:
+    #      #
+    #      #   envVars:
+    #      #     KEY1: VALUE1
+    #      #     KEY2: VALUE2
+    #      envVars: {}
+    #
+    #      # A list of external secret names and versions to mount in
+    #      # containers.
+    #      #
+    #      # Format:
+    #      #
+    #      #   externalSecets:
+    #      #
+    #      #       # The secret name should match the name of the secret in
+    #      #       # Google Secret Manager (GSM).
+    #      #     - name: external-secret-name
+    #      #
+    #      #       # By default, the Kubernetes secret name will match the name
+    #      #       # of the secret in GSM. If you wish to use a different
+    #      #       # Kubernetes secret name, specify it here.
+    #      #       #k8sSecretName:
+    #      #
+    #      #       # If enabled, the ExternalSecret resource will be created.
+    #      #       # The default value is "true".
+    #      #       create: true
+    #      #
+    #      #       # The version of the secret to pull from GSM. The default
+    #      #       # value is "latest".
+    #      #       version: latest
+    #      #
+    #      # By default an external secret called "app-secrets" will be created.
+    #      # This will map to a GSM secret called "xxxx-gke-app-secrets" where
+    #      # "xxxx" is the value defined in `.Values.global.mozcloud.env_code`
+    #      # (ie. "dev", "stage", "prod"). There will be a corresponding
+    #      # Kubernetes secret called "app-secrets" which will automatically
+    #      # be mounted in your app container using the "latest" version.
+    #      #
+    #      # Any secrets you define here will be created IN ADDITION to that
+    #      # secret.
+    #      externalSecrets: []
+    #
+    #      # Optionally use a custom service account for the container.
+    #      #serviceAccount:
+    #      #
+    #      #  # If "true", the same service account used for the app pod will
+    #      #  # be used for the job pod. Set to "false" to not use any service
+    #      #  # account or configure a custom one.
+    #      #  useAppServiceAccount: true
+    #      #
+    #      #  # Optionally configure a custom service account. This section is
+    #      #  # only applicable if "useAppServiceAccount" is set to "false".
+    #      #  #customServiceAccount:
+    #      #  #  name:
+    #      #  #
+    #      #  #  # If true, the service account will be created.
+    #      #  #  create: true
+    #      #  #
+    #      #  #  # # If this service account should map to a service account in
+    #      #  #  # # GCP, enter the details here.
+    #      #  #  #gcpServiceAccount:
+    #      #  #  #  # The name of the GCP service account (everything before "@"
+    #      #  #  #  # in the email address).
+    #      #  #  #  name:
+    #      #  #  #
+    #      #  #  #  # GCP project ID.
+    #      #  #  #  projectId:
+    #
+    #  postDeployment:
+    #    # The name to use for the job. If this is not changed, the job will be
+    #    # named: "<workload_name>-postdeployment".
+    #    name:
+    #      # Optionally define a Sync Wave value for ArgoCD.
+    #      #
+    #      # Sync waves are used to define an order in which resources are
+    #      # applied within a sync phase. Sync waves are configured using
+    #      # integers in ascending order, where resources with lower-value sync
+    #      # waves are applied first and resources with higher-value sync waves
+    #      # are applied last.
+    #      #
+    #      # This chart allows you to assign Sync Wave values for
+    #      # post-deployment jobs, as long as the values are greater than 0.
+    #      #
+    #      # If no values are specified, a default of 1 will be applied.
+    #      argo:
+    #        syncWave: 1
+    #
+    #      # The name of the container. The default value is "job".
+    #      containerName: job
+    #
+    #      # See image, command, args, and resources configurations for
+    #      # containers as a reference.
+    #      image:
+    #        repository:
+    #        tag:
+    #      command: []
+    #      args: []
+    #      resources:
+    #        cpu:
+    #        memory:
+    #
+    #      # A list of config map names to mount into the container as
+    #      # environment variables. These should be defined higher up in the
+    #      # file under the "configMaps" key.
+    #      #
+    #      # Format:
+    #      #
+    #      #   configMaps:
+    #      #     - my-configmap
+    #      #     - a-different-configmap
+    #      #
+    #      # Important: The last config map in the list will always take
+    #      #            precedence.
+    #      #configMaps: []
+    #
+    #      # A dictionary of environment variables to pass to this container.
+    #      # This should not include secrets. These variables will override
+    #      # those defined in the "configMaps" section above.
+    #      #
+    #      # Format:
+    #      #
+    #      #   envVars:
+    #      #     KEY1: VALUE1
+    #      #     KEY2: VALUE2
+    #      envVars: {}
+    #
+    #      # A list of external secret names and versions to mount in
+    #      # containers.
+    #      #
+    #      # Format:
+    #      #
+    #      #   externalSecets:
+    #      #
+    #      #       # The secret name should match the name of the secret in
+    #      #       # Google Secret Manager (GSM).
+    #      #     - name: external-secret-name
+    #      #
+    #      #       # By default, the Kubernetes secret name will match the name
+    #      #       # of the secret in GSM. If you wish to use a different
+    #      #       # Kubernetes secret name, specify it here.
+    #      #       #k8sSecretName:
+    #      #
+    #      #       # If enabled, the ExternalSecret resource will be created.
+    #      #       # The default value is "true".
+    #      #       create: true
+    #      #
+    #      #       # The version of the secret to pull from GSM. The default
+    #      #       # value is "latest".
+    #      #       version: latest
+    #      #
+    #      # By default an external secret called "app-secrets" will be created.
+    #      # This will map to a GSM secret called "xxxx-gke-app-secrets" where
+    #      # "xxxx" is the value defined in `.Values.global.mozcloud.env_code`
+    #      # (ie. "dev", "stage", "prod"). There will be a corresponding
+    #      # Kubernetes secret called "app-secrets" which will automatically
+    #      # be mounted in your app container using the "latest" version.
+    #      #
+    #      # Any secrets you define here will be created IN ADDITION to that
+    #      # secret.
+    #      externalSecrets: []
+    #
+    #      # Optionally use a custom service account for the container.
+    #      #serviceAccount:
+    #      #
+    #      #  # If "true", the same service account used for the app pod will
+    #      #  # be used for the job pod. Set to "false" to not use any service
+    #      #  # account or configure a custom one.
+    #      #  useAppServiceAccount: true
+    #      #
+    #      #  # Optionally configure a custom service account. This section is
+    #      #  # only applicable if "useAppServiceAccount" is set to "false".
+    #      #  #customServiceAccount:
+    #      #  #  name:
+    #      #  #
+    #      #  #  # If true, the service account will be created.
+    #      #  #  create: true
+    #      #  #
+    #      #  #  # # If this service account should map to a service account in
+    #      #  #  # # GCP, enter the details here.
+    #      #  #  #gcpServiceAccount:
+    #      #  #  #  # The name of the GCP service account (everything before "@"
+    #      #  #  #  # in the email address).
+    #      #  #  #  name:
+    #      #  #  #
+    #      #  #  #  # GCP project ID.
+    #      #  #  #  projectId:
+
+    # Optionally configure NGINX.
+    #nginx:
+    #  # NGINX is enabled by default, but can be disabled if set to "false".
+    #  enabled: true
+
+    #  # If you are using a custom NGINX image such as openresty-oidc, specify
+    #  # that here.
+    #  #
+    #  # The format is:
+    #  #
+    #  #   repo/image:tag
+    #  #
+    #  # For example:
+    #  #
+    #  #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/openresty-oidc:1.21.4.1-0-alpine
+    #  #image:
+
+    #  # Optionally define an NGINX configuration to use for nginx.conf. This
+    #  # should refer to a template created outside the scope of this Helm
+    #  # chart.
+    #  #configMap:
+    #
+    #  # To customize the resource allocation for the NGINX container, use the
+    #  # "resources" dictionary.
+    #  #
+    #  # Example:
+    #  #
+    #  #   resources:
+    #  #     cpu: 100m
+    #  #     memory: 512Mi
+    #  #
+    #  # By default, we will allocate "50m" CPU and "128Mi" of memory.
+    #  #resources:
+    #  #  cpu: 50m
+    #  #  memory: 128Mi
+
+    # Configure auto instrumentation for the OTEL Collector.
+    #
+    # This can only be enabled for applications written in one of the supported
+    # languages. See below for a list of supported languages.
+    otel:
+      autoInstrumentation:
+        # By default, auto instrumentation is disabled. Set this to "true" to
+        # enable it.
+        enabled: false
+
+        # If the application was written in a supported language, specify it
+        # here to ensure auto instrumentation occurs successfully.
+        #
+        # Supported languages/options (case sensitive):
+        #
+        #   dotnet
+        #   go
+        #   java
+        #   nodejs
+        #   python
+        language: ''
+
+    # Optionally override some securityContext settings for the pod.
+    # section should not be configured unless the user knows what they are
+    # doing. Most tenants will not need to configure any of this.
+    #
+    # Configuration options:
+    #
+    # security:
+    #   # By default, no containers should run as root. The few exceptions to
+    #   # this rule can configure this by setting "runAsRoot" to "true".
+    #   #
+    #   # Note: The webservices-high and dataservices-high Kubernetes clusters
+    #   # will not allow you to deploy containers using the root user.
+    #   runAsRoot: false
+    security: {}
+
+    # Optionally use a custom service account for the pod. By default, a service
+    # account using the name of your workload will be created that uses the GCP
+    # service account automatically created with your tenant:
+    #
+    #   gke-<environment>@<gcp_project_id>.iam.serviceaccount.com
+    #
+    # Example and configuration options:
+    #
+    # serviceAccount:
+    #   name:
+    #
+    #   # If true, the service account will be created.
+    #   create: true
+    #
+    #   # If this service account should map to a service account in GCP, enter
+    #   # the details here.
+    #   gcpServiceAccount:
+    #     # The name of the GCP service account (everything before "@" in the
+    #     # email address).
+    #     name: ''
+    #
+    #     # GCP project ID. If not specified, the value automatically set in
+    #     # .Values.global.mozcloud.project_id will be used.
+    #     #projectId: ''
+    serviceAccount: {}
+
+    # Define the strategy Kubernetes should use when replacing pods. Below are
+    # the options:
+    #
+    #   Recreate: All existing pods will be removed before replacement pods are
+    #             deployed.
+    #
+    #   RollingUpdate: Pods are gradually replaced when a new version of the
+    #                  deployment is created.
+    #
+    # The default value is "RollingUpdate".
+    #
+    strategy: RollingUpdate
+
+    # The number of seconds a pod should be retained after transitioning to the
+    # Terminating state. This is useful if one or more containers needs to
+    # perform cleanup or graceful termination before deletion.
+    #
+    # Default: 30, min: 1
+    #terminationGracePeriodSeconds: 30
+
+# We have additional features we will want to add in the coming releases.
+#
+# To do list:
+#   - Add support for additional PodMonitoring definitions
+#   - Add support for Rollout steps (enabling canary deployments through Argo
+#     Rollouts)
+#   - Add support for StatefulSet resources

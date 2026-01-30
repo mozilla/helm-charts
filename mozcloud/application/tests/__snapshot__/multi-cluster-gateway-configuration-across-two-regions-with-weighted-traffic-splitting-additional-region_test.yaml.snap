@@ -1,0 +1,34 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        artifact_id: abcd1234
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mozcloud-test-europe-west1
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  2: |
+    apiVersion: net.gke.io/v1
+    kind: ServiceExport
+    metadata:
+      name: mozcloud-test-europe-west1
