@@ -6,16 +6,17 @@ workloads:
       enabled: true
       # Using a custom configmap for nginx
       configMap: my-nginx-configmap
-    container:
-      image:
-        repository: test-repo/test-image
-        tag: 1.0.0
-      # Mount a regular configMap as a volume
-      volumes:
-        - name: test-config-volume
-          type: configMap
-          path: /etc/config
-          readOnly: true
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        # Mount a regular configMap as a volume
+        volumes:
+          - name: test-config-volume
+            type: configMap
+            path: /etc/config
+            readOnly: true
     hosts:
       test-deployment:
         domains:

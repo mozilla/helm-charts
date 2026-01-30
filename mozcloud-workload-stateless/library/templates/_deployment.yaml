@@ -187,6 +187,62 @@ spec:
             {{- end }}
           {{- end }}
         {{- end }}
+      {{- if $deployment.initContainers }}
+      initContainers:
+        {{- range $container := $deployment.initContainers }}
+        - name: {{ $container.name }}
+          image: {{ printf "%s:%s" $container.image $container.tag }}
+          imagePullPolicy: Always
+          {{- if $container.command }}
+          command:
+            {{- $container.command | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.args }}
+          args:
+            {{- $container.args | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.env }}
+          env:
+            {{- range $env_var := $container.env }}
+            - name: {{ $env_var.name }}
+              value: {{ $env_var.value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if $container.envFrom }}
+          envFrom:
+            {{- $container.envFrom | toYaml | nindent 12 }}
+          {{- end }}
+          {{- if $container.ports }}
+          ports:
+            {{- $container.ports | toYaml | nindent 12 }}
+          {{- end }}
+          resources:
+            {{- include "mozcloud-workload-core-lib.pod.container.resources" (default (dict) $container.resources) | nindent 12 }}
+          {{- if $container.restartPolicy }}
+          restartPolicy: {{ $container.restartPolicy }}
+          {{- end }}
+          securityContext:
+            {{- include "mozcloud-workload-core-lib.pod.container.securityContext" (default (dict) $container.securityContext) | nindent 12 }}
+          {{- if $container.volumes }}
+          volumeMounts:
+            {{- range $volume := $container.volumes }}
+            - name: {{ $volume.name }}
+              mountPath: {{ $volume.path }}
+              {{- if $volume.key }}
+              subPath: {{ $volume.key }}
+              {{- end }}
+              {{- if eq $volume.type "secret" }}
+              readOnly: true
+              {{- else if $volume.readOnly }}
+              readOnly: {{ $volume.readOnly }}
+              {{- end }}
+              {{- if not (hasKey $volumes $volume.name) }}
+              {{- $_ := set $volumes $volume.name $volume }}
+              {{- end }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
       securityContext:
         {{- $params := dict }}
         {{- if hasKey (default (dict) ($deployment.securityContext).runAsNonRoot) "runAsNonRoot" }}

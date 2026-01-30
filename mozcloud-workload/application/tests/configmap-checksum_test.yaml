@@ -55,11 +55,12 @@ tests:
       workloads:
         test-service:
           component: web
-          container:
-            image:
-              repository: test-repo/test-image
-              tag: 1.0.0
-            volumes: []
+          containers:
+            app:
+              image:
+                repository: test-repo/test-image
+                tag: 1.0.0
+              volumes: []
       configMaps: {}
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name

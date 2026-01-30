@@ -386,12 +386,11 @@ Autoscaling (HPAs)
 {{- $workloads := .workloads -}}
 hpas:
   {{- range $workload_name, $workload_config := $workloads }}
-  {{- $container := $workload_config.container }}
-  {{- if (dig "autoscaling" "enabled" true $container) }}
+  {{- if (dig "autoscaling" "enabled" true $workload_config) }}
   {{ $workload_name }}:
     component: {{ $workload_config.component }}
-    minReplicas: {{ default 1 (($container.autoscaling).replicas).min }}
-    maxReplicas: {{ default 30 (($container.autoscaling).replicas).max }}
+    minReplicas: {{ default 1 (($workload_config.autoscaling).replicas).min }}
+    maxReplicas: {{ default 30 (($workload_config.autoscaling).replicas).max }}
     scaleTargetRef:
       {{/*
       The following 3 lines will need to be tweaked when we officially support
@@ -401,7 +400,7 @@ hpas:
       kind: Deployment
       name: {{ $workload_name }}
     metrics:
-      {{- range $metric := (default (list) ($container.autoscaling).metrics) }}
+      {{- range $metric := (default (list) ($workload_config.autoscaling).metrics) }}
       {{- if eq $metric.type "network" }}
       - type: Object
         object:
@@ -441,137 +440,220 @@ deployments:
   }}
   {{- $nginx_enabled = false }}
   {{- end }}
-  {{- $container := $workload_config.container }}
   {{ $workload_name }}:
     component: {{ $workload_config.component }}
     labels:
       {{- range $k, $v := (default (list) ($workload_config.labels)) }}
       {{ $k }}: {{ $v }}
       {{- end }}
-    {{- if $container.terminationGracePeriodSeconds }}
-    terminationGracePeriodSeconds: {{ $container.terminationGracePeriodSeconds }}
+    {{- if $workload_config.terminationGracePeriodSeconds }}
+    terminationGracePeriodSeconds: {{ $workload_config.terminationGracePeriodSeconds }}
     {{- end }}
     containers:
-      - name: {{ default "app" $container.name }}
-        {{- if and (not ($container.image).repository) (not ($globals.image).repository) }}
-        {{- $fail_message := printf "A fully qualified image path must be configured in either \".Values.mozcloud-workload.workloads.%s.container.image.repository\" or \".Values.global.mozcloud.image.repository\"." $workload_config.component }}
+      {{- $formatter_params := dict "containers" $workload_config.containers "type" "containers" }}
+      {{- $containers := include "mozcloud-workload.formatter.containers" $formatter_params | fromYaml }}
+      {{- range $container_name, $container_config := $containers }}
+      - name: {{ $container_name }}
+        {{- if and (not ($container_config.image).repository) (not ($globals.image).repository) }}
+        {{- $fail_message := printf "A fully qualified image path must be configured in either \".Values.mozcloud-workload.workloads.%s.containers.%s.image.repository\" or \".Values.global.mozcloud.image.repository\"." $workload_name $container_name }}
         {{- fail $fail_message }}
         {{- end }}
-        image: {{ default ($globals.image).repository ($container.image).repository }}
-        {{- if and (not ($container.image).tag) (not ($globals.image).tag) }}
-        {{- $fail_message := printf "An image tag must be configured in either \".Values.mozcloud-workload.workloads.%s.container.image.tag\" or \".Values.global.mozcloud.image.tag\"." $workload_config.component }}
+        image: {{ default ($globals.image).repository ($container_config.image).repository }}
+        {{- if and (not ($container_config.image).tag) (not ($globals.image).tag) }}
+        {{- $fail_message := printf "An image tag must be configured in either \".Values.mozcloud-workload.workloads.%s.containers.%s.image.tag\" or \".Values.global.mozcloud.image.tag\"." $workload_name $container_name }}
         {{- fail $fail_message }}
         {{- end }}
-        tag: {{ default ($globals.image).tag ($container.image).tag }}
-        {{- if $container.command }}
+        tag: {{ default ($globals.image).tag ($container_config.image).tag }}
+        {{- if $container_config.command }}
         command:
-          {{- range $line := $container.command }}
+          {{- range $line := $container_config.command }}
           - {{ $line | quote }}
           {{- end }}
         {{- end }}
-        {{- if $container.args }}
+        {{- if $container_config.args }}
         args:
-          {{- range $line := $container.args }}
+          {{- range $line := $container_config.args }}
           - {{ $line | quote }}
           {{- end }}
         {{- end }}
-        {{- if $container.envVars }}
+        {{- if $container_config.envVars }}
         env:
-          {{- range $env_key, $env_val := $container.envVars }}
+          {{- range $env_key, $env_val := $container_config.envVars }}
           - name: {{ $env_key }}
             value: {{ $env_val | quote }}
           {{- end }}
         {{- end }}
         envFrom:
-          {{- if $container.configMaps }}
-          {{- range $config_map := $container.configMaps }}
+          {{- if $container_config.configMaps }}
+          {{- range $config_map := $container_config.configMaps }}
           - configMapRef:
               name: {{ $config_map }}
           {{- end }}
           {{- end }}
           - secretRef:
               name: {{ $globals.app_code }}-secrets
-          {{- if $container.externalSecrets }}
-          {{- range $external_secret := $container.externalSecrets }}
+          {{- if $container_config.externalSecrets }}
+          {{- range $external_secret := $container_config.externalSecrets }}
           - secretRef:
               name: {{ default $external_secret.name $external_secret.k8sSecretName }}
           {{- end }}
           {{- end }}
-        {{- if (dig "healthCheck" "liveness" "enabled" true $workload_config) }}
+        {{- if (dig "healthCheck" "liveness" "enabled" true $container_config) }}
         livenessProbe:
           httpGet:
-            {{- if (($workload_config.healthCheck).liveness).httpHeaders }}
+            {{- if (($container_config.healthCheck).liveness).httpHeaders }}
             httpHeaders:
-              {{- range $header := $workload_config.healthCheck.liveness.httpHeaders }}
+              {{- range $header := $container_config.healthCheck.liveness.httpHeaders }}
               - name: {{ $header.name }}
                 value: {{ $header.value }}
               {{- end }}
-            {{- else if (($workload_config.healthCheck).readiness).httpHeaders }}
+            {{- else if (($container_config.healthCheck).readiness).httpHeaders }}
             httpHeaders:
-              {{- range $header := $workload_config.healthCheck.readiness.httpHeaders }}
+              {{- range $header := $container_config.healthCheck.readiness.httpHeaders }}
               - name: {{ $header.name }}
                 value: {{ $header.value }}
               {{- end }}
             {{- end }}
-            path: {{ default "/__lbheartbeat__" $workload_config.healthCheck.liveness.path }}
+            path: {{ default "/__lbheartbeat__" $container_config.healthCheck.liveness.path }}
             port: app
-          {{- if (($workload_config.healthCheck).liveness).probes }}
-          {{- range $k, $v := $workload_config.healthCheck.liveness.probes }}
+          {{- if (($container_config.healthCheck).liveness).probes }}
+          {{- range $k, $v := $container_config.healthCheck.liveness.probes }}
           {{ $k }}: {{ $v }}
           {{- end }}
-          {{- else if (($workload_config.healthCheck).readiness).probes }}
-          {{- range $k, $v := $workload_config.healthCheck.readiness.probes }}
+          {{- else if (($container_config.healthCheck).readiness).probes }}
+          {{- range $k, $v := $container_config.healthCheck.readiness.probes }}
           {{ $k }}: {{ $v }}
           {{- end }}
           {{- end }}
         {{- end }}
-        {{- if (dig "healthCheck" "readiness" "enabled" true $workload_config) }}
+        {{- if (dig "healthCheck" "readiness" "enabled" true $container_config) }}
         readinessProbe:
           httpGet:
-            {{- if (($workload_config.healthCheck).readiness).httpHeaders }}
+            {{- if (($container_config.healthCheck).readiness).httpHeaders }}
             httpHeaders:
-              {{- range $header := $workload_config.healthCheck.readiness.httpHeaders }}
+              {{- range $header := $container_config.healthCheck.readiness.httpHeaders }}
               - name: {{ $header.name }}
                 value: {{ $header.value }}
               {{- end }}
             {{- end }}
-            path: {{ default "/__lbheartbeat__" $workload_config.healthCheck.readiness.path }}
+            path: {{ default "/__lbheartbeat__" $container_config.healthCheck.readiness.path }}
             port: app
-          {{- if (($workload_config.healthCheck).readiness).probes }}
-          {{- range $k, $v := $workload_config.healthCheck.readiness.probes }}
+          {{- if (($container_config.healthCheck).readiness).probes }}
+          {{- range $k, $v := $container_config.healthCheck.readiness.probes }}
           {{ $k }}: {{ $v }}
           {{- end }}
           {{- end }}
         {{- end }}
         {{- if or
             $workload_config.hosts
-            (($workload_config.healthCheck).readiness).enabled
-            (($workload_config.healthCheck).liveness).enabled
+            (($container_config.healthCheck).readiness).enabled
+            (($container_config.healthCheck).liveness).enabled
         }}
         ports:
           - name: app
-            containerPort: {{ $container.port }}
+            containerPort: {{ $container_config.port }}
         {{- end }}
         resources:
           requests:
-            cpu: {{ $container.resources.cpu }}
-            memory: {{ $container.resources.memory }}
-        {{- if or ($container.security).uid ($container.security).gid ($container.security).addCapabilities }}
+            cpu: {{ $container_config.resources.cpu }}
+            memory: {{ $container_config.resources.memory }}
+        {{- if or ($container_config.security).uid ($container_config.security).gid ($container_config.security).addCapabilities }}
         securityContext:
-          {{- $security_context := include "mozcloud-workload.config.securityContext" $container.security | fromYaml }}
+          {{- $security_context := include "mozcloud-workload.config.securityContext" $container_config.security | fromYaml }}
           uid: {{ $security_context.user }}
           gid: {{ $security_context.group }}
-          {{- if gt (len $container.security.addCapabilities) 0 }}
+          {{- if gt (len $container_config.security.addCapabilities) 0 }}
           addCapabilities:
-            {{- range $capability := $container.security.addCapabilities }}
+            {{- range $capability := $container_config.security.addCapabilities }}
             - {{ $capability }}
             {{- end }}
           {{- end }}
         {{- end }}
-        {{- if $container.volumes }}
+        {{- if $container_config.volumes }}
         volumes:
-          {{- $container.volumes | toYaml | nindent 10 }}
+          {{- $container_config.volumes | toYaml | nindent 10 }}
         {{- end }}
+      {{- end }}
+    {{- $formatter_params = dict "containers" (default (dict) $workload_config.initContainers) "type" "init-containers" }}
+    {{- $init_containers := include "mozcloud-workload.formatter.containers" $formatter_params | fromYaml }}
+    {{- if $init_containers }}
+    initContainers:
+      {{- range $container_name, $container_config := $init_containers }}
+      - name: {{ $container_name }}
+        {{- if and (not ($container_config.image).repository) (not ($globals.image).repository) }}
+        {{- $fail_message := printf "A fully qualified image path must be configured in either \".Values.mozcloud-workload.workloads.%s.initContainers.%s.image.repository\" or \".Values.global.mozcloud.image.repository\"." $workload_name $container_name }}
+        {{- fail $fail_message }}
+        {{- end }}
+        image: {{ default ($globals.image).repository ($container_config.image).repository }}
+        {{- if and (not ($container_config.image).tag) (not ($globals.image).tag) }}
+        {{- $fail_message := printf "An image tag must be configured in either \".Values.mozcloud-workload.workloads.%s.initContainers.%s.image.tag\" or \".Values.global.mozcloud.image.tag\"." $workload_name $container_name }}
+        {{- fail $fail_message }}
+        {{- end }}
+        tag: {{ default ($globals.image).tag ($container_config.image).tag }}
+        {{- if $container_config.command }}
+        command:
+          {{- range $line := $container_config.command }}
+          - {{ $line | quote }}
+          {{- end }}
+        {{- end }}
+        {{- if $container_config.args }}
+        args:
+          {{- range $line := $container_config.args }}
+          - {{ $line | quote }}
+          {{- end }}
+        {{- end }}
+        {{- if $container_config.envVars }}
+        env:
+          {{- range $env_key, $env_val := $container_config.envVars }}
+          - name: {{ $env_key }}
+            value: {{ $env_val | quote }}
+          {{- end }}
+        {{- end }}
+        envFrom:
+          {{- if $container_config.configMaps }}
+          {{- range $config_map := $container_config.configMaps }}
+          - configMapRef:
+              name: {{ $config_map }}
+          {{- end }}
+          {{- end }}
+          - secretRef:
+              name: {{ $globals.app_code }}-secrets
+          {{- if $container_config.externalSecrets }}
+          {{- range $external_secret := $container_config.externalSecrets }}
+          - secretRef:
+              name: {{ default $external_secret.name $external_secret.k8sSecretName }}
+          {{- end }}
+          {{- end }}
+        {{- if $container_config.port }}
+        ports:
+          - name: {{ $container_name }}
+            containerPort: {{ $container_config.port }}
+        {{- end }}
+        resources:
+          requests:
+            cpu: {{ $container_config.resources.cpu }}
+            memory: {{ $container_config.resources.memory }}
+        {{- if (dig "sidecar" false $container_config) }}
+        restartPolicy: Always
+        {{- end }}
+        {{- if or ($container_config.security).uid ($container_config.security).gid ($container_config.security).addCapabilities }}
+        securityContext:
+          {{- $security_context := include "mozcloud-workload.config.securityContext" $container_config.security | fromYaml }}
+          uid: {{ $security_context.user }}
+          gid: {{ $security_context.group }}
+          {{- if gt (len $container_config.security.addCapabilities) 0 }}
+          addCapabilities:
+            {{- range $capability := $container_config.security.addCapabilities }}
+            - {{ $capability }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+        {{- if $container_config.volumes }}
+        volumes:
+          {{- $container_config.volumes | toYaml | nindent 10 }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
     {{- if $nginx_enabled }}
     nginx:
       enabled: true
@@ -595,16 +677,16 @@ deployments:
     otel:
       {{- $workload_config.otel | toYaml | nindent 6 }}
     {{- end }}
-    {{- if ($container.security).runAsRoot }}
+    {{- if ($workload_config.security).runAsRoot }}
     securityContext:
       runAsNonRoot: false
     {{- end }}
-    {{- if ($container.serviceAccount).name }}
-    serviceAccount: {{ $container.serviceAccount.name }}
+    {{- if ($workload_config.serviceAccount).name }}
+    serviceAccount: {{ $workload_config.serviceAccount.name }}
     {{- else }}
     serviceAccount: {{ $globals.app_code }}
     {{- end }}
-    strategy: {{ $container.strategy }}
+    strategy: {{ $workload_config.strategy }}
 {{- end }}
 {{- end -}}
 
@@ -777,16 +859,9 @@ jobs:
           - {{ $line | quote }}
           {{- end }}
         {{- end }}
-        {{- if or
-          ($job_config.envVars).customVars
-          (default true ($job_config.envVars).useAppEnvVars)
-        }}
-        {{- $merged_vars := mergeOverwrite
-          (default (dict) $workload_config.container.envVars)
-          (default (dict) ($job_config.envVars).customVars)
-        }}
+        {{- if $job_config.envVars }}
         env:
-          {{- range $env_var_key, $env_var_val := $merged_vars }}
+          {{- range $env_var_key, $env_var_val := $job_config.envVars }}
           - name: {{ $env_var_key }}
             value: {{ $env_var_val }}
           {{- end }}
@@ -803,19 +878,11 @@ jobs:
             - {{ $config_map }}
             {{- end }}
           {{- end }}
-          {{- if or
-            (not (default false ($job_config.externalSecrets).disableAppExternalSecrets))
-            ($job_config.externalSecrets).customExternalSecrets
-          }}
           secrets:
             - {{ $globals.app_code }}-secrets
-            {{- range $external_secret := default (list) $workload_config.container.externalSecrets }}
+            {{- range $external_secret := default (list) $job_config.externalSecrets }}
             - {{ $external_secret.name }}
             {{- end }}
-            {{- range $external_secret := default (list) ($job_config.externalSecrets).customExternalSecrets }}
-            - {{ $external_secret.name }}
-            {{- end }}
-          {{- end }}
         {{- end }}
         {{- if or ($job_config.resources).cpu ($job_config.resources).memory }}
         resources:
@@ -831,7 +898,7 @@ jobs:
     config:
       serviceAccount:
         {{- if ($job_config.serviceAccount).useAppServiceAccount }}
-        name: {{ default $globals.app_code ($workload_config.container.serviceAccount).name }}
+        name: {{ default $globals.app_code ($workload_config.serviceAccount).name }}
         {{- else }}
         name: {{ $job_config.serviceAccount.customServiceAccount.name }}
         {{- end }}
@@ -867,6 +934,24 @@ persistentVolumes:
 {{/*
 Formatting helpers
 */}}
+{{- define "mozcloud-workload.formatter.containers" -}}
+{{- $container_values := .containers -}}
+{{- $containers := .containers -}}
+{{- $default_key := ternary "mozcloud-init-container" "mozcloud-container" (eq .type "init-containers") -}}
+{{- /* Remove default containers key and merge with user-defined keys, if defined */ -}}
+{{- if or
+  (and (eq (keys $container_values | len) 1) (keys $container_values | first) $default_key)
+  (gt (keys $container_values | len) 1)
+}}
+  {{- $containers = omit $containers $default_key -}}
+  {{- range $name, $config := $containers -}}
+    {{- $defaults := index $container_values $default_key -}}
+    {{- $_ := set $containers $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
+  {{- end -}}
+{{- end -}}
+{{ $containers | toYaml }}
+{{- end -}}
+
 {{- define "mozcloud-workload.formatter.host" -}}
 {{- $component := .component -}}
 {{- $hosts := .hosts -}}
@@ -890,10 +975,26 @@ Formatting helpers
 {{- define "mozcloud-workload.formatter.externalSecrets" -}}
 {{- $secrets := dict -}}
 {{- $workload := .workload -}}
-{{- /* First, pull secrets from workload */ -}}
-{{- range $workload_secret := default (list) $workload.container.externalSecrets -}}
-  {{- if not (hasKey $secrets $workload_secret.name) -}}
-    {{- $_ := set $secrets $workload_secret.name $workload_secret -}}
+{{- /* First, pull secrets from the workload containers */ -}}
+{{- $formatter_params := dict "containers" $workload.containers "type" "containers" -}}
+{{- $containers := include "mozcloud-workload.formatter.containers" $formatter_params | fromYaml -}}
+{{- range $container_name, $container_config := $containers -}}
+  {{- range $workload_secret := default (list) $container_config.externalSecrets -}}
+    {{- if not (hasKey $secrets $workload_secret.name) -}}
+      {{- $_ := set $secrets $workload_secret.name $workload_secret -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- /* Next, pull secrets from the workload init containers, if any */ -}}
+{{- if $workload.initContainers -}}
+  {{- $formatter_params = dict "containers" $workload.initContainers "type" "init-containers" -}}
+  {{- $containers = include "mozcloud-workload.formatter.containers" $formatter_params | fromYaml -}}
+  {{- range $container_name, $container_config := $containers -}}
+    {{- range $workload_secret := default (list) $container_config.externalSecrets -}}
+      {{- if not (hasKey $secrets $workload_secret.name) -}}
+        {{- $_ := set $secrets $workload_secret.name $workload_secret -}}
+      {{- end -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- /* Next, pull secrets from jobs */ -}}
@@ -901,7 +1002,7 @@ Formatting helpers
   {{- $jobs := default (dict) $workload.jobs -}}
   {{- if index $jobs $job_type -}}
     {{- $job := index $workload.jobs $job_type -}}
-    {{- $job_secrets := default (list) ($job.externalSecrets).customExternalSecrets -}}
+    {{- $job_secrets := default (list) $job.externalSecrets -}}
     {{- range $job_secret := $job_secrets -}}
       {{- if not hasKey $secrets $job_secret.name -}}
         {{- $_ := set $secrets $job_secret.name $job_secret -}}
@@ -918,16 +1019,16 @@ secrets:
 
 {{- define "mozcloud-workload.formatter.serviceAccounts" -}}
 {{- $service_accounts := dict -}}
-{{- $container := .workload.container -}}
+{{- $workload := .workload -}}
 {{- /* First, pull service accounts from workload */ -}}
-{{- if ($container.serviceAccount).create -}}
-  {{- $_ := set $service_accounts $container.serviceAccount.name $container.serviceAccount -}}
+{{- if ($workload.serviceAccount).create -}}
+  {{- $_ := set $service_accounts $workload.serviceAccount.name $workload.serviceAccount -}}
 {{- end -}}
 {{- /* Next, pull service accounts from jobs */ -}}
 {{- range $job_type := list "preDeployment" "postDeployment" -}}
-  {{- $jobs := default (dict) $container.jobs -}}
+  {{- $jobs := default (dict) $workload.jobs -}}
   {{- if index $jobs $job_type -}}
-    {{- $job := index $container.jobs $job_type -}}
+    {{- $job := index $workload.jobs $job_type -}}
     {{- if and (($job.serviceAccount).customServiceAccount).create (not hasKey (($job.serviceAccount).customServiceAccount).name $service_accounts) -}}
       {{- $_ := set $service_accounts $job.serviceAccount.customServiceAccount.name $job.serviceAccount.customServiceAccount -}}
     {{- end -}}
@@ -985,10 +1086,26 @@ serviceAccounts:
 {{- define "mozcloud-workload.formatter.volumes" -}}
 {{- $volumes := dict -}}
 {{- $workload := .workload -}}
-{{- /* First, pull volumes from workload */ -}}
-{{- range $container_volume := default (list) $workload.container.volumes -}}
-  {{- if not (hasKey $volumes $container_volume.name) -}}
-    {{- $_ := set $volumes $container_volume.name $container_volume -}}
+{{- /* First, pull volumes from workload containers */ -}}
+{{- $formatter_params := dict "containers" $workload.containers "type" "containers" -}}
+{{- $containers := include "mozcloud-workload.formatter.containers" $formatter_params | fromYaml -}}
+{{- range $container_name, $container_config := $containers -}}
+  {{- range $container_volume := default (list) $container_config.volumes -}}
+    {{- if not (hasKey $volumes $container_volume.name) -}}
+      {{- $_ := set $volumes $container_volume.name $container_volume -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- /* Next, pull volumes from workload init containers, if any */ -}}
+{{- if $workload.initContainers -}}
+  {{- $formatter_params = dict "containers" $workload.containers "type" "containers" -}}
+  {{- $containers = include "mozcloud-workload.formatter.containers" $formatter_params | fromYaml -}}
+  {{- range $container_name, $container_config := $containers -}}
+    {{- range $container_volume := default (list) $container_config.volumes -}}
+      {{- if not (hasKey $volumes $container_volume.name) -}}
+        {{- $_ := set $volumes $container_volume.name $container_volume -}}
+      {{- end -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 {{- /* Next, pull volumes from jobs */ -}}

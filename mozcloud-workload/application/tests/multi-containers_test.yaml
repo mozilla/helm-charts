@@ -1,0 +1,78 @@
+---
+suite: "mozcloud-workload: Multiple containers"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/multi-containers.yaml
+templates:
+  - workload.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Container count is correct
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 2
+  - it: Init container count is correct
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.initContainers
+          count: 2
+  - it: First container has correct image
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="container-1")].image
+          value: "test-repo/image1:1.0.0"
+  - it: Second container has correct image
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="container-2")].image
+          value: "test-repo/image2:2.0.0"
+  - it: First init container has correct image
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name=="init-container-1")].image
+          value: "test-repo/image3:3.0.0"
+  - it: Second container has correct image
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name=="init-container-2")].image
+          value: "test-repo/image4:4.0.0"
+  - it: Init container with sidecar mode enabled correctly identified
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name=="init-container-1")].restartPolicy
+          value: "Always"
