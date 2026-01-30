@@ -27,7 +27,7 @@ args = `arg="$(filter-out $@,$(MAKECMDGOALS))" && echo $${arg:-${1}}`
 
 
 
-.PHONY: help install, update-dependencies, bump-charts, unit-tests
+.PHONY: help install, update-dependencies, bump-charts, unit-tests, clean
 
 .PHONY: help
 
@@ -68,3 +68,8 @@ unit-tests: ## Run unit tests for all charts (set UPDATE_SNAPSHOTS=1 to update s
 	fi
 	@echo "$(UNIT_TEST_MESSAGE)"
 	@bash -c 'find **/application -type f -name "Chart.yaml" -exec dirname {} \; | xargs -I {} helm unittest {} -s $(UPDATE_SNAPSHOTS_ARG)'
+
+clean: ## Remove all downloaded chart dependencies
+	@echo "Removing downloaded chart dependencies..."
+	@find **/application -type d -name "charts" -exec rm -rf {} + 2>/dev/null || true
+	@echo "Clean complete"
