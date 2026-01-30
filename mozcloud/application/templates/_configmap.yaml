@@ -1,0 +1,26 @@
+{{- define "common.configMap" -}}
+{{- if .configMaps }}
+{{- $config_maps := include "common.config.configMaps" . | fromYaml }}
+{{- range $config_map := $config_maps.configMaps }}
+{{- if gt (keys $config_map.data | len) 0 }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $config_map.name }}
+  labels:
+    {{- $config_map.labels | toYaml | nindent 4 }}
+  {{- $annotation_params := dict "annotations" (default (dict) $config_map.annotations) "context" ($ | deepCopy) "type" "configMap" }}
+  {{- $annotations := include "common.config.annotations" $annotation_params | fromYaml }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | toYaml | nindent 4 }}
+  {{- end }}
+data:
+  {{- range $key, $value := $config_map.data }}
+  {{ $key }}: {{ $value | quote }}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
