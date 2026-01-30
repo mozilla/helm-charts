@@ -1,0 +1,39 @@
+---
+suite: "mozcloud: Basic persistent volume claim configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/basic-configuration.yaml
+templates:
+  - workload/workload.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: PersistentVolumeClaim is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+      value: test-service-pvc
+    asserts:
+      - equal:
+          path: metadata.labels.component_code
+          value: web
+      - equal:
+          path: spec.accessModes
+          value: [ReadWriteOnce]
+      - equal:
+          path: spec.resources.requests.storage
+          value: 10Gi
+      - equal:
+          path: spec.storageClassName
+          value: standard

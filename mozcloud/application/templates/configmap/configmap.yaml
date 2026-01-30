@@ -1,0 +1,10 @@
+{{- if .Values.enabled }}
+{{- $config_maps := .Values.configMaps }}
+{{- if gt (keys $config_maps | len) 0 }}
+{{- $helper_params := dict "configMaps" $config_maps }}
+{{- $params := include "common.config.configMap" $helper_params | fromYaml }}
+{{- $label_params := include "mozcloud.labelParams" . | fromYaml }}
+{{- $_ := set $label_params "component_code" "configmap" -}}
+{{- include "common.configMap" (mergeOverwrite $params $label_params) }}
+{{- end -}}
+{{- end -}}

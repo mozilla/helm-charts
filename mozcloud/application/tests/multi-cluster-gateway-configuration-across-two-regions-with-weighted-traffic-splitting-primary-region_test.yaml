@@ -1,0 +1,235 @@
+---
+suite: "mozcloud: Multi Cluster Gateway API Configuration across two regions with weighted traffic splitting (primary region)"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/multi-cluster-gateway-configuration-across-two-regions-with-weighted-traffic-splitting-primary-region.yaml
+
+templates:
+  - gateway/gateway.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Resource count matches expectations
+    asserts:
+      - hasDocuments:
+          count: 10
+  - it: Service is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: mozcloud-test-us-west1
+    asserts:
+      - lengthEqual:
+          path: spec.ports
+          count: 1
+      - contains:
+          path: spec.ports
+          count: 1
+          content:
+            name: http
+            port: 8080
+            protocol: TCP
+            targetPort: http
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/component: web
+            app.kubernetes.io/name: mozcloud-test
+            env_code: dev
+  - it: ServiceExport exists
+    documentSelector:
+      path: $[?(@.kind == "ServiceExport")].metadata.name
+      value: mozcloud-test-us-west1
+    asserts:
+      - isAPIVersion:
+          of: net.gke.io/v1
+  - it: HealthCheckPolicy is configured correctly (primary region)
+    documentSelector:
+      path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+      value: mozcloud-test-us-west1
+    asserts:
+      - equal:
+          path: spec.default.config
+          value:
+            httpHealthCheck:
+              requestPath: /readiness/
+            type: HTTP
+      - equal:
+          path: spec.targetRef
+          value:
+            group: net.gke.io
+            kind: ServiceImport
+            name: mozcloud-test-us-west1
+  - it: HealthCheckPolicy is configured correctly (additional region)
+    documentSelector:
+      path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+      value: mozcloud-test-europe-west1
+    asserts:
+      - equal:
+          path: spec.default.config
+          value:
+            httpHealthCheck:
+              requestPath: /readiness/
+            type: HTTP
+      - equal:
+          path: spec.targetRef
+          value:
+            group: net.gke.io
+            kind: ServiceImport
+            name: mozcloud-test-europe-west1
+  - it: GCPBackendPolicy is configured correctly (primary region)
+    documentSelector:
+      path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
+      value: mozcloud-test-us-west1
+    asserts:
+      - equal:
+          path: spec.targetRef
+          value:
+            group: net.gke.io
+            kind: ServiceImport
+            name: mozcloud-test-us-west1
+  - it: GCPBackendPolicy is configured correctly (additional region)
+    documentSelector:
+      path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
+      value: mozcloud-test-europe-west1
+    asserts:
+      - equal:
+          path: spec.targetRef
+          value:
+            group: net.gke.io
+            kind: ServiceImport
+            name: mozcloud-test-europe-west1
+  - it: HTTPRoute is configured correctly (http-redirect)
+    documentSelector:
+      path: $[?(@.kind == "HTTPRoute")].metadata.name
+      value: mozcloud-test-http-redirect
+    asserts:
+      - lengthEqual:
+          path: spec.hostnames
+          count: 2
+      - contains:
+          path: spec.hostnames
+          count: 1
+          content: dev.mozcloud-test.nonprod.webservices.mozgcp.net
+      - contains:
+          path: spec.hostnames
+          count: 1
+          content: mozcloud-test.allizom.org
+      - lengthEqual:
+          path: spec.rules
+          count: 1
+      - contains:
+          path: spec.rules
+          count: 1
+          content:
+            filters:
+              - requestRedirect:
+                  scheme: https
+                  statusCode: 302
+                type: RequestRedirect
+            matches:
+              - path:
+                  type: PathPrefix
+                  value: /
+  - it: HTTPRoute is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "HTTPRoute")].metadata.name
+      value: mozcloud-test
+    asserts:
+      - lengthEqual:
+          path: spec.hostnames
+          count: 2
+      - contains:
+          path: spec.hostnames
+          count: 1
+          content: dev.mozcloud-test.nonprod.webservices.mozgcp.net
+      - contains:
+          path: spec.hostnames
+          count: 1
+          content: mozcloud-test.allizom.org
+      - lengthEqual:
+          path: spec.rules
+          count: 1
+      - lengthEqual:
+          path: spec.rules[0].backendRefs
+          count: 2
+      - contains:
+          path: spec.rules[0].backendRefs
+          count: 1
+          content:
+            group: net.gke.io
+            kind: ServiceImport
+            name: mozcloud-test-us-west1
+            port: 8080
+            weight: 100
+      - contains:
+          path: spec.rules[0].backendRefs
+          count: 1
+          content:
+            group: net.gke.io
+            kind: ServiceImport
+            name: mozcloud-test-europe-west1
+            port: 8080
+            weight: 0
+  - it: GCPGatewayPolicy is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
+      value: mozcloud-test
+    asserts:
+      - equal:
+          path: spec.targetRef
+          value:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: mozcloud-test
+  - it: Gateway is configured correctly
+    documentSelector:
+      path: $[?(@.kind == "Gateway")].metadata.name
+      value: mozcloud-test
+    asserts:
+      - equal:
+          path: spec.gatewayClassName
+          value: gke-l7-global-external-managed-mc
+      - lengthEqual:
+          path: spec.addresses
+          count: 1
+      - contains:
+          path: spec.addresses
+          count: 1
+          content:
+            type: NamedAddress
+            value: mozcloud-test-dev-ip-v4
+      - lengthEqual:
+          path: spec.listeners
+          count: 2
+      - contains:
+          path: spec.listeners
+          count: 1
+          content:
+            allowedRoutes:
+              namespaces:
+                from: Same
+            name: http
+            port: 80
+            protocol: HTTP
+      - contains:
+          path: spec.listeners
+          count: 1
+          content:
+            allowedRoutes:
+              namespaces:
+                from: Same
+            name: https
+            port: 443
+            protocol: HTTPS

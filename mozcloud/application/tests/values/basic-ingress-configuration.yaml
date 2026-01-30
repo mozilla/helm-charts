@@ -1,0 +1,24 @@
+---
+workloads:
+  # This is the name of the workload ("test-service").
+  #
+  # This name will be used for Deployments, HPAs, and all other workload-related
+  # Kubernetes resources.
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      # This is the name of the host to be created. The name is also used for
+      # the Ingress and all related resources.
+      test-service:
+        domains:
+          - test-service.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: ingress
+        tls:
+          type: ManagedCertificate

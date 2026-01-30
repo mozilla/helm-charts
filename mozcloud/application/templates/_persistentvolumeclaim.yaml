@@ -1,0 +1,21 @@
+{{- define "common.persistentVolumes" -}}
+{{- if .persistentVolumes }}
+{{- $pvcs := include "common.config.persistentVolumes" . | fromYaml }}
+{{- range $pvc := $pvcs.persistentVolumes }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $pvc.name }}
+  labels:
+    {{- $pvc.labels | toYaml | nindent 4 }}
+spec:
+  accessModes:
+    {{ $pvc.accessModes | toYaml | nindent 6 }}
+  resources:
+    requests:
+      storage: {{ $pvc.size }}
+  storageClassName: {{ $pvc.storageClassName }}
+{{- end }}
+{{- end }}
+{{- end -}}

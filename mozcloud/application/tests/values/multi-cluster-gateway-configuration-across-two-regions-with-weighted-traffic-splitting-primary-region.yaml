@@ -1,0 +1,57 @@
+workloads:
+  mozcloud-test:
+    component: web
+    containers:
+      app:
+        image:
+          repository: us-west1-docker.pkg.dev/moz-fx-mozcloud-test-prod/mozcloud-test-prod/mozcloud-test
+          tag: latest
+    hosts:
+      mozcloud-test:
+        multiCluster: true
+        domains:
+          - dev.mozcloud-test.nonprod.webservices.mozgcp.net
+          - mozcloud-test.allizom.org
+        addresses:
+          - mozcloud-test-dev-ip-v4
+        tls:
+          type: certmap
+          certs:
+            - mozcloud-test-nonprod-dev
+        backends:
+          - name: mozcloud-test-us-west1
+            service:
+              portName: http
+              port: 8080
+              targetPort: http
+              createServiceExport: true
+            backendPolicy:
+              targetRef:
+                kind: ServiceImport
+                name: mozcloud-test-us-west1
+            healthCheck:
+              path: /readiness/
+              targetRef:
+                kind: ServiceImport
+                name: mozcloud-test-us-west1
+          - name: mozcloud-test-europe-west1
+            backendPolicy:
+              targetRef:
+                kind: ServiceImport
+                name: mozcloud-test-europe-west1
+            healthCheck:
+              path: /readiness/
+              targetRef:
+                kind: ServiceImport
+                name: mozcloud-test-europe-west1
+        httpRoutes:
+          rules:
+            - backendRefs:
+                - kind: ServiceImport
+                  name: mozcloud-test-us-west1
+                  port: 8080
+                  weight: 100
+                - kind: ServiceImport
+                  name: mozcloud-test-europe-west1
+                  port: 8080
+                  weight: 0

@@ -1,0 +1,165 @@
+---
+suite: "mozcloud: ConfigMap checksum annotation"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/configmap-checksum.yaml
+templates:
+  - workload/workload.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Deployment pod template has checksum annotation for configMap volume
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-service-configmap"]
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/configmap-test-service-configmap"]
+          pattern: ^[a-f0-9]{64}$
+  - it: Checksum annotation changes when configMap data changes
+    set:
+      configMaps:
+        test-service-configmap:
+          data:
+            config.json: |
+              {
+                "key": "different-value",
+                "number": 99
+              }
+            settings.txt: |
+              FOO=changed
+              BAZ=modified
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-service-configmap"]
+      - notEqual:
+          path: spec.template.metadata.annotations["checksum/configmap-test-service-configmap"]
+          # This is the checksum from the original values
+          value: 8f434346648f6b96df89dda901c5176b10a6d83961dd3c1ac88b59b2dc327aa4
+  - it: Deployment without configMap volumes should not have checksum annotations
+    set:
+      workloads:
+        test-service:
+          component: web
+          containers:
+            app:
+              image:
+                repository: test-repo/test-image
+                tag: 1.0.0
+              volumes: []
+      configMaps: {}
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-service-configmap"]
+---
+suite: "mozcloud: ConfigMap checksum annotation for nginx"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/configmap-checksum-nginx.yaml
+templates:
+  - workload/workload.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Deployment pod template has checksum annotation for nginx configMap
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-deployment
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
+          pattern: ^[a-f0-9]{64}$
+  - it: Deployment pod template has checksum annotation for regular container configMap
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-deployment
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+      - matchRegex:
+          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+          pattern: ^[a-f0-9]{64}$
+  - it: Both nginx and container configMap checksums are present
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-deployment
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+  - it: Nginx configMap checksum changes when nginx config data changes
+    set:
+      configMaps:
+        my-nginx-configmap:
+          data:
+            nginx.conf: |
+              events {
+                  worker_connections 2048;
+              }
+              http {
+                  server {
+                      listen 8080;
+                      location / {
+                          proxy_pass http://localhost:9000;
+                      }
+                  }
+              }
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-deployment
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
+      - notEqual:
+          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
+          # This should be different from the original checksum
+          value: da39a3ee5e6b4b0d3255bfef95601890afd80709
+  - it: Container configMap checksum changes when configMap data changes
+    set:
+      configMaps:
+        test-config-volume:
+          data:
+            config.json: |
+              {
+                "key": "different-value",
+                "number": 99
+              }
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-deployment
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+      - notEqual:
+          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+          # This is the checksum from the original values
+          value: 51cab7485bdc05cda8793deab66f191d4b4f5bf6d4d9176ee5145dc948324449
