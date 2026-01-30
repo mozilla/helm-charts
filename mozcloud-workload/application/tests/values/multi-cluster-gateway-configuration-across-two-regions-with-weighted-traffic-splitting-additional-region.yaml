@@ -1,6 +1,11 @@
 workloads:
   mozcloud-test:
     component: web
+    containers:
+      app:
+        image:
+          repository: us-west1-docker.pkg.dev/moz-fx-mozcloud-test-prod/mozcloud-test-prod/mozcloud-test
+          tag: latest
     hosts:
       mozcloud-test:
         disableGateway: true
