@@ -119,430 +119,393 @@
           "component": {
             "type": "string"
           },
-          "container": {
+          "autoscaling": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "name": {
-                "type": "string",
-                "default": "app"
+              "enabled": {
+                "type": "boolean",
+                "default": true
               },
-              "args": {
-                "oneOf": [
-                  {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "autoscaling": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "enabled": {
-                    "type": "boolean",
-                    "default": true
-                  },
-                  "metrics": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "cpu",
-                            "memory",
-                            "network"
-                          ]
-                        },
-                        "threshold": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 100,
-                          "description": "Average percent utilization"
-                        },
-                        "customMetric": {
-                          "type": "string",
-                          "description": "Only applicable when type=network"
-                        }
-                      },
-                      "required": [
-                        "type",
-                        "threshold"
-                      ]
-                    }
-                  },
-                  "replicas": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "min": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "default": 1
-                      },
-                      "max": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "default": 30
-                      }
-                    }
-                  }
-                }
-              },
-              "command": {
-                "oneOf": [
-                  {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
-              },
-              "configMaps": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "envVars": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
-                }
-              },
-              "externalSecrets": {
+              "metrics": {
                 "type": "array",
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "k8sSecretName": {
-                      "type": "string"
-                    },
-                    "create": {
-                      "type": "boolean",
-                      "default": true
-                    },
-                    "version": {
+                    "type": {
                       "type": "string",
-                      "default": "latest"
+                      "enum": [
+                        "cpu",
+                        "memory",
+                        "network"
+                      ]
+                    },
+                    "threshold": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 100,
+                      "description": "Average percent utilization"
+                    },
+                    "customMetric": {
+                      "type": "string",
+                      "description": "Only applicable when type=network"
                     }
                   },
                   "required": [
-                    "name"
+                    "type",
+                    "threshold"
                   ]
                 }
               },
-              "image": {
+              "replicas": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
-                  "repository": {
-                    "type": "string"
-                  },
-                  "tag": {
-                    "type": "string"
-                  }
-                }
-              },
-              "port": {
-                "type": "integer",
-                "default": 8000
-              },
-              "resources": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "cpu": {
-                    "type": "string",
-                    "description": "Integer cores (e.g., 2) or millicores (e.g., 200m)",
-                    "pattern": "^(\\d+|\\d+m)$",
-                    "default": "100m"
-                  },
-                  "memory": {
-                    "type": "string",
-                    "description": "K, Ki, M, Mi, G, or Gi (recommend binary units)",
-                    "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$",
-                    "default": "64Mi"
-                  }
-                }
-              },
-              "security": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "uid": {
+                  "min": {
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 1,
+                    "default": 1
                   },
-                  "gid": {
+                  "max": {
                     "type": "integer",
-                    "minimum": 0
-                  },
-                  "addCapabilities": {
-                    "type": "array"
-                  },
-                  "runAsRoot": {
-                    "type": "boolean",
-                    "default": false
+                    "minimum": 1,
+                    "default": 30
                   }
                 }
-              },
-              "serviceAccount": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "name": {
+              }
+            }
+          },
+          "containers": {
+            "type": "object",
+            "description": "Declarative containers keyed by container name",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "default": "app"
+                },
+                "args": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "command": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "configMaps": {
+                  "type": "array",
+                  "items": {
                     "type": "string"
-                  },
-                  "create": {
-                    "type": "boolean",
-                    "default": true
-                  },
-                  "gcpServiceAccount": {
+                  }
+                },
+                "envVars": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "externalSecrets": {
+                  "type": "array",
+                  "items": {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
                       "name": {
                         "type": "string"
                       },
-                      "projectId": {
+                      "k8sSecretName": {
                         "type": "string"
+                      },
+                      "create": {
+                        "type": "boolean",
+                        "default": true
+                      },
+                      "version": {
+                        "type": "string",
+                        "default": "latest"
                       }
-                    }
+                    },
+                    "required": [
+                      "name"
+                    ]
                   }
-                }
-              },
-              "strategy": {
-                "type": "string",
-                "enum": [
-                  "Recreate",
-                  "RollingUpdate"
-                ]
-              },
-              "terminationGracePeriodSeconds": {
-                "type": "integer",
-                "minimum": 1,
-                "default": 30
-              },
-              "volumes": {
-                "type": "array",
-                "items": {
+                },
+                "healthCheck": {
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "name": {
+                    "readiness": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "default": true
+                        },
+                        "path": {
+                          "type": "string",
+                          "default": "/__lbheartbeat__"
+                        },
+                        "httpHeaders": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "probes": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "initialDelaySeconds": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "default": 10
+                            },
+                            "periodSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 6
+                            },
+                            "timeoutSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 5
+                            },
+                            "successThreshold": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 1
+                            },
+                            "failureThreshold": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 3
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "liveness": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "default": true
+                        },
+                        "path": {
+                          "type": "string",
+                          "default": "/__lbheartbeat__"
+                        },
+                        "httpHeaders": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "probes": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "initialDelaySeconds": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "default": 10
+                            },
+                            "periodSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 6
+                            },
+                            "timeoutSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 5
+                            },
+                            "successThreshold": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 1
+                            },
+                            "failureThreshold": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 5
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "metrics": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "path": {
+                          "type": "string",
+                          "default": "/metrics"
+                        }
+                      }
+                    }
+                  }
+                },
+                "image": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "repository": {
                       "type": "string"
                     },
-                    "type": {
+                    "tag": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "port": {
+                  "type": "integer",
+                  "default": 8000
+                },
+                "resources": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "cpu": {
                       "type": "string",
-                      "enum": [
-                        "configMap",
-                        "secret",
-                        "persistentVolumeClaim"
-                      ]
+                      "description": "Integer cores (e.g., 2) or millicores (e.g., 200m)",
+                      "pattern": "^(\\d+|\\d+m)$",
+                      "default": "100m"
                     },
-                    "path": {
-                      "type": "string"
+                    "memory": {
+                      "type": "string",
+                      "description": "K, Ki, M, Mi, G, or Gi (recommend binary units)",
+                      "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$",
+                      "default": "64Mi"
+                    }
+                  }
+                },
+                "security": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "uid": {
+                      "type": "integer",
+                      "minimum": 0
                     },
-                    "key": {
-                      "type": "string"
+                    "gid": {
+                      "type": "integer",
+                      "minimum": 0
                     },
-                    "readOnly": {
-                      "type": "boolean"
-                    },
-                    "create": {
-                      "type": "boolean",
-                      "default": false
-                    },
-                    "accessModes": {
-                      "type": "array",
-                      "items": {
+                    "addCapabilities": {
+                      "type": "array"
+                    }
+                  }
+                },
+                "volumes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "type": {
                         "type": "string",
                         "enum": [
-                          "ReadWriteOnce",
-                          "ReadOnlyMany",
-                          "ReadWriteMany"
+                          "configMap",
+                          "secret",
+                          "persistentVolumeClaim"
                         ]
                       },
-                      "default": "ReadWriteOnce"
-                    },
-                    "size": {
-                      "type": "string",
-                      "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
-                    },
-                    "storageClassName": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "type",
-                    "path"
-                  ],
-                  "if": {
-                    "properties": {
-                      "type": {
-                        "const": "persistentVolumeClaim"
+                      "path": {
+                        "type": "string"
+                      },
+                      "key": {
+                        "type": "string"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "create": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "accessModes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "ReadWriteOnce",
+                            "ReadOnlyMany",
+                            "ReadWriteMany"
+                          ]
+                        },
+                        "default": "ReadWriteOnce"
+                      },
+                      "size": {
+                        "type": "string",
+                        "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+                      },
+                      "storageClassName": {
+                        "type": "string"
                       }
-                    }
-                  },
-                  "then": {
+                    },
                     "required": [
-                      "accessModes",
-                      "size"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          "healthCheck": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "readiness": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "enabled": {
-                    "type": "boolean",
-                    "default": true
-                  },
-                  "path": {
-                    "type": "string",
-                    "default": "/__lbheartbeat__"
-                  },
-                  "httpHeaders": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": false,
+                      "name",
+                      "type",
+                      "path"
+                    ],
+                    "if": {
                       "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "value": {
-                          "type": "string"
+                        "type": {
+                          "const": "persistentVolumeClaim"
                         }
                       }
+                    },
+                    "then": {
+                      "required": [
+                        "accessModes",
+                        "size"
+                      ]
                     }
-                  },
-                  "probes": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "initialDelaySeconds": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "default": 10
-                      },
-                      "periodSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "default": 6
-                      },
-                      "timeoutSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "default": 5
-                      },
-                      "successThreshold": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "default": 1
-                      },
-                      "failureThreshold": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "default": 3
-                      }
-                    }
-                  }
-                }
-              },
-              "liveness": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "enabled": {
-                    "type": "boolean",
-                    "default": true
-                  },
-                  "path": {
-                    "type": "string",
-                    "default": "/__lbheartbeat__"
-                  },
-                  "httpHeaders": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "name": {
-                          "type": "string"
-                        },
-                        "value": {
-                          "type": "string"
-                        }
-                      }
-                    }
-                  },
-                  "probes": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "initialDelaySeconds": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "default": 10
-                      },
-                      "periodSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "default": 6
-                      },
-                      "timeoutSeconds": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "default": 5
-                      },
-                      "successThreshold": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "default": 1
-                      },
-                      "failureThreshold": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "default": 5
-                      }
-                    }
-                  }
-                }
-              },
-              "metrics": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "path": {
-                    "type": "string",
-                    "default": "/metrics"
                   }
                 }
               }
@@ -821,6 +784,208 @@
               ]
             }
           },
+          "initContainers": {
+            "type": "object",
+            "description": "Declarative init containers keyed by container name",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "default": "app"
+                },
+                "args": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "command": {
+                  "oneOf": [
+                    {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                },
+                "configMaps": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "envVars": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                },
+                "externalSecrets": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "k8sSecretName": {
+                        "type": "string"
+                      },
+                      "create": {
+                        "type": "boolean",
+                        "default": true
+                      },
+                      "version": {
+                        "type": "string",
+                        "default": "latest"
+                      }
+                    },
+                    "required": [
+                      "name"
+                    ]
+                  }
+                },
+                "image": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "repository": {
+                      "type": "string"
+                    },
+                    "tag": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "port": {
+                  "type": "integer"
+                },
+                "resources": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "cpu": {
+                      "type": "string",
+                      "description": "Integer cores (e.g., 2) or millicores (e.g., 200m)",
+                      "pattern": "^(\\d+|\\d+m)$",
+                      "default": "100m"
+                    },
+                    "memory": {
+                      "type": "string",
+                      "description": "K, Ki, M, Mi, G, or Gi (recommend binary units)",
+                      "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$",
+                      "default": "64Mi"
+                    }
+                  }
+                },
+                "security": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "uid": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "gid": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "addCapabilities": {
+                      "type": "array"
+                    }
+                  }
+                },
+                "sidecar": {
+                  "type": "boolean",
+                  "default": false
+                },
+                "volumes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "configMap",
+                          "secret",
+                          "persistentVolumeClaim"
+                        ]
+                      },
+                      "path": {
+                        "type": "string"
+                      },
+                      "key": {
+                        "type": "string"
+                      },
+                      "readOnly": {
+                        "type": "boolean"
+                      },
+                      "create": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "accessModes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "ReadWriteOnce",
+                            "ReadOnlyMany",
+                            "ReadWriteMany"
+                          ]
+                        },
+                        "default": "ReadWriteOnce"
+                      },
+                      "size": {
+                        "type": "string",
+                        "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+                      },
+                      "storageClassName": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "type",
+                      "path"
+                    ],
+                    "if": {
+                      "properties": {
+                        "type": {
+                          "const": "persistentVolumeClaim"
+                        }
+                      }
+                    },
+                    "then": {
+                      "required": [
+                        "accessModes",
+                        "size"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
           "jobs": {
             "type": "object",
             "additionalProperties": false,
@@ -939,10 +1104,57 @@
                 }
               }
             }
+          },
+          "security": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "runAsRoot": {
+                "type": "boolean",
+                "default": false
+              }
+            }
+          },
+          "serviceAccount": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "create": {
+                "type": "boolean",
+                "default": true
+              },
+              "gcpServiceAccount": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "projectId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "strategy": {
+            "type": "string",
+            "enum": [
+              "Recreate",
+              "RollingUpdate"
+            ]
+          },
+          "terminationGracePeriodSeconds": {
+            "type": "integer",
+            "minimum": 1,
+            "default": 30
           }
         },
         "required": [
-          "container"
+          "containers"
         ]
       }
     },
@@ -1045,54 +1257,34 @@
         },
         "envVars": {
           "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "useAppEnvVars": {
-              "type": "boolean",
-              "default": true
-            },
-            "customVars": {
-              "type": "object",
-              "additionalProperties": {
-                "type": "string"
-              }
-            }
+          "additionalProperties": {
+            "type": "string"
           }
         },
         "externalSecrets": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "disableAppExternalSecrets": {
-              "type": "boolean",
-              "default": false
-            },
-            "customExternalSecrets": {
-              "type": "array",
-              "items": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "k8sSecretName": {
-                    "type": "string"
-                  },
-                  "create": {
-                    "type": "boolean",
-                    "default": true
-                  },
-                  "version": {
-                    "type": "string",
-                    "default": "latest"
-                  }
-                },
-                "required": [
-                  "name"
-                ]
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "k8sSecretName": {
+                "type": "string"
+              },
+              "create": {
+                "type": "boolean",
+                "default": true
+              },
+              "version": {
+                "type": "string",
+                "default": "latest"
               }
-            }
+            },
+            "required": [
+              "name"
+            ]
           }
         },
         "serviceAccount": {

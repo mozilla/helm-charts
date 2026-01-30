@@ -2,15 +2,16 @@
 workloads:
   test-service:
     component: web
-    container:
-      image:
-        repository: test-repo/test-image
-        tag: 1.0.0
-      volumes:
-        - name: test-service-configmap
-          type: configMap
-          path: /data/configmap
-          readOnly: true
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        volumes:
+          - name: test-service-configmap
+            type: configMap
+            path: /data/configmap
+            readOnly: true
 
 configMaps:
   test-service-configmap:

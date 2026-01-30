@@ -10,10 +10,11 @@ workloads:
   # workload-related Kubernetes resources.
   test-service:
     component: web
-    container:
-      image:
-        repository: test-repo/test-image
-        tag: 1.0.0
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
     hosts:
       # This is the name of the host to be created. The name is also used for
       # the Gateway, HTTPRoutes, and GCPGatewayPolicy. For simplicity sake, we
