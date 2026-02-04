@@ -10,7 +10,6 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        artifact_id: abcd1234
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
@@ -45,7 +44,6 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        artifact_id: abcd1234
         component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
@@ -69,7 +67,6 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        artifact_id: abcd1234
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
@@ -107,7 +104,6 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        artifact_id: abcd1234
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
@@ -143,7 +139,6 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        artifact_id: abcd1234
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
@@ -169,7 +164,6 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        artifact_id: abcd1234
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
@@ -196,7 +190,6 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        artifact_id: abcd1234
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
@@ -229,7 +222,6 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        artifact_id: abcd1234
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
@@ -255,7 +247,6 @@ Configuration matches entire snapshot:
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        artifact_id: abcd1234
         component_code: web
         env_code: dev
         helm.sh/chart: test-chart
