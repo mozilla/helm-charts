@@ -21,12 +21,6 @@ Configuration matches entire snapshot:
       backoffLimit: 6
       parallelism: 1
       template:
-        metadata:
-          annotations:
-            resource.opentelemetry.io/app_code: mozcloud-test
-            resource.opentelemetry.io/component_code: job
-            resource.opentelemetry.io/env_code: dev
-            resource.opentelemetry.io/realm: nonprod
         spec:
           containers:
             - args:

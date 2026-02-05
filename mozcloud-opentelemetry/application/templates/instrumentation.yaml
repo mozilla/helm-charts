@@ -6,9 +6,9 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   exporter:
-    endpoint: http://$(OTEL_COLLECTOR_HOST):4318
+    endpoint: http://$(HOST_IP):4318
   env:
-    - name: OTEL_COLLECTOR_HOST
+    - name: HOST_IP
       valueFrom:
         fieldRef:
           fieldPath: status.hostIP

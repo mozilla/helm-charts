@@ -1082,6 +1082,14 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "containers": {
+                "type": "array",
+                "default": []
+              },
               "autoInstrumentation": {
                 "type": "object",
                 "additionalProperties": false,
