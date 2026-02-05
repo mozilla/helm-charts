@@ -1,5 +1,5 @@
 {{- define "mozcloud-labels-lib.annotations" -}}
-{{- if eq (.type) "pod" -}}
+{{- if and .otel (eq (.type) "pod") -}}
 {{- include "mozcloud-labels-lib.annotations.otel" . }}
 {{- end }}
 {{- if .annotations }}

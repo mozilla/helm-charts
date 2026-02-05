@@ -673,10 +673,8 @@ deployments:
         {{- end }}
       {{- end }}
     {{- end }}
-    {{- if and (($workload_config.otel).autoInstrumentation).enabled (($workload_config.otel).autoInstrumentation).language }}
     otel:
       {{- $workload_config.otel | toYaml | nindent 6 }}
-    {{- end }}
     {{- if ($workload_config.security).runAsRoot }}
     securityContext:
       runAsNonRoot: false

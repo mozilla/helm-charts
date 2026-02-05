@@ -41,16 +41,15 @@ spec:
     metadata:
       {{- /* If auto injection is enabled for OTEL, we should include those annotations */}}
       {{- $otel_annotations := dict }}
-      {{- if and (($deployment.otel).autoInstrumentation).enabled (($deployment.otel).autoInstrumentation).language }}
-      {{- $container_names := list }}
-      {{- range $container := $deployment.containers }}
-        {{- $container_names = append $container_names $container.name }}
-      {{- end }}
-      {{- $otel_annotation_params := dict "containers" $container_names "language" $deployment.otel.autoInstrumentation.language }}
+      {{- $otel_enabled := dig "otel" "enabled" true $deployment }}
+      {{- $otel_container_names := default list ($deployment.otel).containers }}
+      {{- $otel_auto_instrumentation_enabled := and $otel_container_names (dig "otel" "autoInstrumentation" "enabled" false $deployment) (($deployment.otel).autoInstrumentation).language }}
+      {{- if $otel_auto_instrumentation_enabled }}
+      {{- $otel_annotation_params := dict "containers" $otel_container_names "language" $deployment.otel.autoInstrumentation.language }}
       {{- $otel_annotations = include "common.config.annotations.otel.autoInjection" $otel_annotation_params | fromYaml }}
       {{- end }}
-      {{- /* Note: pod annotations will automatically include resource annotations for OTEL */}}
-      {{- $annotation_params := dict "annotations" $otel_annotations "context" ($ | deepCopy) "type" "pod" }}
+      {{- /* Note: pod annotations will automatically include resource annotations for OTEL if enabled */}}
+      {{- $annotation_params := dict "annotations" $otel_annotations "context" ($ | deepCopy) "type" "pod" "otel" $otel_enabled }}
       {{- $base_annotations := include "common.config.annotations" $annotation_params | fromYaml }}
       {{- /* Add checksum annotation for configmaps to trigger rolling updates when configmap changes */}}
       {{- $configmap_checksums := dict }}
@@ -141,11 +140,19 @@ spec:
           args:
             {{- $container.args | toYaml | nindent 12 }}
           {{- end }}
-          {{- if $container.env }}
+          {{- $otel_container_enabled := and $otel_enabled (not $otel_auto_instrumentation_enabled) (has $container.name $otel_container_names) }}
+          {{- if or $container.env $otel_container_enabled }}
           env:
             {{- range $env_var := $container.env }}
             - name: {{ $env_var.name }}
               value: {{ $env_var.value | quote }}
+            {{- end }}
+            {{- if $otel_container_enabled }}
+            - name: OTEL_COLLECTOR_HOST
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
             {{- end }}
           {{- end }}
           {{- if $container.envFrom }}

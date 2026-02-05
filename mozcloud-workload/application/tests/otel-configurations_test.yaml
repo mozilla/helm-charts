@@ -1,0 +1,91 @@
+---
+suite: "mozcloud-workload: OTEL Collector configurations"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/otel-configurations.yaml
+templates:
+  - workload.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: OTEL settings absent if disabled
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: otel-disabled
+    asserts:
+      - isNotSubset:
+          path: spec.template.metadata.annotations
+          content:
+            instrumentation.opentelemetry.io/inject-python: "true"
+            instrumentation.opentelemetry.io/python-container-names: app
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: web
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+      - isNotSubset:
+          path: spec.template.spec.containers[?(@.name=="app")].env
+          content:
+            name: OTEL_COLLECTOR_HOST
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
+  - it: OTEL settings configured correctly when auto instrumentation is disabled
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: otel-auto-instrumentation-disabled
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.annotations
+          content:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: web
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+      - isNotSubset:
+          path: spec.template.metadata.annotations
+          content:
+            instrumentation.opentelemetry.io/inject-python: "true"
+            instrumentation.opentelemetry.io/python-container-names: app
+      - contains:
+          path: spec.template.spec.containers[?(@.name=="app")].env
+          content:
+            name: OTEL_COLLECTOR_HOST
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
+  - it: OTEL settings configured correctly when auto instrumentation is enabled
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: otel-auto-instrumentation-enabled
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.annotations
+          content:
+            instrumentation.opentelemetry.io/inject-python: "true"
+            instrumentation.opentelemetry.io/python-container-names: app
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: web
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+      - notContains:
+          path: spec.template.spec.containers[?(@.name=="app")].env
+          content:
+            name: OTEL_COLLECTOR_HOST
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP

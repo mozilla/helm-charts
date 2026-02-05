@@ -1132,9 +1132,30 @@ workloads:
     # This can only be enabled for applications written in one of the supported
     # languages. See below for a list of supported languages.
     otel:
+      enabled: true
+
+      # A list of the containers on which the OTEL collector will be enabled.
+      #
+      # If auto instrumentation is enabled, these containers will be configured
+      # accordingly.
+      #
+      # If auto instrumentation is disabled, these containers will automatically
+      # be configured with the OTEL_COLLECTOR_HOST environment variable.
+      #
+      # If not containers are specified, the OTEL Collector will not be
+      # configured on any containers.
+      containers: []
+
       autoInstrumentation:
         # By default, auto instrumentation is disabled. Set this to "true" to
         # enable it.
+        #
+        # If "otel" is enabled but auto instrumentation is disabled, you will
+        # need to configure the following environment variables at the container
+        # level:
+        #
+        #   - OTEL_EXPORTER_OTLP_ENDPOINT
+        #   - OTEL_SERVICE_NAME
         enabled: false
 
         # If the application was written in a supported language, specify it
