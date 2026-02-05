@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 0.0.2](https://img.shields.io/badge/Version-0.0.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.0.3](https://img.shields.io/badge/Version-0.0.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~0.0.2
+    version: ~0.0.3
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -35,10 +35,10 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.23 |
-| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.4.18 |
-| file://../../mozcloud-job/library | mozcloud-job-lib | 0.5.9 |
-| file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.14 |
+| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.24 |
+| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.4.19 |
+| file://../../mozcloud-job/library | mozcloud-job-lib | 0.5.10 |
+| file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.15 |
 
 ## Values
 
@@ -100,6 +100,8 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.mozcloud-workload.initContainers.mozcloud-init-container.sidecar | bool | `false` |  |
 | workloads.mozcloud-workload.otel.autoInstrumentation.enabled | bool | `false` |  |
 | workloads.mozcloud-workload.otel.autoInstrumentation.language | string | `""` |  |
+| workloads.mozcloud-workload.otel.containers | list | `[]` |  |
+| workloads.mozcloud-workload.otel.enabled | bool | `true` |  |
 | workloads.mozcloud-workload.security | object | `{}` |  |
 | workloads.mozcloud-workload.serviceAccount | object | `{}` |  |
 | workloads.mozcloud-workload.strategy | string | `"RollingUpdate"` |  |

@@ -1,0 +1,31 @@
+---
+global:
+  mozcloud:
+    image:
+      repository: test-repo/test-image
+      tag: 1.0.0
+
+workloads:
+  otel-disabled:
+    component: web
+    containers:
+      app: {}
+    otel:
+      enabled: false
+  otel-auto-instrumentation-disabled:
+    component: web
+    containers:
+      app: {}
+      sidecar: {}
+    otel:
+      containers: ["app"]
+  otel-auto-instrumentation-enabled:
+    component: web
+    containers:
+      app: {}
+      sidecar: {}
+    otel:
+      containers: ["app"]
+      autoInstrumentation:
+        enabled: true
+        language: python
