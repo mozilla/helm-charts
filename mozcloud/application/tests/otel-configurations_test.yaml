@@ -67,6 +67,14 @@ tests:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.hostIP
+      - notContains:
+          path: spec.template.spec.containers[?(@.name=="sidecar")].env
+          content:
+            name: OTEL_COLLECTOR_HOST
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
   - it: OTEL settings configured correctly when auto instrumentation is enabled
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
@@ -83,6 +91,14 @@ tests:
             resource.opentelemetry.io/realm: nonprod
       - notContains:
           path: spec.template.spec.containers[?(@.name=="app")].env
+          content:
+            name: OTEL_COLLECTOR_HOST
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
+      - notContains:
+          path: spec.template.spec.containers[?(@.name=="sidecar")].env
           content:
             name: OTEL_COLLECTOR_HOST
             valueFrom:
