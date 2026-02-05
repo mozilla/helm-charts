@@ -19,6 +19,12 @@ Run `make install` to ensure `uv`, `pre-commit`, and `helm` are installed.
 
 Additionally, this will install/update the `unittest` Helm plugin.
 
+### helm-docs
+`helm-docs` is required during pre-commit runs, installation methods vary by OS:
+- MacOS: `brew install norwoodj/tap/helm-docs`
+- Go: `go install github.com/norwoodj/helm-docs/cmd/helm-docs@latest`
+- Additional info available in repo: https://github.com/norwoodj/helm-docs
+
 ## Development Helpers
 
 ### `make update-dependencies`
