@@ -148,7 +148,7 @@ spec:
               value: {{ $env_var.value | quote }}
             {{- end }}
             {{- if $otel_container_enabled }}
-            - name: OTEL_COLLECTOR_HOST
+            - name: HOST_IP
               valueFrom:
                 fieldRef:
                   apiVersion: v1

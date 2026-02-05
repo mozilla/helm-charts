@@ -1140,7 +1140,7 @@ workloads:
       # accordingly.
       #
       # If auto instrumentation is disabled, these containers will automatically
-      # be configured with the OTEL_COLLECTOR_HOST environment variable.
+      # be configured with the HOST_IP environment variable.
       #
       # If no containers are specified, the OTEL Collector will not be
       # configured on any containers.
