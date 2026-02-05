@@ -46,6 +46,13 @@ spec:
           http:
             endpoint: "0.0.0.0:{{ .Values.collectors.gateway.endpoints.otlp.collectorMetricsPort }}"
 
+      statsd:
+        endpoint: ${env:POD_IP}:8125
+        aggregation_interval: 30s
+        enable_metric_type: true
+        enable_simple_tags: true
+        is_monotonic_counter: true
+
     processors:
       # The transform/collision processor ensures that any attributes that may
       # collide with the googlemanagedprometheus exporter's monitored resource
@@ -171,6 +178,7 @@ spec:
         metrics:
           receivers:
           - otlp
+          - statsd
           processors:
           - memory_limiter
           - transform/collision
