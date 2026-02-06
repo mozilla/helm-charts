@@ -81,6 +81,7 @@ Backends and backend policies
 {{- $workloads := .workloads -}}
 backends:
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{- range $host_name, $host_config := default (dict) $workload_config.hosts }}
   {{- if $host_config.backends }}
   {{- range $backend := (default (list) $host_config.backends) }}
@@ -164,6 +165,7 @@ backends:
   {{- end }}
   {{- end }}
   {{- end }}
+  {{- end }}
 {{- end -}}
 
 {{/*
@@ -181,6 +183,7 @@ Gateways
 {{- $workloads := .workloads }}
 gateways:
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{- range $host_name, $host_config := default (dict) $workload_config.hosts }}
   {{- if not (default false $host_config.disableGateway) }}
   {{ $host_name }}:
@@ -221,6 +224,7 @@ gateways:
   {{- end }}
   {{- end }}
   {{- end }}
+  {{- end }}
 {{- end -}}
 
 {{/*
@@ -230,6 +234,7 @@ HTTPRoute
 {{- $workloads := .workloads -}}
 httpRoutes:
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{- range $host_name, $host_config := default (dict) $workload_config.hosts }}
   {{- if (($host_config).httpRoutes).createHttpRoutes }}
   {{ $host_name }}:
@@ -284,6 +289,7 @@ httpRoutes:
   {{- end }}
   {{- end }}
   {{- end }}
+  {{- end }}
 {{- end -}}
 
 {{/*
@@ -297,6 +303,7 @@ Frontend configs
 {{- $workloads := .workloads -}}
 frontendConfigs:
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{- range $host_name, $host_config := default (dict) $workload_config.hosts }}
   {{- if eq $host_config.type "external" }}
   {{ $host_name }}:
@@ -305,6 +312,7 @@ frontendConfigs:
       enabled: true
       responseCodeName: MOVED_PERMANENTLY_DEFAULT
     sslPolicy: mozilla-intermediate
+  {{- end }}
   {{- end }}
   {{- end }}
   {{- end }}
@@ -318,6 +326,7 @@ Ingresses
 {{- $workloads := .workloads -}}
 ingresses:
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{- range $host_name, $host_config := default (dict) $workload_config.hosts }}
   {{- if eq $host_config.type "external" }}
   {{ $host_name }}:
@@ -373,6 +382,7 @@ ingresses:
   {{- end }}
   {{- end }}
   {{- end }}
+  {{- end }}
 {{- end -}}
 
 {{/*
@@ -386,6 +396,7 @@ Autoscaling (HPAs)
 {{- $workloads := .workloads -}}
 hpas:
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{- if (dig "autoscaling" "enabled" true $workload_config) }}
   {{ $workload_name }}:
     component: {{ $workload_config.component }}
@@ -423,6 +434,7 @@ hpas:
       {{- end }}
   {{- end }}
   {{- end }}
+  {{- end }}
 {{- end -}}
 
 {{/*
@@ -433,6 +445,7 @@ Deployments
 {{- $workloads := .workloads -}}
 deployments:
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{- $nginx_enabled := true }}
   {{- if or
     (and (hasKey (default (dict) $workload_config.nginx) "enabled") (not ($workload_config.nginx).enabled))
@@ -685,6 +698,7 @@ deployments:
     serviceAccount: {{ $globals.app_code }}
     {{- end }}
     strategy: {{ $workload_config.strategy }}
+  {{- end }}
 {{- end }}
 {{- end -}}
 
@@ -707,6 +721,7 @@ externalSecrets:
     gsm:
       secret: {{ .Values.global.mozcloud.env_code }}-gke-app-secrets
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{- $external_secrets := include "mozcloud-workload.formatter.externalSecrets" (dict "workload" $workload_config) | fromYaml }}
   {{- range $external_secret := $external_secrets.secrets }}
   {{- if (default true $external_secret.create) }}
@@ -723,6 +738,7 @@ externalSecrets:
     gsm:
       secret: {{ $external_secret.name }}
       version: {{ default "latest" $external_secret.version }}
+  {{- end }}
   {{- end }}
   {{- end }}
   {{- end }}
@@ -766,6 +782,7 @@ Service accounts
 {{- $workloads := .workloads -}}
 serviceAccounts:
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{ $globals.app_code }}:
     component: serviceaccount
     {{- /*
@@ -798,6 +815,7 @@ serviceAccounts:
   {{- end }}
   {{- end }}
   {{- end }}
+  {{- end }}
 {{- end }}
 
 {{/*
@@ -809,6 +827,7 @@ Job resources
 {{- $workloads := .workloads -}}
 jobs:
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{- $job_list := list }}
   {{- range $job_name, $job_config := default (dict) (index (default (dict) $workload_config.jobs) $job_type) }}
   {{- /* Check if job name is "name" and replace if so */}}
@@ -905,6 +924,7 @@ jobs:
   {{- end }}
   {{- end }}
   {{- end }}
+  {{- end }}
 {{- end -}}
 
 {{/*
@@ -915,6 +935,7 @@ Persistent volume claims
 {{- $workloads := .workloads -}}
 persistentVolumes:
   {{- range $workload_name, $workload_config := $workloads }}
+  {{- if $workload_config }}
   {{- $volumes := include "mozcloud-workload.formatter.volumes" (dict "workload" $workload_config) | fromYaml }}
   {{- range $volume_name, $volume_config := $volumes.volumes }}
   {{- if and (eq $volume_config.type "persistentVolumeClaim") $volume_config.create }}
@@ -924,6 +945,7 @@ persistentVolumes:
     storageClassName: {{ $volume_config.storageClassName }}
     accessModes: 
     {{ $volume_config.accessModes | toYaml | nindent 6 }}
+  {{- end }}
   {{- end }}
   {{- end }}
   {{- end }}
@@ -1048,31 +1070,33 @@ serviceAccounts:
 }}
   {{- $workloads = omit $workloads "mozcloud-workload" -}}
   {{- range $name, $config := $workloads -}}
-    {{- $default_workload := index $workload_values "mozcloud-workload" -}}
-    {{- /* Merge host configs with defaults */}}
-    {{- $host_values := $default_workload.hosts -}}
-    {{- $hosts := dict -}}
-    {{- $config_hosts := default (dict) $config.hosts -}}
-    {{- range $host_name, $host_config := $config_hosts -}}
-      {{- $_ := set $hosts $host_name (mergeOverwrite ($host_values.name | deepCopy) $host_config) -}}
-    {{- end -}}
-    {{- if gt (keys $hosts | len) 0 -}}
-      {{- /*
-      If we are working with a Gateway or Ingress template, we will want to
-      filter out hosts that are not set to the correct API type
-      */ -}}
-      {{- if or (eq $component "gateway") (eq $component "ingress") -}}
-        {{- $helper_params := dict "component" $component "hosts" $hosts "workloadName" $name -}}
-        {{- $hosts = include "mozcloud-workload.formatter.host" $helper_params | fromYaml -}}
+    {{- if $config -}}
+      {{- $default_workload := index $workload_values "mozcloud-workload" -}}
+      {{- /* Merge host configs with defaults */}}
+      {{- $host_values := $default_workload.hosts -}}
+      {{- $hosts := dict -}}
+      {{- $config_hosts := default (dict) $config.hosts -}}
+      {{- range $host_name, $host_config := $config_hosts -}}
+        {{- $_ := set $hosts $host_name (mergeOverwrite ($host_values.name | deepCopy) $host_config) -}}
       {{- end -}}
-      {{- $_ := set $config "hosts" $hosts -}}
+      {{- if gt (keys $hosts | len) 0 -}}
+        {{- /*
+        If we are working with a Gateway or Ingress template, we will want to
+        filter out hosts that are not set to the correct API type
+        */ -}}
+        {{- if or (eq $component "gateway") (eq $component "ingress") -}}
+          {{- $helper_params := dict "component" $component "hosts" $hosts "workloadName" $name -}}
+          {{- $hosts = include "mozcloud-workload.formatter.host" $helper_params | fromYaml -}}
+        {{- end -}}
+        {{- $_ := set $config "hosts" $hosts -}}
+      {{- end -}}
+      {{- $defaults := omit $default_workload "hosts" -}}
+      {{- $_ := set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
     {{- end -}}
-    {{- $defaults := omit $default_workload "hosts" -}}
-    {{- $_ := set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
 {{- end -}}
 {{- range $name, $config := $workloads -}}
-  {{- if not $config.component -}}
+  {{- if and $config (not ($config).component) -}}
     {{- $fail_message := printf "A component was not defined for workload \"%s\". You must define a component in \".Values.mozcloud-workload.workloads.%s.component\". See values.yaml in the mozcloud-workload chart for more details." $name $name -}}
     {{- fail $fail_message -}}
   {{- end -}}
