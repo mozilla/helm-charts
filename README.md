@@ -14,6 +14,11 @@ uv tool install pre-commit
 ### `helm`
 [Helm](https://helm.sh/docs/intro/install/) must be installed for unit tests to run
 
+### helm-docs
+`helm-docs` is required during pre-commit runs, installation methods vary by OS:
+- MacOS: `brew install norwoodj/tap/helm-docs`
+- Additional info available in repo: https://github.com/norwoodj/helm-docs
+
 ## Setup
 Run `make install` to ensure `uv`, `pre-commit`, and `helm` are installed.
 

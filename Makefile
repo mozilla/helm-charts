@@ -39,7 +39,7 @@ endif
 	@pre-commit install
 ifndef HELM_UNITTEST_CHECK
 	@echo "Installing unittest Helm plugin..."
-	@helm plugin install https://github.com/helm-unittest/helm-unittest.git
+	@helm plugin install https://github.com/helm-unittest/helm-unittest.git --verify=false
 else
 	@echo "Updating unittest Helm plugin..."
 	@helm plugin update unittest
