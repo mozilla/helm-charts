@@ -10,8 +10,10 @@ Only include Ingress and related resources if we have Ingress hosts defined
 */}}
 {{- $hosts := list }}
 {{- range $workload_name, $workload_config := $workloads }}
-  {{- range $host_name, $host_config := $workload_config.hosts }}
-    {{- $hosts = append $hosts $host_name }}
+  {{- if $workload_config }}
+    {{- range $host_name, $host_config := $workload_config.hosts }}
+      {{- $hosts = append $hosts $host_name }}
+    {{- end }}
   {{- end }}
 {{- end }}
 {{- if gt (len $hosts) 0 -}}
