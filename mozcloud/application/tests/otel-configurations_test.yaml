@@ -28,7 +28,7 @@ tests:
       - isNotSubset:
           path: spec.template.metadata.annotations
           content:
-            instrumentation.opentelemetry.io/inject-python: "true"
+            instrumentation.opentelemetry.io/inject-python: "mozcloud-opentelemetry/mozcloud-opentelemetry-instrumentation"
             instrumentation.opentelemetry.io/python-container-names: app
             resource.opentelemetry.io/app_code: mozcloud-test
             resource.opentelemetry.io/component_code: web
@@ -57,7 +57,7 @@ tests:
       - isNotSubset:
           path: spec.template.metadata.annotations
           content:
-            instrumentation.opentelemetry.io/inject-python: "true"
+            instrumentation.opentelemetry.io/inject-python: "mozcloud-opentelemetry/mozcloud-opentelemetry-instrumentation"
             instrumentation.opentelemetry.io/python-container-names: app
       - contains:
           path: spec.template.spec.containers[?(@.name=="app")].env
@@ -83,7 +83,7 @@ tests:
       - isSubset:
           path: spec.template.metadata.annotations
           content:
-            instrumentation.opentelemetry.io/inject-python: "true"
+            instrumentation.opentelemetry.io/inject-python: "mozcloud-opentelemetry/mozcloud-opentelemetry-instrumentation"
             instrumentation.opentelemetry.io/python-container-names: app
             resource.opentelemetry.io/app_code: mozcloud-test
             resource.opentelemetry.io/component_code: web
