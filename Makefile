@@ -24,9 +24,15 @@ endif
 
 args = `arg="$(filter-out $@,$(MAKECMDGOALS))" && echo $${arg:-${1}}`
 
-.PHONY: install, update-dependencies, bump-charts, unit-tests
 
-install:
+
+
+.PHONY: help, install, update-dependencies, bump-charts, unit-tests, clean
+
+help:
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
+
+install: ## Install dependencies and pre-commit hooks
 ifndef UV_CHECK
 	@echo "uv is not installed. Please install uv..."
 	@exit 1
@@ -45,12 +51,23 @@ else
 	@helm plugin update unittest
 endif
 
-update-dependencies:
+update-dependencies: ## Update chart dependencies (args: chart path or --all, set DRY_RUN=1 for dry run)
 	$(CHART_KIT) update-dependencies $(DRY_RUN_ARG) $(call args, '--all')
 
-bump-charts:
+bump-charts: ## Bump chart versions (args: chart path or --staged, set DRY_RUN=1 for dry run)
 	$(CHART_KIT) version bump $(DRY_RUN_ARG) $(call args, '--staged')
 
-unit-tests:
+unit-tests: ## Run unit tests for all charts (set UPDATE_SNAPSHOTS=1 to update snapshots)
+	@missing=$$(find **/application -type f -name "Chart.yaml" -exec dirname {} \; | while read dir; do [ ! -d "$$dir/charts" ] && echo "$$dir"; done); \
+	if [ -n "$$missing" ]; then \
+		echo "Dependencies not found in: $$missing"; \
+		echo "Running update-dependencies..."; \
+		$(MAKE) update-dependencies; \
+	fi
 	@echo "$(UNIT_TEST_MESSAGE)"
 	@bash -c 'find **/application -type f -name "Chart.yaml" -exec dirname {} \; | xargs -I {} helm unittest {} -s $(UPDATE_SNAPSHOTS_ARG)'
+
+clean: ## Remove all downloaded chart dependencies
+	@echo "Removing downloaded chart dependencies..."
+	@find **/application -type d -name "charts" -exec rm -rf {} + 2>/dev/null || true
+	@echo "Clean complete"
