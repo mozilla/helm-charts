@@ -110,10 +110,10 @@
       }
     },
     "workloads": {
-      "type": "object",
+      "type": ["object", "null"],
       "description": "Declarative workloads keyed by workload name",
       "additionalProperties": {
-        "type": "object",
+        "type": ["object", "null"],
         "additionalProperties": false,
         "properties": {
           "component": {
