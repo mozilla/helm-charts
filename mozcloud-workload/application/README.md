@@ -1,6 +1,6 @@
 # mozcloud-workload
 
-![Version: 0.4.4](https://img.shields.io/badge/Version-0.4.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.4.5](https://img.shields.io/badge/Version-0.4.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud workloads and supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-workload
-    version: ~0.4.4
+    version: ~0.4.5
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -37,10 +37,10 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 |------------|------|---------|
 | file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.24 |
 | file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.4.19 |
-| file://../../mozcloud-job/library | mozcloud-job-lib | 0.5.10 |
+| file://../../mozcloud-job/library | mozcloud-job-lib | 0.5.11 |
 | file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.15 |
-| file://../../mozcloud-workload-core/library | mozcloud-workload-core-lib | 0.6.20 |
-| file://../../mozcloud-workload-stateless/library | mozcloud-workload-stateless-lib | 0.5.2 |
+| file://../../mozcloud-workload-core/library | mozcloud-workload-core-lib | 0.6.21 |
+| file://../../mozcloud-workload-stateless/library | mozcloud-workload-stateless-lib | 0.5.3 |
 
 ## Values
 

@@ -58,7 +58,7 @@ Template helpers
 {{- end -}}
 
 {{- define "mozcloud-workload-core-lib.config.annotations.otel.autoInjection" -}}
-instrumentation.opentelemetry.io/inject-{{ .language }}: "true"
+instrumentation.opentelemetry.io/inject-{{ .language }}: "mozcloud-opentelemetry/mozcloud-opentelemetry-instrumentation"
 instrumentation.opentelemetry.io/{{ .language }}-container-names: {{ join "," .containers | quote }}
 {{- end -}}
 

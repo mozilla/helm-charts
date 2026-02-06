@@ -165,7 +165,7 @@ Configuration matches entire snapshot:
       template:
         metadata:
           annotations:
-            instrumentation.opentelemetry.io/inject-python: "true"
+            instrumentation.opentelemetry.io/inject-python: mozcloud-opentelemetry/mozcloud-opentelemetry-instrumentation
             instrumentation.opentelemetry.io/python-container-names: app
             resource.opentelemetry.io/app_code: mozcloud-test
             resource.opentelemetry.io/component_code: web
