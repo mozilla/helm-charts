@@ -12,6 +12,8 @@ values:
   - values/globals.yaml
   - values/basic-configuration.yaml
 templates:
+  - externalsecret/externalsecret.yaml
+  - serviceaccount/serviceaccount.yaml
   - workload/workload.yaml
 tests:
   - it: Ensure no failures occur

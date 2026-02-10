@@ -271,58 +271,6 @@ Configuration matches entire snapshot:
         realm: nonprod
       name: test-service-nginx
   3: |
-    apiVersion: external-secrets.io/v1beta1
-    kind: ExternalSecret
-    metadata:
-      annotations:
-        argocd.argoproj.io/sync-wave: "-11"
-      labels:
-        app.kubernetes.io/component: externalsecret
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: externalsecret
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: mozcloud-test-secrets
-    spec:
-      dataFrom:
-        - extract:
-            conversionStrategy: Default
-            decodingStrategy: None
-            key: dev-gke-app-secrets
-            metadataPolicy: None
-            version: latest
-      refreshInterval: 5m
-      secretStoreRef:
-        kind: SecretStore
-        name: secret-store
-      target:
-        creationPolicy: Owner
-        name: mozcloud-test-secrets
-  4: |
-    apiVersion: v1
-    kind: ServiceAccount
-    metadata:
-      annotations:
-        argocd.argoproj.io/sync-wave: "-11"
-        iam.gke.io/gcp-service-account: gke-dev@moz-fx-mozcloud-test-nonprod.iam.gserviceaccount.com
-      labels:
-        app.kubernetes.io/component: serviceaccount
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: serviceaccount
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: mozcloud-test
-  5: |
     apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
     metadata:
@@ -352,7 +300,7 @@ Configuration matches entire snapshot:
         apiVersion: apps/v1
         kind: Deployment
         name: test-service
-  6: |
+  4: |
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:

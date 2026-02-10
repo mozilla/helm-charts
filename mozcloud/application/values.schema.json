@@ -109,6 +109,75 @@
         }
       }
     },
+    "externalSecrets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "gsmSecretName": {
+            "type": "string"
+          },
+          "version": {
+            "type": "string",
+            "default": "latest"
+          }
+        },
+        "required": ["gsmSecretName"]
+      }
+    },
+    "persistentVolumes": {
+      "type": "object",
+      "description": "PersistentVolumeClaims available to workloads/jobs",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "accessModes": {
+            "type": "string",
+            "enum": [
+              "ReadWriteOnce",
+              "ReadOnlyMany",
+              "ReadWriteMany"
+            ],
+            "default": "ReadWriteOnce"
+          },
+          "size": {
+            "type": "string",
+            "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+          },
+          "storageClassName": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "accessModes",
+          "size",
+          "storageClassName"
+        ]
+      }
+    },
+    "serviceAccounts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "gcpServiceAccount": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "projectId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
     "workloads": {
       "type": "object",
       "description": "Declarative workloads keyed by workload name",
@@ -228,27 +297,7 @@
                 "externalSecrets": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "k8sSecretName": {
-                        "type": "string"
-                      },
-                      "create": {
-                        "type": "boolean",
-                        "default": true
-                      },
-                      "version": {
-                        "type": "string",
-                        "default": "latest"
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ]
+                    "type": "string"
                   }
                 },
                 "healthCheck": {
@@ -836,27 +885,7 @@
                 "externalSecrets": {
                   "type": "array",
                   "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "k8sSecretName": {
-                        "type": "string"
-                      },
-                      "create": {
-                        "type": "boolean",
-                        "default": true
-                      },
-                      "version": {
-                        "type": "string",
-                        "default": "latest"
-                      }
-                    },
-                    "required": [
-                      "name"
-                    ]
+                    "type": "string"
                   }
                 },
                 "image": {
@@ -1124,29 +1153,7 @@
             }
           },
           "serviceAccount": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "create": {
-                "type": "boolean",
-                "default": true
-              },
-              "gcpServiceAccount": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "projectId": {
-                    "type": "string"
-                  }
-                }
-              }
-            }
+            "type": "string"
           },
           "strategy": {
             "type": "string",
@@ -1163,36 +1170,6 @@
         },
         "required": [
           "containers"
-        ]
-      }
-    },
-    "persistentVolumes": {
-      "type": "object",
-      "description": "PersistentVolumeClaims available to workloads/jobs",
-      "additionalProperties": {
-        "type": "object",
-        "additionalProperties": false,
-        "properties": {
-          "accessModes": {
-            "type": "string",
-            "enum": [
-              "ReadWriteOnce",
-              "ReadOnlyMany",
-              "ReadWriteMany"
-            ],
-            "default": "ReadWriteOnce"
-          },
-          "size": {
-            "type": "string",
-            "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
-          },
-          "storageClassName": {
-            "type": "string"
-          }
-        },
-        "required": [
-          "accessModes",
-          "size"
         ]
       }
     }
@@ -1272,63 +1249,11 @@
         "externalSecrets": {
           "type": "array",
           "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "name": {
-                "type": "string"
-              },
-              "k8sSecretName": {
-                "type": "string"
-              },
-              "create": {
-                "type": "boolean",
-                "default": true
-              },
-              "version": {
-                "type": "string",
-                "default": "latest"
-              }
-            },
-            "required": [
-              "name"
-            ]
+            "type": "string"
           }
         },
         "serviceAccount": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "useAppServiceAccount": {
-              "type": "boolean",
-              "default": true
-            },
-            "customServiceAccount": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "name": {
-                  "type": "string"
-                },
-                "create": {
-                  "type": "boolean",
-                  "default": true
-                },
-                "gcpServiceAccount": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "name": {
-                      "type": "string"
-                    },
-                    "projectId": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
+          "type": "string"
         }
       }
     }
