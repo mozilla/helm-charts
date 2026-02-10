@@ -12,6 +12,8 @@ values:
   - values/globals.yaml
   - values/basic-configuration.yaml
 templates:
+  - externalsecret/externalsecret.yaml
+  - serviceaccount/serviceaccount.yaml
   - workload/workload.yaml
 tests:
   - it: Ensure no failures occur
@@ -21,6 +23,7 @@ tests:
     asserts:
       - matchSnapshot: {}
   - it: External secret is configured correctly
+    template: externalsecret/externalsecret.yaml
     documentSelector:
       path: $[?(@.kind == "ExternalSecret")].metadata.name
       value: mozcloud-test-secrets
@@ -49,6 +52,7 @@ tests:
           path: spec.target.name
           value: mozcloud-test-secrets
   - it: Service account is configured correctly
+    template: serviceaccount/serviceaccount.yaml
     documentSelector:
       path: $[?(@.kind == "ServiceAccount")].metadata.name
       value: mozcloud-test
@@ -62,6 +66,7 @@ tests:
           path: metadata.annotations["iam.gke.io/gcp-service-account"]
           value: gke-dev@moz-fx-mozcloud-test-nonprod.iam.gserviceaccount.com
   - it: Deployment (containers excluded) is configured correctly
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -112,6 +117,7 @@ tests:
               name: test-service-secret
             name: test-service-secret
   - it: Deployment (app container) is configured correctly
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -179,6 +185,7 @@ tests:
             seccompProfile:
               type: RuntimeDefault
   - it: Deployment (nginx container) is configured correctly
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -261,6 +268,7 @@ tests:
             readOnly: true
             subPath: nginx.conf
   - it: NGINX config map is configured correctly
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "ConfigMap")].metadata.name
       value: test-service-nginx
@@ -268,6 +276,7 @@ tests:
       - isNotNullOrEmpty:
           path: data["nginx.conf"]
   - it: HPA is configured correctly
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
       value: test-service

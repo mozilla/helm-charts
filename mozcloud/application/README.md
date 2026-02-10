@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 0.0.4](https://img.shields.io/badge/Version-0.0.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.0.5](https://img.shields.io/badge/Version-0.0.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~0.0.4
+    version: ~0.0.5
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -46,6 +46,9 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 |-----|------|---------|-------------|
 | configMaps | object | `{}` |  |
 | enabled | bool | `true` |  |
+| externalSecrets | object | `{}` |  |
+| persistentVolumes | object | `{}` |  |
+| serviceAccounts | object | `{}` | ---------------------------------------------------------------------------- This chart CANNOT create resources in GCP. For this work, you must have already created the following in GCP using Terraform:   - GCP service account   - GCP service account permissions   - Workload Identity configuration  To learn more about creating service accounts in GCP with Workload Identity, review this link: <link>  By default, a service account using the name of your tenant will be created that corresponds to the GCP service account automatically created during the tenant provisioning process. The naming convention is as follows:    gke-<environment>@<gcp_project_id>.iam.serviceaccount.com  Any service accounts created here will be created IN ADDITION to that tenant service account.  Example and configuration options:  serviceAccounts:   # This is the name of the Kubernetes service account you would like to   # create. To use this service account with your workloads or jobs, reference   # the name you specify here in the `serviceAccounts` sections in container   # configurations.   kubernetes-service-account-name:     # If this service account should map to a service account in GCP, enter     # the details here.     gcpServiceAccount:       # The name of the GCP service account (everything before "@" in the       # email address).       name: ''        # GCP project ID. If not specified, the value automatically set in       # .Values.global.mozcloud.project_id will be used.       #projectId: '' |
 | workloads.mozcloud-workload.autoscaling.enabled | bool | `true` |  |
 | workloads.mozcloud-workload.autoscaling.metrics[0].threshold | int | `60` |  |
 | workloads.mozcloud-workload.autoscaling.metrics[0].type | string | `"cpu"` |  |
@@ -103,7 +106,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.mozcloud-workload.otel.containers | list | `[]` |  |
 | workloads.mozcloud-workload.otel.enabled | bool | `true` |  |
 | workloads.mozcloud-workload.security | object | `{}` |  |
-| workloads.mozcloud-workload.serviceAccount | object | `{}` |  |
+| workloads.mozcloud-workload.serviceAccount | string | `""` |  |
 | workloads.mozcloud-workload.strategy | string | `"RollingUpdate"` |  |
 
 ----------------------------------------------

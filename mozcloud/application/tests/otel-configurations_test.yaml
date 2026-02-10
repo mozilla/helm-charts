@@ -1,5 +1,5 @@
 ---
-suite: "mozcloud-workload: OTEL Collector configurations"
+suite: "mozcloud: OTEL Collector configurations"
 release:
   name: mozcloud-test
   namespace: mozcloud-test-dev

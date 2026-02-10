@@ -31,6 +31,216 @@ enabled: true
 #         KEY3: VALUE3
 configMaps: {}
 
+# External secret names and versions to mount in containers.
+#
+# Format:
+#
+#   externalSecrets:
+#     # This is the name of the Kubernetes secret you will be mounting to
+#     # workload and/or job containers as environment variables. This is the
+#     # name you will reference in `externalSecrets` sections in container
+#     # configurations.
+#     kubernetes-secret-name:
+#       # This should be the name of the secret in Google Secret Manager (GSM).
+#       gsmSecretName: ''
+#
+#       # The version of the secret to pull from GSM. The default value is
+#       # "latest".
+#       version: latest
+#
+# By default a Kubernetes secret called "<app>-secrets" will be created where
+# "<app>" is the name of the tenant. This will map to a GSM secret called
+# "<env>-gke-app-secrets" where "<env>" is the value defined in
+# `.Values.global.mozcloud.env_code` (ie. "dev", "stage", "prod") using the
+# latest secret version.
+#
+# Any secrets you define here will be created IN ADDITION to that secret.
+externalSecrets: {}
+
+# Persistent volumes to create. These can be mounted as volumes in conatinerized
+# workloads and jobs.
+#
+# Format:
+#
+#   persistentVolumes:
+#     # This is the name of the persistent volume you will be creating. This is also
+#     # the name you will reference when assigning persistent volumes to workloads
+#     # and jobs.
+#     mozcloud-pvc:
+#       # Access modes determine whether the volume can be mounted as read only or
+#       # read/write and by either a single node or multiple.
+#       #
+#       # Options:
+#       #
+#       #   - ReadWriteOnce (default)
+#       #   - ReadOnlyMany
+#       #   - ReadWriteMany
+#       #
+#       # This is a required field.
+#       #
+#       # For more info, see:
+#       # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
+#       accessModes: ''
+#   
+#       # The size of the volume using SI or IEC units. Sizes can specified using
+#       # the following units: K, Ki, M, Mi, G, Gi
+#       #
+#       # This is a required field.
+#       size: ''
+#   
+#       # A storage class to use, if applicable. These can be
+#       #
+#       # Possible options include:
+#       #
+#       #   - enterprise-multishare-rwx
+#       #   - enterprise-rwx
+#       #   - mozilla-enterprise-rwx (custom Mozilla StorageClass)
+#       #   - premium-rwo
+#       #   - premium-rwx
+#       #   - regional-rwx
+#       #   - standard
+#       #   - standard-rwo
+#       #   - standard-rwx
+#       #   - zonal-rwx
+#       #
+#       # Please reach out to MozCloud Support for assistance in picking a
+#       # StorageClass.
+#       #
+#       # This is a required field.
+#       storageClassName: ''
+persistentVolumes: {}
+
+# Here, you can create Kubernetes service accounts that optionally map to
+# corresponding GCP service accounts.
+#
+# IMPORTANT
+# ------------------------------------------------------------------------------
+# This chart CANNOT create resources in GCP. For this work, you must have
+# already created the following in GCP using Terraform:
+#   - GCP service account
+#   - GCP service account permissions
+#   - Workload Identity configuration
+#
+# To learn more about creating service accounts in GCP with Workload Identity,
+# review this link: <link>
+#
+# By default, a service account using the name of your tenant will be created
+# that corresponds to the GCP service account automatically created during the
+# tenant provisioning process. The naming convention is as follows:
+#
+#   gke-<environment>@<gcp_project_id>.iam.serviceaccount.com
+#
+# Any service accounts created here will be created IN ADDITION to that tenant
+# service account.
+#
+# Example and configuration options:
+#
+# serviceAccounts:
+#   # This is the name of the Kubernetes service account you would like to
+#   # create. To use this service account with your workloads or jobs, reference
+#   # the name you specify here in the `serviceAccounts` sections in container
+#   # configurations.
+#   kubernetes-service-account-name:
+#     # If this service account should map to a service account in GCP, enter
+#     # the details here.
+#     gcpServiceAccount:
+#       # The name of the GCP service account (everything before "@" in the
+#       # email address).
+#       name: ''
+#
+#       # GCP project ID. If not specified, the value automatically set in
+#       # .Values.global.mozcloud.project_id will be used.
+#       #projectId: ''
+serviceAccounts: {}
+
+# The consolidation of all jobs to tasks is coming soon.
+#tasks:
+#  common:
+#    container: {} # common job container settings
+#    cronJob: {} # common cronjob config settings
+#    job: {} #common job config settings
+#  cronJobs: {}
+#  jobs:
+#    # The name to use for the job. If this is not changed, the job will be
+#    # named: "<workload_name>-predeployment".
+#    name:
+#      type: preDeployment # postDeployment
+#
+#      # Optionally define a Sync Wave value for ArgoCD.
+#      #
+#      # Sync waves are used to define an order in which resources are
+#      # applied within a sync phase. Sync waves are configured using
+#      # integers in ascending order, where resources with lower-value sync
+#      # waves are applied first and resources with higher-value sync waves
+#      # are applied last.
+#      #
+#      # This chart allows you to assign Sync Wave values for pre-deployment
+#      # jobs ranging from -10 (run first) to -1 (run last).
+#      #
+#      # If no values are specified, a default of -1 will be applied.
+#      argo:
+#        syncWave: -1
+#
+#      # See image, command, args, and resources configurations for
+#      # containers as a reference.
+#      image:
+#        repository:
+#        tag:
+#      command: []
+#      args: []
+#      resources:
+#        cpu:
+#        memory:
+#
+#      # A list of config map names to mount into the container as
+#      # environment variables. These should be defined higher up in the
+#      # file under the "configMaps" key.
+#      #
+#      # Format:
+#      #
+#      #   configMaps:
+#      #     - my-configmap
+#      #     - a-different-configmap
+#      #
+#      # Important: The last config map in the list will always take
+#      #            precedence.
+#      configMaps: []
+#
+#      # A dictionary of environment variables to pass to this container.
+#      # This should not include secrets. These variables will override
+#      # those defined in the "configMaps" section above.
+#      #
+#      # Format:
+#      #
+#      #   envVars:
+#      #     KEY1: VALUE1
+#      #     KEY2: VALUE2
+#      envVars: {}
+#
+#      # A list of external secret names and versions to mount in containers.
+#      # External secrets can be defined using the externalSecrets key above.
+#      #
+#      # By default an external secret called "app-secrets" will be created. This
+#      # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
+#      # the value defined in `.Values.global.mozcloud.env_code` (ie. "dev",
+#      # "stage", "prod"). There will be a corresponding Kubernetes secret called
+#      # "app-secrets" which will automatically be mounted in your app container
+#      # using the "latest" version.
+#      #
+#      # Any secrets you define here will be created IN ADDITION to that secret.
+#      #
+#      # Format:
+#      #
+#      #   externalSecets:
+#      #     - external-secret-name
+#      #     - another-external-secret-name
+#      externalSecrets: []
+#
+#      # Optionally use a custom service account for the container. The value
+#      # should match a service account created above in the `serviceAccounts`
+#      # section.
+#      serviceAccount: ''
+
 workloads:
   # The name of your workload and all related components. "mozcloud-workload"
   # is the default if no names are specified.
@@ -150,37 +360,23 @@ workloads:
         envVars: {}
 
         # A list of external secret names and versions to mount in containers.
-        #
-        # Format:
-        #
-        #   externalSecets:
-        #
-        #       # The secret name should match the name of the secret in Google
-        #       # Secret Manager (GSM).
-        #     - name: external-secret-name
-        #
-        #       # By default, the Kubernetes secret name will match the name of
-        #       # the secret in GSM. If you wish to use a different Kubernetes
-        #       # secret name, specify it here.
-        #       #k8sSecretName:
-        #
-        #       # If enabled, the ExternalSecret resource will be created. The
-        #       # default value is "true".
-        #       create: true
-        #
-        #       # The version of the secret to pull from GSM. The default value
-        #       # is "latest".
-        #       version: latest
+        # External secrets can be defined using the externalSecrets key above.
         #
         # By default an external secret called "app-secrets" will be created.
         # This will map to a GSM secret called "xxxx-gke-app-secrets" where
         # "xxxx" is the value defined in `.Values.global.mozcloud.env_code`
-        # (ie. "dev", "stage", "prod"). There will be a corresponding Kubernetes
-        # secret called "app-secrets" which will automatically be mounted in
-        # your app container using the "latest" version.
+        # (ie. "dev", "stage", "prod"). There will be a corresponding
+        # Kubernetes secret called "app-secrets" which will automatically
+        # be mounted in your app container using the "latest" version.
         #
         # Any secrets you define here will be created IN ADDITION to that
         # secret.
+        #
+        # Format:
+        #
+        #   externalSecets:
+        #     - external-secret-name
+        #     - another-external-secret-name
         externalSecrets: []
 
         # Health check configurations for the container.
@@ -657,37 +853,23 @@ workloads:
         envVars: {}
 
         # A list of external secret names and versions to mount in containers.
+        # External secrets can be defined using the externalSecrets key above.
+        #
+        # By default an external secret called "app-secrets" will be created.
+        # This will map to a GSM secret called "xxxx-gke-app-secrets" where
+        # "xxxx" is the value defined in `.Values.global.mozcloud.env_code`
+        # (ie. "dev", "stage", "prod"). There will be a corresponding
+        # Kubernetes secret called "app-secrets" which will automatically
+        # be mounted in your app container using the "latest" version.
+        #
+        # Any secrets you define here will be created IN ADDITION to that
+        # secret.
         #
         # Format:
         #
         #   externalSecets:
-        #
-        #       # The secret name should match the name of the secret in Google
-        #       # Secret Manager (GSM).
-        #     - name: external-secret-name
-        #
-        #       # By default, the Kubernetes secret name will match the name of
-        #       # the secret in GSM. If you wish to use a different Kubernetes
-        #       # secret name, specify it here.
-        #       #k8sSecretName:
-        #
-        #       # If enabled, the ExternalSecret resource will be created. The
-        #       # default value is "true".
-        #       create: true
-        #
-        #       # The version of the secret to pull from GSM. The default value
-        #       # is "latest".
-        #       version: latest
-        #
-        # By default an external secret called "app-secrets" will be created.
-        # This will map to a GSM secret called "xxxx-gke-app-secrets" where
-        # "xxxx" is the value defined in `.Values.global.mozcloud.env_code` (ie.
-        # "dev", "stage", "prod"). There will be a corresponding Kubernetes
-        # secret called "app-secrets" which will automatically be mounted in
-        # your app container using the "latest" version.
-        #
-        # Any secrets you define here will be created IN ADDITION to that
-        # secret.
+        #     - external-secret-name
+        #     - another-external-secret-name
         externalSecrets: []
 
         # The image repo, name, and tag to use for the container. The format is:
@@ -911,66 +1093,29 @@ workloads:
     #      #     KEY2: VALUE2
     #      envVars: {}
     #
-    #      # A list of external secret names and versions to mount in
-    #      # containers.
+    #      # A list of external secret names and versions to mount in containers.
+    #      # External secrets can be defined using the externalSecrets key above.
+    #      #
+    #      # By default an external secret called "app-secrets" will be created. This
+    #      # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
+    #      # the value defined in `.Values.global.mozcloud.env_code` (ie. "dev",
+    #      # "stage", "prod"). There will be a corresponding Kubernetes secret called
+    #      # "app-secrets" which will automatically be mounted in your app container
+    #      # using the "latest" version.
+    #      #
+    #      # Any secrets you define here will be created IN ADDITION to that secret.
     #      #
     #      # Format:
     #      #
     #      #   externalSecets:
-    #      #
-    #      #       # The secret name should match the name of the secret in
-    #      #       # Google Secret Manager (GSM).
-    #      #     - name: external-secret-name
-    #      #
-    #      #       # By default, the Kubernetes secret name will match the name
-    #      #       # of the secret in GSM. If you wish to use a different
-    #      #       # Kubernetes secret name, specify it here.
-    #      #       #k8sSecretName:
-    #      #
-    #      #       # If enabled, the ExternalSecret resource will be created.
-    #      #       # The default value is "true".
-    #      #       create: true
-    #      #
-    #      #       # The version of the secret to pull from GSM. The default
-    #      #       # value is "latest".
-    #      #       version: latest
-    #      #
-    #      # By default an external secret called "app-secrets" will be created.
-    #      # This will map to a GSM secret called "xxxx-gke-app-secrets" where
-    #      # "xxxx" is the value defined in `.Values.global.mozcloud.env_code`
-    #      # (ie. "dev", "stage", "prod"). There will be a corresponding
-    #      # Kubernetes secret called "app-secrets" which will automatically
-    #      # be mounted in your app container using the "latest" version.
-    #      #
-    #      # Any secrets you define here will be created IN ADDITION to that
-    #      # secret.
+    #      #     - external-secret-name
+    #      #     - another-external-secret-name
     #      externalSecrets: []
     #
-    #      # Optionally use a custom service account for the container.
-    #      #serviceAccount:
-    #      #
-    #      #  # If "true", the same service account used for the app pod will
-    #      #  # be used for the job pod. Set to "false" to not use any service
-    #      #  # account or configure a custom one.
-    #      #  useAppServiceAccount: true
-    #      #
-    #      #  # Optionally configure a custom service account. This section is
-    #      #  # only applicable if "useAppServiceAccount" is set to "false".
-    #      #  #customServiceAccount:
-    #      #  #  name:
-    #      #  #
-    #      #  #  # If true, the service account will be created.
-    #      #  #  create: true
-    #      #  #
-    #      #  #  # # If this service account should map to a service account in
-    #      #  #  # # GCP, enter the details here.
-    #      #  #  #gcpServiceAccount:
-    #      #  #  #  # The name of the GCP service account (everything before "@"
-    #      #  #  #  # in the email address).
-    #      #  #  #  name:
-    #      #  #  #
-    #      #  #  #  # GCP project ID.
-    #      #  #  #  projectId:
+    #      # Optionally use a custom service account for the container. The value
+    #      # should match a service account created above in the `serviceAccounts`
+    #      # section.
+    #      serviceAccount: ''
     #
     #  postDeployment:
     #    # The name to use for the job. If this is not changed, the job will be
@@ -1030,66 +1175,29 @@ workloads:
     #      #     KEY2: VALUE2
     #      envVars: {}
     #
-    #      # A list of external secret names and versions to mount in
-    #      # containers.
+    #      # A list of external secret names and versions to mount in containers.
+    #      # External secrets can be defined using the externalSecrets key above.
+    #      #
+    #      # By default an external secret called "app-secrets" will be created. This
+    #      # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
+    #      # the value defined in `.Values.global.mozcloud.env_code` (ie. "dev",
+    #      # "stage", "prod"). There will be a corresponding Kubernetes secret called
+    #      # "app-secrets" which will automatically be mounted in your app container
+    #      # using the "latest" version.
+    #      #
+    #      # Any secrets you define here will be created IN ADDITION to that secret.
     #      #
     #      # Format:
     #      #
     #      #   externalSecets:
-    #      #
-    #      #       # The secret name should match the name of the secret in
-    #      #       # Google Secret Manager (GSM).
-    #      #     - name: external-secret-name
-    #      #
-    #      #       # By default, the Kubernetes secret name will match the name
-    #      #       # of the secret in GSM. If you wish to use a different
-    #      #       # Kubernetes secret name, specify it here.
-    #      #       #k8sSecretName:
-    #      #
-    #      #       # If enabled, the ExternalSecret resource will be created.
-    #      #       # The default value is "true".
-    #      #       create: true
-    #      #
-    #      #       # The version of the secret to pull from GSM. The default
-    #      #       # value is "latest".
-    #      #       version: latest
-    #      #
-    #      # By default an external secret called "app-secrets" will be created.
-    #      # This will map to a GSM secret called "xxxx-gke-app-secrets" where
-    #      # "xxxx" is the value defined in `.Values.global.mozcloud.env_code`
-    #      # (ie. "dev", "stage", "prod"). There will be a corresponding
-    #      # Kubernetes secret called "app-secrets" which will automatically
-    #      # be mounted in your app container using the "latest" version.
-    #      #
-    #      # Any secrets you define here will be created IN ADDITION to that
-    #      # secret.
+    #      #     - external-secret-name
+    #      #     - another-external-secret-name
     #      externalSecrets: []
     #
-    #      # Optionally use a custom service account for the container.
-    #      #serviceAccount:
-    #      #
-    #      #  # If "true", the same service account used for the app pod will
-    #      #  # be used for the job pod. Set to "false" to not use any service
-    #      #  # account or configure a custom one.
-    #      #  useAppServiceAccount: true
-    #      #
-    #      #  # Optionally configure a custom service account. This section is
-    #      #  # only applicable if "useAppServiceAccount" is set to "false".
-    #      #  #customServiceAccount:
-    #      #  #  name:
-    #      #  #
-    #      #  #  # If true, the service account will be created.
-    #      #  #  create: true
-    #      #  #
-    #      #  #  # # If this service account should map to a service account in
-    #      #  #  # # GCP, enter the details here.
-    #      #  #  #gcpServiceAccount:
-    #      #  #  #  # The name of the GCP service account (everything before "@"
-    #      #  #  #  # in the email address).
-    #      #  #  #  name:
-    #      #  #  #
-    #      #  #  #  # GCP project ID.
-    #      #  #  #  projectId:
+    #      # Optionally use a custom service account for the container. The value
+    #      # should match a service account created above in the `serviceAccounts`
+    #      # section.
+    #      serviceAccount: ''
 
     # Optionally configure NGINX.
     #nginx:
@@ -1185,31 +1293,10 @@ workloads:
     #   runAsRoot: false
     security: {}
 
-    # Optionally use a custom service account for the pod. By default, a service
-    # account using the name of your workload will be created that uses the GCP
-    # service account automatically created with your tenant:
-    #
-    #   gke-<environment>@<gcp_project_id>.iam.serviceaccount.com
-    #
-    # Example and configuration options:
-    #
-    # serviceAccount:
-    #   name:
-    #
-    #   # If true, the service account will be created.
-    #   create: true
-    #
-    #   # If this service account should map to a service account in GCP, enter
-    #   # the details here.
-    #   gcpServiceAccount:
-    #     # The name of the GCP service account (everything before "@" in the
-    #     # email address).
-    #     name: ''
-    #
-    #     # GCP project ID. If not specified, the value automatically set in
-    #     # .Values.global.mozcloud.project_id will be used.
-    #     #projectId: ''
-    serviceAccount: {}
+    # Optionally use a custom service account for the container. The value
+    # should match a service account created above in the `serviceAccounts`
+    # section.
+    serviceAccount: ''
 
     # Define the strategy Kubernetes should use when replacing pods. Below are
     # the options:

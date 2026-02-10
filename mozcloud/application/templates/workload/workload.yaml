@@ -21,27 +21,6 @@ Deployments
 {{- end }}
 
 {{- /*
-External Secrets
-*/}}
-{{- $external_secrets := include "mozcloud.config.externalSecrets" $helper_params | fromYaml }}
-{{- range $external_secret_name, $external_secret_config := $external_secrets.externalSecrets }}
-{{- $component := default "externalsecret" $external_secret_config.component }}
-{{- $_ := set $label_params "component_code" $component }}
-{{- $_ = set $params "externalSecrets" (dict $external_secret_name (omit $external_secret_config "component")) }}
-{{ include "workload.externalSecret" (mergeOverwrite $params $label_params) }}
-{{- end }}
-
-{{- /*
-Service Accounts
-*/}}
-{{- $service_accounts := include "mozcloud.config.serviceAccounts" $helper_params | fromYaml }}
-{{- range $service_account_name, $service_account_config := $service_accounts.serviceAccounts }}
-{{- $_ := set $label_params "component_code" $service_account_config.component }}
-{{- $_ = set $params "serviceAccounts" (dict $service_account_name (omit $service_account_config "component")) }}
-{{ include "workload.serviceAccount" (mergeOverwrite $params $label_params) }}
-{{- end }}
-
-{{- /*
 HPAs
 */}}
 {{- $hpas := include "mozcloud.config.autoscaling" $helper_params | fromYaml }}
