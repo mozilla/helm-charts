@@ -6,12 +6,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   exporter:
-    endpoint: http://$(HOST_IP):4318
-  env:
-    - name: HOST_IP
-      valueFrom:
-        fieldRef:
-          fieldPath: status.hostIP
+    # instrumentation will automatically inject OTEL_NODE_IP and OTEL_POD_IP environment variables
+    endpoint: http://$(OTEL_NODE_IP):4318
   propagators:
     - tracecontext
     - baggage
