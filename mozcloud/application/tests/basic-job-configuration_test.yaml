@@ -11,6 +11,9 @@ chart:
 values:
   - values/globals.yaml
   - values/basic-job-configuration.yaml
+templates:
+  - job/job.yaml
+  - workload/workload.yaml
 tests:
   - it: Ensure no failures occur
     asserts:

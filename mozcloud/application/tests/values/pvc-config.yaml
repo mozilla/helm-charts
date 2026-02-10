@@ -1,5 +1,5 @@
 persistentVolumes:
   mozcloud-test-pvc:
     accessModes: "ReadWriteOnce"
-    size: "10Gi"
+    size: 10Gi
     storageClassName: "standard"

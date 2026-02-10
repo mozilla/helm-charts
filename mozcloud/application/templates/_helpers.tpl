@@ -430,6 +430,7 @@ Deployments
 */}}
 {{- define "mozcloud.config.deployments" -}}
 {{- $globals := .Values.global.mozcloud -}}
+{{- $external_secrets := default (dict) .Values.externalSecrets -}}
 {{- $workloads := .workloads -}}
 deployments:
   {{- range $workload_name, $workload_config := $workloads }}
@@ -492,10 +493,12 @@ deployments:
           {{- end }}
           - secretRef:
               name: {{ $globals.app_code }}-secrets
-          {{- if $container_config.externalSecrets }}
+          {{- if and $container_config.externalSecrets $external_secrets }}
           {{- range $external_secret := $container_config.externalSecrets }}
+          {{- if has $external_secret (keys $external_secrets) }}
           - secretRef:
-              name: {{ default $external_secret.name $external_secret.k8sSecretName }}
+              name: {{ $external_secret }}
+          {{- end }}
           {{- end }}
           {{- end }}
         {{- if (dig "healthCheck" "liveness" "enabled" true $container_config) }}
@@ -618,10 +621,12 @@ deployments:
           {{- end }}
           - secretRef:
               name: {{ $globals.app_code }}-secrets
-          {{- if $container_config.externalSecrets }}
+          {{- if and $container_config.externalSecrets $external_secrets }}
           {{- range $external_secret := $container_config.externalSecrets }}
+          {{- if has $external_secret (keys $external_secrets) }}
           - secretRef:
-              name: {{ default $external_secret.name $external_secret.k8sSecretName }}
+              name: {{ $external_secret }}
+          {{- end }}
           {{- end }}
           {{- end }}
         {{- if $container_config.port }}
@@ -679,11 +684,7 @@ deployments:
     securityContext:
       runAsNonRoot: false
     {{- end }}
-    {{- if ($workload_config.serviceAccount).name }}
-    serviceAccount: {{ $workload_config.serviceAccount.name }}
-    {{- else }}
-    serviceAccount: {{ $globals.app_code }}
-    {{- end }}
+    serviceAccount: {{ default $globals.app_code $workload_config.serviceAccount }}
     strategy: {{ $workload_config.strategy }}
 {{- end }}
 {{- end -}}
@@ -693,7 +694,7 @@ External secrets
 */}}
 {{- define "mozcloud.config.externalSecrets" -}}
 {{- $globals := .Values.global.mozcloud -}}
-{{- $workloads := .workloads -}}
+{{- $external_secrets := default (dict) .Values.externalSecrets -}}
 externalSecrets:
   {{- $default_secret_name := printf "%s-secrets" $globals.app_code }}
   {{ $default_secret_name }}:
@@ -706,25 +707,18 @@ externalSecrets:
     target: {{ $globals.app_code }}-secrets
     gsm:
       secret: {{ .Values.global.mozcloud.env_code }}-gke-app-secrets
-  {{- range $workload_name, $workload_config := $workloads }}
-  {{- $external_secrets := include "mozcloud.formatter.externalSecrets" (dict "workload" $workload_config) | fromYaml }}
-  {{- range $external_secret := $external_secrets.secrets }}
-  {{- if (default true $external_secret.create) }}
-  {{- $k8s_secret_name := default $external_secret.name $external_secret.k8sSecretName }}
-  {{ $k8s_secret_name }}:
-    component: {{ $workload_config.component }}
+  {{- range $secret_name, $secret_config := $external_secrets }}
+  {{ $secret_name }}:
     {{- /*
     ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
     other resources
     */}}
     argo:
       syncWave: -11
-    target: {{ $k8s_secret_name }}
+    target: {{ $secret_name }}
     gsm:
-      secret: {{ $external_secret.name }}
-      version: {{ default "latest" $external_secret.version }}
-  {{- end }}
-  {{- end }}
+      secret: {{ $secret_config.gsmSecretName }}
+      version: {{ default "latest" $secret_config.version }}
   {{- end }}
 {{- end -}}
 
@@ -763,6 +757,7 @@ Service accounts
 */}}
 {{- define "mozcloud.config.serviceAccounts" -}}
 {{- $globals := .Values.global.mozcloud -}}
+{{- $service_accounts := default (dict) .Values.serviceAccounts -}}
 {{- $workloads := .workloads -}}
 serviceAccounts:
   {{- range $workload_name, $workload_config := $workloads }}
@@ -777,11 +772,9 @@ serviceAccounts:
     gcpServiceAccount:
       name: gke-{{ $globals.env_code }}
       projectId: {{ $globals.project_id }}
-  {{- $service_accounts := include "mozcloud.formatter.serviceAccounts" (dict "workload" $workload_config) | fromYaml }}
-  {{- range $service_account_name, $service_account_config := $service_accounts.serviceAccounts }}
+  {{- range $service_account_name, $service_account_config := $service_accounts }}
   {{- if not (eq $service_account_name $globals.app_code) }}
   {{ $service_account_name }}:
-    component: {{ $workload_config.component }}
     {{- /*
     ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
     other resources
@@ -791,9 +784,7 @@ serviceAccounts:
     {{- if ($service_account_config.gcpServiceAccount).name }}
     gcpServiceAccount:
       name: {{ $service_account_config.gcpServiceAccount.name }}
-      {{- if ($service_account_config.gcpServiceAccount).projectId }}
       projectId: {{ default $globals.project_id $service_account_config.gcpServiceAccount.projectId }}
-      {{- end }}
     {{- end }}
   {{- end }}
   {{- end }}
@@ -866,8 +857,7 @@ jobs:
         {{- end }}
         {{- if or
           $job_config.configMaps
-          (not (default false ($job_config.externalSecrets).disableAppExternalSecrets))
-          ($job_config.externalSecrets).customExternalSecrets
+          $job_config.externalSecrets
         }}
         envFrom:
           {{- if $job_config.configMaps }}
@@ -876,11 +866,12 @@ jobs:
             - {{ $config_map }}
             {{- end }}
           {{- end }}
+          {{- if $job_config.externalSecrets }}
           secrets:
-            - {{ $globals.app_code }}-secrets
             {{- range $external_secret := default (list) $job_config.externalSecrets }}
             - {{ $external_secret.name }}
             {{- end }}
+          {{- end }}
         {{- end }}
         {{- if or ($job_config.resources).cpu ($job_config.resources).memory }}
         resources:
@@ -892,14 +883,10 @@ jobs:
             memory: {{ $job_config.resources.memory }}
           {{- end }}
         {{- end }}
-    {{- if or ($job_config.serviceAccount).useAppServiceAccount (($job_config.serviceAccount).customServiceAccount).name }}
+    {{- if $workload_config.serviceAccount }}
     config:
       serviceAccount:
-        {{- if ($job_config.serviceAccount).useAppServiceAccount }}
-        name: {{ default $globals.app_code ($workload_config.serviceAccount).name }}
-        {{- else }}
-        name: {{ $job_config.serviceAccount.customServiceAccount.name }}
-        {{- end }}
+        name: {{ $workload_config.serviceAccount }}
     {{- end }}
   {{- $job_list = append $job_list $name }}
   {{- end }}
@@ -968,73 +955,6 @@ Formatting helpers
   {{- end -}}
 {{- end -}}
 {{ $output | toYaml }}
-{{- end -}}
-
-{{- define "mozcloud.formatter.externalSecrets" -}}
-{{- $secrets := dict -}}
-{{- $workload := .workload -}}
-{{- /* First, pull secrets from the workload containers */ -}}
-{{- $formatter_params := dict "containers" $workload.containers "type" "containers" -}}
-{{- $containers := include "mozcloud.formatter.containers" $formatter_params | fromYaml -}}
-{{- range $container_name, $container_config := $containers -}}
-  {{- range $workload_secret := default (list) $container_config.externalSecrets -}}
-    {{- if not (hasKey $secrets $workload_secret.name) -}}
-      {{- $_ := set $secrets $workload_secret.name $workload_secret -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
-{{- /* Next, pull secrets from the workload init containers, if any */ -}}
-{{- if $workload.initContainers -}}
-  {{- $formatter_params = dict "containers" $workload.initContainers "type" "init-containers" -}}
-  {{- $containers = include "mozcloud.formatter.containers" $formatter_params | fromYaml -}}
-  {{- range $container_name, $container_config := $containers -}}
-    {{- range $workload_secret := default (list) $container_config.externalSecrets -}}
-      {{- if not (hasKey $secrets $workload_secret.name) -}}
-        {{- $_ := set $secrets $workload_secret.name $workload_secret -}}
-      {{- end -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
-{{- /* Next, pull secrets from jobs */ -}}
-{{- range $job_type := list "preDeployment" "postDeployment" -}}
-  {{- $jobs := default (dict) $workload.jobs -}}
-  {{- if index $jobs $job_type -}}
-    {{- $job := index $workload.jobs $job_type -}}
-    {{- $job_secrets := default (list) $job.externalSecrets -}}
-    {{- range $job_secret := $job_secrets -}}
-      {{- if not hasKey $secrets $job_secret.name -}}
-        {{- $_ := set $secrets $job_secret.name $job_secret -}}
-      {{- end -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
-{{- /* Finally, reformat back into the expected format for the parent function */ -}}
-secrets:
-  {{- range $secret_name, $secret_config := $secrets }}
-  - {{ $secret_config | toYaml | nindent 4 }}
-  {{- end }}
-{{- end -}}
-
-{{- define "mozcloud.formatter.serviceAccounts" -}}
-{{- $service_accounts := dict -}}
-{{- $workload := .workload -}}
-{{- /* First, pull service accounts from workload */ -}}
-{{- if ($workload.serviceAccount).create -}}
-  {{- $_ := set $service_accounts $workload.serviceAccount.name $workload.serviceAccount -}}
-{{- end -}}
-{{- /* Next, pull service accounts from jobs */ -}}
-{{- range $job_type := list "preDeployment" "postDeployment" -}}
-  {{- $jobs := default (dict) $workload.jobs -}}
-  {{- if index $jobs $job_type -}}
-    {{- $job := index $workload.jobs $job_type -}}
-    {{- if and (($job.serviceAccount).customServiceAccount).create (not hasKey (($job.serviceAccount).customServiceAccount).name $service_accounts) -}}
-      {{- $_ := set $service_accounts $job.serviceAccount.customServiceAccount.name $job.serviceAccount.customServiceAccount -}}
-    {{- end -}}
-  {{- end -}}
-{{- end -}}
-{{- /* Finally, reformat back into the expected format for the parent function */ -}}
-serviceAccounts:
-  {{- $service_accounts | toYaml | nindent 2 }}
 {{- end -}}
 
 {{- define "mozcloud.formatter.workloads" -}}
