@@ -47,6 +47,7 @@ spec:
         enable_metric_type: true
         enable_simple_tags: true
         is_monotonic_counter: true
+        enable_ip_only_aggregation: true
 
     processors:
       k8sattributes:
