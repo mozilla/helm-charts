@@ -1,0 +1,28 @@
+---
+workloads:
+  # This is the name of the workload ("test-service").
+  #
+  # Within the scope of Gateway configurations, the name is also used for the
+  # Service, GCPBackendPolicy, HealthCheckPolicy, and any references to
+  # "backends" in HTTPRoutes.
+  #
+  # Additionally, this name will be used for Deployments, HPAs, and all other
+  # workload-related Kubernetes resources.
+  test-service:
+    component: web
+    containers: {}
+    hosts:
+      # This is the name of the host to be created. The name is also used for
+      # the Gateway, HTTPRoutes, and GCPGatewayPolicy. For simplicity sake, we
+      # will use the same name as the workload, though it be configured to use
+      # a different name if desired.
+      test-service:
+        domains:
+          - foo.bar
+
+        httpRoutes:
+          rules:
+            - matches:
+                - headers:
+                    - name: foo
+                      value: bar

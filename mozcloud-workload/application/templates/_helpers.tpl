@@ -265,27 +265,52 @@ httpRoutes:
       support weighted backends here (e.g. for Multi-Cluster Scenarios)
       */}}
     rules:
-    {{- if (($host_config).httpRoutes).rules }}
-      {{- range $rule := (default (list) $host_config.httpRoutes.rules) }}
-      - backendRefs:
-          {{- range $backend_ref := (default (list) $rule.backendRefs) }}
-          {{- if and $backend_ref.kind (eq $backend_ref.kind "ServiceImport") }}
-          {{- $_ := set $backend_ref "group" "net.gke.io" }}
-          {{- end }}
-          - group: {{ default "" $backend_ref.group | quote }}
-            kind: {{ default "Service" $backend_ref.kind }}
-            name: {{ $backend_ref.name }}
-            port: {{ default 8000 $backend_ref.port }}
-            {{- if or (eq (toString $backend_ref.weight) "0") (gt (int $backend_ref.weight) 0) }}
-            weight: {{ $backend_ref.weight }}
+      {{- $rules := (list) -}}
+      {{- $defaultBackendRef := dict "name" $workload_name "port" 8080 -}}
+      {{- if ($host_config.httpRoutes).rules }}
+        {{- range $rule_config := $host_config.httpRoutes.rules }}
+          {{- $rule := dict }}
+          {{- $backendRefs := (list) }}
+          {{- if $rule_config.backendRefs }}
+            {{- range $backendRef_config := $rule_config.backendRefs }}
+              {{- $backendRef := dict }}
+              {{- if and $backendRef_config.kind (eq $backendRef_config.kind "ServiceImport") }}
+                {{- $_ := set $backendRef "group" "net.gke.io" }}
+              {{- else }}
+                {{- $_ := set $backendRef "group" (default "" $backendRef_config.group) }}
+              {{- end }}
+              {{- $_ := set $backendRef "kind" (default "Service" $backendRef_config.kind) }}
+              {{- $_ := set $backendRef "name" (default $workload_name $backendRef_config.name) }}
+              {{- $_ := set $backendRef "port" (default 8080 $backendRef_config.port) }}
+              {{- if or (eq (toString $backendRef_config.weight) "0") (gt (int $backendRef_config.weight) 0) }}
+                {{- $_ := set $backendRef "weight" $backendRef_config.weight }}
+              {{- end }}
+              {{- $backendRefs = append $backendRefs $backendRef }}
             {{- end }}
+          {{- else }}
+            {{- $backendRefs = append $backendRefs $defaultBackendRef }}
           {{- end }}
+          {{ $_ := set $rule "backendRefs" $backendRefs }}
+          {{- if $rule_config.matches }}
+            {{- $matches := (list) }}
+            {{- range $match_config := $rule_config.matches }}
+              {{- $match := dict }}
+              {{- if $match_config.path }}
+                {{- $_ := set $match "path" $match_config.path }}
+              {{- end }}
+              {{- if $match_config.headers }}
+                {{- $_ := set $match "headers" $match_config.headers }}
+              {{- end }}
+              {{- $matches = append $matches $match }}
+            {{- end }}
+            {{ $_ := set $rule "matches" $matches }}
+          {{- end }}
+          {{- $rules = append $rules $rule -}}
+        {{- end }}
+      {{- else }}
+        {{- $rules = append $rules (dict "backendRefs" (list $defaultBackendRef)) -}}
       {{- end }}
-    {{- else }}
-      - backendRefs:
-          - name: {{ $workload_name }}
-            port: 8080
-    {{- end }}
+      {{- $rules | toYaml | nindent 6 }}
   {{- end }}
   {{- end }}
   {{- end }}
