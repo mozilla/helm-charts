@@ -54,6 +54,9 @@ spec:
         is_monotonic_counter: true
 
     processors:
+      metricstarttime:
+        strategy: subtract_initial_point
+
       # The transform/collision processor ensures that any attributes that may
       # collide with the googlemanagedprometheus exporter's monitored resource
       # construction are moved to a similar name that is not reserved.
@@ -158,7 +161,7 @@ spec:
           batch: {}
 
       otlphttp:
-        encoding: proto
+        encoding: json
         endpoint: https://telemetry.googleapis.com
         auth:
           authenticator: googleclientauth
@@ -181,20 +184,20 @@ spec:
           - statsd
           processors:
           - memory_limiter
-          - transform/collision
-          - transform/aco-gke
+          - resource/gcp_project_id
+          - metricstarttime
           exporters:
-          - googlemanagedprometheus
+          - otlphttp
         metrics/collectors:
           receivers:
           - otlp/collectors
           processors:
           - memory_limiter
           - resourcedetection
-          - transform/collision
-          - transform/aco-gke
+          - resource/gcp_project_id
+          - metricstarttime
           exporters:
-          - googlemanagedprometheus
+          - otlphttp
         traces:
           receivers:
           - otlp
