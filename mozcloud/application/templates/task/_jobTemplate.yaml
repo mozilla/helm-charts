@@ -107,7 +107,7 @@ template:
         This function can be found in templates/_pod.yaml
         */}}
         {{- $params = dict "requests" (dict "cpu" $containerConfig.resources.cpu "memory" $containerConfig.resources.memory) }}
-        {{- $resources := include "common.pod.container.resources" $params | fromYaml }}
+        {{- $resources := include "pod.container.resources" $params | fromYaml }}
         resources:
           requests:
             cpu: {{ $resources.requests.cpu | quote }}
@@ -123,7 +123,7 @@ template:
           {{- $user := default "" $containerConfig.security.uid }}
           {{- $group := default "" $containerConfig.security.gid }}
           {{- $params = dict "addCapabilities" $addCapabilities "user" $user "group" $group }}
-          {{- include "common.pod.container.securityContext" $params | nindent 10 }}
+          {{- include "pod.container.securityContext" $params | nindent 10 }}
         {{- if $containerConfig.volumes }}
         volumeMounts:
           {{- range $volume := $containerConfig.volumes }}
@@ -152,7 +152,7 @@ template:
     securityContext:
       {{- $runAsNonRoot := ternary false true (dig "security" "runAsRoot" false $jobConfig) }}
       {{- $params := dict "runAsNonRoot" $runAsNonRoot }}
-      {{- include "common.pod.securityContext" $params | nindent 6 }}
+      {{- include "pod.securityContext" $params | nindent 6 }}
     {{- if $jobConfig.serviceAccount }}
     serviceAccountName: {{ $jobConfig.serviceAccount }}
     {{- end }}

@@ -88,7 +88,7 @@ spec:
             {{- $cpu := default "50m" ($deployment.nginx.resources).cpu }}
             {{- $memory := default "128Mi" ($deployment.nginx.resources).memory }}
             {{- $resources := dict "requests" (dict "cpu" $cpu "memory" $memory) }}
-            {{- include "common.pod.container.resources" $resources | nindent 12 }}
+            {{- include "pod.container.resources" $resources | nindent 12 }}
           readinessProbe:
             {{- $container := dict }}
             {{- if ge (len $deployment.containers) 1 }}
@@ -165,9 +165,9 @@ spec:
             {{- $container.readinessProbe | toYaml | nindent 12 }}
           {{- end }}
           resources:
-            {{- include "common.pod.container.resources" (default (dict) $container.resources) | nindent 12 }}
+            {{- include "pod.container.resources" (default (dict) $container.resources) | nindent 12 }}
           securityContext:
-            {{- include "common.pod.container.securityContext" (default (dict) $container.securityContext) | nindent 12 }}
+            {{- include "pod.container.securityContext" (default (dict) $container.securityContext) | nindent 12 }}
           {{- if $container.volumes }}
           volumeMounts:
             {{- range $volume := $container.volumes }}
@@ -217,12 +217,12 @@ spec:
             {{- $container.ports | toYaml | nindent 12 }}
           {{- end }}
           resources:
-            {{- include "common.pod.container.resources" (default (dict) $container.resources) | nindent 12 }}
+            {{- include "pod.container.resources" (default (dict) $container.resources) | nindent 12 }}
           {{- if $container.restartPolicy }}
           restartPolicy: {{ $container.restartPolicy }}
           {{- end }}
           securityContext:
-            {{- include "common.pod.container.securityContext" (default (dict) $container.securityContext) | nindent 12 }}
+            {{- include "pod.container.securityContext" (default (dict) $container.securityContext) | nindent 12 }}
           {{- if $container.volumes }}
           volumeMounts:
             {{- range $volume := $container.volumes }}
@@ -248,7 +248,7 @@ spec:
         {{- if hasKey (default (dict) ($deployment.securityContext).runAsNonRoot) "runAsNonRoot" }}
         {{- $_ := set $params "runAsNonRoot" $deployment.securityContext.runAsNonRoot }}
         {{- end }}
-        {{- include "common.pod.securityContext" $params | nindent 8 }}
+        {{- include "pod.securityContext" $params | nindent 8 }}
       {{- if $deployment.serviceAccount }}
       serviceAccountName: {{ $deployment.serviceAccount }}
       {{- end }}

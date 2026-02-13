@@ -1,4 +1,4 @@
-{{- define "common.pod.container.resources" -}}
+{{- define "pod.container.resources" -}}
 {{- $requests := .requests -}}
 {{- $limits := default (dict) .limits -}}
 {{- $resources := dict "requests" .requests "limits" $limits -}}
@@ -96,7 +96,7 @@ CPU resources can only be integers/floats for an entire CPU or millicpu (m)
 {{- $resources | toYaml }}
 {{- end -}}
 
-{{- define "common.pod.container.securityContext" -}}
+{{- define "pod.container.securityContext" -}}
 allowPrivilegeEscalation: false
 capabilities:
   {{- if gt (len (default (list) .addCapabilities)) 0 }}
@@ -117,7 +117,7 @@ seccompProfile:
   type: "RuntimeDefault"
 {{- end -}}
 
-{{- define "common.pod.securityContext" -}}
+{{- define "pod.securityContext" -}}
 # PSS https://kubernetes.io/docs/concepts/security/pod-security-standards/
 # restricted profile
 seccompProfile:
