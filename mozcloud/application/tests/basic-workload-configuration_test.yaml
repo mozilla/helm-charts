@@ -91,7 +91,7 @@ tests:
           value: mozcloud-test
       - lengthEqual:
           path: spec.template.spec.volumes
-          count: 4
+          count: 6
       - isSubset:
           path: spec.template.spec.volumes[0]
           content:
@@ -107,11 +107,23 @@ tests:
       - isSubset:
           path: spec.template.spec.volumes[2]
           content:
+            emptyDir: {}
+            name: test-service-empty
+      - isSubset:
+          path: spec.template.spec.volumes[3]
+          content:
+            name: test-service-memory
+            emptyDir:
+              medium: Memory
+              sizeLimit: 500Mi
+      - isSubset:
+          path: spec.template.spec.volumes[4]
+          content:
             persistentVolumeClaim:
               claimName: test-service-pvc
             name: test-service-pvc
       - isSubset:
-          path: spec.template.spec.volumes[3]
+          path: spec.template.spec.volumes[5]
           content:
             secret:
               name: test-service-secret
@@ -302,3 +314,14 @@ tests:
             apiVersion: apps/v1
             kind: Deployment
             name: test-service
+  - it: Schema rejects emptyDir with medium Memory but no sizeLimit
+    template: workload/workload.yaml
+    set:
+      workloads.test-service.containers.app.volumes:
+        - name: bad-volume
+          type: emptyDir
+          path: /tmp/bad
+          medium: Memory
+    asserts:
+      - failedTemplate:
+          errorPattern: missing property 'sizeLimit'

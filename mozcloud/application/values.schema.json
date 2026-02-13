@@ -501,7 +501,8 @@
                         "enum": [
                           "configMap",
                           "secret",
-                          "persistentVolumeClaim"
+                          "persistentVolumeClaim",
+                          "emptyDir"
                         ]
                       },
                       "path": {
@@ -535,6 +536,16 @@
                       },
                       "storageClassName": {
                         "type": "string"
+                      },
+                      "medium": {
+                        "type": "string",
+                        "enum": [
+                          "Memory"
+                        ]
+                      },
+                      "sizeLimit": {
+                        "type": "string",
+                        "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
                       }
                     },
                     "required": [
@@ -542,19 +553,40 @@
                       "type",
                       "path"
                     ],
-                    "if": {
-                      "properties": {
-                        "type": {
-                          "const": "persistentVolumeClaim"
+                    "allOf": [
+                      {
+                        "if": {
+                          "properties": {
+                            "type": {
+                              "const": "persistentVolumeClaim"
+                            }
+                          }
+                        },
+                        "then": {
+                          "required": [
+                            "accessModes",
+                            "size"
+                          ]
+                        }
+                      },
+                      {
+                        "if": {
+                          "properties": {
+                            "medium": {
+                              "const": "Memory"
+                            }
+                          },
+                          "required": [
+                            "medium"
+                          ]
+                        },
+                        "then": {
+                          "required": [
+                            "sizeLimit"
+                          ]
                         }
                       }
-                    },
-                    "then": {
-                      "required": [
-                        "accessModes",
-                        "size"
-                      ]
-                    }
+                    ]
                   }
                 }
               }
@@ -956,7 +988,8 @@
                         "enum": [
                           "configMap",
                           "secret",
-                          "persistentVolumeClaim"
+                          "persistentVolumeClaim",
+                          "emptyDir"
                         ]
                       },
                       "path": {
@@ -990,6 +1023,16 @@
                       },
                       "storageClassName": {
                         "type": "string"
+                      },
+                      "medium": {
+                        "type": "string",
+                        "enum": [
+                          "Memory"
+                        ]
+                      },
+                      "sizeLimit": {
+                        "type": "string",
+                        "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
                       }
                     },
                     "required": [
@@ -997,19 +1040,40 @@
                       "type",
                       "path"
                     ],
-                    "if": {
-                      "properties": {
-                        "type": {
-                          "const": "persistentVolumeClaim"
+                    "allOf": [
+                      {
+                        "if": {
+                          "properties": {
+                            "type": {
+                              "const": "persistentVolumeClaim"
+                            }
+                          }
+                        },
+                        "then": {
+                          "required": [
+                            "accessModes",
+                            "size"
+                          ]
+                        }
+                      },
+                      {
+                        "if": {
+                          "properties": {
+                            "medium": {
+                              "const": "Memory"
+                            }
+                          },
+                          "required": [
+                            "medium"
+                          ]
+                        },
+                        "then": {
+                          "required": [
+                            "sizeLimit"
+                          ]
                         }
                       }
-                    },
-                    "then": {
-                      "required": [
-                        "accessModes",
-                        "size"
-                      ]
-                    }
+                    ]
                   }
                 }
               }

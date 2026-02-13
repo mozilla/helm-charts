@@ -291,6 +291,18 @@ spec:
           {{- if eq $volume_config.type "persistentVolumeClaim" }}
           persistentVolumeClaim:
             claimName: {{ $volume_name }}
+          {{- else if eq $volume_config.type "emptyDir" }}
+          {{- if or $volume_config.medium $volume_config.sizeLimit }}
+          emptyDir:
+            {{- if $volume_config.medium }}
+            medium: {{ $volume_config.medium }}
+            {{- end }}
+            {{- if $volume_config.sizeLimit }}
+            sizeLimit: {{ $volume_config.sizeLimit }}
+            {{- end }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
           {{- else }}
           {{- if eq $volume_config.type "configMap" }}
           configMap:
