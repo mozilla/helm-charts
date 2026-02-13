@@ -64,21 +64,12 @@
     "mozcloud-ingress-lib": {
       "type": "object"
     },
-    "mozcloud-job-lib": {
-      "type": "object"
-    },
     "mozcloud-labels-lib": {
-      "type": "object"
-    },
-    "mozcloud-workload-stateless": {
       "type": "object"
     },
     "enabled": {
       "type": "boolean",
       "default": true
-    },
-    "nameOverride": {
-      "type": "string"
     },
     "configMaps": {
       "type": "object",

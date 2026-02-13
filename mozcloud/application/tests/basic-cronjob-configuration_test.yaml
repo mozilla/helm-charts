@@ -1,0 +1,99 @@
+---
+suite: "mozcloud: Basic cron job configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/basic-cronjob-configuration.yaml
+templates:
+  - task/cronjob.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Cron job is configured correctly
+    template: task/cronjob.yaml
+    documentSelector:
+      path: $[?(@.kind == "CronJob")].metadata.name
+      value: test-cronjob
+    asserts:
+      - notExists:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+      - notExists:
+          path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
+      - notExists:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+      - matchRegex:
+          path: spec.schedule
+          pattern: ^(0 \* \* \* \*|@hourly)$
+      - equal:
+          path: spec.successfulJobsHistoryLimit
+          value: 1
+      - equal:
+          path: spec.failedJobsHistoryLimit
+          value: 1
+      - equal:
+          path: spec.jobTemplate.spec.backoffLimit
+          value: 6
+      - equal:
+          path: spec.jobTemplate.spec.parallelism
+          value: 1
+      - lengthEqual:
+          path: spec.jobTemplate.spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].image
+          value: test-repo/test-image:latest
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].command
+          value: ["sh", "-c"]
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].args
+          value: ["echo", "foo", "bar"]
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].name
+          value: job
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources
+      - isSubset:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources
+          content:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 100m
+              memory: 128Mi
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.containers[0].securityContext
+      - isSubset:
+          path: spec.jobTemplate.spec.template.spec.containers[0].securityContext
+          content:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.restartPolicy
+          value: Never
+      - exists:
+          path: spec.jobTemplate.spec.template.spec.securityContext
+      - isSubset:
+          path: spec.jobTemplate.spec.template.spec.securityContext
+          content:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault

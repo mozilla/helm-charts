@@ -25,8 +25,8 @@ metadata:
   name: {{ $deployment.name }}
   labels:
     {{- $deployment.labels | toYaml | nindent 4 }}
-  {{- $annotation_params := dict "annotations" (default (dict) $deployment.annotations) "context" ($ | deepCopy) "type" "deployment" }}
-  {{- $annotations := include "common.config.annotations" $annotation_params | fromYaml }}
+  {{- $params := dict "annotations" (default (dict) $deployment.annotations) "context" ($ | deepCopy) "type" "deployment" }}
+  {{- $annotations := include "common.annotations" $params | fromYaml }}
   {{- if $annotations }}
   annotations:
     {{- $annotations | toYaml | nindent 4 }}
@@ -39,18 +39,11 @@ spec:
     type: {{ default "RollingUpdate" $deployment.strategy }}
   template:
     metadata:
-      {{- /* If auto injection is enabled for OTEL, we should include those annotations */}}
-      {{- $otel_annotations := dict }}
       {{- $otel_enabled := dig "otel" "enabled" true $deployment }}
       {{- $otel_container_names := default list ($deployment.otel).containers }}
       {{- $otel_auto_instrumentation_enabled := and $otel_container_names (dig "otel" "autoInstrumentation" "enabled" false $deployment) (($deployment.otel).autoInstrumentation).language }}
-      {{- if $otel_auto_instrumentation_enabled }}
-      {{- $otel_annotation_params := dict "containers" $otel_container_names "language" $deployment.otel.autoInstrumentation.language }}
-      {{- $otel_annotations = include "common.config.annotations.otel.autoInjection" $otel_annotation_params | fromYaml }}
-      {{- end }}
-      {{- /* Note: pod annotations will automatically include resource annotations for OTEL if enabled */}}
-      {{- $annotation_params := dict "annotations" $otel_annotations "context" ($ | deepCopy) "type" "pod" "otel" $otel_enabled }}
-      {{- $base_annotations := include "common.config.annotations" $annotation_params | fromYaml }}
+      {{- $params = dict "context" ($ | deepCopy) "otel" ($deployment.otel) "type" "deployment" }}
+      {{- $annotations := include "common.annotations" $params | fromYaml }}
       {{- /* Add checksum annotation for configmaps to trigger rolling updates when configmap changes */}}
       {{- $configmap_checksums := dict }}
       {{- if gt (keys $volumes | len) 0 }}
@@ -64,7 +57,7 @@ spec:
           {{- end }}
         {{- end }}
       {{- end }}
-      {{- $annotations := mergeOverwrite (default (dict) $base_annotations) $configmap_checksums }}
+      {{- $annotations = mergeOverwrite (default (dict) $annotations) (default (dict) $configmap_checksums) }}
       {{- if $annotations }}
       annotations:
         {{- $annotations | toYaml | nindent 8 }}
@@ -251,7 +244,7 @@ spec:
         {{- end }}
       {{- end }}
       securityContext:
-        {{- $params := dict }}
+        {{- $params = dict }}
         {{- if hasKey (default (dict) ($deployment.securityContext).runAsNonRoot) "runAsNonRoot" }}
         {{- $_ := set $params "runAsNonRoot" $deployment.securityContext.runAsNonRoot }}
         {{- end }}
