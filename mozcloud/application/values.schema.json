@@ -169,6 +169,116 @@
         }
       }
     },
+    "tasks": {
+      "type": "object",
+      "description": "Declarative tasks broken down by common, cron job, and job configurations",
+      "properties": {
+        "common": {
+          "type": "object",
+          "description": "Common configurations for containers, cron jobs, and jobs",
+          "additionalProperties": false,
+          "properties": {
+            "container": {
+              "$ref": "#/$defs/container"
+            },
+            "cronJob": {
+              "$ref": "#/$defs/cronJob"
+            },
+            "job": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/job"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "preDeployment",
+                        "postDeployment"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        "cronJobs": {
+          "type": "object",
+          "description": "Declarative cron jobs keyed by cron job name",
+          "additionalProperties": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/cronJob"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "jobConfig": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/job"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "containers": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "$ref": "#/$defs/container"
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "jobs": {
+          "type": "object",
+          "description": "Declarative jobs keyed by job name",
+          "additionalProperties": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/job"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "preDeployment",
+                      "postDeployment"
+                    ]
+                  },
+                  "argo": {
+                    "type": "object",
+                    "properties": {
+                      "syncWave": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "containers": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "$ref": "#/$defs/container"
+                    }
+                  }
+                },
+                "required": ["type", "containers"]
+              }
+            ]
+          }
+        }
+      }
+    },
     "workloads": {
       "type": "object",
       "description": "Declarative workloads keyed by workload name",
@@ -240,57 +350,12 @@
             "type": "object",
             "description": "Declarative containers keyed by container name",
             "additionalProperties": {
-              "type": "object",
-              "additionalProperties": false,
+              "allOf": [
+                {
+                  "$ref": "#/$defs/container"
+                }
+              ],
               "properties": {
-                "name": {
-                  "type": "string",
-                  "default": "app"
-                },
-                "args": {
-                  "oneOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "command": {
-                  "oneOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "configMaps": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "envVars": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
-                },
-                "externalSecrets": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
                 "healthCheck": {
                   "type": "object",
                   "additionalProperties": false,
@@ -427,126 +492,9 @@
                     }
                   }
                 },
-                "image": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "repository": {
-                      "type": "string"
-                    },
-                    "tag": {
-                      "type": "string"
-                    }
-                  }
-                },
                 "port": {
                   "type": "integer",
                   "default": 8000
-                },
-                "resources": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "cpu": {
-                      "type": "string",
-                      "description": "Integer cores (e.g., 2) or millicores (e.g., 200m)",
-                      "pattern": "^(\\d+|\\d+m)$",
-                      "default": "100m"
-                    },
-                    "memory": {
-                      "type": "string",
-                      "description": "K, Ki, M, Mi, G, or Gi (recommend binary units)",
-                      "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$",
-                      "default": "64Mi"
-                    }
-                  }
-                },
-                "security": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "uid": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "gid": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "addCapabilities": {
-                      "type": "array"
-                    }
-                  }
-                },
-                "volumes": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "configMap",
-                          "secret",
-                          "persistentVolumeClaim"
-                        ]
-                      },
-                      "path": {
-                        "type": "string"
-                      },
-                      "key": {
-                        "type": "string"
-                      },
-                      "readOnly": {
-                        "type": "boolean"
-                      },
-                      "create": {
-                        "type": "boolean",
-                        "default": false
-                      },
-                      "accessModes": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "ReadWriteOnce",
-                            "ReadOnlyMany",
-                            "ReadWriteMany"
-                          ]
-                        },
-                        "default": "ReadWriteOnce"
-                      },
-                      "size": {
-                        "type": "string",
-                        "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
-                      },
-                      "storageClassName": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "type",
-                      "path"
-                    ],
-                    "if": {
-                      "properties": {
-                        "type": {
-                          "const": "persistentVolumeClaim"
-                        }
-                      }
-                    },
-                    "then": {
-                      "required": [
-                        "accessModes",
-                        "size"
-                      ]
-                    }
-                  }
                 }
               }
             }
@@ -828,244 +776,26 @@
             "type": "object",
             "description": "Declarative init containers keyed by container name",
             "additionalProperties": {
-              "type": "object",
-              "additionalProperties": false,
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "default": "app"
+              "allOf": [
+                {
+                  "$ref": "#/$defs/container"
                 },
-                "args": {
-                  "oneOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "command": {
-                  "oneOf": [
-                    {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "configMaps": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "envVars": {
+                {
                   "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
-                },
-                "externalSecrets": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                "image": {
-                  "type": "object",
-                  "additionalProperties": false,
                   "properties": {
-                    "repository": {
-                      "type": "string"
-                    },
-                    "tag": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "port": {
-                  "type": "integer"
-                },
-                "resources": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "cpu": {
-                      "type": "string",
-                      "description": "Integer cores (e.g., 2) or millicores (e.g., 200m)",
-                      "pattern": "^(\\d+|\\d+m)$",
-                      "default": "100m"
-                    },
-                    "memory": {
-                      "type": "string",
-                      "description": "K, Ki, M, Mi, G, or Gi (recommend binary units)",
-                      "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$",
-                      "default": "64Mi"
-                    }
-                  }
-                },
-                "security": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "uid": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "gid": {
-                      "type": "integer",
-                      "minimum": 0
-                    },
-                    "addCapabilities": {
-                      "type": "array"
-                    }
-                  }
-                },
-                "sidecar": {
-                  "type": "boolean",
-                  "default": false
-                },
-                "volumes": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "type": {
-                        "type": "string",
-                        "enum": [
-                          "configMap",
-                          "secret",
-                          "persistentVolumeClaim"
-                        ]
-                      },
-                      "path": {
-                        "type": "string"
-                      },
-                      "key": {
-                        "type": "string"
-                      },
-                      "readOnly": {
-                        "type": "boolean"
-                      },
-                      "create": {
-                        "type": "boolean",
-                        "default": false
-                      },
-                      "accessModes": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "enum": [
-                            "ReadWriteOnce",
-                            "ReadOnlyMany",
-                            "ReadWriteMany"
-                          ]
-                        },
-                        "default": "ReadWriteOnce"
-                      },
-                      "size": {
-                        "type": "string",
-                        "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
-                      },
-                      "storageClassName": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "name",
-                      "type",
-                      "path"
-                    ],
-                    "if": {
-                      "properties": {
-                        "type": {
-                          "const": "persistentVolumeClaim"
-                        }
-                      }
-                    },
-                    "then": {
-                      "required": [
-                        "accessModes",
-                        "size"
-                      ]
+                    "sidecar": {
+                      "type": "boolean",
+                      "default": false
                     }
                   }
                 }
-              }
+              ]
             }
           },
-          "jobs": {
+          "labels": {
             "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "preDeployment": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  },
-                  {
-                    "type": "object",
-                    "additionalProperties": {
-                      "type": "object",
-                      "allOf": [
-                        {
-                          "$ref": "#/$defs/job"
-                        }
-                      ],
-                      "properties": {
-                        "argo": {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "properties": {
-                            "syncWave": {
-                              "type": "integer",
-                              "minimum": -10,
-                              "maximum": -1,
-                              "default": -1
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                ]
-              },
-              "postDeployment": {
-                "type": "object",
-                "additionalProperties": {
-                  "type": "object",
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/job"
-                    }
-                  ],
-                  "properties": {
-                    "argo": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "syncWave": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "default": 1
-                        }
-                      }
-                    }
-                  }
-                }
-              }
+            "additionalProperties": {
+              "type": "string"
             }
           },
           "nginx": {
@@ -1099,49 +829,10 @@
             }
           },
           "otel": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "enabled": {
-                "type": "boolean",
-                "default": true
-              },
-              "containers": {
-                "type": "array",
-                "default": []
-              },
-              "autoInstrumentation": {
-                "type": "object",
-                "additionalProperties": false,
-                "properties": {
-                  "enabled": {
-                    "type": "boolean",
-                    "default": false
-                  },
-                  "language": {
-                    "type": "string",
-                    "enum": [
-                      "",
-                      "dotnet",
-                      "go",
-                      "java",
-                      "nodejs",
-                      "python"
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/$defs/otel"
           },
           "security": {
-            "type": "object",
-            "additionalProperties": false,
-            "properties": {
-              "runAsRoot": {
-                "type": "boolean",
-                "default": false
-              }
-            }
+            "$ref": "#/$defs/podSecurity"
           },
           "serviceAccount": {
             "type": "string"
@@ -1160,44 +851,16 @@
           }
         },
         "required": [
+          "component",
           "containers"
         ]
       }
     }
   },
   "$defs": {
-    "job": {
+    "container": {
       "type": "object",
       "properties": {
-        "containerName": {
-          "type": "string",
-          "default": "job"
-        },
-        "image": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "repository": {
-              "type": "string"
-            },
-            "tag": {
-              "type": "string"
-            }
-          }
-        },
-        "command": {
-          "oneOf": [
-            {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
         "args": {
           "oneOf": [
             {
@@ -1211,19 +874,18 @@
             }
           ]
         },
-        "resources": {
-          "type": "object",
-          "additionalProperties": false,
-          "properties": {
-            "cpu": {
-              "type": "string",
-              "pattern": "^(\\d+|\\d+m)$"
+        "command": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             },
-            "memory": {
-              "type": "string",
-              "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+            {
+              "type": "string"
             }
-          }
+          ]
         },
         "configMaps": {
           "type": "array",
@@ -1243,8 +905,234 @@
             "type": "string"
           }
         },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "repository": {
+              "type": "string"
+            },
+            "tag": {
+              "type": "string"
+            }
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "Integer cores (e.g., 2) or millicores (e.g., 200m)",
+              "pattern": "^(\\d+|\\d+m)$",
+              "default": "100m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "K, Ki, M, Mi, G, or Gi (recommend binary units)",
+              "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$",
+              "default": "128Mi"
+            }
+          }
+        },
+        "security": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "uid": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "gid": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "addCapabilities": {
+              "type": "array"
+            }
+          }
+        },
+        "volumes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "configMap",
+                  "secret",
+                  "persistentVolumeClaim"
+                ]
+              },
+              "path": {
+                "type": "string"
+              },
+              "key": {
+                "type": "string"
+              },
+              "readOnly": {
+                "type": "boolean"
+              },
+              "create": {
+                "type": "boolean",
+                "default": false
+              },
+              "accessModes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ReadWriteOnce",
+                    "ReadOnlyMany",
+                    "ReadWriteMany"
+                  ]
+                },
+                "default": "ReadWriteOnce"
+              },
+              "size": {
+                "type": "string",
+                "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+              },
+              "storageClassName": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "type",
+              "path"
+            ],
+            "if": {
+              "properties": {
+                "type": {
+                  "const": "persistentVolumeClaim"
+                }
+              }
+            },
+            "then": {
+              "required": [
+                "accessModes",
+                "size"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "cronJob": {
+      "type": "object",
+      "properties": {
+        "jobHistory": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "successful": {
+              "type": "number"
+            },
+            "failed": {
+              "type": "number"
+            }
+          }
+        },
+        "schedule": {
+          "type": "string"
+        },
+        "suspend": {
+          "type": "boolean"
+        }
+      },
+      "required": ["schedule"]
+    },
+    "job": {
+      "type": "object",
+      "properties": {
+        "generateName": {
+          "type": "boolean"
+        },
+        "activeDeadlineSeconds": {
+          "type": "integer"
+        },
+        "backoffLimit": {
+          "type": "integer",
+          "default": 6
+        },
+        "otel": {
+          "$ref": "#/$defs/otel"
+        },
+        "parallelism": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 1
+        },
+        "restartPolicy": {
+          "type": "string",
+          "enum": [
+            "Never",
+            "OnFailure"
+          ],
+          "default": "Never"
+        },
+        "security": {
+          "$ref": "#/$defs/podSecurity"
+        },
         "serviceAccount": {
           "type": "string"
+        },
+        "suspend": {
+          "type": "boolean"
+        },
+        "ttlSecondsAfterFinished": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "otel": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean"
+        },
+        "containers": {
+          "type": "array",
+          "default": []
+        },
+        "autoInstrumentation": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "language": {
+              "type": "string",
+              "enum": [
+                "",
+                "dotnet",
+                "go",
+                "java",
+                "nodejs",
+                "python"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "podSecurity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runAsRoot": {
+          "type": "boolean",
+          "default": false
         }
       }
     }

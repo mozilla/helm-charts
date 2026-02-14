@@ -1,5 +1,3 @@
-# See values.yaml.example for example configurations.
-
 # If disabled, no resources in the chart will be created.
 enabled: true
 
@@ -53,7 +51,7 @@ configMaps: {}
 # Any secrets you define here will be created IN ADDITION to that secret.
 externalSecrets: {}
 
-# Persistent volumes to create. These can be mounted as volumes in conatinerized
+# Persistent volumes to create. These can be mounted as volumes in containerized
 # workloads and jobs.
 #
 # Format:
@@ -191,6 +189,7 @@ tasks:
     #
     # Some options are commented out as they are omitted by default.
     job:
+      # While "type" is required in job definitions, it is not required here.
       type: preDeployment
       generateName: false
       #activeDeadlineSeconds:
@@ -694,14 +693,6 @@ workloads:
         min: 1
         max: 30
 
-
-    # Labels to pass down to workload resources, e.g. Deployments and Pods. In
-    # some scenarios, this can be useful to apply, e.g. when you spawn multiple
-    # workloads, but only want the main workload with default labels to match
-    # the selector of your Ingress / Gateway resources.
-    #labels:
-    #  my-custom-label: my-custom-value
-
     # All of the (non-init) containers you need to deploy for your work. Init
     # containers can be specified in the initContainers section below.
     #
@@ -918,8 +909,8 @@ workloads:
           #
           # We recommend using Binary (IEC) units, such as Ki, Mi, and Gi.
           #
-          # The default value is 64Mi.
-          memory: 64Mi
+          # The default value is 128Mi.
+          memory: 128Mi
 
         # Optionally override some securityContext settings for the container.
         # This section should not be configured unless the user knows what they
@@ -1318,8 +1309,8 @@ workloads:
           #
           # We recommend using Binary (IEC) units, such as Ki, Mi, and Gi.
           #
-          # The default value is 64Mi.
-          memory: 64Mi
+          # The default value is 128Mi.
+          memory: 128Mi
 
         # Optionally override some securityContext settings for the container.
         # This section should not be configured unless the user knows what they
@@ -1422,204 +1413,52 @@ workloads:
         #
         #volumes: []
 
-    # Configure jobs to run before or after the rest of the deployment.
-    #jobs:
-    #  preDeployment:
-    #    # The name to use for the job. If this is not changed, the job will be
-    #    # named: "<workload_name>-predeployment".
-    #    name:
-    #      # Optionally define a Sync Wave value for ArgoCD.
-    #      #
-    #      # Sync waves are used to define an order in which resources are
-    #      # applied within a sync phase. Sync waves are configured using
-    #      # integers in ascending order, where resources with lower-value sync
-    #      # waves are applied first and resources with higher-value sync waves
-    #      # are applied last.
-    #      #
-    #      # This chart allows you to assign Sync Wave values for pre-deployment
-    #      # jobs ranging from -10 (run first) to -1 (run last).
-    #      #
-    #      # If no values are specified, a default of -1 will be applied.
-    #      argo:
-    #        syncWave: -1
-    #
-    #      # See image, command, args, and resources configurations for
-    #      # containers as a reference.
-    #      image:
-    #        repository:
-    #        tag:
-    #      command: []
-    #      args: []
-    #      resources:
-    #        cpu:
-    #        memory:
-    #
-    #      # A list of config map names to mount into the container as
-    #      # environment variables. These should be defined higher up in the
-    #      # file under the "configMaps" key.
-    #      #
-    #      # Format:
-    #      #
-    #      #   configMaps:
-    #      #     - my-configmap
-    #      #     - a-different-configmap
-    #      #
-    #      # Important: The last config map in the list will always take
-    #      #            precedence.
-    #      configMaps: []
-    #
-    #      # A dictionary of environment variables to pass to this container.
-    #      # This should not include secrets. These variables will override
-    #      # those defined in the "configMaps" section above.
-    #      #
-    #      # Format:
-    #      #
-    #      #   envVars:
-    #      #     KEY1: VALUE1
-    #      #     KEY2: VALUE2
-    #      envVars: {}
-    #
-    #      # A list of external secret names and versions to mount in containers.
-    #      # External secrets can be defined using the externalSecrets key above.
-    #      #
-    #      # By default an external secret called "app-secrets" will be created. This
-    #      # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
-    #      # the value defined in `.Values.global.mozcloud.env_code` (ie. "dev",
-    #      # "stage", "prod"). There will be a corresponding Kubernetes secret called
-    #      # "app-secrets" which will automatically be mounted in your app container
-    #      # using the "latest" version.
-    #      #
-    #      # Any secrets you define here will be created IN ADDITION to that secret.
-    #      #
-    #      # Format:
-    #      #
-    #      #   externalSecrets:
-    #      #     - external-secret-name
-    #      #     - another-external-secret-name
-    #      externalSecrets: []
-    #
-    #      # Optionally use a custom service account for the container. The value
-    #      # should match a service account created above in the `serviceAccounts`
-    #      # section.
-    #      serviceAccount: ''
-    #
-    #  postDeployment:
-    #    # The name to use for the job. If this is not changed, the job will be
-    #    # named: "<workload_name>-postdeployment".
-    #    name:
-    #      # Optionally define a Sync Wave value for ArgoCD.
-    #      #
-    #      # Sync waves are used to define an order in which resources are
-    #      # applied within a sync phase. Sync waves are configured using
-    #      # integers in ascending order, where resources with lower-value sync
-    #      # waves are applied first and resources with higher-value sync waves
-    #      # are applied last.
-    #      #
-    #      # This chart allows you to assign Sync Wave values for
-    #      # post-deployment jobs, as long as the values are greater than 0.
-    #      #
-    #      # If no values are specified, a default of 1 will be applied.
-    #      argo:
-    #        syncWave: 1
-    #
-    #      # The name of the container. The default value is "job".
-    #      containerName: job
-    #
-    #      # See image, command, args, and resources configurations for
-    #      # containers as a reference.
-    #      image:
-    #        repository:
-    #        tag:
-    #      command: []
-    #      args: []
-    #      resources:
-    #        cpu:
-    #        memory:
-    #
-    #      # A list of config map names to mount into the container as
-    #      # environment variables. These should be defined higher up in the
-    #      # file under the "configMaps" key.
-    #      #
-    #      # Format:
-    #      #
-    #      #   configMaps:
-    #      #     - my-configmap
-    #      #     - a-different-configmap
-    #      #
-    #      # Important: The last config map in the list will always take
-    #      #            precedence.
-    #      #configMaps: []
-    #
-    #      # A dictionary of environment variables to pass to this container.
-    #      # This should not include secrets. These variables will override
-    #      # those defined in the "configMaps" section above.
-    #      #
-    #      # Format:
-    #      #
-    #      #   envVars:
-    #      #     KEY1: VALUE1
-    #      #     KEY2: VALUE2
-    #      envVars: {}
-    #
-    #      # A list of external secret names and versions to mount in containers.
-    #      # External secrets can be defined using the externalSecrets key above.
-    #      #
-    #      # By default an external secret called "app-secrets" will be created. This
-    #      # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
-    #      # the value defined in `.Values.global.mozcloud.env_code` (ie. "dev",
-    #      # "stage", "prod"). There will be a corresponding Kubernetes secret called
-    #      # "app-secrets" which will automatically be mounted in your app container
-    #      # using the "latest" version.
-    #      #
-    #      # Any secrets you define here will be created IN ADDITION to that secret.
-    #      #
-    #      # Format:
-    #      #
-    #      #   externalSecrets:
-    #      #     - external-secret-name
-    #      #     - another-external-secret-name
-    #      externalSecrets: []
-    #
-    #      # Optionally use a custom service account for the container. The value
-    #      # should match a service account created above in the `serviceAccounts`
-    #      # section.
-    #      serviceAccount: ''
+    # Labels to pass down to workload resources, e.g. Deployments and Pods. In
+    # some scenarios, this can be useful to apply, e.g. when you spawn multiple
+    # workloads, but only want the main workload with default labels to match
+    # the selector of your Ingress / Gateway resources.
+    labels: {}
 
     # Optionally configure NGINX.
-    #nginx:
-    #  # NGINX is enabled by default, but can be disabled if set to "false".
-    #  enabled: true
-
-    #  # If you are using a custom NGINX image such as openresty-oidc, specify
-    #  # that here.
-    #  #
-    #  # The format is:
-    #  #
-    #  #   repo/image:tag
-    #  #
-    #  # For example:
-    #  #
-    #  #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/openresty-oidc:1.21.4.1-0-alpine
-    #  #image:
-
-    #  # Optionally define an NGINX configuration to use for nginx.conf. This
-    #  # should refer to a template created outside the scope of this Helm
-    #  # chart.
-    #  #configMap:
     #
-    #  # To customize the resource allocation for the NGINX container, use the
-    #  # "resources" dictionary.
-    #  #
-    #  # Example:
-    #  #
-    #  #   resources:
-    #  #     cpu: 100m
-    #  #     memory: 512Mi
-    #  #
-    #  # By default, we will allocate "50m" CPU and "128Mi" of memory.
-    #  #resources:
-    #  #  cpu: 50m
-    #  #  memory: 128Mi
+    # Format:
+    #
+    #   nginx:
+    #     # NGINX is enabled by default, but can be disabled if set to "false".
+    #     enabled: true
+    #
+    #     # If you are using a custom NGINX image such as openresty-oidc, specify
+    #     # that here.
+    #     #
+    #     # The format is:
+    #     #
+    #     #   repo/image:tag
+    #     #
+    #     # For example:
+    #     #
+    #     #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/openresty-oidc:1.21.4.1-0-alpine
+    #     image: ''
+    #
+    #     # Optionally define an NGINX configuration to use for nginx.conf. This
+    #     # should refer to a template created outside the scope of this Helm
+    #     # chart.
+    #     configMap: ''
+    #
+    #     # To customize the resource allocation for the NGINX container, use the
+    #     # "resources" dictionary.
+    #     #
+    #     # Example:
+    #     #
+    #     #   resources:
+    #     #     cpu: 100m
+    #     #     memory: 512Mi
+    #     #
+    #     # By default, we will allocate "50m" CPU and "128Mi" of memory.
+    #     resources:
+    #       cpu: 50m
+    #       memory: 128Mi
+    nginx:
+      enabled: true
 
     # Configure auto instrumentation for the OTEL Collector.
     #
