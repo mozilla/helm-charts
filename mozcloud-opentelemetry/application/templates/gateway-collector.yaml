@@ -142,6 +142,12 @@ spec:
         endpoint: https://telemetry.googleapis.com
         auth:
           authenticator: googleclientauth
+        sending_queue:
+          batch:
+            sizer: items
+            min_size: 200
+            max_size: 200
+            flush_timeout: 5s
 
     extensions:
       health_check:
