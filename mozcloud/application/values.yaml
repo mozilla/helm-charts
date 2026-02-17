@@ -81,13 +81,13 @@ externalSecrets: {}
 #       # For more info, see:
 #       # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
 #       accessModes: ''
-#   
+#
 #       # The size of the volume using SI or IEC units. Sizes can specified using
 #       # the following units: K, Ki, M, Mi, G, Gi
 #       #
 #       # This is a required field.
 #       size: ''
-#   
+#
 #       # A storage class to use, if applicable. These can be
 #       #
 #       # Possible options include:
@@ -542,12 +542,12 @@ workloads:
         # Configuration options:
         #
         # security:
-        #   # The 'uid' and 'gid' values to use for the container, if
+        #   # The 'user' and 'group' values to use for the container, if
         #   # non-default.
         #   #
         #   # The default value for both is 10001.
-        #   uid: 10001
-        #   gid: 10001
+        #   user: 10001
+        #   group: 10001
         #
         #   # By default, all OS capabilities are dropped. If needed, you can
         #   # list one or more capabilities to add to the container here.

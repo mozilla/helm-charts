@@ -474,11 +474,11 @@
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "uid": {
+                    "user": {
                       "type": "integer",
                       "minimum": 0
                     },
-                    "gid": {
+                    "group": {
                       "type": "integer",
                       "minimum": 0
                     },
@@ -925,11 +925,11 @@
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "uid": {
+                    "user": {
                       "type": "integer",
                       "minimum": 0
                     },
-                    "gid": {
+                    "group": {
                       "type": "integer",
                       "minimum": 0
                     },

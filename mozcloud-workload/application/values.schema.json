@@ -425,11 +425,13 @@
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "uid": {
+                    "user": {
+                      "description": "User ID to run the container as (maps to securityContext.runAsUser). Defaults to 10001.",
                       "type": "integer",
                       "minimum": 0
                     },
-                    "gid": {
+                    "group": {
+                      "description": "Group ID to run the container as (maps to securityContext.runAsGroup). Defaults to 10001.",
                       "type": "integer",
                       "minimum": 0
                     },
@@ -933,11 +935,13 @@
                   "type": "object",
                   "additionalProperties": false,
                   "properties": {
-                    "uid": {
+                    "user": {
+                      "description": "User ID to run the container as (maps to securityContext.runAsUser). Defaults to 10001.",
                       "type": "integer",
                       "minimum": 0
                     },
-                    "gid": {
+                    "group": {
+                      "description": "Group ID to run the container as (maps to securityContext.runAsGroup). Defaults to 10001.",
                       "type": "integer",
                       "minimum": 0
                     },
