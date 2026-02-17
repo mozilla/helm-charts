@@ -12,8 +12,7 @@ values:
   - values/globals.yaml
   - values/basic-job-configuration.yaml
 templates:
-  - job/job.yaml
-  - workload/workload.yaml
+  - task/job.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -22,7 +21,7 @@ tests:
     asserts:
       - matchSnapshot: {}
   - it: Pre-deployment job is configured correctly
-    template: job/job.yaml
+    template: task/job.yaml
     documentSelector:
       path: $[?(@.kind == "Job")].metadata.name
       value: test-predeployment-job
@@ -63,11 +62,11 @@ tests:
           path: spec.template.spec.containers[0].resources
           content:
             limits:
-              cpu: 20m
-              memory: 128Mi
+              cpu: 200m
+              memory: 256Mi
             requests:
-              cpu: 10m
-              memory: 64Mi
+              cpu: 100m
+              memory: 128Mi
       - exists:
           path: spec.template.spec.containers[0].securityContext
       - isSubset:
@@ -93,7 +92,7 @@ tests:
             seccompProfile:
               type: RuntimeDefault
   - it: Post-deployment job is configured correctly
-    template: job/job.yaml
+    template: task/job.yaml
     documentSelector:
       path: $[?(@.kind == "Job")].metadata.name
       value: test-postdeployment-job
@@ -134,11 +133,11 @@ tests:
           path: spec.template.spec.containers[0].resources
           content:
             limits:
-              cpu: 20m
-              memory: 128Mi
+              cpu: 200m
+              memory: 256Mi
             requests:
-              cpu: 10m
-              memory: 64Mi
+              cpu: 100m
+              memory: 128Mi
       - exists:
           path: spec.template.spec.containers[0].securityContext
       - isSubset:

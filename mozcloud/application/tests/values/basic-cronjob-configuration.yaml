@@ -1,0 +1,13 @@
+---
+tasks:
+  cronJobs:
+    test-cronjob:
+      schedule: '0 * * * *'  # can also be '@hourly'
+      jobConfig:
+        containers:
+          job:
+            image:
+              repository: test-repo/test-image
+              tag: latest
+            command: ["sh", "-c"]
+            args: ["echo", "foo", "bar"]

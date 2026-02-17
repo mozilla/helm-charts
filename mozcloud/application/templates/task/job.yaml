@@ -1,0 +1,49 @@
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- $common := .Values.tasks.common }}
+{{- $context := deepCopy . }}
+{{- $globals := .Values.global.mozcloud }}
+{{- $params := dict "jobs" (default (dict) .Values.tasks.jobs) }}
+{{- $jobs := include "mozcloud.job.formatter" $params | fromYaml }}
+{{- if $jobs }}
+{{- $_ := set $context "component_code" "job" -}}
+{{- range $name, $config := $jobs }}
+{{- if $config }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  {{- if $config.generateName }}
+  {{- if not (hasSuffix "-" $name) }}
+  {{- $name = printf "%s-" $name }}
+  {{- end }}
+  {{- $name = printf "%s%s" $name (randAlphaNum 12 | lower) }}
+  {{- end }}
+  name: {{ $name }}
+  labels:
+    {{- $params = dict "context" (mergeOverwrite (deepCopy $context) $labelParams) "labels" (default (dict) $config.labels) }}
+    {{- $labels := include "common.labels" $params | fromYaml }}
+    {{ $labels.labels | toYaml | nindent 4 }}
+  {{- $type := "" }}
+  {{- if eq $config.type "preDeployment" }}
+    {{- $type = "jobPreDeployment" }}
+  {{- else if eq $config.type "postDeployment" }}
+    {{- $type = "jobPostDeployment" }}
+  {{- end }}
+  {{- $params = dict "syncWave" (($config.argo).syncWave) "type" $type }}
+  {{- $argoAnnotations := include "common.annotations.argo" $params | fromYaml }}
+  {{- $params = dict "annotations" (mergeOverwrite $argoAnnotations (default (dict) $config.annotations)) "context" ($context | deepCopy) "type" "job" }}
+  {{- $annotations := include "common.annotations" $params | fromYaml }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+  {{- /*
+  The template below can be found in templates/task/_jobTemplate.yaml
+  */}}
+  {{- $params = dict "common" $common "config" $config "context" $context }}
+  {{- include "mozcloud.job.jobTemplate" $params | nindent 2 }}
+{{- end }}
+{{- end }}
+{{- end }}

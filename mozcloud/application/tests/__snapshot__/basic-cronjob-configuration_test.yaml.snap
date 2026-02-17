@@ -1,0 +1,64 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      labels:
+        labels:
+          app.kubernetes.io/component: cronjob
+          app.kubernetes.io/managed-by: argocd
+          app.kubernetes.io/name: null
+          app_code: null
+          component_code: cronjob
+          env_code: null
+          helm.sh/chart: mozcloud
+          mozcloud_chart: null
+          mozcloud_chart_version: null
+          realm: nonprod
+        selectorLabels:
+          app.kubernetes.io/component: cronjob
+          app.kubernetes.io/name: null
+          env_code: null
+      name: test-cronjob
+    spec:
+      failedJobsHistoryLimit: 1
+      jobTemplate:
+        spec:
+          backoffLimit: 6
+          parallelism: 1
+          template:
+            spec:
+              containers:
+                - args:
+                    - echo
+                    - foo
+                    - bar
+                  command:
+                    - sh
+                    - -c
+                  image: test-repo/test-image:latest
+                  imagePullPolicy: Always
+                  name: job
+                  resources:
+                    limits:
+                      cpu: 200m
+                      memory: 256Mi
+                    requests:
+                      cpu: 100m
+                      memory: 128Mi
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                      drop:
+                        - ALL
+                    seccompProfile:
+                      type: RuntimeDefault
+              restartPolicy: Never
+              securityContext:
+                runAsGroup: 10001
+                runAsNonRoot: true
+                runAsUser: 10001
+                seccompProfile:
+                  type: RuntimeDefault
+      schedule: 0 * * * *
+      successfulJobsHistoryLimit: 1

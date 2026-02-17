@@ -1,0 +1,176 @@
+{{- /*
+This is the template we use for jobs in both job.yaml and cronjob.yaml. Changes
+here will affect both templates.
+
+Params:
+
+common (dict): (optional) Common job configurations from .Values.tasks.common.job.
+config (dict): (required) The job configuration from .Values.tasks.jobs.<job_name>
+context (dict): (required) The root context from the template calling this function
+*/ -}}
+{{- define "mozcloud.job.jobTemplate" -}}
+{{- $common := deepCopy .common }}
+{{- $context := .context }}
+{{- $jobConfig := mergeOverwrite (default (dict) $common.job) .config }}
+{{- $volumes := dict }}
+{{- if $jobConfig.activeDeadlineSeconds }}
+activeDeadlineSeconds: {{ $jobConfig.activeDeadlineSeconds }}
+{{- end }}
+{{- if $jobConfig.backoffLimit }}
+backoffLimit: {{ $jobConfig.backoffLimit }}
+{{- end }}
+{{- if $jobConfig.parallelism }}
+parallelism: {{ $jobConfig.parallelism }}
+{{- end }}
+{{- if $jobConfig.suspend }}
+suspend: {{ $jobConfig.suspend }}
+{{- end }}
+{{- if $jobConfig.ttlSecondsAfterFinished }}
+ttlSecondsAfterFinished: {{ $jobConfig.ttlSecondsAfterFinished }}
+{{- end }}
+template:
+  {{- /* Annotations, including OTEL if applicable */}}
+  {{- $otelEnabled := dig "otel" "enabled" true $jobConfig }}
+  {{- $otelContainerNames := default list ($jobConfig.otel).containers }}
+  {{- $otelAutoInstrumentationEnabled := and $otelContainerNames (dig "otel" "autoInstrumentation" "enabled" false $jobConfig) (($jobConfig.otel).autoInstrumentation).language }}
+  {{- $params := dict "context" $context "otel" ($jobConfig.otel) "type" "job" }}
+  {{- $annotations := include "common.annotations" $params | fromYaml }}
+  {{- if $annotations }}
+  metadata:
+    annotations:
+      {{- $annotations | toYaml | nindent 8 }}
+  {{- end }}
+  spec:
+    containers:
+      {{- $params = dict "containers" $jobConfig.containers "type" "containers" }}
+      {{- $containers := include "common.formatter.containers" $params | fromYaml }}
+      {{- range $containerName, $containerConfig := $containers }}
+        {{- $containerConfig = mergeOverwrite (deepCopy (default (dict) $common.container)) $containerConfig }}
+      - name: {{ $containerName }}
+        {{- $globalImage := default (dict) $context.Values.global.mozcloud.image }}
+        {{- $imageRepo := default (($globalImage).repository) ($containerConfig.image).repository }}
+        {{- $imageTag := default (($globalImage).tag) ($containerConfig.image).tag }}
+        {{- if not $imageRepo }}
+        {{- fail (printf "%sContainer image repository must be set! You can set this in either .Values.mozcloud-job.jobs.%s.containers[].image.repository or .Values.global.mozcloud.image.repository" $jobConfig.name) }}
+        {{- end }}
+        {{- if not $imageTag }}
+        {{- fail (printf "%sContainer image tag must be set! You can set this in either .Values.mozcloud-job.jobs.%s.containers[].image.tag or .Values.global.mozcloud.image.tag" $jobConfig.name) }}
+        {{- end }}
+        image: {{ $imageRepo }}:{{ $imageTag }}
+        imagePullPolicy: Always
+        {{- if $containerConfig.command }}
+        command:
+          {{- range $line := $containerConfig.command }}
+          - {{ $line | quote }}
+          {{- end }}
+        {{- end }}
+        {{- if $containerConfig.args }}
+        args:
+          {{- range $line := $containerConfig.args }}
+          - {{ $line | quote }}
+          {{- end }}
+        {{- end }}
+        {{- $otelContainerEnabled := and $otelEnabled (not $otelAutoInstrumentationEnabled) (has $containerName $otelContainerNames) }}
+        {{- /*
+        If OTEL is enabled but auto instrumentation is disabled, we need to
+        create the HOST_IP environment variable directly in the container.
+        */}}
+        {{- if or $containerConfig.envVars $otelContainerEnabled }}
+        env:
+          {{- range $envVarName, $envVarValue := $containerConfig.envVars }}
+          - name: {{ $envVarName }}
+            value: {{ $envVarValue | quote }}
+          {{- end }}
+          {{- if $otelContainerEnabled }}
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
+            {{- end }}
+        {{- end }}
+        {{- if or $containerConfig.configMaps $containerConfig.externalSecrets }}
+        envFrom:
+          {{- range $configMap := default (list) $containerConfig.configMaps }}
+          - configMapRef:
+              name: {{ $configMap }}
+          {{- end }}
+          {{- range $secret := default (list) $containerConfig.externalSecrets }}
+          - secretRef:
+              name: {{ $secret }}
+          {{- end }}
+        {{- end }}
+        {{- /*
+        We automatically calculate limits by doubling requests using the helper function
+        below.
+
+        This function can be found in templates/_pod.yaml
+        */}}
+        {{- $params = dict "requests" (dict "cpu" $containerConfig.resources.cpu "memory" $containerConfig.resources.memory) }}
+        {{- $resources := include "pod.container.resources" $params | fromYaml }}
+        resources:
+          requests:
+            cpu: {{ $resources.requests.cpu | quote }}
+            memory: {{ $resources.requests.memory | quote }}
+          limits:
+            cpu: {{ $resources.limits.cpu | quote }}
+            memory: {{ $resources.limits.memory | quote }}
+        {{- /*
+        The container security context helper function can be found in templates/_pod.yaml
+        */}}
+        securityContext:
+          {{- $addCapabilities := default (list) $containerConfig.security.addCapabilities }}
+          {{- $user := default "" $containerConfig.security.uid }}
+          {{- $group := default "" $containerConfig.security.gid }}
+          {{- $params = dict "addCapabilities" $addCapabilities "user" $user "group" $group }}
+          {{- include "pod.container.securityContext" $params | nindent 10 }}
+        {{- if $containerConfig.volumes }}
+        volumeMounts:
+          {{- range $volume := $containerConfig.volumes }}
+          - name: {{ $volume.name }}
+            mountPath: {{ $volume.path }}
+            {{- if $volume.key }}
+            subPath: {{ $volume.key }}
+            {{- end }}
+            {{- if eq $volume.type "secret" }}
+            readOnly: true
+            {{- else if $volume.readOnly }}
+            readOnly: {{ $volume.readOnly }}
+            {{- end }}
+            {{- if not (hasKey $volumes $volume.name) }}
+            {{- $_ := set $volumes $volume.name $volume }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- if $jobConfig.restartPolicy }}
+    restartPolicy: {{ $jobConfig.restartPolicy }}
+    {{- end }}
+    {{- /*
+    The pod security context helper function can be found in templates/_pod.yaml
+    */}}
+    securityContext:
+      {{- $runAsNonRoot := ternary false true (dig "security" "runAsRoot" false $jobConfig) }}
+      {{- $params := dict "runAsNonRoot" $runAsNonRoot }}
+      {{- include "pod.securityContext" $params | nindent 6 }}
+    {{- if $jobConfig.serviceAccount }}
+    serviceAccountName: {{ $jobConfig.serviceAccount }}
+    {{- end }}
+    {{- if gt (keys $volumes | len) 0 }}
+    volumes:
+      {{- range $volumeName, $volumeConfig := $volumes }}
+      - name: {{ $volumeName }}
+        {{- if eq $volumeConfig.type "persistentVolumeClaim" }}
+        persistentVolumeClaim:
+          claimName: {{ $volumeName }}
+        {{- else }}
+        {{- if eq $volumeConfig.type "configMap" }}
+        configMap:
+        {{- else if eq $volumeConfig.type "secret" }}
+        secret:
+        {{- end }}
+          name: {{ $volumeName }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+{{- end -}}

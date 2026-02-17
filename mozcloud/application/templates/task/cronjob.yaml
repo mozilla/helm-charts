@@ -1,0 +1,38 @@
+{{- $common := .Values.tasks.common }}
+{{- $context := deepCopy . }}
+{{- $globals := .Values.global.mozcloud }}
+{{- $params := dict "cronJobs" (default (dict) .Values.tasks.cronJobs) }}
+{{- $cronJobs := include "mozcloud.cronJob.formatter" $params | fromYaml }}
+{{- if $cronJobs }}
+{{- $_ := set $context "component_code" "cronjob" -}}
+{{- range $name, $config := $cronJobs }}
+{{- if $config }}
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- $params = dict "context" $context "labels" (default (dict) $config.labels) }}
+    {{- include "common.labels" $params | nindent 4 }}
+spec:
+  {{- if ($config.jobHistory).successful }}
+  successfulJobsHistoryLimit: {{ $config.jobHistory.successful }}
+  {{- end }}
+  {{- if ($config.jobHistory).failed }}
+  failedJobsHistoryLimit: {{ $config.jobHistory.failed }}
+  {{- end }}
+  schedule: {{ $config.schedule | quote }}
+  {{- if $config.suspend }}
+  suspend: {{ $config.suspend }}
+  {{- end }}
+  jobTemplate:
+    spec:
+      {{- /*
+      The template below can be found in templates/task/_jobTemplate.yaml
+      */}}
+      {{- $params = dict "common" $common "config" $config.jobConfig "context" $context }}
+      {{- include "mozcloud.job.jobTemplate" $params | nindent 6 }}
+{{- end }}
+{{- end }}
+{{- end }}

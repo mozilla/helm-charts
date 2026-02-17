@@ -10,7 +10,7 @@ PodMonitoring template helpers
   {{- $pod_monitoring_config := $pod_monitoring | deepCopy -}}
   {{- /* Configure name and labels */ -}}
   {{- $params := dict "config" $pod_monitoring_config "context" ($ | deepCopy) "labels" $labels -}}
-  {{- $common := include "common.config.common" $params | fromYaml -}}
+  {{- $common := include "common.labels" $params | fromYaml -}}
   {{- $pod_monitoring_config = mergeOverwrite $pod_monitoring_config $common -}}
   {{- if $name_override }}
     {{- $name = $name_override }}
@@ -34,7 +34,7 @@ HPA template helpers
   {{- $hpa_config := $hpa | deepCopy -}}
   {{- /* Configure name and labels */ -}}
   {{- $params := dict "config" $hpa_config "context" ($ | deepCopy) "labels" $labels -}}
-  {{- $common := include "common.config.common" $params | fromYaml -}}
+  {{- $common := include "common.labels" $params | fromYaml -}}
   {{- $hpa_config = mergeOverwrite $hpa_config $common -}}
   {{- if $name_override }}
     {{- $name = $name_override }}
@@ -57,7 +57,7 @@ Deployment template helpers
   {{- $deployment_config := $deployment | deepCopy -}}
   {{- /* Configure name and labels */ -}}
   {{- $params := dict "config" $deployment_config "context" ($ | deepCopy) "labels" (default (dict) ($deployment).labels) -}}
-  {{- $common := include "common.config.common" $params | fromYaml -}}
+  {{- $common := include "common.labels" $params | fromYaml -}}
   {{- $deployment_config = mergeOverwrite $deployment_config $common -}}
   {{- if $name_override }}
     {{- $name = $name_override }}
