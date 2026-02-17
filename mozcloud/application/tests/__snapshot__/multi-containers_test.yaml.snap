@@ -73,10 +73,10 @@ Configuration matches entire snapshot:
               resources:
                 limits:
                   cpu: 200m
-                  memory: 128Mi
+                  memory: 256Mi
                 requests:
                   cpu: 100m
-                  memory: 64Mi
+                  memory: 128Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -114,10 +114,10 @@ Configuration matches entire snapshot:
               resources:
                 limits:
                   cpu: 200m
-                  memory: 128Mi
+                  memory: 256Mi
                 requests:
                   cpu: 100m
-                  memory: 64Mi
+                  memory: 128Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -135,10 +135,10 @@ Configuration matches entire snapshot:
               resources:
                 limits:
                   cpu: 200m
-                  memory: 128Mi
+                  memory: 256Mi
                 requests:
                   cpu: 100m
-                  memory: 64Mi
+                  memory: 128Mi
               restartPolicy: Always
               securityContext:
                 allowPrivilegeEscalation: false
@@ -156,10 +156,10 @@ Configuration matches entire snapshot:
               resources:
                 limits:
                   cpu: 200m
-                  memory: 128Mi
+                  memory: 256Mi
                 requests:
                   cpu: 100m
-                  memory: 64Mi
+                  memory: 128Mi
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:

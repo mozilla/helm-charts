@@ -11,7 +11,7 @@ metadata:
   labels:
     {{- $config_map.labels | toYaml | nindent 4 }}
   {{- $annotation_params := dict "annotations" (default (dict) $config_map.annotations) "context" ($ | deepCopy) "type" "configMap" }}
-  {{- $annotations := include "common.config.annotations" $annotation_params | fromYaml }}
+  {{- $annotations := include "common.annotations" $annotation_params | fromYaml }}
   {{- if $annotations }}
   annotations:
     {{- $annotations | toYaml | nindent 4 }}

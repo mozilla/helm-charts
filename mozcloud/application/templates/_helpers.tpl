@@ -452,7 +452,7 @@ deployments:
     {{- end }}
     containers:
       {{- $formatter_params := dict "containers" $workload_config.containers "type" "containers" }}
-      {{- $containers := include "mozcloud.formatter.containers" $formatter_params | fromYaml }}
+      {{- $containers := include "common.formatter.containers" $formatter_params | fromYaml }}
       {{- range $container_name, $container_config := $containers }}
       - name: {{ $container_name }}
         {{- if and (not ($container_config.image).repository) (not ($globals.image).repository) }}
@@ -578,7 +578,7 @@ deployments:
         {{- end }}
       {{- end }}
     {{- $formatter_params = dict "containers" (default (dict) $workload_config.initContainers) "type" "init-containers" }}
-    {{- $init_containers := include "mozcloud.formatter.containers" $formatter_params | fromYaml }}
+    {{- $init_containers := include "common.formatter.containers" $formatter_params | fromYaml }}
     {{- if $init_containers }}
     initContainers:
       {{- range $container_name, $container_config := $init_containers }}
@@ -919,24 +919,6 @@ persistentVolumes:
 {{/*
 Formatting helpers
 */}}
-{{- define "mozcloud.formatter.containers" -}}
-{{- $container_values := .containers -}}
-{{- $containers := .containers -}}
-{{- $default_key := ternary "mozcloud-init-container" "mozcloud-container" (eq .type "init-containers") -}}
-{{- /* Remove default containers key and merge with user-defined keys, if defined */ -}}
-{{- if or
-  (and (eq (keys $container_values | len) 1) (keys $container_values | first) $default_key)
-  (gt (keys $container_values | len) 1)
-}}
-  {{- $containers = omit $containers $default_key -}}
-  {{- range $name, $config := $containers -}}
-    {{- $defaults := index $container_values $default_key -}}
-    {{- $_ := set $containers $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
-  {{- end -}}
-{{- end -}}
-{{ $containers | toYaml }}
-{{- end -}}
-
 {{- define "mozcloud.formatter.host" -}}
 {{- $component := .component -}}
 {{- $hosts := .hosts -}}
@@ -1006,7 +988,7 @@ Formatting helpers
 {{- $workload := .workload -}}
 {{- /* First, pull volumes from workload containers */ -}}
 {{- $formatter_params := dict "containers" $workload.containers "type" "containers" -}}
-{{- $containers := include "mozcloud.formatter.containers" $formatter_params | fromYaml -}}
+{{- $containers := include "common.formatter.containers" $formatter_params | fromYaml -}}
 {{- range $container_name, $container_config := $containers -}}
   {{- range $container_volume := default (list) $container_config.volumes -}}
     {{- if not (hasKey $volumes $container_volume.name) -}}
@@ -1017,7 +999,7 @@ Formatting helpers
 {{- /* Next, pull volumes from workload init containers, if any */ -}}
 {{- if $workload.initContainers -}}
   {{- $formatter_params = dict "containers" $workload.containers "type" "containers" -}}
-  {{- $containers = include "mozcloud.formatter.containers" $formatter_params | fromYaml -}}
+  {{- $containers = include "common.formatter.containers" $formatter_params | fromYaml -}}
   {{- range $container_name, $container_config := $containers -}}
     {{- range $container_volume := default (list) $container_config.volumes -}}
       {{- if not (hasKey $volumes $container_volume.name) -}}
