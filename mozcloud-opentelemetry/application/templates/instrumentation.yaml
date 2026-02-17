@@ -17,5 +17,5 @@ spec:
       #     - name: OTEL_PYTHON_DISABLED_INSTRUMENTATIONS
       #       value:
       #         <comma-separated list of package names to exclude from instrumentation>
-      - name: OTEL_PYTHON_DISABLED_INSTRUMENTATIONS
-        value: "system_metrics"
+      #- name: OTEL_PYTHON_DISABLED_INSTRUMENTATIONS
+      #  value: "system_metrics"

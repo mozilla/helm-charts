@@ -54,29 +54,6 @@ spec:
         is_monotonic_counter: true
 
     processors:
-      metricstarttime:
-        strategy: subtract_initial_point
-
-      # The transform/collision processor ensures that any attributes that may
-      # collide with the googlemanagedprometheus exporter's monitored resource
-      # construction are moved to a similar name that is not reserved.
-      transform/collision:
-        metric_statements:
-        - context: datapoint
-          statements:
-          - set(attributes["exported_location"], attributes["location"])
-          - delete_key(attributes, "location")
-          - set(attributes["exported_cluster"], attributes["cluster"])
-          - delete_key(attributes, "cluster")
-          - set(attributes["exported_namespace"], attributes["namespace"])
-          - delete_key(attributes, "namespace")
-          - set(attributes["exported_job"], attributes["job"])
-          - delete_key(attributes, "job")
-          - set(attributes["exported_instance"], attributes["instance"])
-          - delete_key(attributes, "instance")
-          - set(attributes["exported_project_id"], attributes["project_id"])
-          - delete_key(attributes, "project_id")
-
       # The relative ordering of statements between ReplicaSet & Deployment and Job & CronJob are important.
       # The ordering of these controllers is decided based on the k8s controller documentation available at
       # https://kubernetes.io/docs/concepts/workloads/controllers.
@@ -165,8 +142,6 @@ spec:
         endpoint: https://telemetry.googleapis.com
         auth:
           authenticator: googleclientauth
-        sending_queue:
-          batch: {}
 
     extensions:
       health_check:
@@ -185,7 +160,6 @@ spec:
           processors:
           - memory_limiter
           - resource/gcp_project_id
-          - metricstarttime
           exporters:
           - otlphttp
         metrics/collectors:
@@ -195,7 +169,6 @@ spec:
           - memory_limiter
           - resourcedetection
           - resource/gcp_project_id
-          - metricstarttime
           exporters:
           - otlphttp
         traces:
