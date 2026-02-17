@@ -595,11 +595,11 @@ deployments:
           requests:
             cpu: {{ $container_config.resources.cpu }}
             memory: {{ $container_config.resources.memory }}
-        {{- if or ($container_config.security).uid ($container_config.security).gid ($container_config.security).addCapabilities }}
+        {{- if or ($container_config.security).user ($container_config.security).group ($container_config.security).addCapabilities }}
         securityContext:
           {{- $security_context := include "mozcloud-workload.config.securityContext" $container_config.security | fromYaml }}
-          uid: {{ $security_context.user }}
-          gid: {{ $security_context.group }}
+          user: {{ $security_context.user }}
+          group: {{ $security_context.group }}
           {{- if gt (len $container_config.security.addCapabilities) 0 }}
           addCapabilities:
             {{- range $capability := $container_config.security.addCapabilities }}
@@ -674,11 +674,11 @@ deployments:
         {{- if (dig "sidecar" false $container_config) }}
         restartPolicy: Always
         {{- end }}
-        {{- if or ($container_config.security).uid ($container_config.security).gid ($container_config.security).addCapabilities }}
+        {{- if or ($container_config.security).user ($container_config.security).group ($container_config.security).addCapabilities }}
         securityContext:
           {{- $security_context := include "mozcloud-workload.config.securityContext" $container_config.security | fromYaml }}
-          uid: {{ $security_context.user }}
-          gid: {{ $security_context.group }}
+          user: {{ $security_context.user }}
+          group: {{ $security_context.group }}
           {{- if gt (len $container_config.security.addCapabilities) 0 }}
           addCapabilities:
             {{- range $capability := $container_config.security.addCapabilities }}
@@ -968,7 +968,7 @@ persistentVolumes:
     component: {{ $workload_config.component }}
     size: {{ $volume_config.size }}
     storageClassName: {{ $volume_config.storageClassName }}
-    accessModes: 
+    accessModes:
     {{ $volume_config.accessModes | toYaml | nindent 6 }}
   {{- end }}
   {{- end }}

@@ -346,12 +346,12 @@ workloads:
         # Configuration options:
         #
         # security:
-        #   # The 'uid' and 'gid' values to use for the container, if
-        #   # non-default.
+        #   # The 'user' and 'group' values to use for the container,
+        #   # if non-default.
         #   #
         #   # The default value for both is 10001.
-        #   uid: 10001
-        #   gid: 10001
+        #   user: 10001
+        #   group: 10001
         #
         #   # By default, all OS capabilities are dropped. If needed, you can
         #   # list one or more capabilities to add to the container here.
@@ -767,12 +767,12 @@ workloads:
         # Configuration options:
         #
         # security:
-        #   # The 'uid' and 'gid' values to use for the container, if
-        #   # non-default.
+        #   # The 'user' and 'group' values to use for the container,
+        #   # if non-default.
         #   #
         #   # The default value for both is 10001.
-        #   uid: 10001
-        #   gid: 10001
+        #   user: 10001
+        #   group: 10001
         #
         #   # By default, all OS capabilities are dropped. If needed, you can
         #   # list one or more capabilities to add to the container here.
