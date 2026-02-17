@@ -1,12 +1,5 @@
-# See values.yaml.example for example configurations.
-
 # If disabled, no resources in the chart will be created.
 enabled: true
-
-# Name to be used for all resources if not specified at the resource level.
-# This overrides the chart name set in .Values.global.mozcloud.chart but is
-# overridden by names defined at the resource level.
-#nameOverride:
 
 # In this section, you can create ConfigMap resources that can be used
 # by all workloads and jobs. To use ConfigMaps created here in a workload,
@@ -17,6 +10,7 @@ enabled: true
 # variables defined in the "envVars" configurations.
 #
 # Format:
+#
 #   configMaps:
 #     my-configmap-name:
 #       annotations:
@@ -57,7 +51,7 @@ configMaps: {}
 # Any secrets you define here will be created IN ADDITION to that secret.
 externalSecrets: {}
 
-# Persistent volumes to create. These can be mounted as volumes in conatinerized
+# Persistent volumes to create. These can be mounted as volumes in containerized
 # workloads and jobs.
 #
 # Format:
@@ -154,92 +148,483 @@ persistentVolumes: {}
 serviceAccounts: {}
 
 # The consolidation of all jobs to tasks is coming soon.
-#tasks:
-#  common:
-#    container: {} # common job container settings
-#    cronJob: {} # common cronjob config settings
-#    job: {} #common job config settings
-#  cronJobs: {}
-#  jobs:
-#    # The name to use for the job. If this is not changed, the job will be
-#    # named: "<workload_name>-predeployment".
-#    name:
-#      type: preDeployment # postDeployment
-#
-#      # Optionally define a Sync Wave value for ArgoCD.
-#      #
-#      # Sync waves are used to define an order in which resources are
-#      # applied within a sync phase. Sync waves are configured using
-#      # integers in ascending order, where resources with lower-value sync
-#      # waves are applied first and resources with higher-value sync waves
-#      # are applied last.
-#      #
-#      # This chart allows you to assign Sync Wave values for pre-deployment
-#      # jobs ranging from -10 (run first) to -1 (run last).
-#      #
-#      # If no values are specified, a default of -1 will be applied.
-#      argo:
-#        syncWave: -1
-#
-#      # See image, command, args, and resources configurations for
-#      # containers as a reference.
-#      image:
-#        repository:
-#        tag:
-#      command: []
-#      args: []
-#      resources:
-#        cpu:
-#        memory:
-#
-#      # A list of config map names to mount into the container as
-#      # environment variables. These should be defined higher up in the
-#      # file under the "configMaps" key.
-#      #
-#      # Format:
-#      #
-#      #   configMaps:
-#      #     - my-configmap
-#      #     - a-different-configmap
-#      #
-#      # Important: The last config map in the list will always take
-#      #            precedence.
-#      configMaps: []
-#
-#      # A dictionary of environment variables to pass to this container.
-#      # This should not include secrets. These variables will override
-#      # those defined in the "configMaps" section above.
-#      #
-#      # Format:
-#      #
-#      #   envVars:
-#      #     KEY1: VALUE1
-#      #     KEY2: VALUE2
-#      envVars: {}
-#
-#      # A list of external secret names and versions to mount in containers.
-#      # External secrets can be defined using the externalSecrets key above.
-#      #
-#      # By default an external secret called "app-secrets" will be created. This
-#      # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
-#      # the value defined in `.Values.global.mozcloud.env_code` (ie. "dev",
-#      # "stage", "prod"). There will be a corresponding Kubernetes secret called
-#      # "app-secrets" which will automatically be mounted in your app container
-#      # using the "latest" version.
-#      #
-#      # Any secrets you define here will be created IN ADDITION to that secret.
-#      #
-#      # Format:
-#      #
-#      #   externalSecets:
-#      #     - external-secret-name
-#      #     - another-external-secret-name
-#      externalSecrets: []
-#
-#      # Optionally use a custom service account for the container. The value
-#      # should match a service account created above in the `serviceAccounts`
-#      # section.
-#      serviceAccount: ''
+tasks:
+  common:
+    # Common container configurations. These can be used as defaults for all job
+    # and cron job containers.
+    #
+    # All options are listed here. See
+    # .Values.tasks.jobs.mozcloud-job.containers.mozcloud-container for details
+    # on how to configure each option.
+    container:
+      args: []
+      command: []
+      configMaps: []
+      envVars: {}
+      externalSecrets: []
+      image: {}
+      resources:
+        cpu: 100m
+        memory: 128Mi
+      security: {}
+      volumes: []
+
+    # Common cron job configurations. These can be used as defaults for all cron
+    # job configurations.
+    #
+    # All options are listed here. See .Values.tasks.cronJobs.mozcloud-cronJob
+    # for details on how to configure each option.
+    #
+    # Some options are commented out as they are omitted by default.
+    cronJob:
+      jobHistory: {}
+      schedule: ''
+      #suspend:
+
+    # Common job configurations. These can be used as defaults for all job
+    # configurations.
+    #
+    # All options are listed here. See .Values.tasks.jobs.mozcloud-job for
+    # details on how to configure each option.
+    #
+    # Some options are commented out as they are omitted by default.
+    job:
+      # While "type" is required in job definitions, it is not required here.
+      type: preDeployment
+      generateName: false
+      #activeDeadlineSeconds:
+      backoffLimit: 6
+      otel: {}
+      parallelism: 1
+      restartPolicy: Never
+      security: {}
+      serviceAccount: ''
+      #suspend: false
+      #ttlSecondsAfterFinished:
+
+  cronJobs:
+    # This is the name of your cron job. Use a name other than
+    # "mozcloud-cronjob" as it is being used to set default values. Any cron
+    # jobs named "mozcloud-cronjob" will be omitted from configurations.
+    mozcloud-cronjob:
+      # Configures the total number of jobs keep after cron jobs run.
+      jobHistory:
+        successful: 1
+        failed: 1
+
+      # The schedule for the cron job. The value typically follows the cron or
+      # Vixie cron formats. This is a required field.
+      #
+      # Cron syntax:
+      #   ┌───────────── minute (0 - 59)
+      #   │ ┌───────────── hour (0 - 23)
+      #   │ │ ┌───────────── day of the month (1 - 31)
+      #   │ │ │ ┌───────────── month (1 - 12)
+      #   │ │ │ │ ┌───────────── day of the week (0 - 6) (Sunday to Saturday)
+      #   │ │ │ │ │              OR sun, mon, tue, wed, thu, fri, sat
+      #   │ │ │ │ │
+      #   │ │ │ │ │
+      #   * * * * *
+      #
+      # Vixie cron examples:
+      #   * 0-23/2 * * *  ──── every other hour
+      #   * */2 * * *     ──── also every other hour
+      #
+      # You can also use the following macros:
+      #   @yearly (or @annually) ──── equivalent to 0 0 1 1 *
+      #   @monthly               ──── equivalent to 0 0 1 * *
+      #   @weekly                ──── equivalent to 0 0 * * 0
+      #   @daily (or @midnight)  ──── equivalent to 0 0 * * *
+      #   @hourly                ──── equivalent to 0 * * * *
+      #
+      # Important: Schedules in cron or Vixie cron format must be quoted.
+      #            Schedules using macros must be single quoted. Single quotes
+      #            are recommended in general as a best practice.
+      schedule: ''
+
+      # When Kubernetes creates CronJob resources, the Job controller will
+      # immediately enforce the cron job in the schedule you define. If
+      # "suspend" is enabled, Kubernetes will suspend future executions of the
+      # cron job, effectively disabling it.
+      #
+      # This is unset/disabled by default.
+      #suspend: false
+
+      # This section follows the same format as .Values.tasks.jobs.mozcloud-job,
+      # however options are limited to the following:
+      #
+      #   - activeDeadlineSeconds
+      #   - backoffLimit
+      #   - containers
+      #   - otel
+      #   - parallelism
+      #   - restartPolicy
+      #   - security
+      #   - serviceAccount
+      #   - suspend
+      #   - ttlSecondsAfterFinished
+      jobConfig: {}
+
+  jobs:
+    # This is the name of your job. Use a name other than "mozcloud-job" as it
+    # is being used to set default values. Any jobs named "mozcloud-job" will be
+    # omitted from configurations.
+    mozcloud-job:
+      # The job type can either be "preDeployment" or "postDeployment".
+      #
+      # preDeployment: Jobs that run before other resources in the chart are
+      #                updated.
+      # postDeployment: Jobs that run after other resources in the chart are
+      #                updated.
+      #
+      # Default: preDeployment
+      #
+      # This is a required field.
+      type: preDeployment
+
+      # Enabling generateName will use the value for "name" as a prefix,
+      # generating a suffix of random characters. This ensures each job will have
+      # unique names, much like the jobs created by CronJob resources. This is
+      # typically not necessary for most jobs.
+      #
+      # If enabled, a hyphen will be appended to the end of the job prefix if not
+      # already set.
+      generateName: false
+
+      # Optionally define a Sync Wave value for ArgoCD.
+      #
+      # Sync waves are used to define an order in which resources are
+      # applied within a sync phase. Sync waves are configured using
+      # integers in ascending order, where resources with lower-value sync
+      # waves are applied first and resources with higher-value sync waves
+      # are applied last.
+      #
+      # This chart allows you to assign Sync Wave values for pre-deployment
+      # jobs ranging from -10 (run first) to -1 (run last).
+      #
+      # If no values are specified, a default of -1 will be applied.
+      #
+      # Format:
+      #
+      #   argo:
+      #     syncWave: -1
+      argo: {}
+
+      # The maximum amount of time, in seconds, that a job can run before being
+      # forcefully terminated. If unset, no deadline will be enforced.
+      #
+      # activeDeadlineSeconds takes precedence over backoffLimit. If set and
+      # job reaches the configured threshold, the job will be immediately
+      # marked with a status of "Failed" regardless of any backoffLimit that
+      # may be configured.
+      #activeDeadlineSeconds:
+
+      # The number of times a failed job will be re-run before it will be
+      # marked with a status of "Failed". Certain jobs (eg. smoke tests) may
+      # benefit from lower values. The default value is 6.
+      #
+      # Defaults are set in .Values.tasks.common.job
+      #backoffLimit: 6
+
+      containers:
+        # This is the name of your container. "mozcloud-container" will be
+        # ignored as it contains default settings for containers.
+        mozcloud-container:
+          # Arguments to pass to a container. This can be an array or a string.
+          args: []
+
+          # The command a container should run as its entrypoint.
+          command: []
+
+          # A list of config map names to mount into the container as
+          # environment variables. These should be defined higher up in the
+          # file under the "configMaps" key.
+          #
+          # Format:
+          #
+          #   configMaps:
+          #     - my-configmap
+          #     - a-different-configmap
+          #
+          # Important: The last config map in the list will always take
+          #            precedence.
+          configMaps: []
+
+          # A dictionary of environment variables to pass to this container.
+          # This should not include secrets. These variables will override
+          # those defined in the "configMaps" section above.
+          #
+          # Format:
+          #
+          #   envVars:
+          #     KEY1: VALUE1
+          #     KEY2: VALUE2
+          envVars: {}
+
+          # A list of external secret names and versions to mount in containers.
+          # External secrets can be defined using the externalSecrets key above.
+          #
+          # By default an external secret called "app-secrets" will be created. This
+          # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
+          # the value defined in `.Values.global.mozcloud.env_code` (ie. "dev",
+          # "stage", "prod"). There will be a corresponding Kubernetes secret called
+          # "app-secrets" which will automatically be mounted in your app container
+          # using the "latest" version.
+          #
+          # Any secrets you define here will be created IN ADDITION to that secret.
+          #
+          # Format:
+          #
+          #   externalSecrets:
+          #     - external-secret-name
+          #     - another-external-secret-name
+          externalSecrets: []
+
+          # The image repo, name, and tag to use for the container. The format is:
+          #
+          #   image:
+          #     repository: repo/image_name
+          #     tag: tag_name
+          #
+          # For example:
+          #
+          #   image:
+          #     repository: us-docker.pkg.dev/moz-fx-system-prod/system-prod/app
+          #     tag: 1.0.0
+          #
+          # We recommend you allow Image Updater to automatically manage image
+          # tags for your applications. See the link below for more details:
+          # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/1695449473/How+to+Configuring+your+tenant+to+use+ArgoCD
+          #
+          # If multiple workloads or jobs share an image that is managed by
+          # Image Updater, either omit this section or configure empty values,
+          # then configure your tenant file so that "image_name" and "image_tag"
+          # reflect the following:
+          #
+          #   image_name: global.mozcloud.image.repository
+          #   image_tag: global.mozcloud.image.tag
+          #
+          # See the tenant definition document for details:
+          # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/588742735/Tenant+Definition
+          image:
+            repository: ''
+            tag: ''
+
+          # The "resources" section allows you to specify the amount of CPU and
+          # memory that your container needs to run. These are equivalent to
+          # requests values.
+          #
+          # Format:
+          #
+          #   resources:
+          #     # CPU can be specified in either of the following formats:
+          #     #
+          #     #   Positive integer (eg. "2"):
+          #     #     - This represents an entire vCPU
+          #     #
+          #     #   Millicpu (eg. "200m"):
+          #     #     - This represents a fraction of a vCPU.
+          #     #     - For example, "200m" means 0.2 CPU.
+          #     #
+          #     # The default value is "100m".
+          #     cpu: 100m
+          #
+          #     # Memory can be specified using any of the following suffixes:
+          #     #
+          #     #   K (kilobytes), Ki (kibibytes)
+          #     #   M (megabytes), Mi (mebibytes)
+          #     #   G (gigabytes), Gi (gibibytes)
+          #     #
+          #     # We recommend using Binary (IEC) units, such as Ki, Mi, and Gi.
+          #     #
+          #     # The default value is 128Mi.
+          #     memory: 128Mi
+          #
+          # Defaults are set in .Values.tasks.common.container.resources
+          resources: {}
+
+          # Optionally override some securityContext settings for the container.
+          # This section should not be configured unless the user knows what they
+          # are doing. Most tenants will not need to configure any of this.
+          #
+          # Configuration options:
+          #
+          # security:
+          #   # The 'uid' and 'gid' values to use for the container, if
+          #   # non-default.
+          #   #
+          #   # The default value for both is 10001.
+          #   uid: 10001
+          #   gid: 10001
+          #
+          #   # By default, all OS capabilities are dropped. If needed, you can
+          #   # list one or more capabilities to add to the container here.
+          #   #
+          #   # Example:
+          #   #
+          #   #   addCapabilities:
+          #   #     - NET_BIND_SERVICE
+          #   #
+          #   # For more details, visit the page below:
+          #   # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
+          #   addCapabilities: []
+          security: {}
+
+          # Optionally mount volumes to the container. The supported volume types
+          # are "configMap" (default), "secret" and "persistentVolumeClaim".
+          #
+          # Volumes should use names that match either config map, external
+          # secret, or persistent volume claim names created as part of and
+          # external secret names created as part of this chart or reference
+          # ConfigMap, PersistentVolumeClaim and Secret resources created
+          # independently of this chart.
+          #
+          # With "configMap" volumes, you can also specify the following options:
+          #
+          #   "key": A key within the config map. The value of the key will be
+          #          used as the contents of the file.
+          #
+          #   "path": The path within the container to which the volume should be
+          #           mounted.
+          #
+          #   "readOnly": Whether or not the volume should be mounted as read
+          #               only. Options are "true" or "false", with the default
+          #               being "false".
+          #
+          # "secret" volumes use the same options above that "configMap" volumes
+          # use with the exception of "readOnly" which is always "true" here. Any
+          # value set for "readOnly" will be ignored in this case.
+          #
+          # "persistentVolumeClaim" volumes support additional options that allow
+          # the creation of PVCs as part of the workload definition. These options
+          # include:
+          #
+          #   "create": Boolean value that indicates whether a PVC should be
+          #             created for this volume. Default is "false".
+          #
+          #   "size": The size of the volume to create (e.g. "10Gi"). Required if
+          #           "create" is set to "true".
+          #
+          #   "accessModes": A list of access modes for the volume. Required if
+          #                  "create" is set to "true". Example values include:
+          #                  "ReadWriteOnce", "ReadOnlyMany", and "ReadWriteMany".
+          #
+          #   "storageClassName": The storage class to use for the volume.
+          #                       Optional.
+          #
+          # Example:
+          #
+          #   volumes:
+          #     - name: my-config-map
+          #       type: configMap
+          #       path: /path/to/my_file.txt
+          #     - name: another-config-map
+          #       type: configMap
+          #       path: /path/to/another_file.txt
+          #       key: another_file.txt
+          #       readOnly: false
+          #     - name: my-secret  # Should match an external secret/secret name.
+          #       type: secret
+          #       path: /path/to/secret_file.txt
+          #     - name: my-pvc-volume
+          #       type: persistentVolumeClaim
+          #       path: /path/to/mount
+          #       create: true
+          #       size: 10Gi
+          #       accessModes:
+          #         - ReadWriteOnce
+          #       storageClassName: standard
+          volumes: []
+
+      # Configure auto instrumentation for the OTEL Collector.
+      #
+      # This can only be enabled for applications written in one of the
+      # supported languages. See below for a list of supported languages.
+      #
+      # OTEL Collector integration is disabled for jobs by default.
+      otel:
+        enabled: false
+
+        # A list of the containers on which the OTEL collector will be enabled.
+        #
+        # If auto instrumentation is enabled, these containers will be
+        # configured accordingly.
+        #
+        # If auto instrumentation is disabled, these containers will
+        # automatically be configured with the HOST_IP environment variable.
+        #
+        # If no containers are specified, the OTEL Collector will not be
+        # configured on any containers.
+        containers: []
+
+        autoInstrumentation:
+          # By default, auto instrumentation is disabled. Set this to "true" to
+          # enable it.
+          #
+          # If "otel" is enabled but auto instrumentation is disabled, you will
+          # need to configure the following environment variables at the
+          # container level:
+          #
+          #   - OTEL_EXPORTER_OTLP_ENDPOINT
+          #   - OTEL_SERVICE_NAME
+          enabled: false
+
+          # If the application was written in a supported language, specify it
+          # here to ensure auto instrumentation occurs successfully.
+          #
+          # Supported languages/options (case sensitive):
+          #
+          #   dotnet
+          #   go
+          #   java
+          #   nodejs
+          #   python
+          language: ''
+
+      # This is the number of instances of this job that can run in parallel.
+      # The default value is 1, meaning only a single instance of the job can
+      # run at a time.
+      #
+      # Defaults are set in .Values.tasks.common.job
+      #parallelism: 1
+
+      # This determines if the job should be restarted if the job fails.
+      # Options are "Never" and "OnFailure". Default is "Never".
+      #
+      # Defaults are set in .Values.tasks.common.job
+      #restartPolicy: Never
+
+      # Optionally override some securityContext settings for the pod.
+      # section should not be configured unless the user knows what they are
+      # doing. Most tenants will not need to configure any of this.
+      #
+      # Configuration options:
+      #
+      # security:
+      #   # By default, no containers should run as root. The few exceptions to
+      #   # this rule can configure this by setting "runAsRoot" to "true".
+      #   #
+      #   # Note: The webservices-high and dataservices-high Kubernetes clusters
+      #   # will not allow you to deploy containers using the root user.
+      #   runAsRoot: false
+      security: {}
+
+      # Optionally use a custom service account for the container. The value
+      # should match a service account created above in the `serviceAccounts`
+      # section.
+      serviceAccount: ''
+
+      # When Kubernetes creates Job resources, the Job controller will
+      # immediately begin executing the job by creating pods. If "suspend" is
+      # enabled, the job will be suspended from execution, effectively
+      # disabling the job.
+      #
+      # This is unset/disabled by default.
+      #suspend: false
+
+      # The time, in seconds, that a job will be kept after completing or
+      # failing before Kubernetes cleans it up.
+      #ttlSecondsAfterFinished:
 
 workloads:
   # The name of your workload and all related components. "mozcloud-workload"
@@ -308,14 +693,6 @@ workloads:
         min: 1
         max: 30
 
-
-    # Labels to pass down to workload resources, e.g. Deployments and Pods. In
-    # some scenarios, this can be useful to apply, e.g. when you spawn multiple
-    # workloads, but only want the main workload with default labels to match
-    # the selector of your Ingress / Gateway resources.
-    #labels:
-    #  my-custom-label: my-custom-value
-
     # All of the (non-init) containers you need to deploy for your work. Init
     # containers can be specified in the initContainers section below.
     #
@@ -374,7 +751,7 @@ workloads:
         #
         # Format:
         #
-        #   externalSecets:
+        #   externalSecrets:
         #     - external-secret-name
         #     - another-external-secret-name
         externalSecrets: []
@@ -532,8 +909,8 @@ workloads:
           #
           # We recommend using Binary (IEC) units, such as Ki, Mi, and Gi.
           #
-          # The default value is 64Mi.
-          memory: 64Mi
+          # The default value is 128Mi.
+          memory: 128Mi
 
         # Optionally override some securityContext settings for the container.
         # This section should not be configured unless the user knows what they
@@ -886,7 +1263,7 @@ workloads:
         #
         # Format:
         #
-        #   externalSecets:
+        #   externalSecrets:
         #     - external-secret-name
         #     - another-external-secret-name
         externalSecrets: []
@@ -951,8 +1328,8 @@ workloads:
           #
           # We recommend using Binary (IEC) units, such as Ki, Mi, and Gi.
           #
-          # The default value is 64Mi.
-          memory: 64Mi
+          # The default value is 128Mi.
+          memory: 128Mi
 
         # Optionally override some securityContext settings for the container.
         # This section should not be configured unless the user knows what they
@@ -1074,204 +1451,52 @@ workloads:
         #
         #volumes: []
 
-    # Configure jobs to run before or after the rest of the deployment.
-    #jobs:
-    #  preDeployment:
-    #    # The name to use for the job. If this is not changed, the job will be
-    #    # named: "<workload_name>-predeployment".
-    #    name:
-    #      # Optionally define a Sync Wave value for ArgoCD.
-    #      #
-    #      # Sync waves are used to define an order in which resources are
-    #      # applied within a sync phase. Sync waves are configured using
-    #      # integers in ascending order, where resources with lower-value sync
-    #      # waves are applied first and resources with higher-value sync waves
-    #      # are applied last.
-    #      #
-    #      # This chart allows you to assign Sync Wave values for pre-deployment
-    #      # jobs ranging from -10 (run first) to -1 (run last).
-    #      #
-    #      # If no values are specified, a default of -1 will be applied.
-    #      argo:
-    #        syncWave: -1
-    #
-    #      # See image, command, args, and resources configurations for
-    #      # containers as a reference.
-    #      image:
-    #        repository:
-    #        tag:
-    #      command: []
-    #      args: []
-    #      resources:
-    #        cpu:
-    #        memory:
-    #
-    #      # A list of config map names to mount into the container as
-    #      # environment variables. These should be defined higher up in the
-    #      # file under the "configMaps" key.
-    #      #
-    #      # Format:
-    #      #
-    #      #   configMaps:
-    #      #     - my-configmap
-    #      #     - a-different-configmap
-    #      #
-    #      # Important: The last config map in the list will always take
-    #      #            precedence.
-    #      configMaps: []
-    #
-    #      # A dictionary of environment variables to pass to this container.
-    #      # This should not include secrets. These variables will override
-    #      # those defined in the "configMaps" section above.
-    #      #
-    #      # Format:
-    #      #
-    #      #   envVars:
-    #      #     KEY1: VALUE1
-    #      #     KEY2: VALUE2
-    #      envVars: {}
-    #
-    #      # A list of external secret names and versions to mount in containers.
-    #      # External secrets can be defined using the externalSecrets key above.
-    #      #
-    #      # By default an external secret called "app-secrets" will be created. This
-    #      # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
-    #      # the value defined in `.Values.global.mozcloud.env_code` (ie. "dev",
-    #      # "stage", "prod"). There will be a corresponding Kubernetes secret called
-    #      # "app-secrets" which will automatically be mounted in your app container
-    #      # using the "latest" version.
-    #      #
-    #      # Any secrets you define here will be created IN ADDITION to that secret.
-    #      #
-    #      # Format:
-    #      #
-    #      #   externalSecets:
-    #      #     - external-secret-name
-    #      #     - another-external-secret-name
-    #      externalSecrets: []
-    #
-    #      # Optionally use a custom service account for the container. The value
-    #      # should match a service account created above in the `serviceAccounts`
-    #      # section.
-    #      serviceAccount: ''
-    #
-    #  postDeployment:
-    #    # The name to use for the job. If this is not changed, the job will be
-    #    # named: "<workload_name>-postdeployment".
-    #    name:
-    #      # Optionally define a Sync Wave value for ArgoCD.
-    #      #
-    #      # Sync waves are used to define an order in which resources are
-    #      # applied within a sync phase. Sync waves are configured using
-    #      # integers in ascending order, where resources with lower-value sync
-    #      # waves are applied first and resources with higher-value sync waves
-    #      # are applied last.
-    #      #
-    #      # This chart allows you to assign Sync Wave values for
-    #      # post-deployment jobs, as long as the values are greater than 0.
-    #      #
-    #      # If no values are specified, a default of 1 will be applied.
-    #      argo:
-    #        syncWave: 1
-    #
-    #      # The name of the container. The default value is "job".
-    #      containerName: job
-    #
-    #      # See image, command, args, and resources configurations for
-    #      # containers as a reference.
-    #      image:
-    #        repository:
-    #        tag:
-    #      command: []
-    #      args: []
-    #      resources:
-    #        cpu:
-    #        memory:
-    #
-    #      # A list of config map names to mount into the container as
-    #      # environment variables. These should be defined higher up in the
-    #      # file under the "configMaps" key.
-    #      #
-    #      # Format:
-    #      #
-    #      #   configMaps:
-    #      #     - my-configmap
-    #      #     - a-different-configmap
-    #      #
-    #      # Important: The last config map in the list will always take
-    #      #            precedence.
-    #      #configMaps: []
-    #
-    #      # A dictionary of environment variables to pass to this container.
-    #      # This should not include secrets. These variables will override
-    #      # those defined in the "configMaps" section above.
-    #      #
-    #      # Format:
-    #      #
-    #      #   envVars:
-    #      #     KEY1: VALUE1
-    #      #     KEY2: VALUE2
-    #      envVars: {}
-    #
-    #      # A list of external secret names and versions to mount in containers.
-    #      # External secrets can be defined using the externalSecrets key above.
-    #      #
-    #      # By default an external secret called "app-secrets" will be created. This
-    #      # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
-    #      # the value defined in `.Values.global.mozcloud.env_code` (ie. "dev",
-    #      # "stage", "prod"). There will be a corresponding Kubernetes secret called
-    #      # "app-secrets" which will automatically be mounted in your app container
-    #      # using the "latest" version.
-    #      #
-    #      # Any secrets you define here will be created IN ADDITION to that secret.
-    #      #
-    #      # Format:
-    #      #
-    #      #   externalSecets:
-    #      #     - external-secret-name
-    #      #     - another-external-secret-name
-    #      externalSecrets: []
-    #
-    #      # Optionally use a custom service account for the container. The value
-    #      # should match a service account created above in the `serviceAccounts`
-    #      # section.
-    #      serviceAccount: ''
+    # Labels to pass down to workload resources, e.g. Deployments and Pods. In
+    # some scenarios, this can be useful to apply, e.g. when you spawn multiple
+    # workloads, but only want the main workload with default labels to match
+    # the selector of your Ingress / Gateway resources.
+    labels: {}
 
     # Optionally configure NGINX.
-    #nginx:
-    #  # NGINX is enabled by default, but can be disabled if set to "false".
-    #  enabled: true
-
-    #  # If you are using a custom NGINX image such as openresty-oidc, specify
-    #  # that here.
-    #  #
-    #  # The format is:
-    #  #
-    #  #   repo/image:tag
-    #  #
-    #  # For example:
-    #  #
-    #  #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/openresty-oidc:1.21.4.1-0-alpine
-    #  #image:
-
-    #  # Optionally define an NGINX configuration to use for nginx.conf. This
-    #  # should refer to a template created outside the scope of this Helm
-    #  # chart.
-    #  #configMap:
     #
-    #  # To customize the resource allocation for the NGINX container, use the
-    #  # "resources" dictionary.
-    #  #
-    #  # Example:
-    #  #
-    #  #   resources:
-    #  #     cpu: 100m
-    #  #     memory: 512Mi
-    #  #
-    #  # By default, we will allocate "50m" CPU and "128Mi" of memory.
-    #  #resources:
-    #  #  cpu: 50m
-    #  #  memory: 128Mi
+    # Format:
+    #
+    #   nginx:
+    #     # NGINX is enabled by default, but can be disabled if set to "false".
+    #     enabled: true
+    #
+    #     # If you are using a custom NGINX image such as openresty-oidc, specify
+    #     # that here.
+    #     #
+    #     # The format is:
+    #     #
+    #     #   repo/image:tag
+    #     #
+    #     # For example:
+    #     #
+    #     #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/openresty-oidc:1.21.4.1-0-alpine
+    #     image: ''
+    #
+    #     # Optionally define an NGINX configuration to use for nginx.conf. This
+    #     # should refer to a template created outside the scope of this Helm
+    #     # chart.
+    #     configMap: ''
+    #
+    #     # To customize the resource allocation for the NGINX container, use the
+    #     # "resources" dictionary.
+    #     #
+    #     # Example:
+    #     #
+    #     #   resources:
+    #     #     cpu: 100m
+    #     #     memory: 512Mi
+    #     #
+    #     # By default, we will allocate "50m" CPU and "128Mi" of memory.
+    #     resources:
+    #       cpu: 50m
+    #       memory: 128Mi
+    nginx:
+      enabled: true
 
     # Configure auto instrumentation for the OTEL Collector.
     #
