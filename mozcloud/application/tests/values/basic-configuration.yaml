@@ -31,6 +31,14 @@ workloads:
             type: configMap
             path: /data/configmap
             readOnly: true
+          - name: test-service-empty
+            type: emptyDir
+            path: /cache
+          - name: test-service-memory
+            type: emptyDir
+            path: /dev/shm
+            medium: Memory
+            sizeLimit: 500Mi
 
     hosts:
       # This is the name of the host to be created. The name is also used for

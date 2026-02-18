@@ -940,7 +940,7 @@ workloads:
         security: {}
 
         # Optionally mount volumes to the container. The supported volume types
-        # are "configMap" (default), "secret" and "persistentVolumeClaim".
+        # are "configMap" (default), "secret", "persistentVolumeClaim", and "emptyDir".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -981,6 +981,18 @@ workloads:
         #   "storageClassName": The storage class to use for the volume.
         #                       Optional.
         #
+        # "emptyDir" volumes, as the name suggests, create an empty volume
+        # that's created when the Pod is assigned to a node. When a Pod is
+        # removed from a node for any reason, the data in the emptyDir is
+        # deleted permanently. Config options include:
+        #
+        #   "medium": By default, emptyDir volumes use the node's backing
+        #             storage (disk, SSD, or network). Setting emptyDir.medium
+        #             to "Memory" mounts a tmpfs (RAM-backed filesystem) instead.
+        #
+        #   "sizeLimit": the maximum amount of storage that an emptyDir volume
+        #                can consume (e.g. 500Mi)
+        #
         # Example:
         #
         #   volumes:
@@ -1003,6 +1015,13 @@ workloads:
         #       accessModes:
         #         - ReadWriteOnce
         #       storageClassName: standard
+        #     - name: cache-volume
+        #       type: emptyDir:
+        #       path: /path/to/dir
+        #     - name: another-cache-volume
+        #       path: /path/to/another/dir
+        #       sizeLimit: 500Mi
+        #       medium: Memory
         #
         #volumes: []
 
@@ -1347,7 +1366,7 @@ workloads:
         sidecar: false
 
         # Optionally mount volumes to the container. The supported volume types
-        # are "configMap" (default), "secret" and "persistentVolumeClaim".
+        # are "configMap" (default), "secret", "persistentVolumeClaim", and "emptyDir".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -1388,6 +1407,18 @@ workloads:
         #   "storageClassName": The storage class to use for the volume.
         #                       Optional.
         #
+        # "emptyDir" volumes, as the name suggests, create an empty volume
+        # that's created when the Pod is assigned to a node. When a Pod is
+        # removed from a node for any reason, the data in the emptyDir is
+        # deleted permanently. Config options include:
+        #
+        #   "medium": By default, emptyDir volumes use the node's backing
+        #             storage (disk, SSD, or network). Setting emptyDir.medium
+        #             to "Memory" mounts a tmpfs (RAM-backed filesystem) instead.
+        #
+        #   "sizeLimit": the maximum amount of storage that an emptyDir volume
+        #                can consume (e.g. 500Mi)
+        #
         # Example:
         #
         #   volumes:
@@ -1410,6 +1441,13 @@ workloads:
         #       accessModes:
         #         - ReadWriteOnce
         #       storageClassName: standard
+        #     - name: cache-volume
+        #       type: emptyDir:
+        #       path: /path/to/dir
+        #     - name: another-cache-volume
+        #       path: /path/to/another/dir
+        #       sizeLimit: 500Mi
+        #       medium: Memory
         #
         #volumes: []
 
