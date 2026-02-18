@@ -1,0 +1,35 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers: {}
+    hosts:
+      header-only:
+        domains: ["header.only"]
+        httpRoutes:
+          rules:
+            - matches:
+                - headers:
+                    - name: foo
+                      value: bar
+      path-only:
+        domains: ["path.only"]
+        httpRoutes:
+          rules:
+            - matches:
+                - path:
+                    value: /foo
+                    type: PathPrefix
+      headers-and-path:
+        domains: ["headers.and.path"]
+        httpRoutes:
+          rules:
+            - matches:
+                - path:
+                    value: /foo
+                    type: PathPrefix
+                  headers:
+                    - name: foo
+                      value: bar
+                    - name: baz
+                      value: qux

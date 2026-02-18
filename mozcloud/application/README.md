@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 0.1.2](https://img.shields.io/badge/Version-0.1.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.2.0](https://img.shields.io/badge/Version-0.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,11 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
+<<<<<<< HEAD
     version: ~0.1.2
+=======
+    version: ~0.2.0
+>>>>>>> 4dbd253 (feat(mozcloud): port "matches" httpRoute rule support)
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
