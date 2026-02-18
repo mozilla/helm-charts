@@ -19,11 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-<<<<<<< HEAD
-    version: ~0.1.2
-=======
     version: ~0.2.0
->>>>>>> 4dbd253 (feat(mozcloud): port "matches" httpRoute rule support)
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
