@@ -1069,16 +1069,24 @@ workloads:
         #
         httpRoutes:
           createHttpRoutes: true
-        #  #rules:
-        #    #- backendRefs:
-        #        #- kind: ServiceImport
-        #        #  name: my-custom-backend-us-west1
-        #        #  port: 8080
-        #        #  weight: 80
-        #        #- kind: ServiceImport
-        #        #  name: my-custom-backend-europe-west1
-        #        #  port: 8080
-        #        #  weight: 20
+        #  rules:
+        #    - backendRefs:
+        #        - kind: ServiceImport
+        #          name: my-custom-backend-us-west1
+        #          port: 8080
+        #          weight: 80
+        #        - kind: ServiceImport
+        #          name: my-custom-backend-europe-west1
+        #          port: 8080
+        #          weight: 20
+        #      matches:
+        #        - path:
+        #            value: /foo
+        #            type: PathPrefix
+        #          headers:
+        #            - name: foo
+        #              value: bar
+        #
 
         # Use this array to specify custom backends for your Gateway API-based
         # workloads.
