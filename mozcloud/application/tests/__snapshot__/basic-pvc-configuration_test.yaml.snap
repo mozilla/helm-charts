@@ -144,6 +144,10 @@ Configuration matches entire snapshot:
                 - mountPath: /data/configmap
                   name: test-service-configmap
                   readOnly: true
+                - mountPath: /cache
+                  name: test-service-empty
+                - mountPath: /dev/shm
+                  name: test-service-memory
           securityContext:
             runAsGroup: 10001
             runAsNonRoot: true
@@ -158,6 +162,12 @@ Configuration matches entire snapshot:
             - configMap:
                 name: test-service-configmap
               name: test-service-configmap
+            - emptyDir: {}
+              name: test-service-empty
+            - emptyDir:
+                medium: Memory
+                sizeLimit: 500Mi
+              name: test-service-memory
             - name: test-service-pvc
               persistentVolumeClaim:
                 claimName: test-service-pvc
