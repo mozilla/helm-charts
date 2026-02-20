@@ -212,8 +212,8 @@ type (string): (required) The type of resource being handled -- used for default
 {{- define "common.annotations.argo" -}}
 {{- $type := .type -}}
 {{- $syncWaveDefault := index (include "common.annotations.argo.syncWaveDefaults" . | fromYaml) $type -}}
-argocd.argoproj.io/hook: Sync
 {{- if has $type (list "jobPostDeployment" "jobPreDeployment") }}
+argocd.argoproj.io/hook: Sync
 argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
 {{- end }}
 {{- /* Deployments do not have sync wave values */}}
