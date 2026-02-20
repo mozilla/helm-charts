@@ -4,7 +4,6 @@ Configuration matches entire snapshot:
     kind: ExternalSecret
     metadata:
       annotations:
-        argocd.argoproj.io/hook: Sync
         argocd.argoproj.io/sync-wave: "-11"
       labels:
         app.kubernetes.io/component: externalsecret
@@ -38,7 +37,6 @@ Configuration matches entire snapshot:
     kind: ServiceAccount
     metadata:
       annotations:
-        argocd.argoproj.io/hook: Sync
         argocd.argoproj.io/sync-wave: "-11"
         iam.gke.io/gcp-service-account: gke-dev@moz-fx-mozcloud-test-nonprod.iam.gserviceaccount.com
       labels:
