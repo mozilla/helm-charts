@@ -1,4 +1,5 @@
 {{- define "mozcloud-preview-lib.httpRoute" -}}
+{{- if .httpRouteConfig.enabled }}
 {{- $rawRoutes := .httpRouteConfig.httpRoutes }}
 {{- $previewHost := .previewHost }}
 {{- $previewPr := .previewPr }}
@@ -49,4 +50,5 @@
 
 {{- include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite (omit . "httpRouteConfig") (dict "httpRouteConfig" $transformedConfig)) }}
 
+{{- end }}
 {{- end }}
