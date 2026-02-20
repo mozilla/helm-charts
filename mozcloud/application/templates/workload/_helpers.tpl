@@ -99,10 +99,3 @@ configMap: -2
 externalSecret: -2
 serviceAccount: -2
 {{- end -}}
-
-{{/*
-Debug helper
-*/}}
-{{- define "workload.debug" -}}
-{{- . | mustToPrettyJson | printf "\nThe JSON output of the dumped var is: \n%s" | fail }}
-{{- end -}}

@@ -13,6 +13,7 @@ other cron jobs defined by the user. Because of this, we consider anything under
 
 Params:
 */ -}}
+{{- $common := default (dict) .common.cronJob -}}
 {{- $cronJobValues := .cronJobs -}}
 {{- $cronJobs := .cronJobs -}}
 {{- $defaultKey := "mozcloud-cronjob" -}}
@@ -27,6 +28,7 @@ Params:
   {{- $cronJobs = omit $cronJobs $defaultKey -}}
   {{- range $name, $config := $cronJobs -}}
     {{- $defaults := index $cronJobValues $defaultKey -}}
+    {{- $config = mergeOverwrite (deepCopy $common) $config -}}
     {{- $_ := set $cronJobs $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
 {{- end -}}
@@ -45,6 +47,7 @@ to be defaults and remove that key from the job list.
 
 Params:
 */ -}}
+{{- $common := default (dict) .common.job -}}
 {{- $jobValues := .jobs -}}
 {{- $jobs := .jobs -}}
 {{- $defaultKey := "mozcloud-job" -}}
@@ -59,6 +62,7 @@ Params:
   {{- $jobs = omit $jobs $defaultKey -}}
   {{- range $name, $config := $jobs -}}
     {{- $defaults := index $jobValues $defaultKey -}}
+    {{- $config = mergeOverwrite (deepCopy $common) $config -}}
     {{- $_ := set $jobs $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
 {{- end -}}

@@ -30,16 +30,17 @@ ConfigMap template helpers
 {{- $config_maps := .configMaps -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
-{{- range $config_map := $config_maps -}}
-  {{- $config_map_config := $config_map | deepCopy -}}
+{{- range $name, $config := $config_maps -}}
+  {{- $config_map_config := $config | deepCopy -}}
   {{- /* Configure name and labels */ -}}
+  {{- $_ := set $config_map_config "name" $name }}
   {{- $labels := default (dict) $config_map_config.labels -}}
   {{- $params := dict "config" $config_map_config "context" ($ | deepCopy) "labels" $labels -}}
   {{- $labels = include "common.labels" $params | fromYaml -}}
   {{- $config_map_config = mergeOverwrite $config_map_config $labels -}}
   {{- /* Create configMaps[].data if it does not exist */ -}}
   {{- $config_map_data := default (dict) $config_map_config.data -}}
-  {{- $_ := set $config_map_config "data" $config_map_data -}}
+  {{- $_ = set $config_map_config "data" $config_map_data -}}
   {{- $output = append $output $config_map_config -}}
 {{- end -}}
 {{- $config_maps = dict "configMaps" $output -}}
@@ -121,12 +122,13 @@ ServiceAccount template helpers
 {{- $name_override := default "" .nameOverride -}}
 {{- $service_accounts := .serviceAccounts -}}
 {{- $output := list -}}
-{{- range $service_account := $service_accounts -}}
+{{- range $name, $config := $service_accounts -}}
   {{- $defaults := include "common.defaults.serviceAccount.config" $ | fromYaml -}}
-  {{- $service_account_config := mergeOverwrite $defaults $service_account -}}
+  {{- $service_account_config := mergeOverwrite (deepCopy $defaults) $config -}}
+  {{- $_ := set $service_account_config "name" $name -}}
   {{- /* Configure name and labels */ -}}
   {{- $labels := default (dict) $service_account_config.labels -}}
-  {{- $params := dict "config" $service_account_config "context" ($ | deepCopy) "labels" $labels -}}
+  {{- $params := dict "config" $service_account_config "context" (deepCopy $) "labels" $labels -}}
   {{- $labels = include "common.labels" $params | fromYaml -}}
   {{- $service_account_config = mergeOverwrite $service_account_config $labels -}}
   {{- /* Generate gcpServiceAccount, if applicable */ -}}

@@ -2,9 +2,9 @@
 {{- $config_maps := .Values.configMaps }}
 {{- if gt (keys $config_maps | len) 0 }}
 {{- $helper_params := dict "configMaps" $config_maps }}
-{{- $params := include "common.config.configMap" $helper_params | fromYaml }}
-{{- $label_params := include "mozcloud.labelParams" . | fromYaml }}
-{{- $_ := set $label_params "component_code" "configmap" -}}
+{{- $params := include "mozcloud.config.configMap" $helper_params | fromYaml }}
+{{- $chart_metadata := dict "Chart" .Chart "Release" .Release "component_code" "configmap" }}
+{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
 {{- include "common.configMap" (mergeOverwrite $params $label_params) }}
 {{- end -}}
 {{- end -}}

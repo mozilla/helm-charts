@@ -57,12 +57,6 @@ ConfigMaps
 configMaps:
   {{- range $name, $config := .configMaps }}
   {{ $name }}:
-    {{- /*
-    ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
-    other resources
-    */}}
-    argo:
-      syncWave: -11
     data:
       {{ $config.data | toYaml | nindent 6 }}
     annotations:
@@ -461,7 +455,7 @@ deployments:
   {{- range $workload_name, $workload_config := $workloads }}
   {{- $nginx_enabled := true }}
   {{- if or
-    (and (hasKey (default (dict) $workload_config.nginx) "enabled") (not ($workload_config.nginx).enabled))
+    (not (dig "nginx" "enabled" "true" $workload_config))
     (not $workload_config.hosts)
   }}
   {{- $nginx_enabled = false }}
@@ -723,23 +717,11 @@ External secrets
 externalSecrets:
   {{- $default_secret_name := printf "%s-secrets" $globals.app_code }}
   {{ $default_secret_name }}:
-    {{- /*
-    ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
-    other resources
-    */}}
-    argo:
-      syncWave: -11
     target: {{ $globals.app_code }}-secrets
     gsm:
       secret: {{ .Values.global.mozcloud.env_code }}-gke-app-secrets
   {{- range $secret_name, $secret_config := $external_secrets }}
   {{ $secret_name }}:
-    {{- /*
-    ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
-    other resources
-    */}}
-    argo:
-      syncWave: -11
     target: {{ $secret_name }}
     gsm:
       secret: {{ $secret_config.gsmSecretName }}
@@ -787,25 +769,12 @@ Service accounts
 serviceAccounts:
   {{- range $workload_name, $workload_config := $workloads }}
   {{ $globals.app_code }}:
-    component: serviceaccount
-    {{- /*
-    ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
-    other resources
-    */}}
-    argo:
-      syncWave: -11
     gcpServiceAccount:
       name: gke-{{ $globals.env_code }}
       projectId: {{ $globals.project_id }}
   {{- range $service_account_name, $service_account_config := $service_accounts }}
   {{- if not (eq $service_account_name $globals.app_code) }}
   {{ $service_account_name }}:
-    {{- /*
-    ConfigMaps, ExternalSecrets, and ServiceAccounts should be updated before all
-    other resources
-    */}}
-    argo:
-      syncWave: -11
     {{- if ($service_account_config.gcpServiceAccount).name }}
     gcpServiceAccount:
       name: {{ $service_account_config.gcpServiceAccount.name }}

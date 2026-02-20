@@ -4,21 +4,16 @@ Configuration matches entire snapshot:
     kind: CronJob
     metadata:
       labels:
-        labels:
-          app.kubernetes.io/component: cronjob
-          app.kubernetes.io/managed-by: argocd
-          app.kubernetes.io/name: null
-          app_code: null
-          component_code: cronjob
-          env_code: null
-          helm.sh/chart: mozcloud
-          mozcloud_chart: null
-          mozcloud_chart_version: null
-          realm: nonprod
-        selectorLabels:
-          app.kubernetes.io/component: cronjob
-          app.kubernetes.io/name: null
-          env_code: null
+        app.kubernetes.io/component: cronjob
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: cronjob
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
       name: test-cronjob
     spec:
       failedJobsHistoryLimit: 1
