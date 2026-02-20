@@ -1,9 +1,9 @@
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
-{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
 {{- $common := .Values.tasks.common }}
 {{- $context := deepCopy . }}
 {{- $globals := .Values.global.mozcloud }}
-{{- $params := dict "jobs" (default (dict) .Values.tasks.jobs) }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- $params := dict "common" $common "jobs" (default (dict) .Values.tasks.jobs) }}
 {{- $jobs := include "mozcloud.job.formatter" $params | fromYaml }}
 {{- if $jobs }}
 {{- $_ := set $context "component_code" "job" -}}
