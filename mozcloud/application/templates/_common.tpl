@@ -28,6 +28,16 @@ ConfigMap template helpers
 */}}
 {{- define "common.config.configMaps" -}}
 {{- $config_maps := .configMaps -}}
+{{- /* Apply preview prefix to configmap names if in preview mode */ -}}
+{{- if include "mozcloud.preview.enabled" $ -}}
+  {{- $prefix := include "mozcloud.preview.prefix" $ -}}
+  {{- $prefixed_config_maps := dict -}}
+  {{- range $name, $config := $config_maps -}}
+    {{- $prefixed_name := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixed_config_maps $prefixed_name $config -}}
+  {{- end -}}
+  {{- $config_maps = $prefixed_config_maps -}}
+{{- end -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $output := list -}}
 {{- range $name, $config := $config_maps -}}
@@ -121,6 +131,16 @@ ServiceAccount template helpers
 {{- define "common.config.serviceAccounts" -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $service_accounts := .serviceAccounts -}}
+{{- /* Apply preview prefix to service account names if in preview mode */ -}}
+{{- if include "mozcloud.preview.enabled" $ -}}
+  {{- $prefix := include "mozcloud.preview.prefix" $ -}}
+  {{- $prefixed_service_accounts := dict -}}
+  {{- range $name, $config := $service_accounts -}}
+    {{- $prefixed_name := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixed_service_accounts $prefixed_name $config -}}
+  {{- end -}}
+  {{- $service_accounts = $prefixed_service_accounts -}}
+{{- end -}}
 {{- $output := list -}}
 {{- range $name, $config := $service_accounts -}}
   {{- $defaults := include "common.defaults.serviceAccount.config" $ | fromYaml -}}
