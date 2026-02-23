@@ -1,0 +1,28 @@
+{{- if include "mozcloud.preview.usePreviewHttpRoute" . }}
+{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
+{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" (default dict .Values.preview) }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
+{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $params := $label_params -}}
+
+{{- $http_routes := include "mozcloud.config.httpRoutes" $helper_params | fromYaml }}
+{{- /* Transform all HTTP routes for preview mode */ -}}
+{{- $transform_params := dict "httpRoutes" $http_routes.httpRoutes "previewHost" $.Values.preview.host }}
+{{- $transformed_http_routes := include "preview.transformHttpRoutes" $transform_params | fromYaml }}
+{{- range $http_route_name, $http_route_config := $transformed_http_routes.httpRoutes }}
+  {{- $_ := set $label_params "component_code" $http_route_config.component }}
+
+  {{- /* Override gateway refs to use shared preview gateway */ -}}
+  {{- $preview_gateway_refs := list (dict
+      "name" (default "sandbox-high-preview-gateway" ($.Values.preview.httpRoute.gateway).name)
+      "namespace" (default "preview-shared-infrastructure" ($.Values.preview.httpRoute.gateway).namespace)
+      "sectionName" "https"
+  ) }}
+
+  {{- $_ := set $http_route_config "gatewayRefs" $preview_gateway_refs }}
+
+  {{- $_ = set $params "httpRouteConfig" (dict "httpRoutes" (dict $http_route_name (omit $http_route_config "component"))) }}
+{{ include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite $params $label_params) -}}
+{{- end }}
+{{- end -}}

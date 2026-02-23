@@ -1,0 +1,99 @@
+{{- if and (include "mozcloud.preview.enabled" .) (((.Values.preview).endpointCheck).enabled) }}
+{{- $config := .Values.preview.endpointCheck }}
+{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
+{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- $_ := set $label_params "component_code" "preview" }}
+{{- $labels := include "mozcloud-labels-lib.labels" $label_params | fromYaml }}
+
+{{- /* Get all preview hostnames to check */ -}}
+{{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" (default dict .Values.preview) }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
+{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $http_routes := include "mozcloud.config.httpRoutes" $helper_params | fromYaml }}
+{{- $hostname_params := dict "httpRoutes" $http_routes.httpRoutes "previewHost" $.Values.preview.host }}
+{{- $hostname_result := include "preview.getAllHostnames" $hostname_params | fromYaml }}
+{{- $hostnames_to_check := $hostname_result.hostnames }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "mozcloud.fullname" . }}-endpoint-check
+  labels:
+    {{- $labels | toYaml | nindent 4 }}
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
+spec:
+  backoffLimit: {{ default 1 $config.backoffLimit }}
+  activeDeadlineSeconds: {{ default 900 $config.activeDeadlineSeconds }}
+  template:
+    spec:
+      containers:
+        - name: wait-for-endpoint
+          image: {{ default "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/curlimages/curl:8.14.1" $config.image }}
+          args:
+            - /bin/sh
+            - -c
+            - |
+              FAILED=0
+              CHECKPATH="{{ default "__heartbeat__" $config.checkPath }}"
+              MAX_ATTEMPTS={{ default 60 $config.maxAttempts }}
+              SLEEP_SECONDS={{ default 15 $config.sleepSeconds }}
+              MAX_TIME={{ default 5 $config.maxTimePerAttempt }}
+
+              echo "=== Preview Endpoint Check ==="
+              echo "Checking {{ len $hostnames_to_check }} endpoint(s)..."
+              echo ""
+
+              {{- range $hostname := $hostnames_to_check }}
+              echo "Checking: https://{{ $hostname }}/$CHECKPATH"
+              for i in $(seq 1 $MAX_ATTEMPTS); do
+                if curl -sSf --max-time $MAX_TIME https://{{ $hostname }}/$CHECKPATH > /dev/null 2>&1; then
+                  echo "[OK] https://{{ $hostname }}/$CHECKPATH is ready"
+                  break
+                fi
+                if [ $i -eq $MAX_ATTEMPTS ]; then
+                  echo "[FAILED] https://{{ $hostname }}/$CHECKPATH failed after $MAX_ATTEMPTS attempts"
+                  FAILED=1
+                else
+                  echo "  Attempt $i/$MAX_ATTEMPTS - not ready yet, waiting ${SLEEP_SECONDS}s..."
+                  sleep $SLEEP_SECONDS
+                fi
+              done
+              echo ""
+              {{- end }}
+
+              if [ $FAILED -eq 1 ]; then
+                echo "=== Endpoint check FAILED ==="
+                echo "One or more endpoints did not become ready"
+                exit 1
+              else
+                echo "=== Endpoint check PASSED ==="
+                echo "All {{ len $hostnames_to_check }} endpoint(s) are ready"
+                exit 0
+              fi
+          resources:
+            limits:
+              cpu: 200m
+              memory: 256Mi
+            requests:
+              cpu: 50m
+              memory: 128Mi
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            seccompProfile:
+              type: "RuntimeDefault"
+            runAsNonRoot: true
+            capabilities:
+              drop: ["ALL"]
+      restartPolicy: Never
+      securityContext:
+        seccompProfile:
+          type: "RuntimeDefault"
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+{{- end }}

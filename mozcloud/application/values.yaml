@@ -1,6 +1,30 @@
 # If disabled, no resources in the chart will be created.
 enabled: true
 
+# Preview deployment configuration. When enabled, all resources will be prefixed
+# with "pr{PR}-" and configured for preview environments.
+#
+# This is designed for use with ArgoCD ApplicationSet Pull Request generators,
+# which automatically provide preview.pr and preview.host values.
+preview:
+  enabled: false
+  pr: ""    # PR number - provided by ArgoCD ApplicationSet generator
+  host: ""  # Preview hostname - provided by ArgoCD ApplicationSet generator
+  httpRoute:
+    enabled: true
+    gateway:
+      name: sandbox-high-preview-gateway
+      namespace: preview-shared-infrastructure
+  endpointCheck:
+    enabled: true
+    checkPath: "__heartbeat__"
+    image: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/curlimages/curl:8.14.1"
+    maxAttempts: 60
+    maxTimePerAttempt: 5
+    sleepSeconds: 15
+    backoffLimit: 1
+    activeDeadlineSeconds: 900
+
 # In this section, you can create ConfigMap resources that can be used
 # by all workloads and jobs. To use ConfigMaps created here in a workload,
 # you must list the ConfigMap name you wish to include in each workload or
