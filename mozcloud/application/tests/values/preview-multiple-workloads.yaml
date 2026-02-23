@@ -1,0 +1,55 @@
+---
+workloads:
+  api-service:
+    component: api
+    containers:
+      app:
+        image:
+          repository: test-repo/api-image
+          tag: 1.0.0
+    hosts:
+      api-host:
+        domains:
+          - api.example.com
+        type: external
+        httpRoutes:
+          createHttpRoutes: true
+        tls:
+          certs:
+            - api-cert
+
+  web-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/web-image
+          tag: 1.0.0
+    hosts:
+      web-host:
+        domains:
+          - web.example.com
+        type: external
+        httpRoutes:
+          createHttpRoutes: true
+        tls:
+          certs:
+            - web-cert
+
+  admin-service:
+    component: admin
+    containers:
+      app:
+        image:
+          repository: test-repo/admin-image
+          tag: 1.0.0
+    hosts:
+      admin-host:
+        domains:
+          - admin.example.com
+        type: external
+        httpRoutes:
+          createHttpRoutes: true
+        tls:
+          certs:
+            - admin-cert
