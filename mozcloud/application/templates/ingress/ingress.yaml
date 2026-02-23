@@ -2,7 +2,7 @@
 {{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
 {{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
 {{- /* Call a helper function that merges user data with defaults */}}
-{{- $formatter_params := dict "component" "ingress" "workloads" (.Values.workloads | deepCopy) }}
+{{- $formatter_params := dict "component" "ingress" "workloads" (.Values.workloads | deepCopy) "preview" (default dict .Values.preview) }}
 {{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
 
 {{- /*

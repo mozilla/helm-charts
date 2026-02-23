@@ -2,7 +2,7 @@
 {{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
 {{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
 {{- /* Call a helper function that merges user data with defaults */}}
-{{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) }}
+{{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" (default dict .Values.preview) }}
 {{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
 
 {{- /*
@@ -21,10 +21,11 @@ Only include Gateway and related resources if we have Gateway hosts defined
 {{- $params := $label_params -}}
 
 {{- /*
-Gateways and Gateway policies
+Gateways and Gateway policies - Skip if preview mode is using shared gateway
 
 Delete this section when it is time to move to shared gateways.
 */}}
+{{- if not (include "mozcloud.preview.usePreviewHttpRoute" .) }}
 {{- $gateways := include "mozcloud.config.gateways" $helper_params | fromYaml }}
 {{- range $gateway_name, $gateway_config := $gateways.gateways }}
 {{- $_ := set $label_params "component_code" $gateway_config.component }}
@@ -33,17 +34,20 @@ Delete this section when it is time to move to shared gateways.
 {{- end }}
 {{- $gateway_policy_config := include "mozcloud.config.gatewayPolicy" . | fromYaml }}
 {{- $_ := set $label_params "component_code" "gateway" }}
-{{- $_ = set $params "gatewayPolicyConfig" $gateway_policy_config }} 
+{{- $_ = set $params "gatewayPolicyConfig" $gateway_policy_config }}
 {{ include "mozcloud-gateway-lib.gatewayPolicy" (mergeOverwrite $params $label_params) -}}
+{{- end }}
 
 {{- /*
-HTTPRoutes
+HTTPRoutes - Skip if preview mode is using preview HTTPRoute
 */}}
+{{- if not (include "mozcloud.preview.usePreviewHttpRoute" .) }}
 {{- $http_routes := include "mozcloud.config.httpRoutes" $helper_params | fromYaml }}
 {{- range $http_route_name, $http_route_config := $http_routes.httpRoutes }}
 {{- $_ := set $label_params "component_code" $http_route_config.component }}
 {{- $_ = set $params "httpRouteConfig" (dict "httpRoutes" (dict $http_route_name (omit $http_route_config "component"))) }}
 {{ include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite $params $label_params) -}}
+{{- end }}
 {{- end }}
 
 {{- /*

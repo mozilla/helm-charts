@@ -5,6 +5,7 @@
 {{- $params := include "mozcloud.config.configMap" $helper_params | fromYaml }}
 {{- $chart_metadata := dict "Chart" .Chart "Release" .Release "component_code" "configmap" }}
 {{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
-{{- include "common.configMap" (mergeOverwrite $params $label_params) }}
+{{- $context_params := mergeOverwrite (. | deepCopy) (mergeOverwrite $params $label_params) }}
+{{- include "common.configMap" $context_params }}
 {{- end -}}
 {{- end -}}
