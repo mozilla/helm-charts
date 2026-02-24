@@ -111,7 +111,11 @@ Create label parameters to be used in library chart if defined as values.
 {{- end }}
 {{- $mozcloud_chart_labels := dict "mozcloud_chart" .Chart.Name "mozcloud_chart_version" .Chart.Version -}}
 {{- $params = mergeOverwrite $params $mozcloud_chart_labels -}}
-{{- /* Add preview labels if in preview mode */ -}}
+{{- /* Add preview PR as selector label if in preview mode */ -}}
+{{- if and .Values.global.preview .Values.global.preview.pr -}}
+  {{- $_ := set $params "preview_pr" .Values.global.preview.pr -}}
+{{- end -}}
+{{- /* Add preview labels for metadata */ -}}
 {{- $preview_labels := include "mozcloud.preview.labels" . | fromYaml -}}
 {{- if $preview_labels -}}
   {{- $params = mergeOverwrite $params $preview_labels -}}
