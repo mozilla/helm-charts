@@ -3,4 +3,7 @@
 app.kubernetes.io/name: {{ index $labels "app.kubernetes.io/name" }}
 app.kubernetes.io/component: {{ index $labels "app.kubernetes.io/component" }}
 env_code: {{ index $labels "env_code" }}
+{{- if hasKey $labels "preview_pr" }}
+preview_pr: {{ index $labels "preview_pr" | quote }}
+{{- end }}
 {{- end -}}
