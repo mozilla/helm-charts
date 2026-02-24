@@ -1,6 +1,11 @@
 {{- if .Values.enabled }}
 {{- $config_maps := .Values.configMaps }}
-{{- /* Transform ConfigMap data for preview mode */ -}}
+{{- /*
+  Transform specific ConfigMap keys for preview environments.
+
+  Many services have environment variables that reference static hostnames or urls.
+  These need to be transformed to use the generated preview hostname instead.
+*/ -}}
 {{- if include "mozcloud.preview.enabled" . -}}
   {{- $transformed_config_maps := dict -}}
   {{- $transform_keys := default list .Values.preview.urlTransformKeys -}}
