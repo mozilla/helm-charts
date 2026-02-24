@@ -1,0 +1,63 @@
+---
+suite: "mozcloud: Preview ConfigMap URL transformation"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/preview-configmap-transform.yaml
+set:
+  preview.enabled: true
+  global.preview.pr: "789"
+  global.preview.host: "pr789-test.preview.mozilla.cloud"
+templates:
+  - configmap/configmap.yaml
+tests:
+  # Test that explicitly listed keys are transformed
+  - it: URLBASE is transformed when empty and explicitly listed
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-app-config")]
+    asserts:
+      - equal:
+          path: data.URLBASE
+          value: "https://pr789-test.preview.mozilla.cloud"
+
+  - it: ATTACHMENT_BASE is transformed when empty and explicitly listed
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-app-config")]
+    asserts:
+      - equal:
+          path: data.ATTACHMENT_BASE
+          value: "https://pr789-test.preview.mozilla.cloud"
+
+  # Test that non-listed keys are NOT transformed
+  - it: URL_BASE is not transformed when not in urlTransformKeys list
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-app-config")]
+    asserts:
+      - equal:
+          path: data.URL_BASE
+          value: ""
+
+  # Test that non-empty values are preserved
+  - it: Non-empty values are not overwritten
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-app-config")]
+    asserts:
+      - equal:
+          path: data.OTHER_VAR
+          value: "keep-this"
+
+  # Test that ConfigMap is prefixed in preview mode
+  - it: ConfigMap name is prefixed with PR number
+    template: configmap/configmap.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pr789-app-config

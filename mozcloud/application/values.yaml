@@ -12,6 +12,14 @@ enabled: true
 #
 preview:
   enabled: false
+  # ConfigMap URL transformation: List ConfigMap keys that should be populated with preview host URL
+  # Only keys explicitly listed here will be transformed (empty values only)
+  # No transformation occurs by default - this is opt-in behavior
+  # Example: if your app uses URLBASE and HOSTNAME variables that should point to preview URL:
+  urlTransformKeys: []
+    # - URLBASE
+    # - HOSTNAME
+    # - ATTACHMENT_BASE
   # All other preview settings have sensible defaults:
   httpRoute:
     enabled: true           # Default: true - Use preview HTTPRoute with shared gateway

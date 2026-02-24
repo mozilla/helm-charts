@@ -45,6 +45,34 @@ true
 {{- end -}}
 
 {{/*
+Transform ConfigMap data for preview mode
+Populates empty URL variables with preview host for keys specified in preview.urlTransformKeys
+No transformation occurs by default - keys must be explicitly listed
+*/}}
+{{- define "mozcloud.preview.transformConfigMapData" -}}
+{{- $data := .data -}}
+{{- $preview_host := .previewHost -}}
+{{- $transform_keys := .transformKeys | default list -}}
+{{- $transformed_data := dict -}}
+{{- range $key, $value := $data -}}
+  {{- $should_transform := false -}}
+  {{- /* Check if key is in the explicit transform list */ -}}
+  {{- range $transform_keys -}}
+    {{- if eq $key . -}}
+      {{- $should_transform = true -}}
+    {{- end -}}
+  {{- end -}}
+  {{- /* Transform if key is listed and value is empty */ -}}
+  {{- if and $should_transform (or (not $value) (eq $value "")) -}}
+    {{- $_ := set $transformed_data $key (printf "https://%s" $preview_host) -}}
+  {{- else -}}
+    {{- $_ := set $transformed_data $key $value -}}
+  {{- end -}}
+{{- end -}}
+{{ $transformed_data | toYaml }}
+{{- end -}}
+
+{{/*
 Generate preview prefix if preview mode is enabled
 */}}
 {{- define "mozcloud.preview.prefix" -}}

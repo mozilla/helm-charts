@@ -1,5 +1,17 @@
 {{- if .Values.enabled }}
 {{- $config_maps := .Values.configMaps }}
+{{- /* Transform ConfigMap data for preview mode */ -}}
+{{- if include "mozcloud.preview.enabled" . -}}
+  {{- $transformed_config_maps := dict -}}
+  {{- $transform_keys := default list .Values.preview.urlTransformKeys -}}
+  {{- range $name, $config := $config_maps -}}
+    {{- $transform_params := dict "data" $config.data "previewHost" $.Values.global.preview.host "transformKeys" $transform_keys -}}
+    {{- $transformed_data := include "mozcloud.preview.transformConfigMapData" $transform_params | fromYaml -}}
+    {{- $transformed_config := mergeOverwrite $config (dict "data" $transformed_data) -}}
+    {{- $_ := set $transformed_config_maps $name $transformed_config -}}
+  {{- end -}}
+  {{- $config_maps = $transformed_config_maps -}}
+{{- end -}}
 {{- if gt (keys $config_maps | len) 0 }}
 {{- $helper_params := dict "configMaps" $config_maps }}
 {{- $params := include "mozcloud.config.configMap" $helper_params | fromYaml }}
