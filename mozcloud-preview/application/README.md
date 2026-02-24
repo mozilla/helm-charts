@@ -1,6 +1,6 @@
 # mozcloud-preview
 
-![Version: 0.3.33](https://img.shields.io/badge/Version-0.3.33-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.3.34](https://img.shields.io/badge/Version-0.3.34-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 A Helm chart for Kubernetes
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-preview
-    version: ~0.3.33
+    version: ~0.3.34
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 

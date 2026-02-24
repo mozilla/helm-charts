@@ -14,7 +14,7 @@
 
 {{- $transformedBackends := dict }}
 {{- range $name, $config := .Values.backends }}
-  {{- $name = printf "pr%s-%s" $previewPr (include "mozcloud-preview.name" $) }}
+  {{- $name = printf "pr%s-%s" $previewPr (default (include "mozcloud-preview.name" $) $name) }}
   {{- $be := deepCopy $config }}
   {{- $base := default (dict) $be.service.selectorLabels -}}
   {{- $labels := merge (dict) $base -}}
