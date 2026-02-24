@@ -17,7 +17,7 @@ metadata:
   labels:
     {{- $params := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) "labels" (default (dict) $config.labels) }}
     {{- $labels := include "common.labels" $params | fromYaml }}
-    {{ $labels.labels | toYaml | nindent 4 }}
+    {{- $labels.labels | toYaml | nindent 4 }}
 spec:
   {{- if ($config.jobHistory).successful }}
   successfulJobsHistoryLimit: {{ $config.jobHistory.successful }}

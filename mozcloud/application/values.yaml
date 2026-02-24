@@ -1,29 +1,32 @@
 # If disabled, no resources in the chart will be created.
 enabled: true
 
-# Preview deployment configuration. When enabled, all resources will be prefixed
-# with "pr{PR}-" and configured for preview environments.
+# Preview mode configuration - when enabled, all resources will be prefixed with "pr{PR}-"
+# and configured for preview environments using a shared preview gateway.
 #
-# This is designed for use with ArgoCD ApplicationSet Pull Request generators,
-# which automatically provide preview.pr and preview.host values.
+# The PR number and preview host are provided via global.preview (from ArgoCD ApplicationSet):
+#   global:
+#     preview:
+#       pr: "123"
+#       host: "pr123-app.preview.mozilla.cloud"
+#
 preview:
   enabled: false
-  pr: ""    # PR number - provided by ArgoCD ApplicationSet generator
-  host: ""  # Preview hostname - provided by ArgoCD ApplicationSet generator
+  # All other preview settings have sensible defaults:
   httpRoute:
-    enabled: true
+    enabled: true           # Default: true - Use preview HTTPRoute with shared gateway
     gateway:
-      name: sandbox-high-preview-gateway
-      namespace: preview-shared-infrastructure
+      name: sandbox-high-preview-gateway     # Default gateway name
+      namespace: preview-shared-infrastructure  # Default gateway namespace
   endpointCheck:
-    enabled: true
-    checkPath: "__heartbeat__"
+    enabled: true           # Default: true - Enable endpoint health check
+    checkPath: "__heartbeat__"  # Default health check path
     image: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/curlimages/curl:8.14.1"
-    maxAttempts: 60
-    maxTimePerAttempt: 5
-    sleepSeconds: 15
-    backoffLimit: 1
-    activeDeadlineSeconds: 900
+    maxAttempts: 60         # Default: 60
+    maxTimePerAttempt: 5    # Default: 5 seconds
+    sleepSeconds: 15        # Default: 15 seconds
+    backoffLimit: 1         # Default: 1
+    activeDeadlineSeconds: 900  # Default: 900 seconds (15 minutes)
 
 # In this section, you can create ConfigMap resources that can be used
 # by all workloads and jobs. To use ConfigMaps created here in a workload,

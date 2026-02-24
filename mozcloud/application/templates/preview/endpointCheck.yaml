@@ -1,16 +1,16 @@
-{{- if and (include "mozcloud.preview.enabled" .) (((.Values.preview).endpointCheck).enabled) }}
-{{- $config := .Values.preview.endpointCheck }}
+{{- if include "mozcloud.preview.endpointCheckEnabled" . }}
+{{- $config := default dict .Values.preview.endpointCheck }}
 {{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
 {{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
 {{- $_ := set $label_params "component_code" "preview" }}
 {{- $labels := include "mozcloud-labels-lib.labels" $label_params | fromYaml }}
 
 {{- /* Get all preview hostnames to check */ -}}
-{{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" (default dict .Values.preview) }}
+{{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" (default dict .Values.global.preview) }}
 {{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
 {{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
 {{- $http_routes := include "mozcloud.config.httpRoutes" $helper_params | fromYaml }}
-{{- $hostname_params := dict "httpRoutes" $http_routes.httpRoutes "previewHost" $.Values.preview.host }}
+{{- $hostname_params := dict "httpRoutes" $http_routes.httpRoutes "previewHost" .Values.global.preview.host }}
 {{- $hostname_result := include "preview.getAllHostnames" $hostname_params | fromYaml }}
 {{- $hostnames_to_check := $hostname_result.hostnames }}
 ---

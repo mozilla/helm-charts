@@ -10,8 +10,8 @@ values:
   - values/preview-all-resources.yaml
 set:
   preview.enabled: true
-  preview.pr: "789"
-  preview.host: "pr789-test.preview.mozilla.cloud"
+  global.preview.pr: "789"
+  global.preview.host: "pr789-test.preview.mozilla.cloud"
 templates:
   - configmap/configmap.yaml
   - externalsecret/externalsecret.yaml
@@ -104,7 +104,7 @@ tests:
   - it: HTTPRoute has correct preview hostname
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "api-host")]
+      path: $[?(@.metadata.name == "pr789-api-host")]
     asserts:
       - contains:
           path: spec.hostnames
@@ -114,7 +114,7 @@ tests:
   - it: HTTPRoute routes to prefixed service
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "api-host")]
+      path: $[?(@.metadata.name == "pr789-api-host")]
     asserts:
       - equal:
           path: spec.rules[0].backendRefs[0].name

@@ -39,7 +39,7 @@ Preview mode helpers
 Check if preview mode is enabled and has required configuration
 */}}
 {{- define "mozcloud.preview.enabled" -}}
-{{- if and .Values.preview .Values.preview.enabled .Values.preview.pr -}}
+{{- if and .Values.preview.enabled .Values.global.preview .Values.global.preview.pr -}}
 true
 {{- end -}}
 {{- end -}}
@@ -49,7 +49,7 @@ Generate preview prefix if preview mode is enabled
 */}}
 {{- define "mozcloud.preview.prefix" -}}
 {{- if include "mozcloud.preview.enabled" . -}}
-{{- printf "pr%v-" .Values.preview.pr -}}
+{{- printf "pr%v-" .Values.global.preview.pr -}}
 {{- end -}}
 {{- end -}}
 
@@ -58,16 +58,43 @@ Preview labels to inject when in preview mode
 */}}
 {{- define "mozcloud.preview.labels" -}}
 {{- if include "mozcloud.preview.enabled" . -}}
-app.preview/pr: {{ .Values.preview.pr | quote }}
+app.preview/pr: {{ .Values.global.preview.pr | quote }}
 {{- end -}}
 {{- end -}}
 
 {{/*
 Check if preview HTTPRoute should be used instead of standard
+Defaults to true if not explicitly set
 */}}
 {{- define "mozcloud.preview.usePreviewHttpRoute" -}}
-{{- if and (include "mozcloud.preview.enabled" .) (((.Values.preview).httpRoute).enabled) -}}
+{{- if include "mozcloud.preview.enabled" . -}}
+  {{- $httpRouteEnabled := true -}}
+  {{- if .Values.preview.httpRoute -}}
+    {{- if hasKey .Values.preview.httpRoute "enabled" -}}
+      {{- $httpRouteEnabled = .Values.preview.httpRoute.enabled -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $httpRouteEnabled -}}
 true
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Check if preview endpoint check should be enabled
+Defaults to true if not explicitly set
+*/}}
+{{- define "mozcloud.preview.endpointCheckEnabled" -}}
+{{- if include "mozcloud.preview.enabled" . -}}
+  {{- $endpointCheckEnabled := true -}}
+  {{- if .Values.preview.endpointCheck -}}
+    {{- if hasKey .Values.preview.endpointCheck "enabled" -}}
+      {{- $endpointCheckEnabled = .Values.preview.endpointCheck.enabled -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $endpointCheckEnabled -}}
+true
+  {{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -951,7 +978,7 @@ persistentVolumes:
     component: {{ $workload_config.component }}
     size: {{ $volume_config.size }}
     storageClassName: {{ $volume_config.storageClassName }}
-    accessModes: 
+    accessModes:
     {{ $volume_config.accessModes | toYaml | nindent 6 }}
   {{- end }}
   {{- end }}
