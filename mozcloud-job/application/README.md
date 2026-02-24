@@ -1,9 +1,13 @@
 # mozcloud-job
 
+<<<<<<< HEAD
 > [!CAUTION]
 > **This chart is deprecated.** Please use the mozcloud chart located [here](../../mozcloud/application).
 
 ![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+=======
+![Version: 0.5.13](https://img.shields.io/badge/Version-0.5.13-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+>>>>>>> 108706b (chore: bumped chart versions to include new label variants and all dependnant chart version updates)
 
 A Helm chart that creates Kubernetes jobs and cron jobs.
 
@@ -22,7 +26,11 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-job
+<<<<<<< HEAD
     version: ~0.6.0
+=======
+    version: ~0.5.13
+>>>>>>> 108706b (chore: bumped chart versions to include new label variants and all dependnant chart version updates)
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -38,7 +46,11 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Repository | Name | Version |
 |------------|------|---------|
+<<<<<<< HEAD
 | file://../library | mozcloud-job-lib | 0.6.0 |
+=======
+| file://../library | mozcloud-job-lib | 0.5.12 |
+>>>>>>> 108706b (chore: bumped chart versions to include new label variants and all dependnant chart version updates)
 
 ## Values
 
