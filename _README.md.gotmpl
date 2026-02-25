@@ -40,12 +40,12 @@ dependencies:
 Next, update your tenant's values. Shared charts are meant to be self-documented. We ship a verbose [values file](values.yaml) as well as a [JSON schema](values.schema.json).
 {{ else if eq .Type "library" }}
 Library chart templates can be included using the following format:
-```
+```go
 {{ "{{" }} include "template-name" . {{ "}}" }}
 ```
 
 If params other than the current context, specify those in place of the `.`:
-```
+```go
 {{ "{{" }} include "template-name" $myDict {{ "}}" }}
 ```
 {{- end }}
