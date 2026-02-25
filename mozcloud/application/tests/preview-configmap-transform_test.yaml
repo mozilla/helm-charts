@@ -15,6 +15,9 @@ set:
 templates:
   - configmap/configmap.yaml
 tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
   # Test that explicitly listed keys are transformed
   - it: URLBASE is transformed when empty and explicitly listed
     template: configmap/configmap.yaml

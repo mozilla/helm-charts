@@ -22,6 +22,9 @@ templates:
   - preview/httpRoute.yaml
   - preview/endpointCheck.yaml
 tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
   # Test ConfigMap is prefixed
   - it: Top-level ConfigMap is prefixed with PR number
     template: configmap/configmap.yaml

@@ -17,6 +17,9 @@ templates:
   - preview/endpointCheck.yaml
   - workload/workload.yaml
 tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
   # Test that all three workload deployments are created with correct prefixes
   - it: API deployment is prefixed with PR number
     template: workload/workload.yaml

@@ -1,0 +1,25 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: v1
+    data:
+      ATTACHMENT_BASE: https://pr789-test.preview.mozilla.cloud
+      OTHER_VAR: keep-this
+      URL_BASE: ""
+      URLBASE: https://pr789-test.preview.mozilla.cloud
+    kind: ConfigMap
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-11"
+      labels:
+        app.kubernetes.io/component: configmap
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: configmap
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "789"
+        realm: nonprod
+      name: pr789-app-config
