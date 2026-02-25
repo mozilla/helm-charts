@@ -27,7 +27,7 @@
     {{- $newBackendRefs := list -}}
     {{- range $br := $r.backendRefs }}
       {{- $backendName := (include "mozcloud-preview-lib.config.pr-prefix" (dict "pr" $previewPr "value" $br.name)) }}
-      {{- $newBackendRefs = append $newBackendRefs (deepCopy $br) -}}
+      {{- $newBackendRefs = append $newBackendRefs (mergeOverwrite (deepCopy $br) (dict "name" $backendName)) -}}
     {{- end }}
     {{- $transformedRule := mergeOverwrite (deepCopy $r) (dict "backendRefs" $newBackendRefs) -}}
     {{- $transformedRules = append $transformedRules $transformedRule -}}

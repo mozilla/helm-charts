@@ -106,9 +106,9 @@ Takes a dict {"pr": "1", "value": "mozcloud-preview"}
 Returns "pr1-mozcloud-preview"
 */}}
 {{- define "mozcloud-preview-lib.config.pr-prefix" -}}
-{{- $prPrefix := printf "pr%s" .pr }}
+{{- $prPrefix := printf "pr%s-" .pr }}
 {{- $trimmed := trimPrefix $prPrefix .value }}
-{{- printf "pr%s-%s" $prPrefix $trimmed }}
+{{- printf "%s%s" $prPrefix $trimmed }}
 {{- end }}
 
 {{/*

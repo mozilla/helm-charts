@@ -30,7 +30,6 @@
 {{- $params := mergeOverwrite $label_params (dict
     "httpRouteConfig" $httpRouteConfig
     "backendConfig" (dict "backends" $transformedBackends)
-    "nameOverride" (printf "pr%s-%s" $previewPr (include "mozcloud-preview.name" .))
     "Release" .Release
     "previewPr" $previewPr
     "previewHost" (.Values.global.preview.host | toString)
