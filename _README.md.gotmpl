@@ -1,5 +1,14 @@
 {{ template "chart.header" . }}
+{{- $deprecatedCharts := list
+  "mozcloud-job"
+  "mozcloud-job-lib"
+}}
+{{- if and .Deprecated (has .Name $deprecatedCharts) }}
+> [!CAUTION]
+> **This chart is deprecated.** Please use the mozcloud chart located [here](../../mozcloud/application).
+{{- else }}
 {{ template "chart.deprecationWarning" . }}
+{{- end }}
 
 {{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}
 
@@ -27,7 +36,19 @@ dependencies:
 > [!IMPORTANT]
 > Make sure to set a valid version for your dependencies. Helm supports pinning exact versions as well as version ranges, see [chart best practices - dependencies - versions](https://helm.sh/docs/chart_best_practices/dependencies/#versions) for more details.
 
+{{ if eq .Type "application" }}
 Next, update your tenant's values. Shared charts are meant to be self-documented. We ship a verbose [values file](values.yaml) as well as a [JSON schema](values.schema.json).
+{{ else if eq .Type "library" }}
+Library chart templates can be included using the following format:
+```
+{{ "{{" }} include "template-name" . {{ "}}" }}
+```
+
+If params other than the current context, specify those in place of the `.`:
+```
+{{ "{{" }} include "template-name" $myDict {{ "}}" }}
+```
+{{- end }}
 
 > [!TIP]
 > We're building OCI artifacts automatically with [GHA](/.github/workflows/auto-push-tag-helm-charts.yaml). When a new artifact has been built, we add a matching [tag](https://github.com/mozilla/helm-charts/tags) to this repo as well. Use this to find out about available chart versions and/or to browse the chart's code for a specific version.

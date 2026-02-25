@@ -1,8 +1,8 @@
-# mozcloud-gateway-lib
+# mozcloud-preview-lib
 
-![Version: 0.4.24](https://img.shields.io/badge/Version-0.4.24-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
+![Version: 0.2.34](https://img.shields.io/badge/Version-0.2.34-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
 
-A library chart that creates gateways and supporting Gateway API resources
+A library chart that creates preview http routes and supporting resources
 
 ## Usage
 
@@ -18,8 +18,8 @@ name: my-mozcloud-tenant-chart
 version: 0.1.0
 type: application
 dependencies:
-  - name: mozcloud-gateway-lib
-    version: ~0.4.24
+  - name: mozcloud-preview-lib
+    version: ~0.2.34
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -43,6 +43,7 @@ If params other than the current context, specify those in place of the `.`:
 
 | Repository | Name | Version |
 |------------|------|---------|
+| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.24 |
 | file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.15 |
 | file://../../mozcloud-service/library | mozcloud-service-lib | 0.2.21 |
 
