@@ -101,6 +101,17 @@ Template helpers
 {{- end -}}
 
 {{/*
+Make a string with the pr number as the suffix eg. `pr1-some-name`
+Takes a dict {"pr": "1", "value": "mozcloud-preview"}
+Returns "pr1-mozcloud-preview"
+*/}}
+{{- define "mozcloud-preview-lib.config.pr-prefix" -}}
+{{- $prPrefix := printf "pr%s" .pr }}
+{{- $trimmed := trimPrefix $prPrefix .value }}
+{{- printf "pr%s-%s" $prPrefix $trimmed }}
+{{- end }}
+
+{{/*
 EndpointCheck Render
 */}}
 {{- define "mozcloud-preview-lib.defaults.endpointcheck" -}}

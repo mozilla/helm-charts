@@ -3,7 +3,7 @@
 {{- $httpRoutes := dict }}
 {{- range $name, $config := .Values.httpRoute.httpRoutes }}
   {{- $route := deepCopy $config }}
-  {{- $name = printf "pr%s-%s" $previewPr $name }}
+  {{- $name = include "mozcloud-preview-lib.config.pr-prefix" (dict "pr" $previewPr "value" $name) }}
   {{- $_ := set $httpRoutes $name $route }}
 {{- end }}
 
@@ -14,7 +14,7 @@
 
 {{- $transformedBackends := dict }}
 {{- range $name, $config := .Values.backends }}
-  {{- $name = printf "pr%s-%s" $previewPr (default (include "mozcloud-preview.name" $) $name) }}
+  {{- $name = include "mozcloud-preview-lib.config.pr-prefix" (dict "pr" $previewPr "value" $name) }}
   {{- $be := deepCopy $config }}
   {{- $base := default (dict) $be.service.selectorLabels -}}
   {{- $labels := merge (dict) $base -}}
@@ -34,6 +34,7 @@
     "Release" .Release
     "previewPr" $previewPr
     "previewHost" (.Values.global.preview.host | toString)
+    "checkPath" (.Values).checkPath
 )}}
 
 {{- include "mozcloud-preview-lib.httpRoute" $params }}
