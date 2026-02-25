@@ -5,8 +5,7 @@
 {{- $previewPr := .previewPr }}
 {{- $transformedRoutes := dict }}
 
-{{- $svcName := (include "mozcloud-preview-lib.name" .) -}}
-
+{{- /* $name here has already been transformed to contain the pr name */ -}}
 {{- range $name, $route := $rawRoutes }}
   {{- $newHostnames := list }}
 
@@ -27,7 +26,8 @@
   {{- range $r := $route.rules }}
     {{- $newBackendRefs := list -}}
     {{- range $br := $r.backendRefs }}
-      {{- $newBackendRefs = append $newBackendRefs (mergeOverwrite (deepCopy $br) (dict "name" $svcName)) -}}
+      {{- $backendName := (include "mozcloud-preview-lib.config.pr-prefix" (dict "pr" $previewPr "value" $br.name)) }}
+      {{- $newBackendRefs = append $newBackendRefs (deepCopy $br) -}}
     {{- end }}
     {{- $transformedRule := mergeOverwrite (deepCopy $r) (dict "backendRefs" $newBackendRefs) -}}
     {{- $transformedRules = append $transformedRules $transformedRule -}}
@@ -42,7 +42,7 @@
     ))
     "rules" $transformedRules
   ) }}
-  {{- $_ := set $transformedRoutes $svcName $updatedRoute }}
+  {{- $_ := set $transformedRoutes $name $updatedRoute }}
 
 {{- end }}
 
