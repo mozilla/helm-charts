@@ -1,6 +1,6 @@
 # mozcloud-preview-lib
 
-![Version: 0.2.34](https://img.shields.io/badge/Version-0.2.34-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
+![Version: 0.2.36](https://img.shields.io/badge/Version-0.2.36-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
 
 A library chart that creates preview http routes and supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-preview-lib
-    version: ~0.2.34
+    version: ~0.2.36
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -27,12 +27,12 @@ dependencies:
 > Make sure to set a valid version for your dependencies. Helm supports pinning exact versions as well as version ranges, see [chart best practices - dependencies - versions](https://helm.sh/docs/chart_best_practices/dependencies/#versions) for more details.
 
 Library chart templates can be included using the following format:
-```
+```helm
 {{ include "template-name" . }}
 ```
 
 If params other than the current context, specify those in place of the `.`:
-```
+```helm
 {{ include "template-name" $myDict }}
 ```
 

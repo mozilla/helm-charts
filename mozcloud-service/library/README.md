@@ -27,12 +27,12 @@ dependencies:
 > Make sure to set a valid version for your dependencies. Helm supports pinning exact versions as well as version ranges, see [chart best practices - dependencies - versions](https://helm.sh/docs/chart_best_practices/dependencies/#versions) for more details.
 
 Library chart templates can be included using the following format:
-```
+```helm
 {{ include "template-name" . }}
 ```
 
 If params other than the current context, specify those in place of the `.`:
-```
+```helm
 {{ include "template-name" $myDict }}
 ```
 
