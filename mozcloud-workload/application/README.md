@@ -35,21 +35,12 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Repository | Name | Version |
 |------------|------|---------|
-<<<<<<< HEAD
-| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.24 |
-| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.4.19 |
-| file://../../mozcloud-job/library | mozcloud-job-lib | 0.6.0 |
-| file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.15 |
-| file://../../mozcloud-workload-core/library | mozcloud-workload-core-lib | 0.6.21 |
-| file://../../mozcloud-workload-stateless/library | mozcloud-workload-stateless-lib | 0.5.3 |
-=======
 | file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.25 |
 | file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.4.20 |
-| file://../../mozcloud-job/library | mozcloud-job-lib | 0.5.12 |
+| file://../../mozcloud-job/library | mozcloud-job-lib | 0.6.0 |
 | file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.16 |
 | file://../../mozcloud-workload-core/library | mozcloud-workload-core-lib | 0.6.22 |
 | file://../../mozcloud-workload-stateless/library | mozcloud-workload-stateless-lib | 0.5.4 |
->>>>>>> 108706b (chore: bumped chart versions to include new label variants and all dependnant chart version updates)
 
 ## Values
 

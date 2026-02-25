@@ -1,10 +1,6 @@
 # mozcloud-preview
 
-<<<<<<< HEAD
-![Version: 0.3.36](https://img.shields.io/badge/Version-0.3.36-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
-=======
-![Version: 0.3.34](https://img.shields.io/badge/Version-0.3.34-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
->>>>>>> 108706b (chore: bumped chart versions to include new label variants and all dependnant chart version updates)
+![Version: 0.3.37](https://img.shields.io/badge/Version-0.3.37-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 A Helm chart for Kubernetes
 
@@ -23,11 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-preview
-<<<<<<< HEAD
-    version: ~0.3.36
-=======
-    version: ~0.3.34
->>>>>>> 108706b (chore: bumped chart versions to include new label variants and all dependnant chart version updates)
+    version: ~0.3.37
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -43,11 +35,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Repository | Name | Version |
 |------------|------|---------|
-<<<<<<< HEAD
-| file://../library | mozcloud-preview-lib | 0.2.36 |
-=======
-| file://../library | mozcloud-preview-lib | 0.2.35 |
->>>>>>> 108706b (chore: bumped chart versions to include new label variants and all dependnant chart version updates)
+| file://../library | mozcloud-preview-lib | 0.2.37 |
 
 ## Values
 

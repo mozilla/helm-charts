@@ -1,10 +1,6 @@
 # mozcloud
 
-<<<<<<< HEAD
-![Version: 0.2.3](https://img.shields.io/badge/Version-0.2.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
-=======
 ![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
->>>>>>> 108706b (chore: bumped chart versions to include new label variants and all dependnant chart version updates)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -23,11 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-<<<<<<< HEAD
-    version: ~0.2.3
-=======
     version: ~0.3.0
->>>>>>> 108706b (chore: bumped chart versions to include new label variants and all dependnant chart version updates)
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -43,16 +35,9 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Repository | Name | Version |
 |------------|------|---------|
-<<<<<<< HEAD
-| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.24 |
-| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.4.19 |
-| file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.15 |
-=======
 | file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.25 |
 | file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.4.20 |
-| file://../../mozcloud-job/library | mozcloud-job-lib | 0.5.12 |
 | file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.16 |
->>>>>>> 108706b (chore: bumped chart versions to include new label variants and all dependnant chart version updates)
 
 ## Values
 
