@@ -35,7 +35,7 @@ spec:
       The template below can be found in templates/task/_jobTemplate.yaml
       */}}
       {{- $params = dict "common" $common "config" $config.jobConfig "context" $context }}
-      {{- include "mozcloud.job.jobTemplate" $params | nindent 6 }}
+      {{- include "mozcloud.job.jobTemplate" $params | trim | nindent 6 }}
 {{- end }}
 {{- end }}
 {{- end }}
