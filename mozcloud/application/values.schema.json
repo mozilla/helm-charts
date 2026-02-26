@@ -512,9 +512,6 @@
               "type": "object",
               "additionalProperties": false,
               "properties": {
-                "disableGateway": {
-                  "type": "boolean"
-                },
                 "domains": {
                   "type": "array",
                   "items": {
@@ -709,7 +706,8 @@
                   "type": "string",
                   "enum": [
                     "gateway",
-                    "ingress"
+                    "ingress",
+                    "none"
                   ],
                   "default": "gateway"
                 },

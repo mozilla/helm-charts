@@ -5,6 +5,10 @@
 {{- $preview_config := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
 {{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" $preview_config }}
 {{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
+{{- /* Also get ALL workloads (unfiltered by api type) for backend processing
+     This allows backends to be created even for hosts with api: none */}}
+{{- $formatterParamsAll := dict "workloads" (.Values.workloads | deepCopy) "preview" $preview_config }}
+{{- $allWorkloads := include "mozcloud.formatter.workloadsForBackends" $formatterParamsAll | fromYaml -}}
 
 {{- /*
 Only include Gateway and related resources if we have Gateway hosts defined
@@ -15,11 +19,12 @@ Only include Gateway and related resources if we have Gateway hosts defined
     {{- $hosts = append $hosts $host_name }}
   {{- end }}
 {{- end }}
-{{- if gt (len $hosts) 0 -}}
 
 {{- /* We will build $params as we go */}}
 {{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
 {{- $params := $label_params -}}
+
+{{- if gt (len $hosts) 0 -}}
 
 {{- /*
 Gateways and Gateway policies - Skip if preview mode is using shared gateway
@@ -57,10 +62,14 @@ HTTPRoutes - Skip if preview mode is using preview HTTPRoute
 {{- end }}
 {{- end }}
 
+{{- end -}}
+
 {{- /*
 Backend services, backend policies, and health check policies
+Use allWorkloads (unfiltered by api type) so backends are created for api:none hosts too
 */}}
-{{- $backends := include "mozcloud.config.backends" $helper_params | fromYaml }}
+{{- $backendParams := mergeOverwrite (. | deepCopy) (dict "workloads" $allWorkloads) }}
+{{- $backends := include "mozcloud.config.backends" $backendParams | fromYaml }}
 {{- range $backend_name, $backend_config := $backends.backends }}
 {{- $_ := set $label_params "component_code" $backend_config.component }}
 {{- $_ := set $params "backendConfig" (dict "backends" (dict $backend_name (omit $backend_config "component"))) }}
@@ -69,5 +78,4 @@ Backend services, backend policies, and health check policies
 {{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $label_params) }}
 {{- end }}
 
-{{- end -}}
 {{- end -}}

@@ -8,7 +8,7 @@ workloads:
           tag: latest
     hosts:
       mozcloud-test:
-        disableGateway: true
+        api: none
         httpRoutes:
           createHttpRoutes: false
         backends:

@@ -1049,8 +1049,17 @@ workloads:
         # is "gateway", which will build Gateway API resources. This is the
         # preferred API.
         #
-        # Use "ingress" for legacy environments that have not yet migrated to
-        # Gateway API. Do not use "ingress" for new tenants!
+        # Options include:
+        #
+        #   gateway: Build Gateway API resources (default, preferred)
+        #
+        #   ingress: Build Ingress API resources (legacy environments only,
+        #            do not use for new tenants)
+        #
+        #   none:    Do not create any Gateway or Ingress resources. Use this
+        #            for services without web components (e.g., background workers,
+        #            queue consumers) or for multi-cluster secondary regions where
+        #            you only need backend services.
         api: gateway
 
         # Enable / Disable Multi-Cluster mode
