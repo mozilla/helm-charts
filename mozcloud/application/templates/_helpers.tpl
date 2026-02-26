@@ -252,15 +252,10 @@ Gateways
 {{- $workloads := .workloads }}
 {{- /* Collect all unique gateway configurations */}}
 {{- $gatewayConfigs := dict }}
-{{- $defaultComponent := "" }}
 {{- range $workloadName, $workloadConfig := $workloads }}
   {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
     {{- /* Skip if using a shared gateway */}}
     {{- if not ($hostConfig).sharedGateway }}
-      {{- /* Set default component from first workload */}}
-      {{- if not $defaultComponent }}
-        {{- $defaultComponent = $workloadConfig.component }}
-      {{- end }}
       {{- /* Build gateway configuration key based on unique attributes */}}
       {{- $className := "gke-l7-global-external-managed" }}
       {{- if ($hostConfig).multiCluster }}
@@ -302,7 +297,7 @@ gateways:
   {{- $gatewayNameParams := dict "appCode" $globals.app_code "type" $gatewayConfig.type "hasMultipleTypes" $hasMultipleTypes "multiCluster" $multiCluster }}
   {{- $gatewayName := include "gateway.name" $gatewayNameParams }}
   {{ $gatewayName }}:
-    component: {{ $defaultComponent }}
+    component: gateway
     type: {{ $gatewayConfig.type }}
     className: {{ $gatewayConfig.className }}
     addresses:

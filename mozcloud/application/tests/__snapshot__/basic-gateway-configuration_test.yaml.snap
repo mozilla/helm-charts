@@ -6,11 +6,11 @@ Configuration matches entire snapshot:
       annotations:
         networking.gke.io/certmap: test-service-nonprod-dev
       labels:
-        app.kubernetes.io/component: web
+        app.kubernetes.io/component: gateway
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        component_code: web
+        component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud
