@@ -1,0 +1,13 @@
+---
+preview:
+  urlTransformKeys:
+    - URLBASE
+    - ATTACHMENT_BASE
+
+configMaps:
+  app-config:
+    data:
+      URLBASE: ""
+      ATTACHMENT_BASE: ""
+      URL_BASE: ""
+      OTHER_VAR: "keep-this"

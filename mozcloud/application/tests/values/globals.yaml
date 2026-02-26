@@ -7,3 +7,23 @@ global:
     env_code: dev
     project_id: moz-fx-mozcloud-test-nonprod
     realm: nonprod
+  preview:
+    pr: ""
+    host: ""
+
+preview:
+  enabled: false
+  httpRoute:
+    enabled: true
+    gateway:
+      name: sandbox-high-preview-gateway
+      namespace: preview-shared-infrastructure
+  endpointCheck:
+    enabled: true
+    checkPath: "__heartbeat__"
+    image: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/curlimages/curl:8.14.1"
+    maxAttempts: 60
+    maxTimePerAttempt: 5
+    sleepSeconds: 15
+    backoffLimit: 1
+    activeDeadlineSeconds: 900

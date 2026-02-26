@@ -1,0 +1,1097 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        argocd.argoproj.io/hook: PostSync
+        argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
+      labels:
+        app.kubernetes.io/component: preview
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: preview
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-mozcloud-test-endpoint-check
+    spec:
+      activeDeadlineSeconds: 900
+      backoffLimit: 1
+      template:
+        spec:
+          containers:
+            - args:
+                - /bin/sh
+                - -c
+                - |
+                  FAILED=0
+                  CHECKPATH="__heartbeat__"
+                  MAX_ATTEMPTS=60
+                  SLEEP_SECONDS=15
+                  MAX_TIME=5
+
+                  echo "=== Preview Endpoint Check ==="
+                  echo "Checking 3 endpoint(s)..."
+                  echo ""
+                  echo "Checking: https://admin-pr456-test.preview.mozilla.cloud/$CHECKPATH"
+                  for i in $(seq 1 $MAX_ATTEMPTS); do
+                    if curl -sSf --max-time $MAX_TIME https://admin-pr456-test.preview.mozilla.cloud/$CHECKPATH > /dev/null 2>&1; then
+                      echo "[OK] https://admin-pr456-test.preview.mozilla.cloud/$CHECKPATH is ready"
+                      break
+                    fi
+                    if [ $i -eq $MAX_ATTEMPTS ]; then
+                      echo "[FAILED] https://admin-pr456-test.preview.mozilla.cloud/$CHECKPATH failed after $MAX_ATTEMPTS attempts"
+                      FAILED=1
+                    else
+                      echo "  Attempt $i/$MAX_ATTEMPTS - not ready yet, waiting ${SLEEP_SECONDS}s..."
+                      sleep $SLEEP_SECONDS
+                    fi
+                  done
+                  echo ""
+                  echo "Checking: https://api-pr456-test.preview.mozilla.cloud/$CHECKPATH"
+                  for i in $(seq 1 $MAX_ATTEMPTS); do
+                    if curl -sSf --max-time $MAX_TIME https://api-pr456-test.preview.mozilla.cloud/$CHECKPATH > /dev/null 2>&1; then
+                      echo "[OK] https://api-pr456-test.preview.mozilla.cloud/$CHECKPATH is ready"
+                      break
+                    fi
+                    if [ $i -eq $MAX_ATTEMPTS ]; then
+                      echo "[FAILED] https://api-pr456-test.preview.mozilla.cloud/$CHECKPATH failed after $MAX_ATTEMPTS attempts"
+                      FAILED=1
+                    else
+                      echo "  Attempt $i/$MAX_ATTEMPTS - not ready yet, waiting ${SLEEP_SECONDS}s..."
+                      sleep $SLEEP_SECONDS
+                    fi
+                  done
+                  echo ""
+                  echo "Checking: https://web-pr456-test.preview.mozilla.cloud/$CHECKPATH"
+                  for i in $(seq 1 $MAX_ATTEMPTS); do
+                    if curl -sSf --max-time $MAX_TIME https://web-pr456-test.preview.mozilla.cloud/$CHECKPATH > /dev/null 2>&1; then
+                      echo "[OK] https://web-pr456-test.preview.mozilla.cloud/$CHECKPATH is ready"
+                      break
+                    fi
+                    if [ $i -eq $MAX_ATTEMPTS ]; then
+                      echo "[FAILED] https://web-pr456-test.preview.mozilla.cloud/$CHECKPATH failed after $MAX_ATTEMPTS attempts"
+                      FAILED=1
+                    else
+                      echo "  Attempt $i/$MAX_ATTEMPTS - not ready yet, waiting ${SLEEP_SECONDS}s..."
+                      sleep $SLEEP_SECONDS
+                    fi
+                  done
+                  echo ""
+
+                  if [ $FAILED -eq 1 ]; then
+                    echo "=== Endpoint check FAILED ==="
+                    echo "One or more endpoints did not become ready"
+                    exit 1
+                  else
+                    echo "=== Endpoint check PASSED ==="
+                    echo "All 3 endpoint(s) are ready"
+                    exit 0
+                  fi
+              image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/curlimages/curl:8.14.1
+              name: wait-for-endpoint
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 1000
+                runAsNonRoot: true
+                runAsUser: 1000
+                seccompProfile:
+                  type: RuntimeDefault
+          restartPolicy: Never
+          securityContext:
+            fsGroup: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            runAsUser: 1000
+            seccompProfile:
+              type: RuntimeDefault
+  2: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: admin
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: admin
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-admin-host
+    spec:
+      hostnames:
+        - admin-pr456-test.preview.mozilla.cloud
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: sandbox-high-preview-gateway
+          namespace: preview-shared-infrastructure
+          sectionName: https
+      rules:
+        - backendRefs:
+            - group: ""
+              kind: Service
+              name: pr456-admin-service
+              port: 8080
+  3: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: admin
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: admin
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-admin-host-http-redirect
+    spec:
+      hostnames:
+        - admin-pr456-test.preview.mozilla.cloud
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: sandbox-high-preview-gateway
+          namespace: preview-shared-infrastructure
+          sectionName: http
+      rules:
+        - filters:
+            - requestRedirect:
+                scheme: https
+                statusCode: 302
+              type: RequestRedirect
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
+  4: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: api
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-api-host
+    spec:
+      hostnames:
+        - api-pr456-test.preview.mozilla.cloud
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: sandbox-high-preview-gateway
+          namespace: preview-shared-infrastructure
+          sectionName: https
+      rules:
+        - backendRefs:
+            - group: ""
+              kind: Service
+              name: pr456-api-service
+              port: 8080
+  5: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: api
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-api-host-http-redirect
+    spec:
+      hostnames:
+        - api-pr456-test.preview.mozilla.cloud
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: sandbox-high-preview-gateway
+          namespace: preview-shared-infrastructure
+          sectionName: http
+      rules:
+        - filters:
+            - requestRedirect:
+                scheme: https
+                statusCode: 302
+              type: RequestRedirect
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
+  6: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-web-host
+    spec:
+      hostnames:
+        - web-pr456-test.preview.mozilla.cloud
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: sandbox-high-preview-gateway
+          namespace: preview-shared-infrastructure
+          sectionName: https
+      rules:
+        - backendRefs:
+            - group: ""
+              kind: Service
+              name: pr456-web-service
+              port: 8080
+  7: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-web-host-http-redirect
+    spec:
+      hostnames:
+        - web-pr456-test.preview.mozilla.cloud
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: sandbox-high-preview-gateway
+          namespace: preview-shared-infrastructure
+          sectionName: http
+      rules:
+        - filters:
+            - requestRedirect:
+                scheme: https
+                statusCode: 302
+              type: RequestRedirect
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
+  8: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: admin
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: admin
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-admin-service
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: admin
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev
+          preview_pr: "456"
+      strategy:
+        type: RollingUpdate
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: admin
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: admin
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: admin
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            preview_pr: "456"
+            realm: nonprod
+        spec:
+          containers:
+            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
+              imagePullPolicy: Always
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/bash
+                      - -c
+                      - /bin/sleep 25 && /usr/sbin/nginx -s quit
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__nginxheartbeat__
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: nginx
+              ports:
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 101
+                runAsUser: 101
+              volumeMounts:
+                - mountPath: /etc/nginx/nginx.conf
+                  name: nginx-conf
+                  readOnly: true
+                  subPath: nginx.conf
+            - envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
+              image: test-repo/admin-image:1.0.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: app
+              ports:
+                - containerPort: 8000
+                  name: app
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+          volumes:
+            - configMap:
+                name: pr456-admin-service-nginx
+              name: nginx-conf
+  9: |
+    apiVersion: v1
+    data:
+      nginx.conf: |
+        # The nginx docker container has ln -sf /dev/stderr /var/log/nginx/error.log
+        error_log  /var/log/nginx/error.log warn;
+        pid        /tmp/nginx.pid;
+
+        events {
+            worker_connections  2048;
+        }
+
+        http {
+            include       /etc/nginx/mime.types;
+
+            default_type  application/octet-stream;
+
+            log_format main escape=json
+            '{'
+              '"time":"$time_local",'
+              '"remote_addr":"$remote_addr",'
+              '"remote_user":"$remote_user",'
+              '"request":"$request",'
+              '"status": "$status",'
+              '"log_type": "access",'
+              '"bytes_sent": $body_bytes_sent,'
+              '"request_time": $request_time,'
+              '"referrer":"$http_referer",'
+              '"user_agent":"$http_user_agent",'
+              '"x_forwarded_for":"$http_x_forwarded_for",'
+              '"x_forwarded_proto":"$http_x_forwarded_proto",'
+              '"trace":"$http_x_cloud_trace_context"'
+            '}';
+
+            # The nginx docker container has ln -sf /dev/stdout /var/log/nginx/access.log
+            access_log  /var/log/nginx/access.log  main;
+
+            sendfile        on;
+
+            keepalive_timeout  620;
+
+            server_tokens off;
+
+            gzip on;
+            gzip_http_version 1.1;
+            gzip_comp_level 1;
+            gzip_vary on;
+            gzip_proxied any;
+            gzip_disable "MSIE [1-6]\.(?!.*SV1)";
+            gzip_min_length 1100;
+            gzip_types
+                text/plain
+                text/css
+                application/json
+                application/x-javascript
+                text/xml
+                application/xml
+                application/xml+rss
+                text/javascript
+                application/javascript;
+
+            upstream upstream_docker {
+                server 127.0.0.1:8000;
+            }
+
+            server {
+                listen 8080;
+
+                client_max_body_size 2g;
+
+                add_header Strict-Transport-Security "max-age=31536000" always;
+
+                location / {
+                    proxy_set_header x-forwarded-proto $http_x_forwarded_proto;
+                    proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;
+                    proxy_set_header Host $http_host;
+                    proxy_redirect off;
+                    proxy_pass http://upstream_docker;
+                }
+
+                location = /nginx_status {
+                  stub_status on;
+                  access_log off;
+                  allow 127.0.0.1;
+                  deny all;
+                }
+
+                location = /__nginxheartbeat__ {
+                  return 200;
+                }
+            }
+        }
+    kind: ConfigMap
+    metadata:
+      labels:
+        app.kubernetes.io/component: admin
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: admin
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-admin-service-nginx
+  10: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: api
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-api-service
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: api
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev
+          preview_pr: "456"
+      strategy:
+        type: RollingUpdate
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: api
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: api
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: api
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            preview_pr: "456"
+            realm: nonprod
+        spec:
+          containers:
+            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
+              imagePullPolicy: Always
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/bash
+                      - -c
+                      - /bin/sleep 25 && /usr/sbin/nginx -s quit
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__nginxheartbeat__
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: nginx
+              ports:
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 101
+                runAsUser: 101
+              volumeMounts:
+                - mountPath: /etc/nginx/nginx.conf
+                  name: nginx-conf
+                  readOnly: true
+                  subPath: nginx.conf
+            - envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
+              image: test-repo/api-image:1.0.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: app
+              ports:
+                - containerPort: 8000
+                  name: app
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+          volumes:
+            - configMap:
+                name: pr456-api-service-nginx
+              name: nginx-conf
+  11: |
+    apiVersion: v1
+    data:
+      nginx.conf: |
+        # The nginx docker container has ln -sf /dev/stderr /var/log/nginx/error.log
+        error_log  /var/log/nginx/error.log warn;
+        pid        /tmp/nginx.pid;
+
+        events {
+            worker_connections  2048;
+        }
+
+        http {
+            include       /etc/nginx/mime.types;
+
+            default_type  application/octet-stream;
+
+            log_format main escape=json
+            '{'
+              '"time":"$time_local",'
+              '"remote_addr":"$remote_addr",'
+              '"remote_user":"$remote_user",'
+              '"request":"$request",'
+              '"status": "$status",'
+              '"log_type": "access",'
+              '"bytes_sent": $body_bytes_sent,'
+              '"request_time": $request_time,'
+              '"referrer":"$http_referer",'
+              '"user_agent":"$http_user_agent",'
+              '"x_forwarded_for":"$http_x_forwarded_for",'
+              '"x_forwarded_proto":"$http_x_forwarded_proto",'
+              '"trace":"$http_x_cloud_trace_context"'
+            '}';
+
+            # The nginx docker container has ln -sf /dev/stdout /var/log/nginx/access.log
+            access_log  /var/log/nginx/access.log  main;
+
+            sendfile        on;
+
+            keepalive_timeout  620;
+
+            server_tokens off;
+
+            gzip on;
+            gzip_http_version 1.1;
+            gzip_comp_level 1;
+            gzip_vary on;
+            gzip_proxied any;
+            gzip_disable "MSIE [1-6]\.(?!.*SV1)";
+            gzip_min_length 1100;
+            gzip_types
+                text/plain
+                text/css
+                application/json
+                application/x-javascript
+                text/xml
+                application/xml
+                application/xml+rss
+                text/javascript
+                application/javascript;
+
+            upstream upstream_docker {
+                server 127.0.0.1:8000;
+            }
+
+            server {
+                listen 8080;
+
+                client_max_body_size 2g;
+
+                add_header Strict-Transport-Security "max-age=31536000" always;
+
+                location / {
+                    proxy_set_header x-forwarded-proto $http_x_forwarded_proto;
+                    proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;
+                    proxy_set_header Host $http_host;
+                    proxy_redirect off;
+                    proxy_pass http://upstream_docker;
+                }
+
+                location = /nginx_status {
+                  stub_status on;
+                  access_log off;
+                  allow 127.0.0.1;
+                  deny all;
+                }
+
+                location = /__nginxheartbeat__ {
+                  return 200;
+                }
+            }
+        }
+    kind: ConfigMap
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: api
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-api-service-nginx
+  12: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-web-service
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: web
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev
+          preview_pr: "456"
+      strategy:
+        type: RollingUpdate
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: web
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: web
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: web
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            preview_pr: "456"
+            realm: nonprod
+        spec:
+          containers:
+            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
+              imagePullPolicy: Always
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/bash
+                      - -c
+                      - /bin/sleep 25 && /usr/sbin/nginx -s quit
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__nginxheartbeat__
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: nginx
+              ports:
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 101
+                runAsUser: 101
+              volumeMounts:
+                - mountPath: /etc/nginx/nginx.conf
+                  name: nginx-conf
+                  readOnly: true
+                  subPath: nginx.conf
+            - envFrom:
+                - secretRef:
+                    name: mozcloud-test-secrets
+              image: test-repo/web-image:1.0.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: app
+              ports:
+                - containerPort: 8000
+                  name: app
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+          volumes:
+            - configMap:
+                name: pr456-web-service-nginx
+              name: nginx-conf
+  13: |
+    apiVersion: v1
+    data:
+      nginx.conf: |
+        # The nginx docker container has ln -sf /dev/stderr /var/log/nginx/error.log
+        error_log  /var/log/nginx/error.log warn;
+        pid        /tmp/nginx.pid;
+
+        events {
+            worker_connections  2048;
+        }
+
+        http {
+            include       /etc/nginx/mime.types;
+
+            default_type  application/octet-stream;
+
+            log_format main escape=json
+            '{'
+              '"time":"$time_local",'
+              '"remote_addr":"$remote_addr",'
+              '"remote_user":"$remote_user",'
+              '"request":"$request",'
+              '"status": "$status",'
+              '"log_type": "access",'
+              '"bytes_sent": $body_bytes_sent,'
+              '"request_time": $request_time,'
+              '"referrer":"$http_referer",'
+              '"user_agent":"$http_user_agent",'
+              '"x_forwarded_for":"$http_x_forwarded_for",'
+              '"x_forwarded_proto":"$http_x_forwarded_proto",'
+              '"trace":"$http_x_cloud_trace_context"'
+            '}';
+
+            # The nginx docker container has ln -sf /dev/stdout /var/log/nginx/access.log
+            access_log  /var/log/nginx/access.log  main;
+
+            sendfile        on;
+
+            keepalive_timeout  620;
+
+            server_tokens off;
+
+            gzip on;
+            gzip_http_version 1.1;
+            gzip_comp_level 1;
+            gzip_vary on;
+            gzip_proxied any;
+            gzip_disable "MSIE [1-6]\.(?!.*SV1)";
+            gzip_min_length 1100;
+            gzip_types
+                text/plain
+                text/css
+                application/json
+                application/x-javascript
+                text/xml
+                application/xml
+                application/xml+rss
+                text/javascript
+                application/javascript;
+
+            upstream upstream_docker {
+                server 127.0.0.1:8000;
+            }
+
+            server {
+                listen 8080;
+
+                client_max_body_size 2g;
+
+                add_header Strict-Transport-Security "max-age=31536000" always;
+
+                location / {
+                    proxy_set_header x-forwarded-proto $http_x_forwarded_proto;
+                    proxy_set_header x-forwarded-for $proxy_add_x_forwarded_for;
+                    proxy_set_header Host $http_host;
+                    proxy_redirect off;
+                    proxy_pass http://upstream_docker;
+                }
+
+                location = /nginx_status {
+                  stub_status on;
+                  access_log off;
+                  allow 127.0.0.1;
+                  deny all;
+                }
+
+                location = /__nginxheartbeat__ {
+                  return 200;
+                }
+            }
+        }
+    kind: ConfigMap
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "456"
+        realm: nonprod
+      name: pr456-web-service-nginx

@@ -27,24 +27,34 @@ Template helpers
 ConfigMap template helpers
 */}}
 {{- define "common.config.configMaps" -}}
-{{- $config_maps := .configMaps -}}
-{{- $name_override := default "" .nameOverride -}}
-{{- $output := list -}}
-{{- range $name, $config := $config_maps -}}
-  {{- $config_map_config := $config | deepCopy -}}
-  {{- /* Configure name and labels */ -}}
-  {{- $_ := set $config_map_config "name" $name }}
-  {{- $labels := default (dict) $config_map_config.labels -}}
-  {{- $params := dict "config" $config_map_config "context" ($ | deepCopy) "labels" $labels -}}
-  {{- $labels = include "common.labels" $params | fromYaml -}}
-  {{- $config_map_config = mergeOverwrite $config_map_config $labels -}}
-  {{- /* Create configMaps[].data if it does not exist */ -}}
-  {{- $config_map_data := default (dict) $config_map_config.data -}}
-  {{- $_ = set $config_map_config "data" $config_map_data -}}
-  {{- $output = append $output $config_map_config -}}
+{{- $configMaps := .configMaps -}}
+{{- /* Apply preview prefix to configmap names if in preview mode */ -}}
+{{- if include "mozcloud.preview.enabled" $ -}}
+  {{- $prefix := include "mozcloud.preview.prefix" $ -}}
+  {{- $prefixedConfigMaps := dict -}}
+  {{- range $name, $config := $configMaps -}}
+    {{- $prefixedName := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixedConfigMaps $prefixedName $config -}}
+  {{- end -}}
+  {{- $configMaps = $prefixedConfigMaps -}}
 {{- end -}}
-{{- $config_maps = dict "configMaps" $output -}}
-{{ $config_maps | toYaml }}
+{{- $nameOverride := default "" .nameOverride -}}
+{{- $output := list -}}
+{{- range $name, $config := $configMaps -}}
+  {{- $configMapConfig := $config | deepCopy -}}
+  {{- /* Configure name and labels */ -}}
+  {{- $_ := set $configMapConfig "name" $name }}
+  {{- $labels := default (dict) $configMapConfig.labels -}}
+  {{- $params := dict "config" $configMapConfig "context" ($ | deepCopy) "labels" $labels -}}
+  {{- $labels = include "common.labels" $params | fromYaml -}}
+  {{- $configMapConfig = mergeOverwrite $configMapConfig $labels -}}
+  {{- /* Create configMaps[].data if it does not exist */ -}}
+  {{- $configMapData := default (dict) $configMapConfig.data -}}
+  {{- $_ = set $configMapConfig "data" $configMapData -}}
+  {{- $output = append $output $configMapConfig -}}
+{{- end -}}
+{{- $configMaps = dict "configMaps" $output -}}
+{{ $configMaps | toYaml }}
 {{- end -}}
 
 {{/*
@@ -121,6 +131,16 @@ ServiceAccount template helpers
 {{- define "common.config.serviceAccounts" -}}
 {{- $name_override := default "" .nameOverride -}}
 {{- $service_accounts := .serviceAccounts -}}
+{{- /* Apply preview prefix to service account names if in preview mode */ -}}
+{{- if include "mozcloud.preview.enabled" $ -}}
+  {{- $prefix := include "mozcloud.preview.prefix" $ -}}
+  {{- $prefixed_service_accounts := dict -}}
+  {{- range $name, $config := $service_accounts -}}
+    {{- $prefixed_name := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixed_service_accounts $prefixed_name $config -}}
+  {{- end -}}
+  {{- $service_accounts = $prefixed_service_accounts -}}
+{{- end -}}
 {{- $output := list -}}
 {{- range $name, $config := $service_accounts -}}
   {{- $defaults := include "common.defaults.serviceAccount.config" $ | fromYaml -}}

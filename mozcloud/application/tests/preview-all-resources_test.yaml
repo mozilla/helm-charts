@@ -1,0 +1,142 @@
+---
+suite: "mozcloud: Preview mode with all resource types"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/preview-all-resources.yaml
+set:
+  preview.enabled: true
+  global.preview.pr: "789"
+  global.preview.host: "pr789-test.preview.mozilla.cloud"
+templates:
+  - configmap/configmap.yaml
+  - externalsecret/externalsecret.yaml
+  - serviceaccount/serviceaccount.yaml
+  - task/job.yaml
+  - workload/workload.yaml
+  - gateway/gateway.yaml
+  - preview/httpRoute.yaml
+  - preview/endpointCheck.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  # Test ConfigMap is prefixed
+  - it: Top-level ConfigMap is prefixed with PR number
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-app-config")]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pr789-app-config
+
+  # Test ServiceAccount is prefixed
+  - it: Top-level ServiceAccount is prefixed with PR number
+    template: serviceaccount/serviceaccount.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-app-service-account")]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pr789-app-service-account
+
+  # Test default ServiceAccount is prefixed
+  - it: Default ServiceAccount is prefixed with PR number
+    template: serviceaccount/serviceaccount.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-mozcloud-test")]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pr789-mozcloud-test
+
+  # Test ExternalSecret is prefixed
+  - it: Top-level ExternalSecret is prefixed with PR number
+    template: externalsecret/externalsecret.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-app-external-secret")]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pr789-app-external-secret
+
+  # Test default ExternalSecret is prefixed
+  - it: Default ExternalSecret is prefixed with PR number
+    template: externalsecret/externalsecret.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-mozcloud-test-secrets")]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pr789-mozcloud-test-secrets
+
+  # Test Job is prefixed
+  - it: Job is prefixed with PR number
+    template: task/job.yaml
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pr789-background-processor
+
+  # Test Deployment (workload) is prefixed
+  - it: Deployment is prefixed with PR number
+    template: workload/workload.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pr789-api-service
+
+  # Test Service is prefixed
+  - it: Service is prefixed with PR number
+    template: gateway/gateway.yaml
+    documentSelector:
+      path: $[?(@.kind == "Service")]
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pr789-api-service
+
+  # Test HTTPRoute is created with correct preview hostname
+  - it: HTTPRoute has correct preview hostname
+    template: preview/httpRoute.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-api-host")]
+    asserts:
+      - contains:
+          path: spec.hostnames
+          content: "pr789-test.preview.mozilla.cloud"
+
+  # Test HTTPRoute routes to prefixed service
+  - it: HTTPRoute routes to prefixed service
+    template: preview/httpRoute.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "pr789-api-host")]
+    asserts:
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: pr789-api-service
+
+  # Test endpoint check job is created and prefixed
+  - it: Endpoint check job is prefixed with PR number
+    template: preview/endpointCheck.yaml
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: metadata.name
+          value: pr789-mozcloud-test-endpoint-check
+
+  # Test endpoint check validates preview hostname
+  - it: Endpoint check validates preview hostname
+    template: preview/endpointCheck.yaml
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[2]
+          pattern: "pr789-test.preview.mozilla.cloud"

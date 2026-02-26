@@ -11,14 +11,15 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 If release name contains chart name it will be used as a full name.
 */}}
 {{- define "mozcloud.fullname" -}}
+{{- $prefix := include "mozcloud.preview.prefix" . -}}
 {{- if (.Values).fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- printf "%s%s" $prefix (.Values.fullnameOverride | trunc 63 | trimSuffix "-") }}
 {{- else }}
 {{- $name := default .Chart.Name (.Values).nameOverride }}
 {{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- printf "%s%s" $prefix (.Release.Name | trunc 63 | trimSuffix "-") }}
 {{- else }}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- printf "%s%s-%s" $prefix .Release.Name $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -29,6 +30,92 @@ Create chart name and version as used by the chart label.
 {{- define "mozcloud.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 {{- end }}
+
+{{/*
+Preview mode helpers
+*/}}
+
+{{/*
+Check if preview mode is enabled and has required configuration
+*/}}
+{{- define "mozcloud.preview.enabled" -}}
+{{- if and .Values.preview.enabled .Values.global.preview .Values.global.preview.pr -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Transform ConfigMap data for preview mode
+Populates empty URL variables with preview host for keys specified in preview.urlTransformKeys
+No transformation occurs by default - keys must be explicitly listed
+*/}}
+{{- define "mozcloud.preview.transformConfigMapData" -}}
+{{- $data := .data -}}
+{{- $previewHost := .previewHost -}}
+{{- $transformKeys := .transformKeys | default list -}}
+{{- $transformedData := dict -}}
+{{- range $key, $value := $data -}}
+  {{- $shouldTransform := false -}}
+  {{- /* Check if key is in the explicit transform list */ -}}
+  {{- range $transformKeys -}}
+    {{- if eq $key . -}}
+      {{- $shouldTransform = true -}}
+    {{- end -}}
+  {{- end -}}
+  {{- /* Transform if key is listed and value is empty */ -}}
+  {{- if and $shouldTransform (or (not $value) (eq $value "")) -}}
+    {{- $_ := set $transformedData $key (printf "https://%s" $previewHost) -}}
+  {{- else -}}
+    {{- $_ := set $transformedData $key $value -}}
+  {{- end -}}
+{{- end -}}
+{{ $transformedData | toYaml }}
+{{- end -}}
+
+{{/*
+Generate preview prefix if preview mode is enabled
+*/}}
+{{- define "mozcloud.preview.prefix" -}}
+{{- if include "mozcloud.preview.enabled" . -}}
+{{- printf "pr%v-" .Values.global.preview.pr -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Check if preview HTTPRoute should be used instead of standard
+Defaults to true if not explicitly set
+*/}}
+{{- define "mozcloud.preview.usePreviewHttpRoute" -}}
+{{- if include "mozcloud.preview.enabled" . -}}
+  {{- $httpRouteEnabled := true -}}
+  {{- if .Values.preview.httpRoute -}}
+    {{- if hasKey .Values.preview.httpRoute "enabled" -}}
+      {{- $httpRouteEnabled = .Values.preview.httpRoute.enabled -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $httpRouteEnabled -}}
+true
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Check if preview endpoint check should be enabled
+Defaults to true if not explicitly set
+*/}}
+{{- define "mozcloud.preview.endpointCheckEnabled" -}}
+{{- if include "mozcloud.preview.enabled" . -}}
+  {{- $endpointCheckEnabled := true -}}
+  {{- if .Values.preview.endpointCheck -}}
+    {{- if hasKey .Values.preview.endpointCheck "enabled" -}}
+      {{- $endpointCheckEnabled = .Values.preview.endpointCheck.enabled -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $endpointCheckEnabled -}}
+true
+  {{- end -}}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Create label parameters to be used in library chart if defined as values.
@@ -43,6 +130,10 @@ Create label parameters to be used in library chart if defined as values.
 {{- end }}
 {{- $mozcloud_chart_labels := dict "mozcloud_chart" .Chart.Name "mozcloud_chart_version" .Chart.Version -}}
 {{- $params = mergeOverwrite $params $mozcloud_chart_labels -}}
+{{- /* Add preview PR as selector label if in preview mode */ -}}
+{{- if and .Values.global.preview .Values.global.preview.pr -}}
+  {{- $_ := set $params "preview_pr" .Values.global.preview.pr -}}
+{{- end -}}
 {{- $params | toYaml }}
 {{- end }}
 
@@ -714,15 +805,17 @@ External secrets
 {{- define "mozcloud.config.externalSecrets" -}}
 {{- $globals := .Values.global.mozcloud -}}
 {{- $external_secrets := default (dict) .Values.externalSecrets -}}
+{{- $prefix := include "mozcloud.preview.prefix" . -}}
 externalSecrets:
-  {{- $default_secret_name := printf "%s-secrets" $globals.app_code }}
+  {{- $default_secret_name := printf "%s%s-secrets" $prefix $globals.app_code }}
   {{ $default_secret_name }}:
-    target: {{ $globals.app_code }}-secrets
+    target: {{ printf "%s%s-secrets" $prefix $globals.app_code }}
     gsm:
       secret: {{ .Values.global.mozcloud.env_code }}-gke-app-secrets
   {{- range $secret_name, $secret_config := $external_secrets }}
-  {{ $secret_name }}:
-    target: {{ $secret_name }}
+  {{- $prefixed_name := printf "%s%s" $prefix $secret_name }}
+  {{ $prefixed_name }}:
+    target: {{ $prefixed_name }}
     gsm:
       secret: {{ $secret_config.gsmSecretName }}
       version: {{ default "latest" $secret_config.version }}
@@ -903,7 +996,7 @@ persistentVolumes:
     component: {{ $workload_config.component }}
     size: {{ $volume_config.size }}
     storageClassName: {{ $volume_config.storageClassName }}
-    accessModes: 
+    accessModes:
     {{ $volume_config.accessModes | toYaml | nindent 6 }}
   {{- end }}
   {{- end }}
@@ -966,6 +1059,17 @@ Formatting helpers
     {{- $defaults := omit $default_workload "hosts" -}}
     {{- $_ := set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
+{{- end -}}
+{{- /* Apply preview prefix to workload names if in preview mode */ -}}
+{{- $preview_config := dig "preview" dict . -}}
+{{- if and ($preview_config.enabled) ($preview_config.pr) -}}
+  {{- $prefix := printf "pr%v-" $preview_config.pr -}}
+  {{- $prefixed_workloads := dict -}}
+  {{- range $name, $config := $workloads -}}
+    {{- $prefixed_name := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixed_workloads $prefixed_name $config -}}
+  {{- end -}}
+  {{- $workloads = $prefixed_workloads -}}
 {{- end -}}
 {{- range $name, $config := $workloads -}}
   {{- if not $config.component -}}

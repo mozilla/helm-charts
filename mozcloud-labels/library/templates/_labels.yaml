@@ -6,9 +6,10 @@ app_code
 artifact_id  # removed due to sync issues where every commit to webservices-infra triggered syncs
 component_code
 env_code
+preview_pr  # PR number for preview deployments
 
 */ -}}
-{{- $context_labels := list "app_code" "artifact_id" "component_code" "env_code" "mozcloud_chart" "mozcloud_chart_version" -}}
+{{- $context_labels := list "app_code" "artifact_id" "component_code" "env_code" "mozcloud_chart" "mozcloud_chart_version" "preview_pr" -}}
 {{- $context := dict -}}
 {{- range $context_label := $context_labels -}}
   {{- if index $ $context_label -}}
@@ -38,6 +39,9 @@ component_code: {{ .component_code }}
 env_code: {{ .env_code }}
 mozcloud_chart: {{ .mozcloud_chart }}
 mozcloud_chart_version: {{ .mozcloud_chart_version }}
+{{- if .preview_pr }}
+preview_pr: {{ .preview_pr | quote }}
+{{- end }}
 {{- if eq .env_code "prod" }}
 realm: prod
 {{- else }}

@@ -32,6 +32,16 @@ Params:
     {{- $_ := set $cronJobs $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
 {{- end -}}
+{{- /* Apply preview prefix to cronjob names if in preview mode */ -}}
+{{- if include "mozcloud.preview.enabled" $ -}}
+  {{- $prefix := include "mozcloud.preview.prefix" $ -}}
+  {{- $prefixed_cronJobs := dict -}}
+  {{- range $name, $config := $cronJobs -}}
+    {{- $prefixed_name := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixed_cronJobs $prefixed_name $config -}}
+  {{- end -}}
+  {{- $cronJobs = $prefixed_cronJobs -}}
+{{- end -}}
 {{ $cronJobs | toYaml }}
 {{- end -}}
 
@@ -65,6 +75,16 @@ Params:
     {{- $config = mergeOverwrite (deepCopy $common) $config -}}
     {{- $_ := set $jobs $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
+{{- end -}}
+{{- /* Apply preview prefix to job names if in preview mode */ -}}
+{{- if include "mozcloud.preview.enabled" $ -}}
+  {{- $prefix := include "mozcloud.preview.prefix" $ -}}
+  {{- $prefixedJobs := dict -}}
+  {{- range $name, $config := $jobs -}}
+    {{- $prefixedName := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixedJobs $prefixedName $config -}}
+  {{- end -}}
+  {{- $jobs = $prefixedJobs -}}
 {{- end -}}
 {{ $jobs | toYaml }}
 {{- end -}}

@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 0.2.3](https://img.shields.io/badge/Version-0.2.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~0.2.3
+    version: ~0.3.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -35,9 +35,9 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.24 |
-| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.4.19 |
-| file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.15 |
+| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.25 |
+| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.4.20 |
+| file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.16 |
 
 ## Values
 
@@ -47,6 +47,19 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | enabled | bool | `true` |  |
 | externalSecrets | object | `{}` |  |
 | persistentVolumes | object | `{}` |  |
+| preview.enabled | bool | `false` |  |
+| preview.endpointCheck.activeDeadlineSeconds | int | `900` |  |
+| preview.endpointCheck.backoffLimit | int | `1` |  |
+| preview.endpointCheck.checkPath | string | `"__heartbeat__"` |  |
+| preview.endpointCheck.enabled | bool | `true` |  |
+| preview.endpointCheck.image | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/curlimages/curl:8.14.1"` |  |
+| preview.endpointCheck.maxAttempts | int | `60` |  |
+| preview.endpointCheck.maxTimePerAttempt | int | `5` |  |
+| preview.endpointCheck.sleepSeconds | int | `15` |  |
+| preview.httpRoute.enabled | bool | `true` |  |
+| preview.httpRoute.gateway.name | string | `"sandbox-high-preview-gateway"` |  |
+| preview.httpRoute.gateway.namespace | string | `"preview-shared-infrastructure"` |  |
+| preview.urlTransformKeys | list | `[]` |  |
 | serviceAccounts | object | `{}` | ---------------------------------------------------------------------------- This chart CANNOT create resources in GCP. For this work, you must have already created the following in GCP using Terraform:   - GCP service account   - GCP service account permissions   - Workload Identity configuration  To learn more about creating service accounts in GCP with Workload Identity, review this link: <link>  By default, a service account using the name of your tenant will be created that corresponds to the GCP service account automatically created during the tenant provisioning process. The naming convention is as follows:    gke-<environment>@<gcp_project_id>.iam.serviceaccount.com  Any service accounts created here will be created IN ADDITION to that tenant service account.  Example and configuration options:  serviceAccounts:   # This is the name of the Kubernetes service account you would like to   # create. To use this service account with your workloads or jobs, reference   # the name you specify here in the `serviceAccounts` sections in container   # configurations.   kubernetes-service-account-name:     # If this service account should map to a service account in GCP, enter     # the details here.     gcpServiceAccount:       # The name of the GCP service account (everything before "@" in the       # email address).       name: ''        # GCP project ID. If not specified, the value automatically set in       # .Values.global.mozcloud.project_id will be used.       #projectId: '' |
 | tasks.common.container.args | list | `[]` |  |
 | tasks.common.container.command | list | `[]` |  |

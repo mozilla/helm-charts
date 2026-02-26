@@ -1,10 +1,28 @@
 {{- if .Values.enabled }}
 {{- $config_maps := .Values.configMaps }}
+{{- /*
+  Transform specific ConfigMap keys for preview environments.
+
+  Many services have environment variables that reference static hostnames or urls.
+  These need to be transformed to use the generated preview hostname instead.
+*/ -}}
+{{- if include "mozcloud.preview.enabled" . -}}
+  {{- $transformed_config_maps := dict -}}
+  {{- $transform_keys := default list .Values.preview.urlTransformKeys -}}
+  {{- range $name, $config := $config_maps -}}
+    {{- $transform_params := dict "data" $config.data "previewHost" $.Values.global.preview.host "transformKeys" $transform_keys -}}
+    {{- $transformed_data := include "mozcloud.preview.transformConfigMapData" $transform_params | fromYaml -}}
+    {{- $transformed_config := mergeOverwrite $config (dict "data" $transformed_data) -}}
+    {{- $_ := set $transformed_config_maps $name $transformed_config -}}
+  {{- end -}}
+  {{- $config_maps = $transformed_config_maps -}}
+{{- end -}}
 {{- if gt (keys $config_maps | len) 0 }}
 {{- $helper_params := dict "configMaps" $config_maps }}
 {{- $params := include "mozcloud.config.configMap" $helper_params | fromYaml }}
 {{- $chart_metadata := dict "Chart" .Chart "Release" .Release "component_code" "configmap" }}
 {{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
-{{- include "common.configMap" (mergeOverwrite $params $label_params) }}
+{{- $context_params := mergeOverwrite (. | deepCopy) (mergeOverwrite $params $label_params) }}
+{{- include "common.configMap" $context_params }}
 {{- end -}}
 {{- end -}}
