@@ -1,4 +1,5 @@
 {{- if .Values.enabled }}
+{{- if not (include "mozcloud.preview.enabled" .) -}}
 {{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
 {{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
 {{- /* Call a helper function that merges user data with defaults */}}
@@ -44,5 +45,6 @@ Frontend Config
   {{- $_ = set $params "frontendConfig" (omit $frontend_config "component") }}
 {{ include "mozcloud-ingress-lib.frontendConfig" (mergeOverwrite $params $label_params) }}
 {{- end }}
+{{- end -}}
 {{- end -}}
 {{- end -}}

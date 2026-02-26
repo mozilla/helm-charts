@@ -1,18 +1,18 @@
 {{- if include "mozcloud.preview.endpointCheckEnabled" . }}
 {{- $config := default dict .Values.preview.endpointCheck }}
-{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
-{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
-{{- $_ := set $label_params "component_code" "preview" }}
-{{- $labels := include "mozcloud-labels-lib.labels" $label_params | fromYaml }}
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- $_ := set $labelParams "component_code" "preview" }}
+{{- $labels := include "mozcloud-labels-lib.labels" $labelParams | fromYaml }}
 
 {{- /* Get all preview hostnames to check */ -}}
-{{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" (default dict .Values.global.preview) }}
-{{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
-{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
-{{- $http_routes := include "mozcloud.config.httpRoutes" $helper_params | fromYaml }}
-{{- $hostname_params := dict "httpRoutes" $http_routes.httpRoutes "previewHost" .Values.global.preview.host }}
-{{- $hostname_result := include "preview.getAllHostnames" $hostname_params | fromYaml }}
-{{- $hostnames_to_check := $hostname_result.hostnames }}
+{{- $formatterParams := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" (default dict .Values.global.preview) }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+{{- $helperParams := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $httpRoutes := include "mozcloud.config.httpRoutes" $helperParams | fromYaml }}
+{{- $hostnameParams := dict "httpRoutes" $httpRoutes.httpRoutes "previewHost" .Values.global.preview.host }}
+{{- $hostnameResult := include "preview.getAllHostnames" $hostnameParams | fromYaml }}
+{{- $hostnamesToCheck := $hostnameResult.hostnames }}
 ---
 apiVersion: batch/v1
 kind: Job
@@ -42,10 +42,10 @@ spec:
               MAX_TIME={{ default 5 $config.maxTimePerAttempt }}
 
               echo "=== Preview Endpoint Check ==="
-              echo "Checking {{ len $hostnames_to_check }} endpoint(s)..."
+              echo "Checking {{ len $hostnamesToCheck }} endpoint(s)..."
               echo ""
 
-              {{- range $hostname := $hostnames_to_check }}
+              {{- range $hostname := $hostnamesToCheck }}
               echo "Checking: https://{{ $hostname }}/$CHECKPATH"
               for i in $(seq 1 $MAX_ATTEMPTS); do
                 if curl -sSf --max-time $MAX_TIME https://{{ $hostname }}/$CHECKPATH > /dev/null 2>&1; then
@@ -69,7 +69,7 @@ spec:
                 exit 1
               else
                 echo "=== Endpoint check PASSED ==="
-                echo "All {{ len $hostnames_to_check }} endpoint(s) are ready"
+                echo "All {{ len $hostnamesToCheck }} endpoint(s) are ready"
                 exit 0
               fi
           resources:

@@ -79,12 +79,12 @@ Params:
 {{- /* Apply preview prefix to job names if in preview mode */ -}}
 {{- if include "mozcloud.preview.enabled" $ -}}
   {{- $prefix := include "mozcloud.preview.prefix" $ -}}
-  {{- $prefixed_jobs := dict -}}
+  {{- $prefixedJobs := dict -}}
   {{- range $name, $config := $jobs -}}
-    {{- $prefixed_name := printf "%s%s" $prefix $name -}}
-    {{- $_ := set $prefixed_jobs $prefixed_name $config -}}
+    {{- $prefixedName := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixedJobs $prefixedName $config -}}
   {{- end -}}
-  {{- $jobs = $prefixed_jobs -}}
+  {{- $jobs = $prefixedJobs -}}
 {{- end -}}
 {{ $jobs | toYaml }}
 {{- end -}}

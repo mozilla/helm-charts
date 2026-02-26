@@ -27,34 +27,34 @@ Template helpers
 ConfigMap template helpers
 */}}
 {{- define "common.config.configMaps" -}}
-{{- $config_maps := .configMaps -}}
+{{- $configMaps := .configMaps -}}
 {{- /* Apply preview prefix to configmap names if in preview mode */ -}}
 {{- if include "mozcloud.preview.enabled" $ -}}
   {{- $prefix := include "mozcloud.preview.prefix" $ -}}
-  {{- $prefixed_config_maps := dict -}}
-  {{- range $name, $config := $config_maps -}}
-    {{- $prefixed_name := printf "%s%s" $prefix $name -}}
-    {{- $_ := set $prefixed_config_maps $prefixed_name $config -}}
+  {{- $prefixedConfigMaps := dict -}}
+  {{- range $name, $config := $configMaps -}}
+    {{- $prefixedName := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixedConfigMaps $prefixedName $config -}}
   {{- end -}}
-  {{- $config_maps = $prefixed_config_maps -}}
+  {{- $configMaps = $prefixedConfigMaps -}}
 {{- end -}}
-{{- $name_override := default "" .nameOverride -}}
+{{- $nameOverride := default "" .nameOverride -}}
 {{- $output := list -}}
-{{- range $name, $config := $config_maps -}}
-  {{- $config_map_config := $config | deepCopy -}}
+{{- range $name, $config := $configMaps -}}
+  {{- $configMapConfig := $config | deepCopy -}}
   {{- /* Configure name and labels */ -}}
-  {{- $_ := set $config_map_config "name" $name }}
-  {{- $labels := default (dict) $config_map_config.labels -}}
-  {{- $params := dict "config" $config_map_config "context" ($ | deepCopy) "labels" $labels -}}
+  {{- $_ := set $configMapConfig "name" $name }}
+  {{- $labels := default (dict) $configMapConfig.labels -}}
+  {{- $params := dict "config" $configMapConfig "context" ($ | deepCopy) "labels" $labels -}}
   {{- $labels = include "common.labels" $params | fromYaml -}}
-  {{- $config_map_config = mergeOverwrite $config_map_config $labels -}}
+  {{- $configMapConfig = mergeOverwrite $configMapConfig $labels -}}
   {{- /* Create configMaps[].data if it does not exist */ -}}
-  {{- $config_map_data := default (dict) $config_map_config.data -}}
-  {{- $_ = set $config_map_config "data" $config_map_data -}}
-  {{- $output = append $output $config_map_config -}}
+  {{- $configMapData := default (dict) $configMapConfig.data -}}
+  {{- $_ = set $configMapConfig "data" $configMapData -}}
+  {{- $output = append $output $configMapConfig -}}
 {{- end -}}
-{{- $config_maps = dict "configMaps" $output -}}
-{{ $config_maps | toYaml }}
+{{- $configMaps = dict "configMaps" $output -}}
+{{ $configMaps | toYaml }}
 {{- end -}}
 
 {{/*

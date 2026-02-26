@@ -51,25 +51,25 @@ No transformation occurs by default - keys must be explicitly listed
 */}}
 {{- define "mozcloud.preview.transformConfigMapData" -}}
 {{- $data := .data -}}
-{{- $preview_host := .previewHost -}}
-{{- $transform_keys := .transformKeys | default list -}}
-{{- $transformed_data := dict -}}
+{{- $previewHost := .previewHost -}}
+{{- $transformKeys := .transformKeys | default list -}}
+{{- $transformedData := dict -}}
 {{- range $key, $value := $data -}}
-  {{- $should_transform := false -}}
+  {{- $shouldTransform := false -}}
   {{- /* Check if key is in the explicit transform list */ -}}
-  {{- range $transform_keys -}}
+  {{- range $transformKeys -}}
     {{- if eq $key . -}}
-      {{- $should_transform = true -}}
+      {{- $shouldTransform = true -}}
     {{- end -}}
   {{- end -}}
   {{- /* Transform if key is listed and value is empty */ -}}
-  {{- if and $should_transform (or (not $value) (eq $value "")) -}}
-    {{- $_ := set $transformed_data $key (printf "https://%s" $preview_host) -}}
+  {{- if and $shouldTransform (or (not $value) (eq $value "")) -}}
+    {{- $_ := set $transformedData $key (printf "https://%s" $previewHost) -}}
   {{- else -}}
-    {{- $_ := set $transformed_data $key $value -}}
+    {{- $_ := set $transformedData $key $value -}}
   {{- end -}}
 {{- end -}}
-{{ $transformed_data | toYaml }}
+{{ $transformedData | toYaml }}
 {{- end -}}
 
 {{/*
@@ -78,15 +78,6 @@ Generate preview prefix if preview mode is enabled
 {{- define "mozcloud.preview.prefix" -}}
 {{- if include "mozcloud.preview.enabled" . -}}
 {{- printf "pr%v-" .Values.global.preview.pr -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Preview labels to inject when in preview mode
-*/}}
-{{- define "mozcloud.preview.labels" -}}
-{{- if include "mozcloud.preview.enabled" . -}}
-app.preview/pr: {{ .Values.global.preview.pr | quote }}
 {{- end -}}
 {{- end -}}
 
@@ -142,11 +133,6 @@ Create label parameters to be used in library chart if defined as values.
 {{- /* Add preview PR as selector label if in preview mode */ -}}
 {{- if and .Values.global.preview .Values.global.preview.pr -}}
   {{- $_ := set $params "preview_pr" .Values.global.preview.pr -}}
-{{- end -}}
-{{- /* Add preview labels for metadata */ -}}
-{{- $preview_labels := include "mozcloud.preview.labels" . | fromYaml -}}
-{{- if $preview_labels -}}
-  {{- $params = mergeOverwrite $params $preview_labels -}}
 {{- end -}}
 {{- $params | toYaml }}
 {{- end }}
