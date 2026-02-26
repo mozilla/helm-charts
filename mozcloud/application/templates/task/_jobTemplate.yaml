@@ -77,17 +77,17 @@ template:
         */}}
         {{- if or $containerConfig.envVars $otelContainerEnabled }}
         env:
-          {{- range $envVarName, $envVarValue := $containerConfig.envVars }}
-          - name: {{ $envVarName }}
-            value: {{ $envVarValue | quote }}
-          {{- end }}
           {{- if $otelContainerEnabled }}
           - name: HOST_IP
             valueFrom:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.hostIP
-            {{- end }}
+          {{- end }}
+          {{- range $envVarName, $envVarValue := $containerConfig.envVars }}
+          - name: {{ $envVarName }}
+            value: {{ $envVarValue | quote }}
+          {{- end }}
         {{- end }}
         {{- if or $containerConfig.configMaps $containerConfig.externalSecrets }}
         envFrom:
