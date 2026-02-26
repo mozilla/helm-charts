@@ -1,0 +1,50 @@
+---
+# Top-level ConfigMaps
+configMaps:
+  app-config:
+    data:
+      APP_ENV: "preview"
+      DEBUG: "true"
+
+# Top-level ServiceAccounts
+serviceAccounts:
+  app-service-account:
+    gcpServiceAccount:
+      name: my-gcp-sa
+
+# Top-level ExternalSecrets
+externalSecrets:
+  app-external-secret:
+    gsmSecretName: my-gsm-secret
+    version: latest
+
+# Tasks
+tasks:
+  jobs:
+    background-processor:
+      type: postDeployment
+      containers:
+        processor:
+          image:
+            repository: test-repo/processor
+            tag: 1.0.0
+
+# Workload
+workloads:
+  api-service:
+    component: api
+    containers:
+      app:
+        image:
+          repository: test-repo/api-image
+          tag: 1.0.0
+    hosts:
+      api-host:
+        domains:
+          - api.example.com
+        type: external
+        httpRoutes:
+          createHttpRoutes: true
+        tls:
+          certs:
+            - api-cert

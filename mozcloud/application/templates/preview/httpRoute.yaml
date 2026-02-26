@@ -1,0 +1,35 @@
+{{- if include "mozcloud.preview.usePreviewHttpRoute" . }}
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- $formatterParams := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+{{- $helperParams := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
+{{- $params := $labelParams -}}
+
+{{- $httpRoutes := include "mozcloud.config.httpRoutes" $helperParams | fromYaml }}
+{{- /* Transform all HTTP routes for preview mode */ -}}
+{{- $transformParams := dict "httpRoutes" $httpRoutes.httpRoutes "previewHost" $.Values.global.preview.host }}
+{{- $transformedHttpRoutes := include "preview.transformHttpRoutes" $transformParams | fromYaml }}
+{{- range $httpRouteName, $httpRouteConfig := $transformedHttpRoutes.httpRoutes }}
+  {{- $_ := set $labelParams "component_code" $httpRouteConfig.component }}
+
+  {{- /* Prefix HTTPRoute name with PR number */ -}}
+  {{- $previewPrefix := include "mozcloud.preview.prefix" $ }}
+  {{- $prefixedHttpRouteName := printf "%s%s" $previewPrefix $httpRouteName }}
+
+  {{- /* Override gateway refs to use shared preview gateway */ -}}
+  {{- $gatewayName := default "sandbox-high-preview-gateway" (($.Values.preview.httpRoute).gateway).name }}
+  {{- $gatewayNamespace := default "preview-shared-infrastructure" (($.Values.preview.httpRoute).gateway).namespace }}
+  {{- $previewGatewayRefs := list }}
+  {{- range $httpRouteConfig.gatewayRefs }}
+    {{- $updatedRef := mergeOverwrite . (dict "name" $gatewayName "namespace" $gatewayNamespace) }}
+    {{- $previewGatewayRefs = append $previewGatewayRefs $updatedRef }}
+  {{- end }}
+
+  {{- $_ := set $httpRouteConfig "gatewayRefs" $previewGatewayRefs }}
+
+  {{- $_ = set $params "httpRouteConfig" (dict "httpRoutes" (dict $prefixedHttpRouteName (omit $httpRouteConfig "component"))) }}
+{{ include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite $params $labelParams) -}}
+{{- end }}
+{{- end -}}

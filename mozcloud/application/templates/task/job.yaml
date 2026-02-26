@@ -3,8 +3,8 @@
 {{- $context := deepCopy . }}
 {{- $globals := .Values.global.mozcloud }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
-{{- $params := dict "common" $common "jobs" (default (dict) .Values.tasks.jobs) }}
-{{- $jobs := include "mozcloud.job.formatter" $params | fromYaml }}
+{{- $formatter_params := mergeOverwrite (. | deepCopy) (dict "common" $common "jobs" (default (dict) .Values.tasks.jobs)) }}
+{{- $jobs := include "mozcloud.job.formatter" $formatter_params | fromYaml }}
 {{- if $jobs }}
 {{- $_ := set $context "component_code" "job" -}}
 {{- range $name, $config := $jobs }}
@@ -21,9 +21,9 @@ metadata:
   {{- end }}
   name: {{ $name }}
   labels:
-    {{- $params = dict "context" (mergeOverwrite (deepCopy $context) $labelParams) "labels" (default (dict) $config.labels) }}
+    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) "labels" (default (dict) $config.labels) }}
     {{- $labels := include "common.labels" $params | fromYaml }}
-    {{ $labels.labels | toYaml | nindent 4 }}
+    {{- $labels.labels | toYaml | nindent 4 }}
   {{- $type := "" }}
   {{- if eq $config.type "preDeployment" }}
     {{- $type = "jobPreDeployment" }}
@@ -43,7 +43,7 @@ spec:
   The template below can be found in templates/task/_jobTemplate.yaml
   */}}
   {{- $params = dict "common" $common "config" $config "context" $context }}
-  {{- include "mozcloud.job.jobTemplate" $params | nindent 2 }}
+  {{- include "mozcloud.job.jobTemplate" $params | trim | nindent 2 }}
 {{- end }}
 {{- end }}
 {{- end }}

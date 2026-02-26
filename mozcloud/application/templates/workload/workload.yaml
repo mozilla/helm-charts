@@ -2,7 +2,8 @@
 {{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
 {{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
 {{- /* Call a helper function that merges user data with defaults */}}
-{{- $formatter_params := dict "component" "containers" "workloads" (.Values.workloads | deepCopy) }}
+{{- $preview_config := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- $formatter_params := dict "component" "containers" "workloads" (.Values.workloads | deepCopy) "preview" $preview_config }}
 {{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
 
 {{- /* We will build $params as we go */}}
@@ -21,13 +22,15 @@ Deployments
 {{- end }}
 
 {{- /*
-HPAs
+HPAs - Skip in preview mode as preview environments don't need autoscaling
 */}}
+{{- if not (include "mozcloud.preview.enabled" .) }}
 {{- $hpas := include "mozcloud.config.autoscaling" $helper_params | fromYaml }}
 {{- range $hpa_name, $hpa_config := $hpas.hpas }}
 {{- $_ := set $label_params "component_code" $hpa_config.component }}
 {{- $_ = set $params "hpas" (dict $hpa_name (omit $hpa_config "component")) }}
 {{ include "workload.hpa" (mergeOverwrite $params $label_params) }}
+{{- end }}
 {{- end }}
 
 {{- /*

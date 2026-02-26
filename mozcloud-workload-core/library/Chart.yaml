@@ -1,6 +1,6 @@
 apiVersion: v2
 name: mozcloud-workload-core-lib
-description: A library chart that creates core components needed for MozCloud 
+description: A library chart that creates core components needed for MozCloud
   workloads
 
 # A chart can be either an 'application' or a 'library' chart.
@@ -16,9 +16,9 @@ type: library
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.6.21
+version: 0.6.22
 
 dependencies:
   - name: mozcloud-labels-lib
-    version: 0.3.15
+    version: 0.3.16
     repository: file://../../mozcloud-labels/library
