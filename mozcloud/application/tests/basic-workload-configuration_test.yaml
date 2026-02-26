@@ -26,7 +26,7 @@ tests:
     template: externalsecret/externalsecret.yaml
     documentSelector:
       path: $[?(@.kind == "ExternalSecret")].metadata.name
-      value: mozcloud-test-secrets
+      value: mozcloud-test-test-chart-secrets
     asserts:
       - equal:
           path: metadata.annotations["argocd.argoproj.io/sync-wave"]

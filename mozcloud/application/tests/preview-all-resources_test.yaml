@@ -69,11 +69,11 @@ tests:
   - it: Default ExternalSecret is prefixed with PR number
     template: externalsecret/externalsecret.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-mozcloud-test-secrets")]
+      path: $[?(@.metadata.name == "pr789-mozcloud-test-test-chart-secrets")]
     asserts:
       - equal:
           path: metadata.name
-          value: pr789-mozcloud-test-secrets
+          value: pr789-mozcloud-test-test-chart-secrets
 
   # Test Job is prefixed
   - it: Job is prefixed with PR number

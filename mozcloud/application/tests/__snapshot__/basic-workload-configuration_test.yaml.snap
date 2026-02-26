@@ -16,7 +16,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: mozcloud-test-secrets
+      name: mozcloud-test-test-chart-secrets
     spec:
       dataFrom:
         - extract:
