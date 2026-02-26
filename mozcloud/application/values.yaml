@@ -1152,6 +1152,24 @@ workloads:
         # The default value is "external".
         type: external
 
+        # Optionally reference a shared gateway instead of creating a dedicated
+        # gateway for this host. When configured, this chart will NOT create a
+        # Gateway resource, and HTTPRoutes will reference the specified shared
+        # gateway instead.
+        #
+        # This is useful when multiple applications need to share a single
+        # gateway, or when using a centrally-managed gateway.
+        #
+        # Only applicable when "api" is set to "gateway".
+        #
+        #sharedGateway:
+        #  # The name of the shared gateway to reference.
+        #  name: shared-gateway-name
+        #
+        #  # Optional: The namespace where the shared gateway exists.
+        #  # If not specified, assumes the gateway is in the same namespace.
+        #  #namespace: shared-gateway-namespace
+
         # Global certificate details for external gateways. Certificates MUST be
         # specified if one or more listener(s) uses the HTTPS procotol.
         #

@@ -725,6 +725,21 @@
                   ],
                   "default": "external"
                 },
+                "sharedGateway": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "namespace": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                },
                 "tls": {
                   "type": "object",
                   "additionalProperties": false,
