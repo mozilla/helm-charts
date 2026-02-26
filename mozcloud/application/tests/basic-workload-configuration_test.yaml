@@ -26,7 +26,7 @@ tests:
     template: externalsecret/externalsecret.yaml
     documentSelector:
       path: $[?(@.kind == "ExternalSecret")].metadata.name
-      value: mozcloud-test-test-chart-secrets
+      value: test-chart-secrets
     asserts:
       - equal:
           path: metadata.annotations["argocd.argoproj.io/sync-wave"]
@@ -50,7 +50,7 @@ tests:
             name: secret-store
       - equal:
           path: spec.target.name
-          value: mozcloud-test-secrets
+          value: test-chart-secrets
   - it: Service account is configured correctly
     template: serviceaccount/serviceaccount.yaml
     documentSelector:
