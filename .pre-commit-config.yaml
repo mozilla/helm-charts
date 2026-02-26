@@ -20,6 +20,12 @@ repos:
       - id: helmlint
   - repo: local
     hooks:
+      - id: helm-update-dependencies
+        name: helm update dependencies
+        entry: make update-dependencies
+        files: '^.*\/(application|library)\/.*(\.yaml|\.tpl)$'
+        language: system
+        pass_filenames: false
       - id: helm-unittest
         name: helm unittest
         entry: make unit-tests
