@@ -73,7 +73,7 @@ Configuration matches entire snapshot:
         mozcloud_chart_version: 1.0.0
         preview_pr: "789"
         realm: nonprod
-      name: pr789-mozcloud-test-secrets
+      name: pr789-mozcloud-test-test-chart-secrets
     spec:
       dataFrom:
         - extract:

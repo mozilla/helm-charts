@@ -807,7 +807,7 @@ External secrets
 {{- $external_secrets := default (dict) .Values.externalSecrets -}}
 {{- $prefix := include "mozcloud.preview.prefix" . -}}
 externalSecrets:
-  {{- $default_secret_name := printf "%s%s-secrets" $prefix $globals.app_code }}
+  {{- $default_secret_name := printf "%s%s-%s-secrets" $prefix $globals.app_code $globals.chart }}
   {{ $default_secret_name }}:
     target: {{ printf "%s%s-secrets" $prefix $globals.app_code }}
     gsm:
