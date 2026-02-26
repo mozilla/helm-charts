@@ -33,8 +33,14 @@ Delete this section when it is time to move to shared gateways.
 {{- $_ = set $params "gatewayConfig" (dict "gateways" (dict $gateway_name (omit $gateway_config "component"))) }}
 {{ include "mozcloud-gateway-lib.gateway" (mergeOverwrite $params $label_params) }}
 {{- end }}
+{{- /* Prepare gatewayConfig with all gateways for policy rendering */}}
+{{- $all_gateways_config := dict }}
+{{- range $gateway_name, $gateway_config := $gateways.gateways }}
+{{- $_ := set $all_gateways_config $gateway_name (omit $gateway_config "component") }}
+{{- end }}
 {{- $gateway_policy_config := include "mozcloud.config.gatewayPolicy" . | fromYaml }}
 {{- $_ := set $label_params "component_code" "gateway" }}
+{{- $_ = set $params "gatewayConfig" (dict "gateways" $all_gateways_config) }}
 {{- $_ = set $params "gatewayPolicyConfig" $gateway_policy_config }}
 {{ include "mozcloud-gateway-lib.gatewayPolicy" (mergeOverwrite $params $label_params) -}}
 {{- end }}

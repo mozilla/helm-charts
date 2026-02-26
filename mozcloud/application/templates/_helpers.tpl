@@ -250,47 +250,88 @@ Gateways
 {{- define "mozcloud.config.gateways" -}}
 {{- $globals := .Values.global.mozcloud -}}
 {{- $workloads := .workloads }}
-gateways:
-  {{- range $workload_name, $workload_config := $workloads }}
+{{- /* Collect all unique gateway configurations */}}
+{{- $gatewayConfigs := dict }}
+{{- $defaultComponent := "" }}
+{{- range $workload_name, $workload_config := $workloads }}
   {{- range $host_name, $host_config := default (dict) $workload_config.hosts }}
-  {{- if not (default false $host_config.disableGateway) }}
-  {{ $host_name }}:
-    component: {{ $workload_config.component }}
-    type: {{ $host_config.type }}
-    {{- if ($host_config).multiCluster }}
-    className: gke-l7-global-external-managed-mc
-    {{- end }}
-    addresses:
-      {{- if $host_config.addresses }}
-      {{- range $address := $host_config.addresses }}
-      - {{ $address }}
+    {{- /* Skip if gateway is disabled or using a shared gateway */}}
+    {{- if and (not (default false $host_config.disableGateway)) (not ($host_config).sharedGateway) }}
+      {{- /* Set default component from first workload */}}
+      {{- if not $defaultComponent }}
+        {{- $defaultComponent = $workload_config.component }}
       {{- end }}
+      {{- /* Build gateway configuration key based on unique attributes */}}
+      {{- $className := "gke-l7-global-external-managed" }}
+      {{- if ($host_config).multiCluster }}
+        {{- $className = "gke-l7-global-external-managed-mc" }}
+      {{- end }}
+      {{- $addresses := list }}
+      {{- if $host_config.addresses }}
+        {{- $addresses = $host_config.addresses }}
       {{- else }}
-      - {{ $globals.app_code }}-{{ $globals.env_code }}-ip-v4
+        {{- $addresses = list (printf "%s-%s-ip-v4" $globals.app_code $globals.env_code) }}
+      {{- end }}
+      {{- $certs := list }}
+      {{- if eq $host_config.type "external" }}
+        {{- if gt (len (default (list) $host_config.tls.certs)) 0 }}
+          {{- $certs = $host_config.tls.certs }}
+        {{- else }}
+          {{- $certs = list (printf "%s-%s-%s" $globals.app_code $globals.realm $globals.env_code) }}
+        {{- end }}
+      {{- end }}
+      {{- /* Create a unique key for this gateway configuration */}}
+      {{- $configKey := printf "%s-%s-%s" $host_config.type $className ($addresses | join "-") }}
+      {{- if not (hasKey $gatewayConfigs $configKey) }}
+        {{- $gatewayConfig := dict }}
+        {{- $_ := set $gatewayConfig "type" $host_config.type }}
+        {{- $_ = set $gatewayConfig "className" $className }}
+        {{- $_ = set $gatewayConfig "addresses" $addresses }}
+        {{- $_ = set $gatewayConfig "certs" $certs }}
+        {{- $_ = set $gatewayConfigs $configKey $gatewayConfig }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- /* Generate gateways from unique configurations */}}
+gateways:
+  {{- $gatewayCount := len $gatewayConfigs }}
+  {{- range $configKey, $gatewayConfig := $gatewayConfigs }}
+  {{- /* Create gateway name based on app_code and type */}}
+  {{- $gatewayName := $globals.app_code }}
+  {{- /* Add type suffix if multiple gateways exist or if internal */}}
+  {{- if or (gt $gatewayCount 1) (eq $gatewayConfig.type "internal") }}
+    {{- $gatewayName = printf "%s-%s" $gatewayName $gatewayConfig.type }}
+  {{- end }}
+  {{- /* Add multiCluster suffix if applicable */}}
+  {{- if contains "-mc" $gatewayConfig.className }}
+    {{- $gatewayName = printf "%s-mc" $gatewayName }}
+  {{- end }}
+  {{ $gatewayName }}:
+    component: {{ $defaultComponent }}
+    type: {{ $gatewayConfig.type }}
+    className: {{ $gatewayConfig.className }}
+    addresses:
+      {{- range $address := $gatewayConfig.addresses }}
+      - {{ $address }}
       {{- end }}
     listeners:
       - name: http
         protocol: HTTP
         port: 80
-      {{- if eq $host_config.type "external" }}
+      {{- if eq $gatewayConfig.type "external" }}
       - name: https
         protocol: HTTPS
         port: 443
       {{- end }}
-    {{- if eq $host_config.type "external" }}
+    {{- if eq $gatewayConfig.type "external" }}
     tls:
       certs:
-        {{- if gt (len (default (list) $host_config.tls.certs)) 0 }}
-        {{- range $cert := $host_config.tls.certs }}
+        {{- range $cert := $gatewayConfig.certs }}
         - {{ $cert }}
-        {{- end }}
-        {{- else }}
-        - {{ $globals.app_code }}-{{ $globals.realm }}-{{ $globals.env_code }}
         {{- end }}
       type: certmap
     {{- end }}
-  {{- end }}
-  {{- end }}
   {{- end }}
 {{- end -}}
 
@@ -298,6 +339,7 @@ gateways:
 HTTPRoute
 */}}
 {{- define "mozcloud.config.httpRoutes" -}}
+{{- $globals := .Values.global.mozcloud -}}
 {{- $workloads := .workloads -}}
 httpRoutes:
   {{- range $workload_name, $workload_config := $workloads }}
@@ -306,13 +348,42 @@ httpRoutes:
   {{ $host_name }}:
     component: {{ $workload_config.component }}
     gatewayRefs:
-      - name: {{ $host_name }}
-        {{- /*
-        Uncomment and configure "namespace" line below when switching to shared
-        Gateways:
-
-        namespace: <namespace-of-shared-gateway>
-        */}}
+      {{- /* Determine gateway name - use shared gateway if configured, otherwise use local gateway */}}
+      {{- $gatewayName := "" }}
+      {{- $gatewayNamespace := "" }}
+      {{- if ($host_config).sharedGateway }}
+        {{- /* Future: Use shared/external gateway */}}
+        {{- $gatewayName = $host_config.sharedGateway.name }}
+        {{- $gatewayNamespace = default "" $host_config.sharedGateway.namespace }}
+      {{- else }}
+        {{- /* Current: Use local gateway based on app_code and type */}}
+        {{- /* Need to determine if multiple gateway types exist to match naming logic */}}
+        {{- $hasMultipleTypes := false }}
+        {{- $types := dict }}
+        {{- range $wl_name, $wl_config := $workloads }}
+          {{- range $h_name, $h_config := default (dict) $wl_config.hosts }}
+            {{- if and (not (default false $h_config.disableGateway)) (not ($h_config).sharedGateway) }}
+              {{- $_ := set $types $h_config.type true }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+        {{- if gt (len $types) 1 }}
+          {{- $hasMultipleTypes = true }}
+        {{- end }}
+        {{- $gatewayName = $globals.app_code }}
+        {{- /* Add type suffix if multiple types exist or if internal */}}
+        {{- if or $hasMultipleTypes (eq $host_config.type "internal") }}
+          {{- $gatewayName = printf "%s-%s" $gatewayName $host_config.type }}
+        {{- end }}
+        {{- /* Add multiCluster suffix if applicable */}}
+        {{- if ($host_config).multiCluster }}
+          {{- $gatewayName = printf "%s-mc" $gatewayName }}
+        {{- end }}
+      {{- end }}
+      - name: {{ $gatewayName }}
+        {{- if $gatewayNamespace }}
+        namespace: {{ $gatewayNamespace }}
+        {{- end }}
         {{- if eq $host_config.type "external" }}
         section: https
         {{- else }}

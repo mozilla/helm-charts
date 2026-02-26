@@ -16,7 +16,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: test-service
+      name: mozcloud-test
     spec:
       addresses:
         - type: NamedAddress
@@ -50,14 +50,14 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: test-service
+      name: mozcloud-test
     spec:
       default:
         sslPolicy: mozilla-intermediate
       targetRef:
         group: gateway.networking.k8s.io
         kind: Gateway
-        name: test-service
+        name: mozcloud-test
   3: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
@@ -80,7 +80,7 @@ Configuration matches entire snapshot:
       parentRefs:
         - group: gateway.networking.k8s.io
           kind: Gateway
-          name: test-service
+          name: mozcloud-test
           sectionName: https
       rules:
         - backendRefs:
@@ -110,7 +110,7 @@ Configuration matches entire snapshot:
       parentRefs:
         - group: gateway.networking.k8s.io
           kind: Gateway
-          name: test-service
+          name: mozcloud-test
           sectionName: http
       rules:
         - filters:
