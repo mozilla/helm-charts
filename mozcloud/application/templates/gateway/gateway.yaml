@@ -3,12 +3,12 @@
 {{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
 {{- /* Call a helper function that merges user data with defaults */}}
 {{- $preview_config := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
-{{- $formatter_params := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" $preview_config }}
+{{- $formatter_params := dict "api" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" $preview_config }}
 {{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
 {{- /* Also get ALL workloads (unfiltered by api type) for backend processing
      This allows backends to be created even for hosts with api: none */}}
 {{- $formatterParamsAll := dict "workloads" (.Values.workloads | deepCopy) "preview" $preview_config }}
-{{- $allWorkloads := include "mozcloud.formatter.workloadsForBackends" $formatterParamsAll | fromYaml -}}
+{{- $allWorkloads := include "mozcloud.formatter.workloads" $formatterParamsAll | fromYaml -}}
 
 {{- /*
 Only include Gateway and related resources if we have Gateway hosts defined

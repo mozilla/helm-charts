@@ -996,7 +996,7 @@ Formatting helpers
 {{- end -}}
 
 {{- define "mozcloud.formatter.workloads" -}}
-{{- $component := .component -}}
+{{- $api := .api -}}
 {{- $workload_values := .workloads -}}
 {{- $workloads := .workloads -}}
 {{- /* Remove default workloads key and merge with user-defined keys, if defined */}}
@@ -1016,11 +1016,11 @@ Formatting helpers
     {{- end -}}
     {{- if gt (keys $hosts | len) 0 -}}
       {{- /*
-      If we are working with a Gateway or Ingress template, we will want to
-      filter out hosts that are not set to the correct API type
+      If an api parameter is provided, filter hosts to only those matching that API type.
+      If no api parameter is provided, return all hosts regardless of API type.
       */ -}}
-      {{- if or (eq $component "gateway") (eq $component "ingress") -}}
-        {{- $helper_params := dict "component" $component "hosts" $hosts "workloadName" $name -}}
+      {{- if and $api (or (eq $api "gateway") (eq $api "ingress")) -}}
+        {{- $helper_params := dict "component" $api "hosts" $hosts "workloadName" $name -}}
         {{- $hosts = include "mozcloud.formatter.host" $helper_params | fromYaml -}}
       {{- end -}}
       {{- $_ := set $config "hosts" $hosts -}}
@@ -1049,55 +1049,6 @@ Formatting helpers
 {{ $workloads | toYaml }}
 {{- end -}}
 
-{{/*
-Formatter for workloads when processing backends
-This is similar to mozcloud.formatter.workloads but does NOT filter by API type,
-allowing backends to be created for hosts with api: none
-*/}}
-{{- define "mozcloud.formatter.workloadsForBackends" -}}
-{{- $workloadValues := .workloads -}}
-{{- $workloads := .workloads -}}
-{{- /* Remove default workloads key and merge with user-defined keys, if defined */}}
-{{- if or
-  (and (eq (keys $workloadValues | len) 1) (keys $workloadValues | first) "mozcloud-workload")
-  (gt (keys $workloadValues | len) 1)
-}}
-  {{- $workloads = omit $workloads "mozcloud-workload" -}}
-  {{- range $name, $config := $workloads -}}
-    {{- $defaultWorkload := index $workloadValues "mozcloud-workload" -}}
-    {{- /* Merge host configs with defaults */}}
-    {{- $hostValues := $defaultWorkload.hosts -}}
-    {{- $hosts := dict -}}
-    {{- $configHosts := default (dict) $config.hosts -}}
-    {{- range $hostName, $hostConfig := $configHosts -}}
-      {{- $_ := set $hosts $hostName (mergeOverwrite ($hostValues.name | deepCopy) $hostConfig) -}}
-    {{- end -}}
-    {{- if gt (keys $hosts | len) 0 -}}
-      {{- $_ := set $config "hosts" $hosts -}}
-    {{- end -}}
-    {{- $defaults := omit $defaultWorkload "hosts" -}}
-    {{- $_ := set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
-  {{- end -}}
-{{- end -}}
-{{- /* Apply preview prefix to workload names if in preview mode */ -}}
-{{- $previewConfig := dig "preview" dict . -}}
-{{- if and ($previewConfig.enabled) ($previewConfig.pr) -}}
-  {{- $prefix := printf "pr%v-" $previewConfig.pr -}}
-  {{- $prefixedWorkloads := dict -}}
-  {{- range $name, $config := $workloads -}}
-    {{- $prefixedName := printf "%s%s" $prefix $name -}}
-    {{- $_ := set $prefixedWorkloads $prefixedName $config -}}
-  {{- end -}}
-  {{- $workloads = $prefixedWorkloads -}}
-{{- end -}}
-{{- range $name, $config := $workloads -}}
-  {{- if not $config.component -}}
-    {{- $failMessage := printf "A component was not defined for workload \"%s\". You must define a component in \".Values.mozcloud.workloads.%s.component\". See values.yaml in the mozcloud-workload chart for more details." $name $name -}}
-    {{- fail $failMessage -}}
-  {{- end -}}
-{{- end -}}
-{{ $workloads | toYaml }}
-{{- end -}}
 
 {{/* Volume config formatter */}}
 {{- define "mozcloud.formatter.volumes" -}}
