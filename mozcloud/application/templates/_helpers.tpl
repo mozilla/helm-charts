@@ -297,16 +297,10 @@ Gateways
 gateways:
   {{- $gatewayCount := len $gatewayConfigs }}
   {{- range $configKey, $gatewayConfig := $gatewayConfigs }}
-  {{- /* Create gateway name based on app_code and type */}}
-  {{- $gatewayName := $globals.app_code }}
-  {{- /* Add type suffix if multiple gateways exist or if internal */}}
-  {{- if or (gt $gatewayCount 1) (eq $gatewayConfig.type "internal") }}
-    {{- $gatewayName = printf "%s-%s" $gatewayName $gatewayConfig.type }}
-  {{- end }}
-  {{- /* Add multiCluster suffix if applicable */}}
-  {{- if contains "-mc" $gatewayConfig.className }}
-    {{- $gatewayName = printf "%s-mc" $gatewayName }}
-  {{- end }}
+  {{- $hasMultipleTypes := gt $gatewayCount 1 }}
+  {{- $multiCluster := contains "-mc" $gatewayConfig.className }}
+  {{- $gatewayNameParams := dict "appCode" $globals.app_code "type" $gatewayConfig.type "hasMultipleTypes" $hasMultipleTypes "multiCluster" $multiCluster }}
+  {{- $gatewayName := include "gateway.name" $gatewayNameParams }}
   {{ $gatewayName }}:
     component: {{ $defaultComponent }}
     type: {{ $gatewayConfig.type }}
@@ -370,15 +364,9 @@ httpRoutes:
         {{- if gt (len $types) 1 }}
           {{- $hasMultipleTypes = true }}
         {{- end }}
-        {{- $gatewayName = $globals.app_code }}
-        {{- /* Add type suffix if multiple types exist or if internal */}}
-        {{- if or $hasMultipleTypes (eq $hostConfig.type "internal") }}
-          {{- $gatewayName = printf "%s-%s" $gatewayName $hostConfig.type }}
-        {{- end }}
-        {{- /* Add multiCluster suffix if applicable */}}
-        {{- if ($hostConfig).multiCluster }}
-          {{- $gatewayName = printf "%s-mc" $gatewayName }}
-        {{- end }}
+        {{- $multiCluster := ($hostConfig).multiCluster }}
+        {{- $gatewayNameParams := dict "appCode" $globals.app_code "type" $hostConfig.type "hasMultipleTypes" $hasMultipleTypes "multiCluster" $multiCluster }}
+        {{- $gatewayName = include "gateway.name" $gatewayNameParams }}
       {{- end }}
       - name: {{ $gatewayName }}
         {{- if $gatewayNamespace }}
