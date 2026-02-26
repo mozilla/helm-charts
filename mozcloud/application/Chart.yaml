@@ -1,8 +1,8 @@
 apiVersion: v2
 name: mozcloud
-description: Opinionated application chart used to deploy MozCloud Kubernetes
+description: Opinionated application chart used to deploy MozCloud Kubernetes 
   resources supporting resources
-version: 0.5.0
+version: 0.5.1
 type: application
 dependencies:
   - name: mozcloud-gateway-lib
