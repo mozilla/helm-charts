@@ -136,16 +136,16 @@ spec:
           {{- $otel_container_enabled := and $otel_enabled (not $otel_auto_instrumentation_enabled) (has $container.name $otel_container_names) }}
           {{- if or $container.env $otel_container_enabled }}
           env:
-            {{- range $env_var := $container.env }}
-            - name: {{ $env_var.name }}
-              value: {{ $env_var.value | quote }}
-            {{- end }}
             {{- if $otel_container_enabled }}
             - name: HOST_IP
               valueFrom:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.hostIP
+            {{- end }}
+            {{- range $env_var := $container.env }}
+            - name: {{ $env_var.name }}
+              value: {{ $env_var.value | quote }}
             {{- end }}
           {{- end }}
           {{- if $container.envFrom }}
