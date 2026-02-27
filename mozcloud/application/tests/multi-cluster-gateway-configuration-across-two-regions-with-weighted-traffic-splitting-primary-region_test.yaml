@@ -185,18 +185,18 @@ tests:
   - it: GCPGatewayPolicy is configured correctly
     documentSelector:
       path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
-      value: mozcloud-test-mc
+      value: mozcloud-test
     asserts:
       - equal:
           path: spec.targetRef
           value:
             group: gateway.networking.k8s.io
             kind: Gateway
-            name: mozcloud-test-mc
+            name: mozcloud-test
   - it: Gateway is configured correctly
     documentSelector:
       path: $[?(@.kind == "Gateway")].metadata.name
-      value: mozcloud-test-mc
+      value: mozcloud-test
     asserts:
       - equal:
           path: spec.gatewayClassName
