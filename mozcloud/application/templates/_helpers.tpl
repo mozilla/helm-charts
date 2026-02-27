@@ -786,29 +786,6 @@ deployments:
 {{- end -}}
 
 {{/*
-External secrets
-*/}}
-{{- define "mozcloud.config.externalSecrets" -}}
-{{- $globals := .Values.global.mozcloud -}}
-{{- $external_secrets := default (dict) .Values.externalSecrets -}}
-{{- $prefix := include "mozcloud.preview.prefix" . -}}
-externalSecrets:
-  {{- $default_secret_name := printf "%s%s-secrets" $prefix $globals.chart }}
-  {{ $default_secret_name }}:
-    target: {{ printf "%s%s-secrets" $prefix $globals.chart }}
-    gsm:
-      secret: {{ .Values.global.mozcloud.env_code }}-gke-app-secrets
-  {{- range $secret_name, $secret_config := $external_secrets }}
-  {{- $prefixed_name := printf "%s%s" $prefix $secret_name }}
-  {{ $prefixed_name }}:
-    target: {{ $prefixed_name }}
-    gsm:
-      secret: {{ $secret_config.gsmSecretName }}
-      version: {{ default "latest" $secret_config.version }}
-  {{- end }}
-{{- end -}}
-
-{{/*
 Pod monitorings
 */}}
 {{- define "mozcloud.config.podMonitorings" -}}

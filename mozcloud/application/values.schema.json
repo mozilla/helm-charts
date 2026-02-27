@@ -109,6 +109,10 @@
           "gsmSecretName": {
             "type": "string"
           },
+          "refreshInterval": {
+            "type": "string",
+            "default": "5m"
+          },
           "version": {
             "type": "string",
             "default": "latest"

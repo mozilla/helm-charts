@@ -73,6 +73,11 @@ configMaps: {}
 #       # This should be the name of the secret in Google Secret Manager (GSM).
 #       gsmSecretName: ''
 #
+#       # This configures how often the external secret in GSM is synced to
+#       # Kubernetes. The default is "5m" and should not typically need to be
+#       # changed.
+#       refreshInterval: 5m
+#
 #       # The version of the secret to pull from GSM. The default value is
 #       # "latest".
 #       version: latest

@@ -48,40 +48,6 @@ PersistentVolumeClaim template helpers
 {{- end -}}
 
 {{/*
-ExternalSecret template helpers
-*/}}
-{{- define "common.config.externalSecrets" -}}
-{{- $app_code := default "" .app_code -}}
-{{- $environment := default "" .env_code -}}
-{{- $external_secrets := .externalSecrets -}}
-{{- $name_override := default "" .nameOverride -}}
-{{- $output := list -}}
-{{- range $external_secret := $external_secrets -}}
-  {{- $defaults := include "common.defaults.externalSecret.config" $ | fromYaml -}}
-  {{- $external_secret_config := mergeOverwrite $defaults $external_secret -}}
-  {{- /* Configure name and labels */ -}}
-  {{- $labels := default (dict) $external_secret_config.labels -}}
-  {{- $params := dict "config" $external_secret_config "context" ($ | deepCopy) "labels" $labels -}}
-  {{- $labels = include "common.labels" $params | fromYaml -}}
-  {{- $external_secret_config = mergeOverwrite $external_secret_config $labels -}}
-  {{- /* Populate ExternalSecret-specific fields, if not specified */ -}}
-  {{- if and (not $external_secret.target) $app_code -}}
-    {{- /* Prefer to construct the target name using .app_code if specified, otherwise use default */ -}}
-    {{- $target_name := printf "%s-secrets" $app_code -}}
-    {{- $_ := set $external_secret_config "target" $target_name -}}
-  {{- end -}}
-  {{- if and (not ($external_secret.gsm).secret) $environment -}}
-    {{- /* Prefer to construct the GSM secret name using .environment if specified, otherwise use default */ -}}
-    {{- $gsm_secret := printf "%s-gke-app-secrets" $environment -}}
-    {{- $_ := set $external_secret_config.gsm "secret" $gsm_secret -}}
-  {{- end -}}
-  {{- $output = append $output $external_secret_config -}}
-{{- end -}}
-{{- $external_secrets = dict "externalSecrets" $output -}}
-{{ $external_secrets | toYaml }}
-{{- end -}}
-
-{{/*
 ServiceAccount template helpers
 */}}
 {{- define "common.config.serviceAccount.gcpServiceAccount" -}}
@@ -137,15 +103,6 @@ ServiceAccount template helpers
 {{/*
 Defaults
 */}}
-{{- define "common.defaults.externalSecret.config" -}}
-name: {{ include "common.config.name" . }}
-refreshInterval: 5m
-target: {{ include "common.config.name" . }}-secrets
-gsm:
-  secret: dev-gke-app-secrets
-  version: latest
-{{- end -}}
-
 {{- define "common.defaults.serviceAccount.config" -}}
 name: {{ include "common.config.name" . }}
 {{- end -}}
