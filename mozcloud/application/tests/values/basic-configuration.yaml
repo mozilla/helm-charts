@@ -1,4 +1,9 @@
 ---
+configMaps:
+  test-configmap:
+    data:
+      FOO: bar
+      baz: "1"
 workloads:
   # This is the name of the workload ("test-service").
   #
@@ -12,18 +17,11 @@ workloads:
     component: web
     containers:
       app:
+        configMaps: ["test-configmap"]
         image:
           repository: test-repo/test-image
           tag: 1.0.0
         volumes:
-          - name: test-service-pvc
-            path: /data/pvc
-            type: persistentVolumeClaim
-            create: true
-            size: 10Gi
-            accessModes:
-              - ReadWriteOnce
-            storageClassName: standard
           - name: test-service-secret
             type: secret
             path: /data/secret

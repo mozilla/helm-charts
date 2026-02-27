@@ -142,20 +142,6 @@ Template helpers
 */}}
 
 {{/*
-ConfigMaps
-*/}}
-{{- define "mozcloud.config.configMap" -}}
-configMaps:
-  {{- range $name, $config := .configMaps }}
-  {{ $name }}:
-    data:
-      {{ $config.data | toYaml | nindent 6 }}
-    annotations:
-      {{ $config.annotations | toYaml | nindent 6 }}
-  {{- end -}}
-{{- end -}}
-
-{{/*
 Gateway API resources
 */}}
 
@@ -800,29 +786,6 @@ deployments:
 {{- end -}}
 
 {{/*
-External secrets
-*/}}
-{{- define "mozcloud.config.externalSecrets" -}}
-{{- $globals := .Values.global.mozcloud -}}
-{{- $external_secrets := default (dict) .Values.externalSecrets -}}
-{{- $prefix := include "mozcloud.preview.prefix" . -}}
-externalSecrets:
-  {{- $default_secret_name := printf "%s%s-secrets" $prefix $globals.chart }}
-  {{ $default_secret_name }}:
-    target: {{ printf "%s%s-secrets" $prefix $globals.chart }}
-    gsm:
-      secret: {{ .Values.global.mozcloud.env_code }}-gke-app-secrets
-  {{- range $secret_name, $secret_config := $external_secrets }}
-  {{- $prefixed_name := printf "%s%s" $prefix $secret_name }}
-  {{ $prefixed_name }}:
-    target: {{ $prefixed_name }}
-    gsm:
-      secret: {{ $secret_config.gsmSecretName }}
-      version: {{ default "latest" $secret_config.version }}
-  {{- end }}
-{{- end -}}
-
-{{/*
 Pod monitorings
 */}}
 {{- define "mozcloud.config.podMonitorings" -}}
@@ -851,32 +814,6 @@ Security context
 user: {{ $user }}
 group: {{ $group }}
 {{- end -}}
-
-{{/*
-Service accounts
-*/}}
-{{- define "mozcloud.config.serviceAccounts" -}}
-{{- $globals := .Values.global.mozcloud -}}
-{{- $service_accounts := default (dict) .Values.serviceAccounts -}}
-{{- $workloads := .workloads -}}
-serviceAccounts:
-  {{- range $workload_name, $workload_config := $workloads }}
-  {{ $globals.app_code }}:
-    gcpServiceAccount:
-      name: gke-{{ $globals.env_code }}
-      projectId: {{ $globals.project_id }}
-  {{- range $service_account_name, $service_account_config := $service_accounts }}
-  {{- if not (eq $service_account_name $globals.app_code) }}
-  {{ $service_account_name }}:
-    {{- if ($service_account_config.gcpServiceAccount).name }}
-    gcpServiceAccount:
-      name: {{ $service_account_config.gcpServiceAccount.name }}
-      projectId: {{ default $globals.project_id $service_account_config.gcpServiceAccount.projectId }}
-    {{- end }}
-  {{- end }}
-  {{- end }}
-  {{- end }}
-{{- end }}
 
 {{/*
 Job resources
@@ -980,28 +917,6 @@ jobs:
   {{- end }}
   {{- end }}
 {{- end -}}
-
-{{/*
-Persistent volume claims
-*/}}
-{{- define "mozcloud.config.persistentVolumes" -}}
-{{- $globals := .Values.global.mozcloud -}}
-{{- $workloads := .workloads -}}
-persistentVolumes:
-  {{- range $workload_name, $workload_config := $workloads }}
-  {{- $volumes := include "mozcloud.formatter.volumes" (dict "workload" $workload_config) | fromYaml }}
-  {{- range $volume_name, $volume_config := $volumes.volumes }}
-  {{- if and (eq $volume_config.type "persistentVolumeClaim") $volume_config.create }}
-  {{ $volume_name }}:
-    component: {{ $workload_config.component }}
-    size: {{ $volume_config.size }}
-    storageClassName: {{ $volume_config.storageClassName }}
-    accessModes:
-    {{ $volume_config.accessModes | toYaml | nindent 6 }}
-  {{- end }}
-  {{- end }}
-  {{- end }}
-{{- end }}
 
 {{/*
 Formatting helpers

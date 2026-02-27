@@ -12,6 +12,7 @@ values:
   - values/globals.yaml
   - values/basic-configuration.yaml
 templates:
+  - configmap/configmap.yaml
   - externalsecret/externalsecret.yaml
   - serviceaccount/serviceaccount.yaml
   - workload/workload.yaml
@@ -22,6 +23,20 @@ tests:
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
+  - it: Config map is configured correctly
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.kind == "ConfigMap")].metadata.name
+      value: test-configmap
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-11"
+      - isSubset:
+          path: data
+          content:
+            FOO: bar
+            baz: "1"
   - it: External secret is configured correctly
     template: externalsecret/externalsecret.yaml
     documentSelector:
@@ -91,7 +106,7 @@ tests:
           value: mozcloud-test
       - lengthEqual:
           path: spec.template.spec.volumes
-          count: 6
+          count: 5
       - isSubset:
           path: spec.template.spec.volumes[0]
           content:
@@ -118,12 +133,6 @@ tests:
               sizeLimit: 500Mi
       - isSubset:
           path: spec.template.spec.volumes[4]
-          content:
-            persistentVolumeClaim:
-              claimName: test-service-pvc
-            name: test-service-pvc
-      - isSubset:
-          path: spec.template.spec.volumes[5]
           content:
             secret:
               name: test-service-secret
