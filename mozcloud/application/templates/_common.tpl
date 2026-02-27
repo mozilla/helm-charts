@@ -191,6 +191,20 @@ type (string): (required) Either "containers" or "init-containers", depending on
 {{ $containers | toYaml }}
 {{- end -}}
 
+{{- define "common.formatter.renderEmbeddedTpl" }}
+{{- $ctx := .context }}
+{{- $output := deepCopy .data }}
+{{- $filterRegexp := `{{-?\s*(?:default\s+"[^"]*"\s+)?\.Values(?:\.[a-zA-Z_]\w*)*\s*-?}}` }}
+{{- range $key, $value := .data }}
+  {{- $hasTpl := (toString $value | regexMatch $filterRegexp) }}
+  {{- if $hasTpl }}
+    {{- $newVal := tpl $value $ctx }}
+    {{- $_ := set $output $key $newVal }}
+  {{- end }}
+{{- end }}
+{{ $output | toYaml }}
+{{- end }}
+
 
 {{- /*
 Pulls labels from mozcloud-labels-lib library chart and supplies them to

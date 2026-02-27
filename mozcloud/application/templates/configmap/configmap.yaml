@@ -5,6 +5,9 @@
 {{- $params := dict "configMaps" .Values.configMaps "context" $context }}
 {{- /* Transform configMap names and data for preview environments, if enabled */}}
 {{- $configMaps := include "mozcloud.configMap.formatter.preview" $params | fromYaml }}
+{{- /* Execute embedded templates if enabled */}}
+{{- $_ := set $params "configMaps" $configMaps }}
+{{- $configMaps = include "mozcloud.configMap.formatter.tpl" $params | fromYaml }}
 {{- if $configMaps }}
 {{- $_ := set $context "component_code" "configmap" -}}
 {{- range $name, $config := $configMaps }}

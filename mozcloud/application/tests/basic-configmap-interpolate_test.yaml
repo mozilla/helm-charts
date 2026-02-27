@@ -1,0 +1,77 @@
+---
+suite: "mozcloud: ConfigMap Values template interpolation"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/basic-configmap-transform.yaml
+set:
+  preview.enabled: true
+  hostname: "test.preview.mozilla.cloud"
+templates:
+  - configmap/configmap.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  # Test that explicitly listed keys are transformed
+  - it: URLBASE is transformed when empty and explicitly listed
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "app-config")]
+    asserts:
+      - equal:
+          path: data.URLBASE
+          value: "https://test.preview.mozilla.cloud"
+
+  - it: ATTACHMENT_BASE is transformed when empty and explicitly listed
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "app-config")]
+    asserts:
+      - equal:
+          path: data.ATTACHMENT_BASE
+          value: "https://test.preview.mozilla.cloud/attachments"
+
+  # Test that non-listed keys are NOT transformed
+  - it: URL_BASE is not transformed when not in urlTransformKeys list
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "app-config")]
+    asserts:
+      - equal:
+          path: data.URL_BASE
+          value: ""
+
+  # Test that non-empty values are preserved
+  - it: Non-empty values are not overwritten
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "app-config")]
+    asserts:
+      - equal:
+          path: data.OTHER_VAR
+          value: "keep-this"
+
+  # Test that values defined in the same file can be referenced
+  - it: HOSTNAME evaluates to yaml value defined in same file
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "app-config")]
+    asserts:
+      - equal:
+          path: data.HOSTNAME
+          value: "mozilla.cloud"
+
+  # Test that default values can be set
+  - it: DEFAULT is set to 'default'
+    template: configmap/configmap.yaml
+    documentSelector:
+      path: $[?(@.metadata.name == "app-config")]
+    asserts:
+      - equal:
+          path: data.DEFAULT
+          value: "default"

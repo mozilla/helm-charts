@@ -96,6 +96,9 @@
                 }
               ]
             }
+          },
+          "tplEnabled": {
+            "type": "boolean"
           }
         }
       }
@@ -118,7 +121,9 @@
             "default": "latest"
           }
         },
-        "required": ["gsmSecretName"]
+        "required": [
+          "gsmSecretName"
+        ]
       }
     },
     "persistentVolumes": {
@@ -279,7 +284,10 @@
                     }
                   }
                 },
-                "required": ["type", "containers"]
+                "required": [
+                  "type",
+                  "containers"
+                ]
               }
             ]
           }
@@ -1097,7 +1105,9 @@
           "type": "boolean"
         }
       },
-      "required": ["schedule"]
+      "required": [
+        "schedule"
+      ]
     },
     "job": {
       "type": "object",
