@@ -129,13 +129,16 @@
         "additionalProperties": false,
         "properties": {
           "accessModes": {
-            "type": "string",
-            "enum": [
-              "ReadWriteOnce",
-              "ReadOnlyMany",
-              "ReadWriteMany"
-            ],
-            "default": "ReadWriteOnce"
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "ReadWriteOnce",
+                "ReadOnlyMany",
+                "ReadWriteMany"
+              ]
+            },
+            "default": ["ReadWriteOnce"]
           },
           "size": {
             "type": "string",
@@ -1007,7 +1010,7 @@
                 "enum": [
                   "configMap",
                   "secret",
-                  "persistentVolumeClaim",
+                  "persistentVolume",
                   "emptyDir"
                 ]
               },
@@ -1019,29 +1022,6 @@
               },
               "readOnly": {
                 "type": "boolean"
-              },
-              "create": {
-                "type": "boolean",
-                "default": false
-              },
-              "accessModes": {
-                "type": "array",
-                "items": {
-                  "type": "string",
-                  "enum": [
-                    "ReadWriteOnce",
-                    "ReadOnlyMany",
-                    "ReadWriteMany"
-                  ]
-                },
-                "default": "ReadWriteOnce"
-              },
-              "size": {
-                "type": "string",
-                "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
-              },
-              "storageClassName": {
-                "type": "string"
               },
               "medium": {
                 "type": "string",
@@ -1060,21 +1040,6 @@
               "path"
             ],
             "allOf": [
-              {
-                "if": {
-                  "properties": {
-                    "type": {
-                      "const": "persistentVolumeClaim"
-                    }
-                  }
-                },
-                "then": {
-                  "required": [
-                    "accessModes",
-                    "size"
-                  ]
-                }
-              },
               {
                 "if": {
                   "properties": {

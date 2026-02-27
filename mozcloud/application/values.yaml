@@ -114,7 +114,8 @@ externalSecrets: {}
 #       #
 #       # For more info, see:
 #       # https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes
-#       accessModes: ''
+#       accessModes:
+#         - ReadWriteOnce
 #
 #       # The size of the volume using SI or IEC units. Sizes can specified using
 #       # the following units: K, Ki, M, Mi, G, Gi
@@ -511,7 +512,7 @@ tasks:
           security: {}
 
           # Optionally mount volumes to the container. The supported volume types
-          # are "configMap" (default), "secret" and "persistentVolumeClaim".
+          # are "configMap" (default), "secret" and "persistentVolume".
           #
           # Volumes should use names that match either config map, external
           # secret, or persistent volume claim names created as part of and
@@ -535,22 +536,8 @@ tasks:
           # use with the exception of "readOnly" which is always "true" here. Any
           # value set for "readOnly" will be ignored in this case.
           #
-          # "persistentVolumeClaim" volumes support additional options that allow
-          # the creation of PVCs as part of the workload definition. These options
-          # include:
-          #
-          #   "create": Boolean value that indicates whether a PVC should be
-          #             created for this volume. Default is "false".
-          #
-          #   "size": The size of the volume to create (e.g. "10Gi"). Required if
-          #           "create" is set to "true".
-          #
-          #   "accessModes": A list of access modes for the volume. Required if
-          #                  "create" is set to "true". Example values include:
-          #                  "ReadWriteOnce", "ReadOnlyMany", and "ReadWriteMany".
-          #
-          #   "storageClassName": The storage class to use for the volume.
-          #                       Optional.
+          # "persistentVolume" volumes allow you to mount a persistent volume
+          # claim created in the .Values.persistentVolumes section.
           #
           # Example:
           #
@@ -567,13 +554,8 @@ tasks:
           #       type: secret
           #       path: /path/to/secret_file.txt
           #     - name: my-pvc-volume
-          #       type: persistentVolumeClaim
+          #       type: persistentVolume
           #       path: /path/to/mount
-          #       create: true
-          #       size: 10Gi
-          #       accessModes:
-          #         - ReadWriteOnce
-          #       storageClassName: standard
           volumes: []
 
       # Configure auto instrumentation for the OTEL Collector.
@@ -980,7 +962,7 @@ workloads:
         security: {}
 
         # Optionally mount volumes to the container. The supported volume types
-        # are "configMap" (default), "secret", "persistentVolumeClaim", and "emptyDir".
+        # are "configMap" (default), "secret", "persistentVolume", and "emptyDir".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -1004,22 +986,8 @@ workloads:
         # use with the exception of "readOnly" which is always "true" here. Any
         # value set for "readOnly" will be ignored in this case.
         #
-        # "persistentVolumeClaim" volumes support additional options that allow
-        # the creation of PVCs as part of the workload definition. These options
-        # include:
-        #
-        #   "create": Boolean value that indicates whether a PVC should be
-        #             created for this volume. Default is "false".
-        #
-        #   "size": The size of the volume to create (e.g. "10Gi"). Required if
-        #           "create" is set to "true".
-        #
-        #   "accessModes": A list of access modes for the volume. Required if
-        #                  "create" is set to "true". Example values include:
-        #                  "ReadWriteOnce", "ReadOnlyMany", and "ReadWriteMany".
-        #
-        #   "storageClassName": The storage class to use for the volume.
-        #                       Optional.
+        # "persistentVolume" volumes allow you to mount a persistent volume
+        # claim created in the .Values.persistentVolumes section.
         #
         # "emptyDir" volumes, as the name suggests, create an empty volume
         # that's created when the Pod is assigned to a node. When a Pod is
@@ -1048,13 +1016,8 @@ workloads:
         #       type: secret
         #       path: /path/to/secret_file.txt
         #     - name: my-pvc-volume
-        #       type: persistentVolumeClaim
+        #       type: persistentVolume
         #       path: /path/to/mount
-        #       create: true
-        #       size: 10Gi
-        #       accessModes:
-        #         - ReadWriteOnce
-        #       storageClassName: standard
         #     - name: cache-volume
         #       type: emptyDir:
         #       path: /path/to/dir
@@ -1414,13 +1377,13 @@ workloads:
         sidecar: false
 
         # Optionally mount volumes to the container. The supported volume types
-        # are "configMap" (default), "secret", "persistentVolumeClaim", and "emptyDir".
+        # are "configMap" (default), "secret", "persistentVolume", and "emptyDir".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
         # external secret names created as part of this chart or reference
-        # ConfigMap, PersistentVolumeClaim and Secret resources created
-        # independently of this chart.
+        # ConfigMap, PersistentVolumeClaim and Secret resources created independently
+        # of this chart.
         #
         # With "configMap" volumes, you can also specify the following options:
         #
@@ -1438,22 +1401,8 @@ workloads:
         # use with the exception of "readOnly" which is always "true" here. Any
         # value set for "readOnly" will be ignored in this case.
         #
-        # "persistentVolumeClaim" volumes support additional options that allow
-        # the creation of PVCs as part of the workload definition. These options
-        # include:
-        #
-        #   "create": Boolean value that indicates whether a PVC should be
-        #             created for this volume. Default is "false".
-        #
-        #   "size": The size of the volume to create (e.g. "10Gi"). Required if
-        #           "create" is set to "true".
-        #
-        #   "accessModes": A list of access modes for the volume. Required if
-        #                  "create" is set to "true". Example values include:
-        #                  "ReadWriteOnce", "ReadOnlyMany", and "ReadWriteMany".
-        #
-        #   "storageClassName": The storage class to use for the volume.
-        #                       Optional.
+        # "persistentVolume" volumes allow you to mount a persistent volume
+        # claim created in the .Values.persistentVolumes section.
         #
         # "emptyDir" volumes, as the name suggests, create an empty volume
         # that's created when the Pod is assigned to a node. When a Pod is
@@ -1482,13 +1431,8 @@ workloads:
         #       type: secret
         #       path: /path/to/secret_file.txt
         #     - name: my-pvc-volume
-        #       type: persistentVolumeClaim
+        #       type: persistentVolume
         #       path: /path/to/mount
-        #       create: true
-        #       size: 10Gi
-        #       accessModes:
-        #         - ReadWriteOnce
-        #       storageClassName: standard
         #     - name: cache-volume
         #       type: emptyDir:
         #       path: /path/to/dir

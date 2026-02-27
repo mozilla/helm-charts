@@ -945,28 +945,6 @@ jobs:
 {{- end -}}
 
 {{/*
-Persistent volume claims
-*/}}
-{{- define "mozcloud.config.persistentVolumes" -}}
-{{- $globals := .Values.global.mozcloud -}}
-{{- $workloads := .workloads -}}
-persistentVolumes:
-  {{- range $workload_name, $workload_config := $workloads }}
-  {{- $volumes := include "mozcloud.formatter.volumes" (dict "workload" $workload_config) | fromYaml }}
-  {{- range $volume_name, $volume_config := $volumes.volumes }}
-  {{- if and (eq $volume_config.type "persistentVolumeClaim") $volume_config.create }}
-  {{ $volume_name }}:
-    component: {{ $workload_config.component }}
-    size: {{ $volume_config.size }}
-    storageClassName: {{ $volume_config.storageClassName }}
-    accessModes:
-    {{ $volume_config.accessModes | toYaml | nindent 6 }}
-  {{- end }}
-  {{- end }}
-  {{- end }}
-{{- end }}
-
-{{/*
 Formatting helpers
 */}}
 {{- define "mozcloud.formatter.host" -}}

@@ -106,7 +106,7 @@ tests:
           value: mozcloud-test
       - lengthEqual:
           path: spec.template.spec.volumes
-          count: 6
+          count: 5
       - isSubset:
           path: spec.template.spec.volumes[0]
           content:
@@ -133,12 +133,6 @@ tests:
               sizeLimit: 500Mi
       - isSubset:
           path: spec.template.spec.volumes[4]
-          content:
-            persistentVolumeClaim:
-              claimName: test-service-pvc
-            name: test-service-pvc
-      - isSubset:
-          path: spec.template.spec.volumes[5]
           content:
             secret:
               name: test-service-secret

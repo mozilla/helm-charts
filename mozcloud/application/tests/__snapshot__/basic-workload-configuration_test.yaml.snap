@@ -211,8 +211,6 @@ Configuration matches entire snapshot:
                 seccompProfile:
                   type: RuntimeDefault
               volumeMounts:
-                - mountPath: /data/pvc
-                  name: test-service-pvc
                 - mountPath: /data/secret
                   name: test-service-secret
                   readOnly: true
@@ -243,9 +241,6 @@ Configuration matches entire snapshot:
                 medium: Memory
                 sizeLimit: 500Mi
               name: test-service-memory
-            - name: test-service-pvc
-              persistentVolumeClaim:
-                claimName: test-service-pvc
             - name: test-service-secret
               secret:
                 name: test-service-secret
@@ -385,26 +380,3 @@ Configuration matches entire snapshot:
         apiVersion: apps/v1
         kind: Deployment
         name: test-service
-  7: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app.kubernetes.io/component: web
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: web
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: test-service-pvc
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 10Gi
-      storageClassName: standard

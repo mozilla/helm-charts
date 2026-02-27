@@ -1,0 +1,30 @@
+{{- if .Values.enabled }}
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $context := deepCopy . }}
+{{- $_ := set $context "component_code" "pvc" -}}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- $prefix := include "mozcloud.preview.prefix" . }}
+{{- $persistentVolumes := default dict .Values.persistentVolumes }}
+{{- range $name, $config := $persistentVolumes }}
+{{- $name = printf "%s%s" $prefix $name }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) }}
+    {{- $labels := include "common.labels" $params | fromYaml }}
+    {{- $labels.labels | toYaml | nindent 4 }}
+spec:
+  accessModes:
+    {{- $accessModes := default (list "ReadWriteOnce") $config.accessModes }}
+    {{- range $accessMode := $accessModes }}
+    - {{ $accessMode }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ $config.size }}
+  storageClassName: {{ $config.storageClassName }}
+{{- end }}
+{{- end }}
