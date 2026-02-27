@@ -1,7 +1,7 @@
 {{- if .Values.enabled }}
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
 {{- $context := deepCopy . }}
-{{- $_ := set $context "component_code" "pvc" -}}
+{{- $_ := set $context "component_code" "pvc" }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
 {{- $prefix := include "mozcloud.preview.prefix" . }}
 {{- $persistentVolumes := default dict .Values.persistentVolumes }}

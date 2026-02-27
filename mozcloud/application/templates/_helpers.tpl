@@ -816,32 +816,6 @@ group: {{ $group }}
 {{- end -}}
 
 {{/*
-Service accounts
-*/}}
-{{- define "mozcloud.config.serviceAccounts" -}}
-{{- $globals := .Values.global.mozcloud -}}
-{{- $service_accounts := default (dict) .Values.serviceAccounts -}}
-{{- $workloads := .workloads -}}
-serviceAccounts:
-  {{- range $workload_name, $workload_config := $workloads }}
-  {{ $globals.app_code }}:
-    gcpServiceAccount:
-      name: gke-{{ $globals.env_code }}
-      projectId: {{ $globals.project_id }}
-  {{- range $service_account_name, $service_account_config := $service_accounts }}
-  {{- if not (eq $service_account_name $globals.app_code) }}
-  {{ $service_account_name }}:
-    {{- if ($service_account_config.gcpServiceAccount).name }}
-    gcpServiceAccount:
-      name: {{ $service_account_config.gcpServiceAccount.name }}
-      projectId: {{ default $globals.project_id $service_account_config.gcpServiceAccount.projectId }}
-    {{- end }}
-  {{- end }}
-  {{- end }}
-  {{- end }}
-{{- end }}
-
-{{/*
 Job resources
 */}}
 {{- define "mozcloud.config.jobs" -}}

@@ -23,66 +23,6 @@ Template helpers
 {{ $name | trunc 63 | trimSuffix "-" }}
 {{- end -}}
 
-{{/*
-ServiceAccount template helpers
-*/}}
-{{- define "common.config.serviceAccount.gcpServiceAccount" -}}
-{{- $output := "" -}}
-{{- if .fullName -}}
-  {{- $output = .fullName -}}
-{{- else if and .name .projectId -}}
-  {{- $output = printf "%s@%s.iam.gserviceaccount.com" .name .projectId -}}
-{{- end -}}
-{{ $output }}
-{{- end -}}
-
-{{- define "common.config.serviceAccounts" -}}
-{{- $name_override := default "" .nameOverride -}}
-{{- $service_accounts := .serviceAccounts -}}
-{{- /* Apply preview prefix to service account names if in preview mode */ -}}
-{{- if include "mozcloud.preview.enabled" $ -}}
-  {{- $prefix := include "mozcloud.preview.prefix" $ -}}
-  {{- $prefixed_service_accounts := dict -}}
-  {{- range $name, $config := $service_accounts -}}
-    {{- $prefixed_name := printf "%s%s" $prefix $name -}}
-    {{- $_ := set $prefixed_service_accounts $prefixed_name $config -}}
-  {{- end -}}
-  {{- $service_accounts = $prefixed_service_accounts -}}
-{{- end -}}
-{{- $output := list -}}
-{{- range $name, $config := $service_accounts -}}
-  {{- $defaults := include "common.defaults.serviceAccount.config" $ | fromYaml -}}
-  {{- $service_account_config := mergeOverwrite (deepCopy $defaults) $config -}}
-  {{- $_ := set $service_account_config "name" $name -}}
-  {{- /* Configure name and labels */ -}}
-  {{- $labels := default (dict) $service_account_config.labels -}}
-  {{- $params := dict "config" $service_account_config "context" (deepCopy $) "labels" $labels -}}
-  {{- $labels = include "common.labels" $params | fromYaml -}}
-  {{- $service_account_config = mergeOverwrite $service_account_config $labels -}}
-  {{- /* Generate gcpServiceAccount, if applicable */ -}}
-  {{- if $service_account_config.gcpServiceAccount -}}
-    {{- if and (not $service_account_config.gcpServiceAccount.projectId) $.project_id -}}
-      {{- $_ := set $service_account_config.gcpServiceAccount "projectId" $.project_id -}}
-    {{- end -}}
-    {{- $gcp_service_account := include "common.config.serviceAccount.gcpServiceAccount" $service_account_config.gcpServiceAccount -}}
-    {{- /* Only set if either .fullName is specified or .name and .projectId are both specified */ -}}
-    {{- if $gcp_service_account -}}
-      {{- $_ := set $service_account_config "gcpServiceAccount" $gcp_service_account -}}
-    {{- end -}}
-  {{- end -}}
-  {{- $output = append $output $service_account_config -}}
-{{- end -}}
-{{- $service_accounts = dict "serviceAccounts" $output -}}
-{{ $service_accounts | toYaml }}
-{{- end -}}
-
-{{/*
-Defaults
-*/}}
-{{- define "common.defaults.serviceAccount.config" -}}
-name: {{ include "common.config.name" . }}
-{{- end -}}
-
 {{- /*
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
