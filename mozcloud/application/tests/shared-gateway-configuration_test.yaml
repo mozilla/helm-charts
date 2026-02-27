@@ -1,0 +1,85 @@
+---
+suite: "mozcloud: Shared gateway configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/shared-gateway-configuration.yaml
+templates:
+  - gateway/gateway.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Does not create a Gateway resource when using shared gateway
+    asserts:
+      - hasDocuments:
+          count: 5
+      - isNull:
+          path: $[?(@.kind == "Gateway")]
+  - it: Creates HTTPRoute that references the shared gateway
+    documentSelector:
+      path: $[?(@.kind == "HTTPRoute")].metadata.name
+      value: shared-gateway-host
+    asserts:
+      - contains:
+          path: spec.hostnames
+          count: 1
+          content: shared.test-domain.com
+      - contains:
+          path: spec.parentRefs
+          count: 1
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: sandbox-high-preview-gateway
+            namespace: preview-shared-infrastructure
+            sectionName: https
+  - it: Creates HTTP redirect HTTPRoute that references the shared gateway
+    documentSelector:
+      path: $[?(@.kind == "HTTPRoute")].metadata.name
+      value: shared-gateway-host-http-redirect
+    asserts:
+      - contains:
+          path: spec.parentRefs
+          count: 1
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: sandbox-high-preview-gateway
+            namespace: preview-shared-infrastructure
+            sectionName: http
+  - it: Does not create GCPGatewayPolicy when using shared gateway
+    asserts:
+      - isNull:
+          path: $[?(@.kind == "GCPGatewayPolicy")]
+  - it: Creates backend Service for the workload
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+  - it: Creates GCPBackendPolicy for the backend service
+    documentSelector:
+      path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.targetRef.name
+          value: test-service
+  - it: Creates HealthCheckPolicy for the backend service
+    documentSelector:
+      path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.targetRef.name
+          value: test-service

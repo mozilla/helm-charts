@@ -1,0 +1,35 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      # External host - public facing
+      external-host:
+        type: external
+        domains:
+          - external.test-domain.com
+        addresses:
+          - mozcloud-dev-external-ip-v4
+        tls:
+          certs:
+            - test-service-nonprod-dev
+  test-internal-service:
+    component: auth
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      # Internal host
+      internal-host:
+        type: internal
+        domains:
+          - internal.test-domain.local
+        addresses:
+          - mozcloud-dev-internal-ip-v4

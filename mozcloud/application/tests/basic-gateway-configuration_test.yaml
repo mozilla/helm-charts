@@ -37,7 +37,7 @@ tests:
   - it: External gateway is configured correctly
     documentSelector:
       path: $[?(@.kind == "Gateway")].metadata.name
-      value: test-service
+      value: mozcloud-test
     asserts:
       - equal:
           path: metadata.annotations["networking.gke.io/certmap"]
@@ -70,7 +70,7 @@ tests:
   - it: Gateway policy is configured correctly
     documentSelector:
       path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
-      value: test-service
+      value: mozcloud-test
     asserts:
       - equal:
           path: spec.default.sslPolicy
@@ -80,7 +80,7 @@ tests:
           content:
             group: gateway.networking.k8s.io
             kind: Gateway
-            name: test-service
+            name: mozcloud-test
   - it: Healthcheck policy is configured correctly
     documentSelector:
       path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
@@ -103,14 +103,14 @@ tests:
           content:
             group: gateway.networking.k8s.io
             kind: Gateway
-            name: test-service
+            name: mozcloud-test
             sectionName: https
       - notContains:
           path: spec.parentRefs
           content:
             group: gateway.networking.k8s.io
             kind: Gateway
-            name: test-service
+            name: mozcloud-test
             sectionName: http
       - lengthEqual:
           path: spec.rules
@@ -138,14 +138,14 @@ tests:
           content:
             group: gateway.networking.k8s.io
             kind: Gateway
-            name: test-service
+            name: mozcloud-test
             sectionName: http
       - notContains:
           path: spec.parentRefs
           content:
             group: gateway.networking.k8s.io
             kind: Gateway
-            name: test-service
+            name: mozcloud-test
             sectionName: https
       - lengthEqual:
           path: spec.rules

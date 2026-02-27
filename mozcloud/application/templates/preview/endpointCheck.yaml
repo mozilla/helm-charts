@@ -6,7 +6,7 @@
 {{- $labels := include "mozcloud-labels-lib.labels" $labelParams | fromYaml }}
 
 {{- /* Get all preview hostnames to check */ -}}
-{{- $formatterParams := dict "component" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" (default dict .Values.global.preview) }}
+{{- $formatterParams := dict "api" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" (default dict .Values.global.preview) }}
 {{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
 {{- $helperParams := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
 {{- $httpRoutes := include "mozcloud.config.httpRoutes" $helperParams | fromYaml }}

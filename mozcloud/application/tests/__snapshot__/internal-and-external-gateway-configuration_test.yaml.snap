@@ -16,11 +16,11 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: mozcloud-test
+      name: mozcloud-test-external
     spec:
       addresses:
         - type: NamedAddress
-          value: mozcloud-dev-ip-v4
+          value: mozcloud-dev-external-ip-v4
       gatewayClassName: gke-l7-global-external-managed
       listeners:
         - allowedRoutes:
@@ -36,6 +36,34 @@ Configuration matches entire snapshot:
           port: 443
           protocol: HTTPS
   2: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: Gateway
+    metadata:
+      labels:
+        app.kubernetes.io/component: gateway
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: gateway
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mozcloud-test-internal
+    spec:
+      addresses:
+        - type: NamedAddress
+          value: mozcloud-dev-internal-ip-v4
+      gatewayClassName: gke-l7-global-external-managed
+      listeners:
+        - allowedRoutes:
+            namespaces:
+              from: Same
+          name: http
+          port: 80
+          protocol: HTTP
+  3: |
     apiVersion: networking.gke.io/v1
     kind: GCPGatewayPolicy
     metadata:
@@ -50,44 +78,14 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: mozcloud-test
+      name: mozcloud-test-external
     spec:
       default:
         sslPolicy: mozilla-intermediate
       targetRef:
         group: gateway.networking.k8s.io
         kind: Gateway
-        name: mozcloud-test
-  3: |
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: HTTPRoute
-    metadata:
-      labels:
-        app.kubernetes.io/component: web
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: web
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: test-service
-    spec:
-      hostnames:
-        - test-service.dev.test-domain.com
-      parentRefs:
-        - group: gateway.networking.k8s.io
-          kind: Gateway
-          name: mozcloud-test
-          sectionName: https
-      rules:
-        - backendRefs:
-            - group: ""
-              kind: Service
-              name: test-service
-              port: 8080
+        name: mozcloud-test-external
   4: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
@@ -103,14 +101,44 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: test-service-http-redirect
+      name: external-host
     spec:
       hostnames:
-        - test-service.dev.test-domain.com
+        - external.test-domain.com
       parentRefs:
         - group: gateway.networking.k8s.io
           kind: Gateway
-          name: mozcloud-test
+          name: mozcloud-test-external
+          sectionName: https
+      rules:
+        - backendRefs:
+            - group: ""
+              kind: Service
+              name: test-service
+              port: 8080
+  5: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: external-host-http-redirect
+    spec:
+      hostnames:
+        - external.test-domain.com
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: mozcloud-test-external
           sectionName: http
       rules:
         - filters:
@@ -122,7 +150,115 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /
-  5: |
+  6: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: auth
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: auth
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: internal-host
+    spec:
+      hostnames:
+        - internal.test-domain.local
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: mozcloud-test-internal
+          sectionName: http
+      rules:
+        - backendRefs:
+            - group: ""
+              kind: Service
+              name: test-internal-service
+              port: 8080
+  7: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: auth
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: auth
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-internal-service
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: auth
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  8: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: auth
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: auth
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-internal-service
+    spec:
+      default:
+        logging:
+          enabled: true
+          sampleRate: 100000
+      targetRef:
+        group: ""
+        kind: Service
+        name: test-internal-service
+  9: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: auth
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: auth
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-internal-service
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: test-internal-service
+  10: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -149,7 +285,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/name: mozcloud-test
         env_code: dev
       type: ClusterIP
-  6: |
+  11: |
     apiVersion: networking.gke.io/v1
     kind: GCPBackendPolicy
     metadata:
@@ -174,7 +310,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: test-service
-  7: |
+  12: |
     apiVersion: networking.gke.io/v1
     kind: HealthCheckPolicy
     metadata:
