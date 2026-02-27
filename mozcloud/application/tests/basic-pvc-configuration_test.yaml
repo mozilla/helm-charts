@@ -12,6 +12,7 @@ values:
   - values/globals.yaml
   - values/basic-configuration.yaml
 templates:
+  - configmap/configmap.yaml
   - workload/workload.yaml
 tests:
   - it: Ensure no failures occur
@@ -21,6 +22,7 @@ tests:
     asserts:
       - matchSnapshot: {}
   - it: PersistentVolumeClaim is configured correctly
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
       value: test-service-pvc

@@ -1,4 +1,9 @@
 ---
+configMaps:
+  test-configmap:
+    data:
+      FOO: bar
+      baz: "1"
 workloads:
   # This is the name of the workload ("test-service").
   #
@@ -12,6 +17,7 @@ workloads:
     component: web
     containers:
       app:
+        configMaps: ["test-configmap"]
         image:
           repository: test-repo/test-image
           tag: 1.0.0

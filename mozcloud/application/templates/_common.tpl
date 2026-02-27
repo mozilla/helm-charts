@@ -24,40 +24,6 @@ Template helpers
 {{- end -}}
 
 {{/*
-ConfigMap template helpers
-*/}}
-{{- define "common.config.configMaps" -}}
-{{- $configMaps := .configMaps -}}
-{{- /* Apply preview prefix to configmap names if in preview mode */ -}}
-{{- if include "mozcloud.preview.enabled" $ -}}
-  {{- $prefix := include "mozcloud.preview.prefix" $ -}}
-  {{- $prefixedConfigMaps := dict -}}
-  {{- range $name, $config := $configMaps -}}
-    {{- $prefixedName := printf "%s%s" $prefix $name -}}
-    {{- $_ := set $prefixedConfigMaps $prefixedName $config -}}
-  {{- end -}}
-  {{- $configMaps = $prefixedConfigMaps -}}
-{{- end -}}
-{{- $nameOverride := default "" .nameOverride -}}
-{{- $output := list -}}
-{{- range $name, $config := $configMaps -}}
-  {{- $configMapConfig := $config | deepCopy -}}
-  {{- /* Configure name and labels */ -}}
-  {{- $_ := set $configMapConfig "name" $name }}
-  {{- $labels := default (dict) $configMapConfig.labels -}}
-  {{- $params := dict "config" $configMapConfig "context" ($ | deepCopy) "labels" $labels -}}
-  {{- $labels = include "common.labels" $params | fromYaml -}}
-  {{- $configMapConfig = mergeOverwrite $configMapConfig $labels -}}
-  {{- /* Create configMaps[].data if it does not exist */ -}}
-  {{- $configMapData := default (dict) $configMapConfig.data -}}
-  {{- $_ = set $configMapConfig "data" $configMapData -}}
-  {{- $output = append $output $configMapConfig -}}
-{{- end -}}
-{{- $configMaps = dict "configMaps" $output -}}
-{{ $configMaps | toYaml }}
-{{- end -}}
-
-{{/*
 PersistentVolumeClaim template helpers
 */}}
 {{- define "common.config.persistentVolumes" -}}

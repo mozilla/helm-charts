@@ -142,20 +142,6 @@ Template helpers
 */}}
 
 {{/*
-ConfigMaps
-*/}}
-{{- define "mozcloud.config.configMap" -}}
-configMaps:
-  {{- range $name, $config := .configMaps }}
-  {{ $name }}:
-    data:
-      {{ $config.data | toYaml | nindent 6 }}
-    annotations:
-      {{ $config.annotations | toYaml | nindent 6 }}
-  {{- end -}}
-{{- end -}}
-
-{{/*
 Gateway API resources
 */}}
 
