@@ -54,29 +54,17 @@ spec:
         is_monotonic_counter: true
 
     processors:
-      # The relative ordering of statements between ReplicaSet & Deployment and Job & CronJob are important.
-      # The ordering of these controllers is decided based on the k8s controller documentation available at
-      # https://kubernetes.io/docs/concepts/workloads/controllers.
-      # The relative ordering of the other controllers in this list is inconsequential since they directly
-      # create pods.
-      transform/aco-gke:
+      # Attach certain label attributes to datapoints, reducing the need for group_left promql functions
+      transform/mozcloud:
+        error_mode: ignore
         metric_statements:
-        - context: datapoint
-          statements:
-          - set(attributes["top_level_controller_type"], "ReplicaSet") where resource.attributes["k8s.replicaset.name"] != nil
-          - set(attributes["top_level_controller_name"], resource.attributes["k8s.replicaset.name"]) where resource.attributes["k8s.replicaset.name"] != nil
-          - set(attributes["top_level_controller_type"], "Deployment") where resource.attributes["k8s.deployment.name"] != nil
-          - set(attributes["top_level_controller_name"], resource.attributes["k8s.deployment.name"]) where resource.attributes["k8s.deployment.name"] != nil
-          - set(attributes["top_level_controller_type"], "DaemonSet") where resource.attributes["k8s.daemonset.name"] != nil
-          - set(attributes["top_level_controller_name"], resource.attributes["k8s.daemonset.name"]) where resource.attributes["k8s.daemonset.name"] != nil
-          - set(attributes["top_level_controller_type"], "StatefulSet") where resource.attributes["k8s.statefulset.name"] != nil
-          - set(attributes["top_level_controller_name"], resource.attributes["k8s.statefulset.name"]) where resource.attributes["k8s.statefulset.name"] != nil
-          - set(attributes["top_level_controller_type"], "Job") where resource.attributes["k8s.job.name"] != nil
-          - set(attributes["top_level_controller_name"], resource.attributes["k8s.job.name"]) where resource.attributes["k8s.job.name"] != nil
-          - set(attributes["top_level_controller_type"], "CronJob") where resource.attributes["k8s.cronjob.name"] != nil
-          - set(attributes["top_level_controller_name"], resource.attributes["k8s.cronjob.name"]) where resource.attributes["k8s.cronjob.name"] != nil
-          # podmonitoring uses 'pod' label, so we'll standardize on that
-          - set(attributes["pod"], resource.attributes["k8s.pod.name"]) where resource.attributes["k8s.pod.name"] != nil
+          - context: datapoint
+            statements:
+              {{- $mozcloud_annotation_params := .Values.global.mozcloud }}
+              {{- $fields := include "mozcloud-labels-lib.annotations.otel.fields" $mozcloud_annotation_params | fromYaml }}
+              {{- range $name, $_ := $fields }}
+              - set(attributes[{{ $name | quote }}], resource.attributes[{{ $name | quote }}]) where resource.attributes[{{ $name | quote }}] != nil
+              {{- end }}
 
       resource/gcp_project_id:
         attributes:
@@ -109,33 +97,6 @@ spec:
       debug:
         verbosity: detailed
 
-      googlemanagedprometheus:
-        metric:
-          # GMP exporter automatically adds the following labels from the listed attributes
-          #   project_id: auto-detected by Application Default Credentials, gcp.project.id, or project in exporter config
-          #   location: location, cloud.availability_zone, cloud.region
-          #   cluster: cluster, k8s.cluster_name
-          #   namespace: namespace, k8s.namespace_name
-          #   job: service.name + service.namespace
-          #   instance: service.instance.id
-          # Code below adds additional labels from attributes
-          resource_filters:
-          - prefix: "cloud"
-          - prefix: "k8s"
-          - prefix: "faas"
-          - regex: "container.id"
-          - regex: "process.pid"
-          - regex: "host.name"
-          - regex: "host.id"
-          # MozCloud operational labels
-          - regex: "artifact_version"
-          {{- $mozcloud_annotation_params := .Values.global.mozcloud }}
-          {{- $mozcloud_annotations := include "mozcloud-labels-lib.annotations.otel.fields" $mozcloud_annotation_params | fromYaml }}
-          {{- range $name, $value := $mozcloud_annotations }}
-          - regex: {{ $name | quote }}
-          {{- end }}
-        sending_queue:
-          batch: {}
 
       otlphttp:
         encoding: json
@@ -165,6 +126,7 @@ spec:
           - statsd
           processors:
           - memory_limiter
+          - transform/mozcloud
           - resource/gcp_project_id
           exporters:
           - otlphttp
