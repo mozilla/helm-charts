@@ -60,3 +60,42 @@ Example:
 {{- end -}}
 {{ $output | toYaml }}
 {{- end -}}
+
+{{- define "mozcloud.configMap.formatter.tpl" -}}
+  {{- $configMaps := .configMaps -}}
+  {{- $context := .context -}}
+  {{- $output := deepCopy .configMaps -}}
+  {{- range $name, $config := $configMaps -}}
+    {{- if $config.tplEnabled }}
+      {{- $params := dict "data" $config.data "context" $context }}
+      {{- $transformedData := include "mozcloud.configMap.formatter.renderTpl" $params | fromYaml -}}
+      {{- $config = mergeOverwrite $config (dict "data" $transformedData) -}}
+    {{- $_ := set $output $name $config}}
+    {{- end -}}
+  {{- end -}}
+{{ $output | toYaml }}
+{{- end -}}
+
+{{- /*
+  Ranges over a dictionary and looks for an embedded template in the value string
+  If found it checks for compliance and if that passes calls the `tpl` function rendering
+  the embedded template.
+*/ -}}
+{{- define "mozcloud.configMap.formatter.renderTpl" }}
+{{- $ctx := .context }}
+{{- $output := deepCopy .data }}
+{{- $simpleRegexp := `{{-?\s*[^}]+}}`}}
+{{- $filterRegexp := `{{-?\s*(?:default\s+"[^"]*"\s+)?\.Values(?:\.[a-zA-Z_]\w*)*\s*-?}}` }}
+{{- range $key, $value := .data }}
+  {{- $hasTpl := false }}
+  {{- /* Checks all template matches to see if they match the expected form */ -}}
+  {{- range $_, $match := regexFindAll $simpleRegexp (toString $value) -1 }}
+    {{- $hasTpl =  regexMatch $filterRegexp $match }}
+  {{- end }}
+  {{- if $hasTpl }}
+    {{- $newVal := tpl $value $ctx }}
+    {{- $_ := set $output $key $newVal }}
+  {{- end }}
+{{- end }}
+{{ $output | toYaml }}
+{{- end }}
