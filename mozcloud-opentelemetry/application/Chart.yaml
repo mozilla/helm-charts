@@ -1,9 +1,9 @@
 apiVersion: v2
 name: mozcloud-opentelemetry
-description: Opinionated application chart for MozCloud OpenTelemetry signals
+description: Opinionated application chart for MozCloud OpenTelemetry signals 
   collection
 type: application
-version: 0.2.21
+version: 0.2.22
 appVersion: 0.144.0
 dependencies:
   - name: mozcloud-labels-lib

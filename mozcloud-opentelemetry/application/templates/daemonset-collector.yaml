@@ -55,6 +55,7 @@ spec:
         strategy: subtract_initial_point
 
       k8sattributes:
+        otel_annotations: true
         filter:
           node_from_env_var: KUBE_NODE_NAME
         extract:
