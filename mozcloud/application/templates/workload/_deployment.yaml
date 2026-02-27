@@ -281,7 +281,7 @@ spec:
         {{- end }}
         {{- if not $skip.value }}
         - name: {{ $volume_name }}
-          {{- if eq $volume_config.type "persistentVolumeClaim" }}
+          {{- if eq $volume_config.type "persistentVolume" }}
           persistentVolumeClaim:
             claimName: {{ $volume_name }}
           {{- else if eq $volume_config.type "emptyDir" }}

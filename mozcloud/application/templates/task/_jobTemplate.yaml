@@ -160,7 +160,7 @@ template:
     volumes:
       {{- range $volumeName, $volumeConfig := $volumes }}
       - name: {{ $volumeName }}
-        {{- if eq $volumeConfig.type "persistentVolumeClaim" }}
+        {{- if eq $volumeConfig.type "persistentVolume" }}
         persistentVolumeClaim:
           claimName: {{ $volumeName }}
         {{- else }}

@@ -1,0 +1,87 @@
+---
+suite: "mozcloud: Persistent volume claim configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/pvc.yaml
+templates:
+  - pvc/pvc.yaml
+  - workload/workload.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: ReadWriteOnce PVC is configured correctly
+    template: pvc/pvc.yaml
+    documentSelector:
+      path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+      value: pvc-rwo
+    asserts:
+      - equal:
+          path: metadata.labels.component_code
+          value: pvc
+      - equal:
+          path: spec.accessModes
+          value: ["ReadWriteOnce"]
+      - equal:
+          path: spec.resources.requests.storage
+          value: 10Gi
+      - equal:
+          path: spec.storageClassName
+          value: standard
+  - it: ReadWriteMany PVC is configured correctly
+    template: pvc/pvc.yaml
+    documentSelector:
+      path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+      value: pvc-rwm
+    asserts:
+      - equal:
+          path: metadata.labels.component_code
+          value: pvc
+      - equal:
+          path: spec.accessModes
+          value: ["ReadWriteOnce", "ReadWriteMany"]
+      - equal:
+          path: spec.resources.requests.storage
+          value: 50Gi
+      - equal:
+          path: spec.storageClassName
+          value: mozilla-enterprise-rwx
+  - it: Container is configured to use PVCs as volumes
+    template: workload/workload.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /data/pvc-rwo
+            name: pvc-rwo
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /data/pvc-rwm
+            name: pvc-rwm
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: pvc-rwo
+            persistentVolumeClaim:
+              claimName: pvc-rwo
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: pvc-rwm
+            persistentVolumeClaim:
+              claimName: pvc-rwm

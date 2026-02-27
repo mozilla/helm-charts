@@ -1,0 +1,27 @@
+persistentVolumes:
+  pvc-rwo:
+    accessModes: 
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: standard
+  pvc-rwm:
+    accessModes: 
+      - ReadWriteOnce
+      - ReadWriteMany
+    size: 50Gi
+    storageClassName: mozilla-enterprise-rwx
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        volumes:
+          - name: pvc-rwo
+            path: /data/pvc-rwo
+            type: persistentVolume
+          - name: pvc-rwm
+            path: /data/pvc-rwm
+            type: persistentVolume

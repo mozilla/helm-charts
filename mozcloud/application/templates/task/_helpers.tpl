@@ -1,7 +1,6 @@
 {{/*
 Formatting helpers
 */}}
-{{- define "mozcloud.cronJob.formatter" -}}
 {{- /*
 This function will attempt to merge user-defined cron jobs with the default cron
 job configuration found in .Values.tasks.cronJobs.mozcloud-cronjob.
@@ -12,7 +11,11 @@ other cron jobs defined by the user. Because of this, we consider anything under
 "mozcloud-cronjob" to be defaults and remove that key from the cron job list.
 
 Params:
+
+common (dict): (optional) The common task configurations in .Values.common.
+cronJobs (dict): (required) The cron job configuration in .Values.tasks.cronJobs.
 */ -}}
+{{- define "mozcloud.cronJob.formatter" -}}
 {{- $common := default (dict) .common.cronJob -}}
 {{- $cronJobValues := .cronJobs -}}
 {{- $cronJobs := .cronJobs -}}
@@ -45,7 +48,6 @@ Params:
 {{ $cronJobs | toYaml }}
 {{- end -}}
 
-{{- define "mozcloud.job.formatter" -}}
 {{- /*
 This function will attempt to merge user-defined jobs with the default job
 configuration found in .Values.tasks.jobs.mozcloud-job.
@@ -56,7 +58,11 @@ defined by the user. Because of this, we consider anything under "mozcloud-job"
 to be defaults and remove that key from the job list.
 
 Params:
+
+common (dict): (optional) The common task configurations in .Values.common.
+jobs (dict): (required) The job configuration in .Values.tasks.jobs.
 */ -}}
+{{- define "mozcloud.job.formatter" -}}
 {{- $common := default (dict) .common.job -}}
 {{- $jobValues := .jobs -}}
 {{- $jobs := .jobs -}}
