@@ -1,0 +1,15 @@
+---
+
+global:
+  hostname: mozilla.cloud
+
+configMaps:
+  app-config:
+    tplEnabled: true
+    data:
+      URLBASE: "https://{{ .Values.hostname }}"
+      ATTACHMENT_BASE: "https://{{ .Values.hostname }}/attachments"
+      URL_BASE: ""
+      HOSTNAME: "{{ .Values.global.hostname }}"
+      DEFAULT: "{{- default \"default\" .Values.doesnt_exist }}"
+      OTHER_VAR: "keep-this"

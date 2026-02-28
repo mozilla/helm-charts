@@ -36,6 +36,7 @@ preview:
     backoffLimit: 1         # Default: 1
     activeDeadlineSeconds: 900  # Default: 900 seconds (15 minutes)
 
+
 # In this section, you can create ConfigMap resources that can be used
 # by all workloads and jobs. To use ConfigMaps created here in a workload,
 # you must list the ConfigMap name you wish to include in each workload or
@@ -58,6 +59,20 @@ preview:
 #     a-different-configmap-name:
 #       data:
 #         KEY3: VALUE3
+#
+# EXPERIMENTAL: Support for embedded templates in the ConfigMap value string.
+# This can be enabled by setting "tplEnabled: true" in the configMap object.
+# When enabled you can embed simple helm templates into the value strings of 
+# ConfigMap data. Templates are restricted to direct access of `.Values` and
+# calling the `default` template function with `.Values` access 
+#
+# Example:
+#
+#   configMaps:
+#     my-config-map:
+#       tplEnabled: true
+#       data:
+#         ORIGIN: "https://{{ .Values.global.hostname }}/"
 configMaps: {}
 
 # External secret names and versions to mount in containers.
