@@ -191,12 +191,22 @@ type (string): (required) Either "containers" or "init-containers", depending on
 {{ $containers | toYaml }}
 {{- end -}}
 
+{{- /*
+  Ranges over a dictionary and looks for an embedded template in the value string
+  If found it checks for compliance and if that passes calls the `tpl` function rendering
+  the embedded template.
+*/ -}}
 {{- define "common.formatter.renderEmbeddedTpl" }}
 {{- $ctx := .context }}
 {{- $output := deepCopy .data }}
+{{- $simpleRegexp := `{{-?\s*[^}]+}}`}}
 {{- $filterRegexp := `{{-?\s*(?:default\s+"[^"]*"\s+)?\.Values(?:\.[a-zA-Z_]\w*)*\s*-?}}` }}
 {{- range $key, $value := .data }}
-  {{- $hasTpl := (toString $value | regexMatch $filterRegexp) }}
+  {{- $hasTpl := false }}
+  {{- /* Checks all template matches to see if they match the expected form */ -}}
+  {{- range $_, $match := regexFindAll $simpleRegexp (toString $value) -1 }}
+    {{- $hasTpl =  regexMatch $filterRegexp $match }}
+  {{- end }}
   {{- if $hasTpl }}
     {{- $newVal := tpl $value $ctx }}
     {{- $_ := set $output $key $newVal }}
