@@ -43,9 +43,9 @@ context (dict): (required) The context of the template calling this function.
   {{- $output := deepCopy .configMaps -}}
   {{- range $name, $config := $configMaps -}}
     {{- if $config.tplEnabled }}
-    {{- $params := dict "data" $config.data "context" $context }}
-    {{- $transformedData := include "common.formatter.renderEmbeddedTpl" $params | fromYaml -}}
-    {{- $config = mergeOverwrite $config (dict "data" $transformedData) -}}
+      {{- $params := dict "data" $config.data "context" $context }}
+      {{- $transformedData := include "common.formatter.renderEmbeddedTpl" $params | fromYaml -}}
+      {{- $config = mergeOverwrite $config (dict "data" $transformedData) -}}
     {{ $_ := set $output $name $config}}
     {{- end -}}
   {{- end -}}
