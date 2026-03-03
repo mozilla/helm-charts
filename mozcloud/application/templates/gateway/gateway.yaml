@@ -72,22 +72,10 @@ Only create these for workloads with api: gateway or api: none
 {{- $backendParams := mergeOverwrite (. | deepCopy) (dict "workloads" $allWorkloads) }}
 {{- $backends := include "mozcloud.config.backends" $backendParams | fromYaml }}
 {{- range $backendName, $backendConfig := $backends.backends }}
-  {{- /* Check if this backend's workload has only ingress hosts */}}
-  {{- $workloadConfig := index $allWorkloads $backendName }}
-  {{- $hasIngressHost := false }}
-  {{- if $workloadConfig }}
-    {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
-      {{- $hostApi := default "gateway" $hostConfig.api }}
-      {{- if eq $hostApi "ingress" }}
-        {{- $hasIngressHost = true }}
-      {{- end }}
-    {{- end }}
-  {{- end }}
-
-  {{- /* Only render backend resources if workload doesn't have ingress hosts */}}
-  {{- if not $hasIngressHost }}
+  {{- /* Only render backend resources if api is not ingress */}}
+  {{- if ne $backendConfig.api "ingress" }}
 {{- $_ := set $labelParams "component_code" $backendConfig.component }}
-{{- $_ := set $params "backendConfig" (dict "backends" (dict $backendName (omit $backendConfig "component"))) }}
+{{- $_ := set $params "backendConfig" (dict "backends" (dict $backendName (omit $backendConfig "component" "api"))) }}
 {{ include "mozcloud-gateway-lib.service" (mergeOverwrite $params $labelParams) }}
 {{ include "mozcloud-gateway-lib.backendPolicy" (mergeOverwrite $params $labelParams) }}
 {{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $labelParams) }}
