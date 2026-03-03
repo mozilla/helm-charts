@@ -1,0 +1,136 @@
+---
+suite: "mozcloud: Mixed gateway and ingress configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/mixed-gateway-ingress-configuration.yaml
+templates:
+  - gateway/gateway.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+
+  # Gateway template tests - should only create resources for gateway-service
+  - it: Gateway template creates resources for gateway workload
+    template: gateway/gateway.yaml
+    asserts:
+      - hasDocuments:
+          count: 7
+
+  - it: Gateway is configured for gateway-service
+    template: gateway/gateway.yaml
+    documentSelector:
+      path: $[?(@.kind == "Gateway")].metadata.name
+      value: mozcloud-test
+    asserts:
+      - isNotNullOrEmpty:
+          path: spec.addresses
+
+  - it: Gateway Service is created for gateway-service
+    template: gateway/gateway.yaml
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: gateway-service
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - contains:
+          path: spec.ports
+          count: 1
+          content:
+            name: http
+            port: 8080
+            protocol: TCP
+            targetPort: http
+
+  - it: Gateway HTTPRoute references gateway-service
+    template: gateway/gateway.yaml
+    documentSelector:
+      path: $[?(@.kind == "HTTPRoute")].metadata.name
+      value: gateway-service
+    asserts:
+      - contains:
+          path: spec.rules[0].backendRefs
+          content:
+            group: ""
+            kind: Service
+            name: gateway-service
+            port: 8080
+
+  # Ingress template tests - should only create resources for ingress-service
+  - it: Ingress template creates resources for ingress workload
+    template: ingress/ingress.yaml
+    asserts:
+      - hasDocuments:
+          count: 5
+
+  - it: Ingress is configured for ingress-service
+    template: ingress/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "Ingress")].metadata.name
+      value: ingress-service
+    asserts:
+      - isSubset:
+          path: spec
+          content:
+            defaultBackend:
+              service:
+                name: ingress-service
+                port:
+                  number: 8080
+
+  - it: Ingress Service is created for ingress-service
+    template: ingress/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: ingress-service
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+      - contains:
+          path: spec.ports
+          count: 1
+          content:
+            name: http
+            port: 8080
+            protocol: TCP
+            targetPort: http
+
+  - it: Ingress ManagedCertificate is created
+    template: ingress/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: mcrt-ingress-service-dev-test-domain-com
+    asserts:
+      - contains:
+          path: spec.domains
+          content: "ingress-service.dev.test-domain.com"
+
+  # Cross-validation tests - ensure no resource leakage between templates
+  - it: Gateway template does NOT create resources for ingress-service
+    template: gateway/gateway.yaml
+    asserts:
+      - notContains:
+          path: $[*].metadata.name
+          content: ingress-service
+          any: true
+
+  - it: Ingress template does NOT create resources for gateway-service
+    template: ingress/ingress.yaml
+    asserts:
+      - notContains:
+          path: $[*].metadata.name
+          content: gateway-service
+          any: true

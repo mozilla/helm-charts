@@ -1,0 +1,39 @@
+---
+workloads:
+  # Gateway API workload
+  gateway-service:
+    component: api
+    containers:
+      app:
+        image:
+          repository: test-repo/gateway-image
+          tag: 1.0.0
+    hosts:
+      gateway-service:
+        domains:
+          - gateway-service.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: gateway
+        tls:
+          certs:
+            - gateway-service-nonprod-dev
+
+  # Ingress API workload
+  ingress-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/ingress-image
+          tag: 1.0.0
+    hosts:
+      ingress-service:
+        domains:
+          - ingress-service.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4-ingress
+        api: ingress
+        tls:
+          type: ManagedCertificate
+
