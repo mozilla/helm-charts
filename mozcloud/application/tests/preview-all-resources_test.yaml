@@ -140,3 +140,23 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].args[2]
           pattern: "pr789-test.preview.mozilla.cloud"
+
+  # Test that default secret reference is prefixed in workload containers
+  - it: Workload container secretRef should reference prefixed secret
+    template: workload/workload.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].envFrom[0].secretRef.name
+          value: pr789-mozcloud-test-secrets
+
+  # Test that serviceAccount reference is prefixed in workload spec
+  - it: Workload serviceAccountName should reference prefixed ServiceAccount
+    template: workload/workload.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")]
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: pr789-mozcloud-test
