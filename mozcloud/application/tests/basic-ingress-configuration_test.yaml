@@ -12,6 +12,7 @@ values:
   - values/globals.yaml
   - values/basic-ingress-configuration.yaml
 templates:
+  - gateway/gateway.yaml
   - ingress/ingress.yaml
 tests:
   - it: Ensure no failures occur
@@ -21,6 +22,7 @@ tests:
     asserts:
       - matchSnapshot: {}
   - it: Backend is configured correctly
+    template: ingress/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "BackendConfig")].metadata.name
       value: test-service
@@ -32,6 +34,7 @@ tests:
               enable: true
               sampleRate: 0.1
   - it: Frontend is configured correctly
+    template: ingress/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "FrontendConfig")].metadata.name
       value: test-service
@@ -43,6 +46,7 @@ tests:
               enabled: true
             sslPolicy: mozilla-intermediate
   - it: Ingress is configured correctly
+    template: ingress/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "Ingress")].metadata.name
       value: test-service
@@ -63,6 +67,7 @@ tests:
                 port:
                   number: 8080
   - it: Managed certificate is configured correctly
+    template: ingress/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "ManagedCertificate")].metadata.name
       value: mcrt-test-service-dev-test-domain-com
@@ -74,6 +79,7 @@ tests:
           path: spec.domains
           content: "test-service.dev.test-domain.com"
   - it: Service is configured correctly
+    template: ingress/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "Service")].metadata.name
       value: test-service
