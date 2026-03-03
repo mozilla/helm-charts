@@ -521,7 +521,7 @@ Configuration matches entire snapshot:
                   subPath: nginx.conf
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: pr789-test-chart-secrets
               image: test-repo/api-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -566,7 +566,7 @@ Configuration matches entire snapshot:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
-          serviceAccountName: mozcloud-test
+          serviceAccountName: pr789-mozcloud-test
           volumes:
             - configMap:
                 name: pr789-api-service-nginx
