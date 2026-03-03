@@ -11,8 +11,10 @@ repos:
     hooks:
       - id: ruff-format # formatter
         types_or: [python, pyi, jupyter, toml]
+        exclude: 'uv\.lock$'
       - id: ruff-check # linter
         types_or: [python, pyi, jupyter, toml]
+        exclude: 'uv\.lock$'
         args: [--fix]
   - repo: https://github.com/gruntwork-io/pre-commit
     rev: v0.1.30

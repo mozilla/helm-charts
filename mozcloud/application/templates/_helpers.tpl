@@ -157,6 +157,7 @@ backends:
   {{- range $backend := (default (list) $host_config.backends) }}
   {{ $backend.name }}:
     component: {{ $workload_config.component }}
+    api: {{ default "gateway" $host_config.api }}
     {{- if $backend.service }}
     service:
       {{- $backend.service | toYaml | nindent 6 }}
@@ -192,6 +193,7 @@ backends:
   {{- else }}
   {{ $workload_name }}:
     component: {{ $workload_config.component }}
+    api: {{ default "gateway" $host_config.api }}
     service:
       port: 8080
       targetPort: http
