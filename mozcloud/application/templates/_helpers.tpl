@@ -587,7 +587,7 @@ Deployments
 {{- $prefix := include "mozcloud.preview.prefix" . -}}
 {{- /* In preview mode, use prefixed names matching ExternalSecret; otherwise maintain backwards compatibility */ -}}
 {{- $defaultSecretName := printf "%s%s-secrets" $prefix $globals.app_code -}}
-{{- $defaultServiceAccount = printf "%s%s" $prefix $globals.app_code -}}
+{{- $defaultServiceAccount := printf "%s%s" $prefix $globals.app_code -}}
 deployments:
   {{- range $workload_name, $workload_config := $workloads }}
   {{- $nginx_enabled := true }}
