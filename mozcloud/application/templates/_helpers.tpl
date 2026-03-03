@@ -584,6 +584,10 @@ Deployments
 {{- $globals := .Values.global.mozcloud -}}
 {{- $external_secrets := default (dict) .Values.externalSecrets -}}
 {{- $workloads := .workloads -}}
+{{- $prefix := include "mozcloud.preview.prefix" . -}}
+{{- /* In preview mode, use prefixed names matching ExternalSecret; otherwise maintain backwards compatibility */ -}}
+{{- $defaultSecretName := printf "%s%s-secrets" $prefix $globals.app_code -}}
+{{- $defaultServiceAccount := printf "%s%s" $prefix $globals.app_code -}}
 deployments:
   {{- range $workload_name, $workload_config := $workloads }}
   {{- $nginx_enabled := true }}
@@ -644,7 +648,7 @@ deployments:
           {{- end }}
           {{- end }}
           - secretRef:
-              name: {{ $globals.app_code }}-secrets
+              name: {{ $defaultSecretName }}
           {{- if and $container_config.externalSecrets $external_secrets }}
           {{- range $external_secret := $container_config.externalSecrets }}
           {{- if has $external_secret (keys $external_secrets) }}
@@ -772,7 +776,7 @@ deployments:
           {{- end }}
           {{- end }}
           - secretRef:
-              name: {{ $globals.app_code }}-secrets
+              name: {{ $defaultSecretName }}
           {{- if and $container_config.externalSecrets $external_secrets }}
           {{- range $external_secret := $container_config.externalSecrets }}
           {{- if has $external_secret (keys $external_secrets) }}
@@ -836,7 +840,7 @@ deployments:
     securityContext:
       runAsNonRoot: false
     {{- end }}
-    serviceAccount: {{ default $globals.app_code $workload_config.serviceAccount }}
+    serviceAccount: {{ default $defaultServiceAccount $workload_config.serviceAccount }}
     strategy: {{ $workload_config.strategy }}
 {{- end }}
 {{- end -}}

@@ -424,7 +424,7 @@ Configuration matches entire snapshot:
                   subPath: nginx.conf
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: pr456-mozcloud-test-secrets
               image: test-repo/admin-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -469,7 +469,7 @@ Configuration matches entire snapshot:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
-          serviceAccountName: mozcloud-test
+          serviceAccountName: pr456-mozcloud-test
           volumes:
             - configMap:
                 name: pr456-admin-service-nginx
@@ -681,7 +681,7 @@ Configuration matches entire snapshot:
                   subPath: nginx.conf
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: pr456-mozcloud-test-secrets
               image: test-repo/api-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -726,7 +726,7 @@ Configuration matches entire snapshot:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
-          serviceAccountName: mozcloud-test
+          serviceAccountName: pr456-mozcloud-test
           volumes:
             - configMap:
                 name: pr456-api-service-nginx
@@ -938,7 +938,7 @@ Configuration matches entire snapshot:
                   subPath: nginx.conf
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: pr456-mozcloud-test-secrets
               image: test-repo/web-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -983,7 +983,7 @@ Configuration matches entire snapshot:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
-          serviceAccountName: mozcloud-test
+          serviceAccountName: pr456-mozcloud-test
           volumes:
             - configMap:
                 name: pr456-web-service-nginx
