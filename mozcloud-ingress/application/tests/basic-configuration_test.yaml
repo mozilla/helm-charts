@@ -41,6 +41,7 @@ tests:
           content:
             redirectToHttps:
               enabled: true
+              responseCodeName: MOVED_PERMANENTLY_DEFAULT
             sslPolicy: mozilla-intermediate
   - it: Ingress is configured correctly
     template: ingress.yaml

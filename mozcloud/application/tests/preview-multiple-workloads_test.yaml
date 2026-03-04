@@ -13,6 +13,7 @@ set:
   global.preview.pr: "456"
   global.preview.host: "pr456-test.preview.mozilla.cloud"
 templates:
+  - gateway/httproute.yaml
   - preview/httpRoute.yaml
   - preview/endpointCheck.yaml
   - workload/workload.yaml

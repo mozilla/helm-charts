@@ -1,0 +1,66 @@
+{{- /*
+This function creates the value structure needed for frontendConfig templates in
+the mozcloud-ingress-lib library chart.
+
+Params:
+
+workloads (dict): (required) All of the workloads created using this chart. This
+                  is populated below this function via the workload formatter
+                  function.
+*/}}
+{{- define "mozcloud.config.frontendConfigs" -}}
+{{- $workloads := .workloads }}
+frontendConfigs:
+  {{- range $workloadName, $workloadConfig := $workloads }}
+  {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
+  {{- if eq $hostConfig.type "external" }}
+  {{ $hostName }}:
+    component: {{ $workloadConfig.component }}
+    redirectToHttps:
+      enabled: true
+      responseCodeName: MOVED_PERMANENTLY_DEFAULT
+    sslPolicy: mozilla-intermediate
+  {{- end }}
+  {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{- /* We do not use ingress resources for preview environments */}}
+{{- if and .Values.enabled (not (include "mozcloud.preview.enabled" .)) }}
+  {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+  {{- $context := deepCopy . }}
+  {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+  {{- /* Call a helper function that merges user data with defaults */}}
+  {{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+  {{- /* Get only workloads where "api: ingress" is set */}}
+  {{- $formatterParams := dict "api" "ingress" "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+  {{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+  
+  {{- /*
+  Only include Ingress and related resources if we have Ingress hosts defined
+  */}}
+  {{- $hosts := list }}
+  {{- range $workloadName, $workloadConfig := $workloads }}
+    {{- range $hostName, $hostConfig := $workloadConfig.hosts }}
+      {{- $hosts = append $hosts $hostName }}
+    {{- end }}
+  {{- end }}
+  {{- if gt (len $hosts) 0 }}
+    {{- /*
+    Frontend Config
+    */}}
+    {{- $params := mergeOverwrite $context (dict "taco" "yes" "workloads" $workloads) }}
+    {{- $ingresses := (include "mozcloud.config.ingresses" $params | fromYaml).ingresses }}
+    {{- range $ingressName, $ingressConfig := $ingresses }}
+      {{- $_ := set $ingresses $ingressName (omit $ingressConfig "component") }}
+    {{- end }}
+    {{- $_ := set $params "ingressConfig" $ingresses }}
+    {{- $frontends := (include "mozcloud.config.frontendConfigs" $params | fromYaml).frontendConfigs }}
+    {{- range $frontendName, $frontendConfig := $frontends }}
+      {{- $_ := set $frontendConfig "name" $frontendName }}
+      {{- $_ = set $labelParams "component_code" $frontendConfig.component }}
+      {{- $_ = set $params "frontendConfig" (omit $frontendConfig "component") }}
+{{ include "mozcloud-ingress-lib.frontendConfig" (mergeOverwrite $params $labelParams) }}
+    {{- end }}
+  {{- end }}
+{{- end -}}

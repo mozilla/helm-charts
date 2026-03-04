@@ -1,14 +1,108 @@
+{{- /*
+This function configures the params for the gatewayPolicy template in the
+mozcloud-gateway-lib library chart.
+*/}}
+{{- define "mozcloud.gateway.gatewayPolicy" -}}
+sslPolicy: mozilla-intermediate
+{{- end -}}
+
+{{- /*
+This function creates the value structure needed for gateway templates in the
+mozcloud-gateway-lib library chart.
+
+Params:
+
+globals (dict): (required) Global values from .Values.global.mozcloud.
+workloads (dict): (required) All of the workloads created using this chart. This
+                  is populated below this function via the workload formatter
+                  function.
+*/}}
+{{- define "mozcloud.gateway.gateways" -}}
+{{- $globals := .globals -}}
+{{- $workloads := .workloads }}
+{{- /* Collect all unique gateway configurations */}}
+{{- $gatewayConfigs := dict }}
+{{- range $workloadName, $workloadConfig := $workloads }}
+  {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
+    {{- /* Skip if using a shared gateway */}}
+    {{- if not ($hostConfig).sharedGateway }}
+      {{- /* Build gateway configuration key based on unique attributes */}}
+      {{- $className := "gke-l7-global-external-managed" }}
+      {{- if ($hostConfig).multiCluster }}
+        {{- $className = "gke-l7-global-external-managed-mc" }}
+      {{- end }}
+      {{- $addresses := list }}
+      {{- if $hostConfig.addresses }}
+        {{- $addresses = $hostConfig.addresses }}
+      {{- else }}
+        {{- $addresses = list (printf "%s-%s-ip-v4" $globals.app_code $globals.env_code) }}
+      {{- end }}
+      {{- $certs := list }}
+      {{- if eq $hostConfig.type "external" }}
+        {{- if gt (len (default (list) $hostConfig.tls.certs)) 0 }}
+          {{- $certs = $hostConfig.tls.certs }}
+        {{- else }}
+          {{- $certs = list (printf "%s-%s-%s" $globals.app_code $globals.realm $globals.env_code) }}
+        {{- end }}
+      {{- end }}
+      {{- /* Create a unique key for this gateway configuration */}}
+      {{- $configKey := printf "%s-%s-%s" $hostConfig.type $className ($addresses | join "-") }}
+      {{- if not (hasKey $gatewayConfigs $configKey) }}
+        {{- $gatewayConfig := dict }}
+        {{- $_ := set $gatewayConfig "type" $hostConfig.type }}
+        {{- $_ = set $gatewayConfig "className" $className }}
+        {{- $_ = set $gatewayConfig "addresses" $addresses }}
+        {{- $_ = set $gatewayConfig "certs" $certs }}
+        {{- $_ = set $gatewayConfigs $configKey $gatewayConfig }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- /* Generate gateways from unique configurations */}}
+gateways:
+  {{- $gatewayCount := len $gatewayConfigs }}
+  {{- $hasMultipleTypes := gt $gatewayCount 1 }}
+  {{- range $configKey, $gatewayConfig := $gatewayConfigs }}
+  {{- $multiCluster := contains "-mc" $gatewayConfig.className }}
+  {{- $gatewayNameParams := dict "appCode" $globals.app_code "type" $gatewayConfig.type "hasMultipleTypes" $hasMultipleTypes "multiCluster" $multiCluster }}
+  {{- $gatewayName := include "gateway.name" $gatewayNameParams }}
+  {{ $gatewayName }}:
+    component: gateway
+    type: {{ $gatewayConfig.type }}
+    className: {{ $gatewayConfig.className }}
+    addresses:
+      {{- range $address := $gatewayConfig.addresses }}
+      - {{ $address }}
+      {{- end }}
+    listeners:
+      - name: http
+        protocol: HTTP
+        port: 80
+      {{- if eq $gatewayConfig.type "external" }}
+      - name: https
+        protocol: HTTPS
+        port: 443
+      {{- end }}
+    {{- if eq $gatewayConfig.type "external" }}
+    tls:
+      certs:
+        {{- range $cert := $gatewayConfig.certs }}
+        - {{ $cert }}
+        {{- end }}
+      type: certmap
+    {{- end }}
+  {{- end }}
+{{- end -}}
+
 {{- if .Values.enabled }}
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $context := deepCopy . }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
 {{- /* Call a helper function that merges user data with defaults */}}
 {{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- /* Get only workloads where "api: gateway" is set */}}
 {{- $formatterParams := dict "api" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
 {{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
-{{- /* Also get ALL workloads (unfiltered by api type) for backend processing
-     This allows backends to be created even for hosts with api: none */}}
-{{- $formatterParamsAll := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
-{{- $allWorkloads := include "mozcloud.formatter.workloads" $formatterParamsAll | fromYaml -}}
 
 {{- /*
 Only include Gateway and related resources if we have Gateway hosts defined
@@ -20,66 +114,29 @@ Only include Gateway and related resources if we have Gateway hosts defined
   {{- end }}
 {{- end }}
 
-{{- /* We will build $params as we go */}}
-{{- $helperParams := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
-{{- $params := $labelParams -}}
-
-{{- if gt (len $hosts) 0 -}}
-
-{{- /*
-Gateways and Gateway policies - Skip if preview mode is using shared gateway
-
-Delete this section when it is time to move to shared gateways.
-*/}}
-{{- if not (include "mozcloud.preview.usePreviewHttpRoute" .) }}
-{{- $gateways := include "mozcloud.config.gateways" $helperParams | fromYaml }}
-{{- range $gatewayName, $gatewayConfig := $gateways.gateways }}
-{{- $_ := set $labelParams "component_code" $gatewayConfig.component }}
-{{- $_ = set $params "gatewayConfig" (dict "gateways" (dict $gatewayName (omit $gatewayConfig "component"))) }}
+{{- if gt (len $hosts) 0 }}
+  {{- /*
+  Gateways and Gateway policies - Skip if preview mode is using shared gateway
+  */}}
+  {{- if not (include "mozcloud.preview.usePreviewHttpRoute" .) }}
+    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads) }}
+    {{- $gateways := include "mozcloud.gateway.gateways" $params | fromYaml }}
+    {{- range $gatewayName, $gatewayConfig := $gateways.gateways }}
+      {{- $_ := set $labelParams "component_code" $gatewayConfig.component }}
+      {{- $params = dict "gatewayConfig" (dict "gateways" (dict $gatewayName (omit $gatewayConfig "component"))) }}
 {{ include "mozcloud-gateway-lib.gateway" (mergeOverwrite $params $labelParams) }}
-{{- end }}
-{{- /* Prepare gatewayConfig with all gateways for policy rendering */}}
-{{- $allGatewaysConfig := dict }}
-{{- range $gatewayName, $gatewayConfig := $gateways.gateways }}
-{{- $_ := set $allGatewaysConfig $gatewayName (omit $gatewayConfig "component") }}
-{{- end }}
-{{- $gatewayPolicyConfig := include "mozcloud.config.gatewayPolicy" . | fromYaml }}
-{{- $_ := set $labelParams "component_code" "gateway" }}
-{{- $_ = set $params "gatewayConfig" (dict "gateways" $allGatewaysConfig) }}
-{{- $_ = set $params "gatewayPolicyConfig" $gatewayPolicyConfig }}
+    {{- end }}
+    {{- /* Prepare gatewayConfig with all gateways for policy rendering */}}
+    {{- $allGatewaysConfig := dict }}
+    {{- range $gatewayName, $gatewayConfig := $gateways.gateways }}
+      {{- $_ := set $allGatewaysConfig $gatewayName (omit $gatewayConfig "component") }}
+    {{- end }}
+    {{- $gatewayPolicyConfig := include "mozcloud.gateway.gatewayPolicy" . | fromYaml }}
+    {{- $_ := set $labelParams "component_code" "gateway" }}
+    {{- $params = dict "gatewayConfig" (dict "gateways" $allGatewaysConfig) }}
+    {{- $_ = set $params "gatewayPolicyConfig" $gatewayPolicyConfig }}
 {{ include "mozcloud-gateway-lib.gatewayPolicy" (mergeOverwrite $params $labelParams) -}}
 {{- end }}
 
-{{- /*
-HTTPRoutes - Skip if preview mode is using preview HTTPRoute
-*/}}
-{{- if not (include "mozcloud.preview.usePreviewHttpRoute" .) }}
-{{- $httpRoutes := include "mozcloud.config.httpRoutes" $helperParams | fromYaml }}
-{{- range $httpRouteName, $httpRouteConfig := $httpRoutes.httpRoutes }}
-{{- $_ := set $labelParams "component_code" $httpRouteConfig.component }}
-{{- $_ = set $params "httpRouteConfig" (dict "httpRoutes" (dict $httpRouteName (omit $httpRouteConfig "component"))) }}
-{{ include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite $params $labelParams) -}}
-{{- end }}
-{{- end }}
-
 {{- end -}}
-
-{{- /*
-Backend services, backend policies, and health check policies
-Only create these for workloads with api: gateway or api: none
-(ingress.yaml handles Services for api: ingress workloads)
-*/}}
-{{- $backendParams := mergeOverwrite (. | deepCopy) (dict "workloads" $allWorkloads) }}
-{{- $backends := include "mozcloud.config.backends" $backendParams | fromYaml }}
-{{- range $backendName, $backendConfig := $backends.backends }}
-  {{- /* Only render backend resources if api is not ingress */}}
-  {{- if ne $backendConfig.api "ingress" }}
-{{- $_ := set $labelParams "component_code" $backendConfig.component }}
-{{- $_ := set $params "backendConfig" (dict "backends" (dict $backendName (omit $backendConfig "component" "api"))) }}
-{{ include "mozcloud-gateway-lib.service" (mergeOverwrite $params $labelParams) }}
-{{ include "mozcloud-gateway-lib.backendPolicy" (mergeOverwrite $params $labelParams) }}
-{{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $labelParams) }}
-  {{- end }}
 {{- end }}
-
-{{- end -}}

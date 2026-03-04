@@ -18,7 +18,8 @@ templates:
   - serviceaccount/serviceaccount.yaml
   - task/job.yaml
   - workload/workload.yaml
-  - gateway/gateway.yaml
+  - gateway/backend.yaml
+  - gateway/httproute.yaml
   - preview/httpRoute.yaml
   - preview/endpointCheck.yaml
 tests:
@@ -95,7 +96,7 @@ tests:
 
   # Test Service is prefixed
   - it: Service is prefixed with PR number
-    template: gateway/gateway.yaml
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "Service")]
     asserts:

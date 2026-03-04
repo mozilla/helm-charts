@@ -10,7 +10,7 @@ for preview mode. For multiple routes, it prefixes each hostname with the first
 part of the original hostname.
 
 Params:
-  httpRoutes: The httpRoutes structure from mozcloud.config.httpRoutes
+  httpRoutes: The httpRoutes structure from mozcloud.gateway.httpRoutes
   previewHost: The base preview host from .Values.preview.host
 
 Returns:
@@ -60,7 +60,7 @@ This helper transforms HTTP routes for preview mode and extracts all unique host
 Combines transformation and extraction in a single step for convenience.
 
 Params:
-  httpRoutes: The original httpRoutes structure from mozcloud.config.httpRoutes
+  httpRoutes: The original httpRoutes structure from mozcloud.gateway.httpRoutes
   previewHost: The base preview host from .Values.preview.host
 
 Returns:

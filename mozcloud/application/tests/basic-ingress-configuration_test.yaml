@@ -13,6 +13,7 @@ values:
   - values/basic-ingress-configuration.yaml
 templates:
   - gateway/gateway.yaml
+  - ingress/frontendconfig.yaml
   - ingress/ingress.yaml
 tests:
   - it: Ensure no failures occur
@@ -34,7 +35,7 @@ tests:
               enable: true
               sampleRate: 0.1
   - it: Frontend is configured correctly
-    template: ingress/ingress.yaml
+    template: ingress/frontendconfig.yaml
     documentSelector:
       path: $[?(@.kind == "FrontendConfig")].metadata.name
       value: test-service
@@ -44,6 +45,7 @@ tests:
           content:
             redirectToHttps:
               enabled: true
+              responseCodeName: MOVED_PERMANENTLY_DEFAULT
             sslPolicy: mozilla-intermediate
   - it: Ingress is configured correctly
     template: ingress/ingress.yaml
