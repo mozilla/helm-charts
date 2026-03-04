@@ -9,7 +9,9 @@ values:
   - values/globals.yaml
   - values/mixed-gateway-ingress-configuration.yaml
 templates:
+  - gateway/backend.yaml
   - gateway/gateway.yaml
+  - gateway/httproute.yaml
   - ingress/ingress.yaml
 tests:
   - it: Ensure no failures occur
@@ -25,7 +27,7 @@ tests:
     template: gateway/gateway.yaml
     asserts:
       - hasDocuments:
-          count: 7
+          count: 2
 
   - it: Gateway is configured for gateway-service
     template: gateway/gateway.yaml
@@ -37,7 +39,7 @@ tests:
           path: spec.addresses
 
   - it: Gateway Service is created for gateway-service
-    template: gateway/gateway.yaml
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "Service")].metadata.name
       value: gateway-service
@@ -55,7 +57,7 @@ tests:
             targetPort: http
 
   - it: Gateway HTTPRoute references gateway-service
-    template: gateway/gateway.yaml
+    template: gateway/httproute.yaml
     documentSelector:
       path: $[?(@.kind == "HTTPRoute")].metadata.name
       value: gateway-service
@@ -119,8 +121,8 @@ tests:
           content: "ingress-service.dev.test-domain.com"
 
   # Cross-validation tests - ensure no resource leakage between templates
-  - it: Gateway template does NOT create resources for ingress-service
-    template: gateway/gateway.yaml
+  - it: Gateway backend template does NOT create resources for ingress-service
+    template: gateway/backend.yaml
     asserts:
       - notContains:
           path: $[*].metadata.name
