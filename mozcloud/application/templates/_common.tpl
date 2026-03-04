@@ -1,38 +1,3 @@
-{{/*
-Template helpers
-*/}}
-{{- define "common.config.name" -}}
-{{- $name := "" -}}
-{{- if .name -}}
-  {{- $name = .name -}}
-{{- end -}}
-{{- if and (.nameOverride) (not $name) -}}
-  {{- $name = .nameOverride -}}
-{{- end -}}
-{{- if not $name -}}
-  {{- $name = include "mozcloud.fullname" $ -}}
-{{- end -}}
-{{- if .prefix -}}
-  {{- $name = printf "%s-%s" .prefix $name -}}
-{{- end -}}
-{{- if .suffixes -}}
-  {{- $suffix := join "-" .suffixes -}}
-  {{- $length := $suffix | len | add1 -}}
-  {{- $name = printf "%s-%s" ($name | trunc (sub 63 $length | int)) $suffix -}}
-{{- end -}}
-{{ $name | trunc 63 | trimSuffix "-" }}
-{{- end -}}
-
-{{- /*
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-EVERYTHING BELOW WAS ADDED DURING THE REFACTOR
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-*/ -}}
-
 {{- /*
 Populates Argo CD and OTEL Collector annotations as applicable by calling
 downstream helper functions.
