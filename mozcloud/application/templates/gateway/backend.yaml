@@ -1,0 +1,132 @@
+{{- /*
+This function creates the value structure needed for the service, backendPolicy,
+and healthCheckPolicy templates in the mozcloud-gateway-lib library chart.
+
+Params:
+
+workloads (dict): (required) All of the workloads created using this chart. This
+                  is populated below this function via the workload formatter
+                  function.
+*/}}
+{{- define "mozcloud.gateway.backends" -}}
+{{- $workloads := .workloads -}}
+backends:
+  {{- range $workloadName, $workloadConfig := $workloads }}
+  {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
+  {{- if $hostConfig.backends }}
+  {{- range $backend := (default (list) $hostConfig.backends) }}
+  {{ $backend.name }}:
+    component: {{ $workloadConfig.component }}
+    api: {{ default "gateway" $hostConfig.api }}
+    {{- if $backend.service }}
+    service:
+      {{- $backend.service | toYaml | nindent 6 }}
+    {{- end }}
+    {{- if $backend.backendPolicy }}
+    backendPolicy:
+      targetRef:
+        {{- if and $backend.backendPolicy.targetRef.kind (eq $backend.backendPolicy.targetRef.kind "ServiceImport" )}}
+        {{- $_ := set $backend.backendPolicy.targetRef "group" "net.gke.io" }}
+        {{- end }}
+        group: {{ default "" $backend.backendPolicy.targetRef.group | quote }}
+        kind: {{ $backend.backendPolicy.targetRef.kind }}
+        name: {{ $backend.backendPolicy.targetRef.name }}
+    {{- end }}
+    {{- if $backend.healthCheck }}
+    healthCheck:
+      path: {{ $backend.healthCheck.path }}
+      {{- if ($backend.healthCheck).port }}
+      port: {{ $backend.healthCheck.port }}
+      {{- end }}
+      {{- if ($backend.healthCheck).host }}
+      host: {{ $backend.healthCheck.host }}
+      {{- end }}
+      targetRef:
+        {{- if and $backend.healthCheck.targetRef.kind (eq $backend.healthCheck.targetRef.kind "ServiceImport" )}}
+        {{- $_ := set $backend.healthCheck.targetRef "group" "net.gke.io" }}
+        {{- end }}
+        group: {{ default "" $backend.healthCheck.targetRef.group | quote }}
+        kind: {{ default "Service" $backend.healthCheck.targetRef.kind }}
+        name: {{ $backend.healthCheck.targetRef.name }}
+    {{- end }}
+  {{- end }}
+  {{- else }}
+  {{ $workloadName }}:
+    component: {{ $workloadConfig.component }}
+    api: {{ default "gateway" $hostConfig.api }}
+    service:
+      port: 8080
+      targetPort: http
+    backendPolicy:
+      logging:
+        enabled: true
+      {{- if ($hostConfig.options).logSampleRate }}
+        {{- $sampleRate := $hostConfig.options.logSampleRate | float64 }}
+        sampleRate: {{ mulf $sampleRate 10000 | round | int }}
+      {{- end }}
+      {{- if ($hostConfig.options).iap }}
+      iap:
+        {{- if $hostConfig.options.iap.enabled }}
+        enabled: {{ $hostConfig.options.iap.enabled }}
+        {{- end }}
+        {{- if $hostConfig.options.iap.oauth2ClientId }}
+        oauth2ClientId: {{ $hostConfig.options.iap.oauth2ClientId }}
+        {{- end }}
+        {{- if $hostConfig.options.iap.oauth2ClientSecret }}
+        oauth2ClientSecret: {{ $hostConfig.options.iap.oauth2ClientSecret }}
+        {{- end }}
+      {{- end }}
+      {{- if ($hostConfig.options).timeoutSec }}
+      timeoutSec: {{ $hostConfig.options.timeoutSec | int }}
+      {{- end }}
+    healthCheck:
+      {{- if (($hostConfig.options).healthCheck).host }}
+      host: {{ $hostConfig.options.healthCheck.host }}
+      {{- end }}
+      {{- if (($hostConfig.options).healthCheck).port }}
+      port: {{ $hostConfig.options.healthCheck.port }}
+      {{- end }}
+      {{- if (($hostConfig.options).healthCheck).path }}
+      path: {{ $hostConfig.options.healthCheck.path }}
+      {{- else if kindIs "string" (($hostConfig).healthCheckEndpoints).loadBalancer }}
+      path: {{ default "/__lbheartbeat__" (($hostConfig).healthCheckEndpoints).loadBalancer }}
+      {{- else if kindIs "map" (($hostConfig).healthCheckEndpoints).loadBalancer }}
+      path: {{ default "/__lbheartbeat__" ($hostConfig.healthCheckEndpoints.loadBalancer).path }}
+      {{- end }}
+      protocol: HTTP
+  {{- end }}
+  {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{- if .Values.enabled }}
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $context := deepCopy . }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- /* Call a helper function that merges user data with defaults */}}
+{{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- /* Get ALL workloads (unfiltered by api type) for backend processing
+     This allows backends to be created even for hosts with api: none */}}
+{{- $formatterParams := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+{{- $workloads := dict "workloads" (include "mozcloud.formatter.workloads" $formatterParams | fromYaml) -}}
+
+{{- /*
+Backend services, backend policies, and health check policies.
+
+Only create these for workloads with "api: gateway" or "api: none".
+templates/ingress handles service creation for "api: ingress" workloads.
+*/}}
+{{- $backendParams := mergeOverwrite $context $workloads }}
+{{- $backends := include "mozcloud.gateway.backends" $backendParams | fromYaml }}
+{{- range $backendName, $backendConfig := $backends.backends }}
+  {{- /* Only render backend resources if api is not ingress */}}
+  {{- if ne $backendConfig.api "ingress" }}
+    {{- $_ := set $labelParams "component_code" $backendConfig.component }}
+    {{- $params := dict "backendConfig" (dict "backends" (dict $backendName (omit $backendConfig "component" "api"))) }}
+{{ include "mozcloud-gateway-lib.service" (mergeOverwrite $params $labelParams) }}
+{{ include "mozcloud-gateway-lib.backendPolicy" (mergeOverwrite $params $labelParams) }}
+{{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $labelParams) }}
+  {{- end }}
+{{- end }}
+
+{{- end -}}

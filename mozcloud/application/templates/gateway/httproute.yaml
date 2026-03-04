@@ -1,0 +1,156 @@
+{{- /*
+This function creates the value structure needed for HTTPRoute templates in the
+mozcloud-gateway-lib library chart.
+
+Params:
+
+globals (dict): (required) Global values from .Values.global.mozcloud.
+workloads (dict): (required) All of the workloads created using this chart. This
+                  is populated below this function via the workload formatter
+                  function.
+*/}}
+{{- define "mozcloud.gateway.httpRoutes" -}}
+{{- $globals := .Values.global.mozcloud -}}
+{{- $workloads := .workloads -}}
+httpRoutes:
+  {{- range $workloadName, $workloadConfig := $workloads }}
+  {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
+  {{- if (($hostConfig).httpRoutes).createHttpRoutes }}
+  {{ $hostName }}:
+    component: {{ $workloadConfig.component }}
+    gatewayRefs:
+      {{- /* Determine gateway name - use shared gateway if configured, otherwise use local gateway */}}
+      {{- $gatewayName := "" }}
+      {{- $gatewayNamespace := "" }}
+      {{- if ($hostConfig).sharedGateway }}
+        {{- /* Future: Use shared/external gateway */}}
+        {{- $gatewayName = $hostConfig.sharedGateway.name }}
+        {{- $gatewayNamespace = default "" $hostConfig.sharedGateway.namespace }}
+      {{- else }}
+        {{- /* Current: Use local gateway based on app_code and type */}}
+        {{- /* Need to determine if multiple gateway types exist to match naming logic */}}
+        {{- $hasMultipleTypes := false }}
+        {{- $types := dict }}
+        {{- range $wlName, $wlConfig := $workloads }}
+          {{- range $hName, $hConfig := default (dict) $wlConfig.hosts }}
+            {{- if not ($hConfig).sharedGateway }}
+              {{- $_ := set $types $hConfig.type true }}
+            {{- end }}
+          {{- end }}
+        {{- end }}
+        {{- if gt (len $types) 1 }}
+          {{- $hasMultipleTypes = true }}
+        {{- end }}
+        {{- $multiCluster := ($hostConfig).multiCluster }}
+        {{- $gatewayNameParams := dict "appCode" $globals.app_code "type" $hostConfig.type "hasMultipleTypes" $hasMultipleTypes "multiCluster" $multiCluster }}
+        {{- $gatewayName = include "gateway.name" $gatewayNameParams }}
+      {{- end }}
+      - name: {{ $gatewayName }}
+        {{- if $gatewayNamespace }}
+        namespace: {{ $gatewayNamespace }}
+        {{- end }}
+        {{- if eq $hostConfig.type "external" }}
+        section: https
+        {{- else }}
+        section: http
+        {{- end }}
+    hostnames:
+      {{- range $domain := $hostConfig.domains }}
+      - {{ $domain | quote }}
+      {{- end }}
+    {{- if eq $hostConfig.type "internal" }}
+    httpToHttpsRedirect: false
+    {{- end }}
+      {{/*
+      Some tenants might want to pass HTTPRoute rules in from values. A rules Array item
+      has a high number of possible combinations of values, so we currently only want to
+      support weighted backends here (e.g. for Multi-Cluster Scenarios)
+      */}}
+    rules:
+      {{- $rules := (list) -}}
+      {{- $defaultBackendRef := dict "name" $workloadName "port" 8080 -}}
+      {{- if ($hostConfig.httpRoutes).rules }}
+        {{- range $ruleConfig := $hostConfig.httpRoutes.rules }}
+          {{- $rule := dict }}
+          {{- $backendRefs := (list) }}
+          {{- if $ruleConfig.backendRefs }}
+            {{- range $backendRefConfig := $ruleConfig.backendRefs }}
+              {{- $backendRef := dict }}
+              {{- if and $backendRefConfig.kind (eq $backendRefConfig.kind "ServiceImport") }}
+                {{- $_ := set $backendRef "group" "net.gke.io" }}
+              {{- else }}
+                {{- $_ := set $backendRef "group" (default "" $backendRefConfig.group) }}
+              {{- end }}
+              {{- $_ := set $backendRef "kind" (default "Service" $backendRefConfig.kind) }}
+              {{- $_ := set $backendRef "name" (default $workloadName $backendRefConfig.name) }}
+              {{- $_ := set $backendRef "port" (default 8080 $backendRefConfig.port) }}
+              {{- if or (eq (toString $backendRefConfig.weight) "0") (gt (int $backendRefConfig.weight) 0) }}
+                {{- $_ := set $backendRef "weight" $backendRefConfig.weight }}
+              {{- end }}
+              {{- $backendRefs = append $backendRefs $backendRef }}
+            {{- end }}
+          {{- else }}
+            {{- $backendRefs = append $backendRefs $defaultBackendRef }}
+          {{- end }}
+          {{ $_ := set $rule "backendRefs" $backendRefs }}
+          {{- if $ruleConfig.matches }}
+            {{- $matches := list }}
+            {{- range $matchConfig := $ruleConfig.matches }}
+              {{- $match := dict }}
+              {{- if $matchConfig.path }}
+                {{- $_ := set $match "path" $matchConfig.path }}
+              {{- end }}
+              {{- if $matchConfig.headers }}
+                {{- $_ := set $match "headers" $matchConfig.headers }}
+              {{- end }}
+              {{- $matches = append $matches $match }}
+            {{- end }}
+            {{ $_ := set $rule "matches" $matches }}
+          {{- end }}
+          {{- $rules = append $rules $rule -}}
+        {{- end }}
+      {{- else }}
+        {{- $rules = append $rules (dict "backendRefs" (list $defaultBackendRef)) -}}
+      {{- end }}
+      {{- $rules | toYaml | nindent 6 }}
+  {{- end }}
+  {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{- if .Values.enabled }}
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $context := deepCopy . }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- /* Call a helper function that merges user data with defaults */}}
+{{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- /* Get only workloads where "api: gateway" is set */}}
+{{- $formatterParams := dict "api" "gateway" "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+
+{{- /*
+Only include HTTPRoute resources if we have Gateway hosts defined
+*/}}
+{{- $hosts := list }}
+{{- range $workloadName, $workloadConfig := $workloads }}
+  {{- range $hostName, $hostConfig := $workloadConfig.hosts }}
+    {{- $hosts = append $hosts $hostName }}
+  {{- end }}
+{{- end }}
+
+{{- if gt (len $hosts) 0 -}}
+  {{- /*
+  HTTPRoutes - Skip if preview mode is using preview HTTPRoute
+  */}}
+  {{- if not (include "mozcloud.preview.usePreviewHttpRoute" .) }}
+    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads) }}
+    {{- $httpRoutes := include "mozcloud.gateway.httpRoutes" $params | fromYaml }}
+    {{- range $httpRouteName, $httpRouteConfig := $httpRoutes.httpRoutes }}
+      {{- $_ := set $labelParams "component_code" $httpRouteConfig.component }}
+      {{- $_ = set $params "httpRouteConfig" (dict "httpRoutes" (dict $httpRouteName (omit $httpRouteConfig "component"))) }}
+{{ include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite $params $labelParams) -}}
+    {{- end }}
+  {{- end }}
+{{- end -}}
+
+{{- end -}}

@@ -7,7 +7,7 @@
 {{- $helperParams := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
 {{- $params := $labelParams -}}
 
-{{- $httpRoutes := include "mozcloud.config.httpRoutes" $helperParams | fromYaml }}
+{{- $httpRoutes := include "mozcloud.gateway.httpRoutes" $helperParams | fromYaml }}
 {{- /* Transform all HTTP routes for preview mode */ -}}
 {{- $transformParams := dict "httpRoutes" $httpRoutes.httpRoutes "previewHost" $.Values.global.preview.host }}
 {{- $transformedHttpRoutes := include "preview.transformHttpRoutes" $transformParams | fromYaml }}

@@ -12,7 +12,7 @@ values:
   - values/globals.yaml
   - values/httproute-rules.yaml
 templates:
-  - gateway/gateway.yaml
+  - gateway/httproute.yaml
 tests:
   - it: Ensure no failures occur
     asserts:

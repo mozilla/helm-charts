@@ -9,7 +9,9 @@ values:
   - values/globals.yaml
   - values/shared-gateway-configuration.yaml
 templates:
+  - gateway/backend.yaml
   - gateway/gateway.yaml
+  - gateway/httproute.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -18,12 +20,12 @@ tests:
     asserts:
       - matchSnapshot: {}
   - it: Does not create a Gateway resource when using shared gateway
+    template: gateway/gateway.yaml
     asserts:
-      - hasDocuments:
-          count: 5
       - isNull:
           path: $[?(@.kind == "Gateway")]
   - it: Creates HTTPRoute that references the shared gateway
+    template: gateway/httproute.yaml
     documentSelector:
       path: $[?(@.kind == "HTTPRoute")].metadata.name
       value: shared-gateway-host
@@ -42,6 +44,7 @@ tests:
             namespace: preview-shared-infrastructure
             sectionName: https
   - it: Creates HTTP redirect HTTPRoute that references the shared gateway
+    template: gateway/httproute.yaml
     documentSelector:
       path: $[?(@.kind == "HTTPRoute")].metadata.name
       value: shared-gateway-host-http-redirect
@@ -56,10 +59,12 @@ tests:
             namespace: preview-shared-infrastructure
             sectionName: http
   - it: Does not create GCPGatewayPolicy when using shared gateway
+    template: gateway/gateway.yaml
     asserts:
       - isNull:
           path: $[?(@.kind == "GCPGatewayPolicy")]
   - it: Creates backend Service for the workload
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "Service")].metadata.name
       value: test-service
@@ -68,6 +73,7 @@ tests:
           path: spec.type
           value: ClusterIP
   - it: Creates GCPBackendPolicy for the backend service
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
       value: test-service
@@ -76,6 +82,7 @@ tests:
           path: spec.targetRef.name
           value: test-service
   - it: Creates HealthCheckPolicy for the backend service
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
       value: test-service

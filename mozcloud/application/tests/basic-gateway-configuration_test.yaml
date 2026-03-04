@@ -12,8 +12,9 @@ values:
   - values/globals.yaml
   - values/basic-configuration.yaml
 templates:
+  - gateway/backend.yaml
   - gateway/gateway.yaml
-  - ingress/ingress.yaml
+  - gateway/httproute.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -22,7 +23,7 @@ tests:
     asserts:
       - matchSnapshot: {}
   - it: GCP backend policy is configured correctly
-    template: gateway/gateway.yaml
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
       value: test-service
@@ -86,7 +87,7 @@ tests:
             kind: Gateway
             name: mozcloud-test
   - it: Healthcheck policy is configured correctly
-    template: gateway/gateway.yaml
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
       value: test-service
@@ -98,7 +99,7 @@ tests:
           path: spec.targetRef.name
           value: test-service
   - it: HTTPS HTTPRoute is configured correctly
-    template: gateway/gateway.yaml
+    template: gateway/httproute.yaml
     documentSelector:
       path: $[?(@.kind == "HTTPRoute")].metadata.name
       value: test-service
@@ -134,7 +135,7 @@ tests:
       - notExists:
           path: spec.rules[0].filters[0].requestRedirect
   - it: HTTP-to-HTTPS redirect HTTPRoute is configured correctly
-    template: gateway/gateway.yaml
+    template: gateway/httproute.yaml
     documentSelector:
       path: $[?(@.kind == "HTTPRoute")].metadata.name
       value: test-service-http-redirect
@@ -175,7 +176,7 @@ tests:
               type: PathPrefix
               value: /
   - it: Service is configured correctly
-    template: gateway/gateway.yaml
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "Service")].metadata.name
       value: test-service

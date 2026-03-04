@@ -13,7 +13,7 @@ values:
   - values/multi-cluster-gateway-configuration-across-two-regions-with-weighted-traffic-splitting-primary-region.yaml
   - values/multi-cluster-gateway-configuration-across-two-regions-with-weighted-traffic-splitting-additional-region.yaml
 templates:
-  - gateway/gateway.yaml
+  - gateway/backend.yaml
 tests:
   - it: Ensure no failures occur
     asserts:

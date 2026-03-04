@@ -114,4 +114,5 @@ Configuration matches entire snapshot:
     spec:
       redirectToHttps:
         enabled: true
+        responseCodeName: MOVED_PERMANENTLY_DEFAULT
       sslPolicy: mozilla-intermediate

@@ -13,7 +13,9 @@ values:
   - values/multi-cluster-gateway-configuration-across-two-regions-with-weighted-traffic-splitting-primary-region.yaml
 
 templates:
+  - gateway/backend.yaml
   - gateway/gateway.yaml
+  - gateway/httproute.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -21,11 +23,8 @@ tests:
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
-  - it: Resource count matches expectations
-    asserts:
-      - hasDocuments:
-          count: 10
   - it: Service is configured correctly
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "Service")].metadata.name
       value: mozcloud-test-us-west1
@@ -48,6 +47,7 @@ tests:
             app.kubernetes.io/name: mozcloud-test
             env_code: dev
   - it: ServiceExport exists
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "ServiceExport")].metadata.name
       value: mozcloud-test-us-west1
@@ -55,6 +55,7 @@ tests:
       - isAPIVersion:
           of: net.gke.io/v1
   - it: HealthCheckPolicy is configured correctly (primary region)
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
       value: mozcloud-test-us-west1
@@ -72,6 +73,7 @@ tests:
             kind: ServiceImport
             name: mozcloud-test-us-west1
   - it: HealthCheckPolicy is configured correctly (additional region)
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
       value: mozcloud-test-europe-west1
@@ -89,6 +91,7 @@ tests:
             kind: ServiceImport
             name: mozcloud-test-europe-west1
   - it: GCPBackendPolicy is configured correctly (primary region)
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
       value: mozcloud-test-us-west1
@@ -100,6 +103,7 @@ tests:
             kind: ServiceImport
             name: mozcloud-test-us-west1
   - it: GCPBackendPolicy is configured correctly (additional region)
+    template: gateway/backend.yaml
     documentSelector:
       path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
       value: mozcloud-test-europe-west1
@@ -111,6 +115,7 @@ tests:
             kind: ServiceImport
             name: mozcloud-test-europe-west1
   - it: HTTPRoute is configured correctly (http-redirect)
+    template: gateway/httproute.yaml
     documentSelector:
       path: $[?(@.kind == "HTTPRoute")].metadata.name
       value: mozcloud-test-http-redirect
@@ -143,6 +148,7 @@ tests:
                   type: PathPrefix
                   value: /
   - it: HTTPRoute is configured correctly
+    template: gateway/httproute.yaml
     documentSelector:
       path: $[?(@.kind == "HTTPRoute")].metadata.name
       value: mozcloud-test
@@ -183,6 +189,7 @@ tests:
             port: 8080
             weight: 0
   - it: GCPGatewayPolicy is configured correctly
+    template: gateway/gateway.yaml
     documentSelector:
       path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
       value: mozcloud-test
@@ -194,6 +201,7 @@ tests:
             kind: Gateway
             name: mozcloud-test
   - it: Gateway is configured correctly
+    template: gateway/gateway.yaml
     documentSelector:
       path: $[?(@.kind == "Gateway")].metadata.name
       value: mozcloud-test
