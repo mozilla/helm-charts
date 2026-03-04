@@ -150,7 +150,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[?(@.name=="app")].envFrom[0].secretRef.name
-          value: pr789-mozcloud-test-secrets
+          value: pr789-test-chart-secrets
 
   # Test that serviceAccount reference is prefixed in workload spec
   - it: Workload serviceAccountName should reference prefixed ServiceAccount

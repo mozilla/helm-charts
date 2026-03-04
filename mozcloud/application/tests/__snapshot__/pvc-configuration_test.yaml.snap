@@ -92,7 +92,7 @@ Configuration matches entire snapshot:
           containers:
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: test-chart-secrets
               image: test-repo/test-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:

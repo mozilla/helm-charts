@@ -45,7 +45,7 @@ Configuration matches entire snapshot:
           containers:
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: test-chart-secrets
               image: test-repo/image1:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -86,7 +86,7 @@ Configuration matches entire snapshot:
                   type: RuntimeDefault
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: test-chart-secrets
               image: test-repo/image2:2.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -128,7 +128,7 @@ Configuration matches entire snapshot:
           initContainers:
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: test-chart-secrets
               image: test-repo/image3:3.0.0
               imagePullPolicy: Always
               name: init-container-1
@@ -149,7 +149,7 @@ Configuration matches entire snapshot:
                   type: RuntimeDefault
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: test-chart-secrets
               image: test-repo/image4:4.0.0
               imagePullPolicy: Always
               name: init-container-2

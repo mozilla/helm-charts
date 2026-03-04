@@ -51,7 +51,7 @@ Configuration matches entire snapshot:
                       fieldPath: status.hostIP
               envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: test-chart-secrets
               image: test-repo/test-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -92,7 +92,7 @@ Configuration matches entire snapshot:
                   type: RuntimeDefault
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: test-chart-secrets
               image: test-repo/test-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -186,7 +186,7 @@ Configuration matches entire snapshot:
           containers:
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: test-chart-secrets
               image: test-repo/test-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -227,7 +227,7 @@ Configuration matches entire snapshot:
                   type: RuntimeDefault
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: test-chart-secrets
               image: test-repo/test-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -314,7 +314,7 @@ Configuration matches entire snapshot:
           containers:
             - envFrom:
                 - secretRef:
-                    name: mozcloud-test-secrets
+                    name: test-chart-secrets
               image: test-repo/test-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
