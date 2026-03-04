@@ -147,7 +147,7 @@ tests:
           path: spec.template.spec.containers[1].envFrom
           content:
             secretRef:
-              name: mozcloud-test-secrets
+              name: test-chart-secrets
       - equal:
           path: spec.template.spec.containers[1].image
           value: test-repo/test-image:1.0.0

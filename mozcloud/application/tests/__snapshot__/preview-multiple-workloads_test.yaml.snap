@@ -424,7 +424,7 @@ Configuration matches entire snapshot:
                   subPath: nginx.conf
             - envFrom:
                 - secretRef:
-                    name: pr456-mozcloud-test-secrets
+                    name: pr456-test-chart-secrets
               image: test-repo/admin-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -681,7 +681,7 @@ Configuration matches entire snapshot:
                   subPath: nginx.conf
             - envFrom:
                 - secretRef:
-                    name: pr456-mozcloud-test-secrets
+                    name: pr456-test-chart-secrets
               image: test-repo/api-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -938,7 +938,7 @@ Configuration matches entire snapshot:
                   subPath: nginx.conf
             - envFrom:
                 - secretRef:
-                    name: pr456-mozcloud-test-secrets
+                    name: pr456-test-chart-secrets
               image: test-repo/web-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
