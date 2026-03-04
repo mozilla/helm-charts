@@ -15,7 +15,6 @@ templates:
   - gateway/backend.yaml
   - gateway/gateway.yaml
   - gateway/httproute.yaml
-  - ingress/ingress.yaml
 tests:
   - it: Ensure no failures occur
     asserts:

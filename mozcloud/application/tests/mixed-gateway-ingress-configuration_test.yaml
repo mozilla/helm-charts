@@ -12,6 +12,7 @@ templates:
   - gateway/backend.yaml
   - gateway/gateway.yaml
   - gateway/httproute.yaml
+  - ingress/frontendconfig.yaml
   - ingress/ingress.yaml
 tests:
   - it: Ensure no failures occur
@@ -71,11 +72,17 @@ tests:
             port: 8080
 
   # Ingress template tests - should only create resources for ingress-service
+  - it: Frontend template creates resources for ingress workload
+    template: ingress/frontendconfig.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+
   - it: Ingress template creates resources for ingress workload
     template: ingress/ingress.yaml
     asserts:
       - hasDocuments:
-          count: 5
+          count: 4
 
   - it: Ingress is configured for ingress-service
     template: ingress/ingress.yaml

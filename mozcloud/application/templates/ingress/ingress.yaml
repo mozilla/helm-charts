@@ -1,50 +1,113 @@
-{{- if .Values.enabled }}
-{{- if not (include "mozcloud.preview.enabled" .) -}}
-{{- $chart_metadata := dict "Chart" .Chart "Release" .Release }}
-{{- $label_params := mergeOverwrite $chart_metadata (include "mozcloud.labelParams" . | fromYaml) }}
-{{- /* Call a helper function that merges user data with defaults */}}
-{{- $preview_config := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
-{{- $formatter_params := dict "api" "ingress" "workloads" (.Values.workloads | deepCopy) "preview" $preview_config }}
-{{- $workloads := include "mozcloud.formatter.workloads" $formatter_params | fromYaml -}}
-
-{{- /*
-Only include Ingress and related resources if we have Ingress hosts defined
+{{/*
+Ingresses
 */}}
-{{- $hosts := list }}
-{{- range $workload_name, $workload_config := $workloads }}
-  {{- range $host_name, $host_config := $workload_config.hosts }}
-    {{- $hosts = append $hosts $host_name }}
+{{- /*
+This function creates the value structure needed for ingress, backendConfig,
+managedCertificate, and service templates in the mozcloud-ingress-lib library
+chart.
+
+Params:
+
+globals (dict): (required) Global values from .Values.global.mozcloud.
+workloads (dict): (required) All of the workloads created using this chart. This
+                  is populated below this function via the workload formatter
+                  function.
+*/}}
+{{- define "mozcloud.config.ingresses" -}}
+{{- $globals := .globals }}
+{{- $workloads := .workloads }}
+ingresses:
+  {{- range $workloadName, $workloadConfig := $workloads }}
+  {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
+  {{- if eq $hostConfig.type "external" }}
+  {{ $hostName }}:
+    component: {{ $workloadConfig.component }}
+    hosts:
+      - domains:
+          {{- range $domain := $hostConfig.domains }}
+          - {{ $domain | quote }}
+          {{- end }}
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              config:
+                name: {{ $workloadName }}
+                {{- if (($hostConfig.options).iap).enabled }}
+                iap:
+                  enabled: {{ $hostConfig.options.iap.enabled }}
+                {{- end }}
+                {{- if ($hostConfig.options).logSampleRate }}
+                logging:
+                  {{- $sampleRate := $hostConfig.options.logSampleRate | float64 }}
+                  sampleRate: {{ divf $sampleRate 100 }}
+                {{- end }}
+                {{- if ($hostConfig.options).timeoutSec }}
+                  timeoutSec: {{ $hostConfig.options.timeoutSec }}
+                {{- end }}
+              service:
+                name: {{ $workloadName }}
+                port: 8080
+                protocol: TCP
+                targetPort: http
+        tls:
+          {{- $type := ($hostConfig.tls.type) }}
+          {{- if or (not $type) (eq $type "certmap") }}
+            {{- $type = "ManagedCertificate" }}
+          {{- end }}
+          type: {{ $type }}
+          {{- if and (hasKey $hostConfig.tls "create") ($hostConfig.tls.create) }}
+          createCertificates: true
+          {{- if eq $type "ManagedCertificate" }}
+          multipleHosts: false
+          {{- end }}
+          {{- end }}
+          {{- if eq $type "pre-shared" }}
+          preSharedCerts: {{ join "," (uniq $hostConfig.tls.certs | sortAlpha) | quote }}
+          {{- end }}
+    {{- if $hostConfig.addresses }}
+    staticIpName: {{ $hostConfig.addresses | first }}
+    {{- else }}
+    staticIpName: {{ $globals.app_code }}-{{ $globals.env_code }}-ip-v4
+    {{- end }}
   {{- end }}
-{{- end }}
-{{- if gt (len $hosts) 0 -}}
-
-{{- /* We will build $params as we go */}}
-{{- $helper_params := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
-{{- $params := $label_params -}}
-
-{{- /*
-Ingresses and related resources
-*/}}
-{{- $ingresses := include "mozcloud.config.ingresses" $helper_params | fromYaml }}
-{{- range $ingress_name, $ingress_config := $ingresses.ingresses }}
-{{- $_ := set $label_params "component_code" $ingress_config.component }}
-{{- $_ = set $params "ingressConfig" (dict $ingress_name (omit $ingress_config "component")) }}
-{{ include "mozcloud-ingress-lib.ingress" (mergeOverwrite $params $label_params) }}
-{{ include "mozcloud-ingress-lib.backendConfig" (mergeOverwrite $params $label_params) }}
-{{ include "mozcloud-ingress-lib.managedCertificate" (mergeOverwrite $params $label_params) }}
-{{ include "mozcloud-ingress-lib.service" (mergeOverwrite $params $label_params) }}
-{{- end }}
-
-{{- /*
-Frontend Config
-*/}}
-{{- $frontends := (include "mozcloud.config.frontendConfigs" $helper_params | fromYaml).frontendConfigs }}
-{{- range $frontend_name, $frontend_config := $frontends }}
-  {{- $_ := set $frontend_config "name" $frontend_name }}
-  {{- $_ = set $label_params "component_code" $frontend_config.component }}
-  {{- $_ = set $params "frontendConfig" (omit $frontend_config "component") }}
-{{ include "mozcloud-ingress-lib.frontendConfig" (mergeOverwrite $params $label_params) }}
-{{- end }}
+  {{- end }}
+  {{- end }}
 {{- end -}}
-{{- end -}}
+
+{{- /* We do not use ingress resources for preview environments */}}
+{{- if and .Values.enabled (not (include "mozcloud.preview.enabled" .)) }}
+  {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+  {{- $context := deepCopy . }}
+  {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+  {{- /* Call a helper function that merges user data with defaults */}}
+  {{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+  {{- /* Get only workloads where "api: ingress" is set */}}
+  {{- $formatterParams := dict "api" "ingress" "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+  {{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+
+  {{- /*
+  Only include Ingress and related resources if we have Ingress hosts defined
+  */}}
+  {{- $hosts := list }}
+  {{- range $workloadName, $workloadConfig := $workloads }}
+    {{- range $hostName, $hostConfig := $workloadConfig.hosts }}
+      {{- $hosts = append $hosts $hostName }}
+    {{- end }}
+  {{- end }}
+  {{- if gt (len $hosts) 0 }}
+    {{- /*
+    Ingresses and related resources
+    */}}
+    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads) }}
+    {{- $ingresses := (include "mozcloud.config.ingresses" $params | fromYaml).ingresses }}
+    {{- range $ingressName, $ingressConfig := $ingresses }}
+      {{- $_ := set $labelParams "component_code" $ingressConfig.component }}
+      {{- $_ = set $params "ingressConfig" (dict $ingressName (omit $ingressConfig "component")) }}
+{{ include "mozcloud-ingress-lib.ingress" (mergeOverwrite $params $labelParams) }}
+{{ include "mozcloud-ingress-lib.backendConfig" (mergeOverwrite $params $labelParams) }}
+{{ include "mozcloud-ingress-lib.managedCertificate" (mergeOverwrite $params $labelParams) }}
+{{ include "mozcloud-ingress-lib.service" (mergeOverwrite $params $labelParams) }}
+    {{- end }}
+  {{- end }}
 {{- end -}}

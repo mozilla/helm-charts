@@ -201,6 +201,27 @@ Configuration matches entire snapshot:
                 type: PathPrefix
                 value: /
   8: |
+    apiVersion: networking.gke.io/v1beta1
+    kind: FrontendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: ingress-service
+    spec:
+      redirectToHttps:
+        enabled: true
+        responseCodeName: MOVED_PERMANENTLY_DEFAULT
+      sslPolicy: mozilla-intermediate
+  9: |
     apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
@@ -227,7 +248,7 @@ Configuration matches entire snapshot:
           name: ingress-service
           port:
             number: 8080
-  9: |
+  10: |
     apiVersion: cloud.google.com/v1
     kind: BackendConfig
     metadata:
@@ -247,7 +268,7 @@ Configuration matches entire snapshot:
       logging:
         enable: true
         sampleRate: 0.1
-  10: |
+  11: |
     apiVersion: networking.gke.io/v1
     kind: ManagedCertificate
     metadata:
@@ -266,7 +287,7 @@ Configuration matches entire snapshot:
     spec:
       domains:
         - ingress-service.dev.test-domain.com
-  11: |
+  12: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -296,23 +317,3 @@ Configuration matches entire snapshot:
         app.kubernetes.io/name: mozcloud-test
         env_code: dev
       type: ClusterIP
-  12: |
-    apiVersion: networking.gke.io/v1beta1
-    kind: FrontendConfig
-    metadata:
-      labels:
-        app.kubernetes.io/component: web
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: web
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: ingress-service
-    spec:
-      redirectToHttps:
-        enabled: true
-      sslPolicy: mozilla-intermediate
