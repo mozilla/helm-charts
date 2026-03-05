@@ -55,30 +55,9 @@ spec:
         strategy: subtract_initial_point
 
       k8sattributes:
-        otel_annotations: true
         filter:
           node_from_env_var: KUBE_NODE_NAME
-        extract:
-          metadata:
-          - k8s.namespace.name
-          - k8s.deployment.name
-          - k8s.statefulset.name
-          - k8s.daemonset.name
-          - k8s.cronjob.name
-          - k8s.job.name
-          - k8s.replicaset.name
-          - k8s.pod.name
-          - k8s.pod.uid
-        passthrough: false
-        pod_association:
-        - sources:
-          - from: resource_attribute
-            name: k8s.pod.ip
-        - sources:
-          - from: resource_attribute
-            name: k8s.pod.uid
-        - sources:
-          - from: connection
+        passthrough: true
 
       resourcedetection:
         detectors: [env, gcp]
@@ -182,7 +161,7 @@ spec:
         resource:
           k8s.daemonset.name: {{ include "mozcloud-opentelemetry.name" . }}-daemonset-collector
           k8s.pod.name: ${POD_NAME}
-          namespace: ${POD_NAMESPACE}
+          k8s.namespace.name: ${POD_NAMESPACE}
 
         metrics:
           readers:
