@@ -88,6 +88,30 @@ spec:
             probabilistic:
               sampling_percentage: 1.0
 
+      k8sattributes:
+        extract:
+          otel_annotations: true
+          metadata:
+          - k8s.namespace.name
+          - k8s.deployment.name
+          - k8s.statefulset.name
+          - k8s.daemonset.name
+          - k8s.cronjob.name
+          - k8s.job.name
+          - k8s.replicaset.name
+          - k8s.pod.name
+          - k8s.pod.uid
+        passthrough: false
+        pod_association:
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.ip
+        - sources:
+          - from: resource_attribute
+            name: k8s.pod.uid
+        - sources:
+          - from: connection
+
       resourcedetection:
         detectors: [env, gcp]
         timeout: 10s
@@ -126,6 +150,7 @@ spec:
           - statsd
           processors:
           - memory_limiter
+          - k8sattributes
           - transform/mozcloud
           - resource/gcp_project_id
           exporters:
@@ -135,6 +160,7 @@ spec:
           - otlp/collectors
           processors:
           - memory_limiter
+          - k8sattributes
           - resourcedetection
           - resource/gcp_project_id
           exporters:
@@ -144,6 +170,7 @@ spec:
           - otlp
           processors:
           - memory_limiter
+          - k8sattributes
           - resource/gcp_project_id
           - tail_sampling
           exporters:
