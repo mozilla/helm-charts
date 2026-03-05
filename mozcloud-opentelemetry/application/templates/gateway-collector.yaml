@@ -20,10 +20,6 @@ spec:
   resources: {{ toYaml . | nindent 4 }}
   {{- end }}
   env:
-  - name: POD_NAMESPACE
-    valueFrom:
-      fieldRef:
-        fieldPath: metadata.namespace
   - name: POD_IP
     valueFrom:
       fieldRef:
@@ -100,6 +96,7 @@ spec:
           - k8s.job.name
           - k8s.replicaset.name
           - k8s.pod.name
+          - k8s.pod.ip
           - k8s.pod.uid
         passthrough: false
         pod_association:
@@ -178,10 +175,6 @@ spec:
       telemetry:
         logs:
           encoding: json
-        resource:
-          k8s.deployment.name: {{ include "mozcloud-opentelemetry.name" . }}-gateway-collector
-          k8s.pod.name: ${POD_NAME}
-          namespace: ${POD_NAMESPACE}
         metrics:
           readers:
             - periodic:

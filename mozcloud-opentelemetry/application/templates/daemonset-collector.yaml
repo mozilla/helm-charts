@@ -161,7 +161,7 @@ spec:
         resource:
           k8s.daemonset.name: {{ include "mozcloud-opentelemetry.name" . }}-daemonset-collector
           k8s.pod.name: ${POD_NAME}
-          namespace: ${POD_NAMESPACE}
+          k8s.namespace.name: ${POD_NAMESPACE}
 
         metrics:
           readers:
