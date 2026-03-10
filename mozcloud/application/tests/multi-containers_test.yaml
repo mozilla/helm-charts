@@ -12,7 +12,7 @@ values:
   - values/globals.yaml
   - values/multi-containers.yaml
 templates:
-  - workload/workload.yaml
+  - workload/deployment.yaml
 tests:
   - it: Ensure no failures occur
     asserts:

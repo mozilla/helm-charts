@@ -17,7 +17,7 @@ templates:
   - externalsecret/externalsecret.yaml
   - serviceaccount/serviceaccount.yaml
   - task/job.yaml
-  - workload/workload.yaml
+  - workload/deployment.yaml
   - gateway/backend.yaml
   - gateway/httproute.yaml
   - preview/httpRoute.yaml
@@ -86,7 +86,7 @@ tests:
 
   # Test Deployment (workload) is prefixed
   - it: Deployment is prefixed with PR number
-    template: workload/workload.yaml
+    template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")]
     asserts:
@@ -144,7 +144,7 @@ tests:
 
   # Test that default secret reference is prefixed in workload containers
   - it: Workload container secretRef should reference prefixed secret
-    template: workload/workload.yaml
+    template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")]
     asserts:
@@ -154,7 +154,7 @@ tests:
 
   # Test that serviceAccount reference is prefixed in workload spec
   - it: Workload serviceAccountName should reference prefixed ServiceAccount
-    template: workload/workload.yaml
+    template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")]
     asserts:

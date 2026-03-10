@@ -11,17 +11,6 @@
 {{- $params := $label_params -}}
 
 {{- /*
-Deployments
-*/}}
-{{- $deployments := include "mozcloud.config.deployments" $helper_params | fromYaml }}
-{{- range $deployment_name, $deployment_config := $deployments.deployments }}
-{{- $_ := set $label_params "component_code" $deployment_config.component }}
-{{- $_ = set $params "deployments" (dict $deployment_name (omit $deployment_config "component")) }}
-{{- $_ = set $params "configMaps" $.Values.configMaps }}
-{{ include "workload.deployment" (mergeOverwrite $params $label_params) }}
-{{- end }}
-
-{{- /*
 HPAs - Skip in preview mode as preview environments don't need autoscaling
 */}}
 {{- if not (include "mozcloud.preview.enabled" .) }}

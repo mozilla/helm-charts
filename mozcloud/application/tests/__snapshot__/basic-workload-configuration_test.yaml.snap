@@ -168,8 +168,6 @@ Configuration matches entire snapshot:
                   readOnly: true
                   subPath: nginx.conf
             - envFrom:
-                - configMapRef:
-                    name: test-configmap
                 - secretRef:
                     name: test-chart-secrets
               image: test-repo/test-image:1.0.0

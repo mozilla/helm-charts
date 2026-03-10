@@ -12,7 +12,7 @@ values:
   - values/globals.yaml
   - values/configmap-checksum.yaml
 templates:
-  - workload/workload.yaml
+  - workload/deployment.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -82,7 +82,7 @@ values:
   - values/globals.yaml
   - values/configmap-checksum-nginx.yaml
 templates:
-  - workload/workload.yaml
+  - workload/deployment.yaml
 tests:
   - it: Ensure no failures occur
     asserts:

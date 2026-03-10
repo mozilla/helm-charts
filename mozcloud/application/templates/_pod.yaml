@@ -107,10 +107,17 @@ capabilities:
   {{- end }}
   drop:
     - ALL
-{{- if .user }}
+{{- $user := default "" .user }}
+{{- $group := default "" .group }}
+{{- if and $user (not $group) }}
+  {{- $group = $user }}
+{{- else if and $group (not $user) }}
+  {{- $user = $group }}
+{{- end -}}
+{{- if $user }}
 runAsUser: {{ .user }}
 {{- end }}
-{{- if .group }}
+{{- if $group }}
 runAsGroup: {{ .group }}
 {{- end }}
 seccompProfile:
@@ -122,7 +129,7 @@ seccompProfile:
 # restricted profile
 seccompProfile:
   type: "RuntimeDefault"
-runAsNonRoot: {{ default "true" .runAsNonRoot }}
+runAsNonRoot: {{ dig "runAsNonRoot" true . }}
 runAsUser: {{ default 10001 .user }}
 runAsGroup: {{ default 10001 .group }}
 {{- end -}}

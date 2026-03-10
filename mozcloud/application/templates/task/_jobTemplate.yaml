@@ -119,11 +119,7 @@ template:
         The container security context helper function can be found in templates/_pod.yaml
         */}}
         securityContext:
-          {{- $addCapabilities := default (list) $containerConfig.security.addCapabilities }}
-          {{- $user := default "" $containerConfig.security.uid }}
-          {{- $group := default "" $containerConfig.security.gid }}
-          {{- $params = dict "addCapabilities" $addCapabilities "user" $user "group" $group }}
-          {{- include "pod.container.securityContext" $params | nindent 10 }}
+          {{- include "pod.container.securityContext" (default dict $containerConfig.security) | nindent 10 }}
         {{- if $containerConfig.volumes }}
         volumeMounts:
           {{- range $volume := $containerConfig.volumes }}
