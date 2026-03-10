@@ -11,7 +11,7 @@
 {{- $helperParams := mergeOverwrite (. | deepCopy) (dict "workloads" $workloads) }}
 {{- $httpRoutes := include "mozcloud.gateway.httpRoutes" $helperParams | fromYaml }}
 {{- $hostnameParams := dict "httpRoutes" $httpRoutes.httpRoutes "previewHost" .Values.global.preview.host }}
-{{- $hostnameResult := include "preview.getAllHostnames" $hostnameParams | fromYaml }}
+{{- $hostnameResult := include "mozcloud.preview.getAllHostnames" $hostnameParams | fromYaml }}
 {{- $hostnamesToCheck := $hostnameResult.hostnames }}
 ---
 apiVersion: batch/v1

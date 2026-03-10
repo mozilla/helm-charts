@@ -24,7 +24,7 @@
 {{- $volumes := dict }}
 {{- /* Format containers, removing default container and merging user-defined values with defaults */}}
 {{- $formatterParams = dict "containers" $workloadConfig.containers "type" "containers" }}
-{{- $containers := include "common.formatter.containers" $formatterParams | fromYaml }}
+{{- $containers := include "mozcloud.formatter.containers" $formatterParams | fromYaml }}
 {{- /* Pre-populate volumes from all containers for annotation checksum calculation */}}
 {{- range $containerName, $containerConfig := $containers }}
   {{- range $volume := $containerConfig.volumes }}
@@ -47,10 +47,10 @@ metadata:
   labels:
     {{- $component := dict "component_code" $workloadConfig.component }}
     {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
-    {{- $labels := include "common.labels" $params | fromYaml }}
+    {{- $labels := include "mozcloud.labels" $params | fromYaml }}
     {{- $labels.labels | toYaml | nindent 4 }}
   {{- $params = dict "annotations" (default dict $workloadConfig.annotations) "context" $context "type" "deployment" }}
-  {{- $annotations := include "common.annotations" $params | fromYaml }}
+  {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
   {{- if $annotations }}
   annotations:
     {{- $annotations | toYaml | nindent 4 }}
@@ -68,7 +68,7 @@ spec:
       {{- $otelContainerNames := default list ($workloadConfig.otel).containers }}
       {{- $otelAutoInstrumentationEnabled := and $otelContainerNames (dig "otel" "autoInstrumentation" "enabled" false $workloadConfig) (($workloadConfig.otel).autoInstrumentation).language }}
       {{- $params = dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) "otel" ($workloadConfig.otel) "type" "deployment" }}
-      {{- $annotations := include "common.annotations" $params | fromYaml }}
+      {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
       {{- /* Add checksum annotation for configmaps to trigger rolling updates when configmap changes */}}
       {{- $configMapChecksums := dict }}
       {{- if gt (keys $volumes | len) 0 }}
@@ -306,7 +306,7 @@ spec:
       Init containers
       */}}
       {{- $formatterParams = dict "containers" (default dict $workloadConfig.initContainers) "type" "init-containers" }}
-      {{- $initContainers := include "common.formatter.containers" $formatterParams | fromYaml }}
+      {{- $initContainers := include "mozcloud.formatter.containers" $formatterParams | fromYaml }}
       {{- if $initContainers }}
       initContainers:
         {{- range $containerName, $containerConfig := $initContainers }}

@@ -1,0 +1,108 @@
+{{/*
+Formatting helpers
+*/}}
+
+{{- /*
+This function will attempt to merge user-defined containers with the default
+container configuration found in either of the following locations:
+
+  - .Values.tasks.jobs.mozcloud-job.containers.mozcloud-container
+  - .Values.workloads.mozcloud-workload.containers.mozcloud-container
+
+Params:
+
+containers (dict): (required) Configurations for all containers in question.
+type (string): (required) Either "containers" or "init-containers", depending on the type of container.
+*/ -}}
+{{- define "mozcloud.formatter.containers" -}}
+{{- $container_values := .containers -}}
+{{- $containers := .containers -}}
+{{- $default_key := ternary "mozcloud-init-container" "mozcloud-container" (eq .type "init-containers") -}}
+{{- /* Remove default containers key and merge with user-defined keys, if defined */ -}}
+{{- if or
+  (and (eq (keys $container_values | len) 1) (eq (keys $container_values | first) $default_key))
+  (gt (keys $container_values | len) 1)
+}}
+  {{- $containers = omit $containers $default_key -}}
+  {{- range $name, $config := $containers -}}
+    {{- $defaults := index $container_values $default_key -}}
+    {{- $_ := set $containers $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
+  {{- end -}}
+{{- end -}}
+{{ $containers | toYaml }}
+{{- end -}}
+
+
+{{- define "mozcloud.formatter.host" -}}
+{{- $component := .component -}}
+{{- $hosts := .hosts -}}
+{{- $output := dict -}}
+{{- $workload_name := .workloadName -}}
+{{- range $host_name, $host_config := $hosts -}}
+  {{- if and (eq $host_config.api $component) (not (hasKey $output $workload_name)) -}}
+    {{- /*
+    If, for some reason, a user does not set a real name under
+    .Values.workloads.hosts, use the workload name.
+    */}}
+    {{- if eq $host_name "name" -}}
+      {{- $host_name = $workload_name -}}
+    {{- end -}}
+    {{- $_ := set $output $host_name $host_config -}}
+  {{- end -}}
+{{- end -}}
+{{ $output | toYaml }}
+{{- end -}}
+
+{{- define "mozcloud.formatter.workloads" -}}
+{{- $api := .api -}}
+{{- $workload_values := .workloads -}}
+{{- $workloads := .workloads -}}
+{{- /* Remove default workloads key and merge with user-defined keys, if defined */}}
+{{- if or
+  (and (eq (keys $workload_values | len) 1) (keys $workload_values | first) "mozcloud-workload")
+  (gt (keys $workload_values | len) 1)
+}}
+  {{- $workloads = omit $workloads "mozcloud-workload" -}}
+  {{- range $name, $config := $workloads -}}
+    {{- $default_workload := index $workload_values "mozcloud-workload" -}}
+    {{- /* Merge host configs with defaults */}}
+    {{- $host_values := $default_workload.hosts -}}
+    {{- $hosts := dict -}}
+    {{- $config_hosts := default (dict) $config.hosts -}}
+    {{- range $host_name, $host_config := $config_hosts -}}
+      {{- $_ := set $hosts $host_name (mergeOverwrite ($host_values.name | deepCopy) $host_config) -}}
+    {{- end -}}
+    {{- if gt (keys $hosts | len) 0 -}}
+      {{- /*
+      If an api parameter is provided, filter hosts to only those matching that API type.
+      If no api parameter is provided, return all hosts regardless of API type.
+      */ -}}
+      {{- if and $api (or (eq $api "gateway") (eq $api "ingress")) -}}
+        {{- $helper_params := dict "component" $api "hosts" $hosts "workloadName" $name -}}
+        {{- $hosts = include "mozcloud.formatter.host" $helper_params | fromYaml -}}
+      {{- end -}}
+      {{- $_ := set $config "hosts" $hosts -}}
+    {{- end -}}
+    {{- $defaults := omit $default_workload "hosts" -}}
+    {{- $_ := set $workloads $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
+  {{- end -}}
+{{- end -}}
+{{- /* Apply preview prefix to workload names if in preview mode */ -}}
+{{- $preview_config := dig "preview" dict . -}}
+{{- if and ($preview_config.enabled) ($preview_config.pr) -}}
+  {{- $prefix := printf "pr%v-" $preview_config.pr -}}
+  {{- $prefixed_workloads := dict -}}
+  {{- range $name, $config := $workloads -}}
+    {{- $prefixed_name := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixed_workloads $prefixed_name $config -}}
+  {{- end -}}
+  {{- $workloads = $prefixed_workloads -}}
+{{- end -}}
+{{- range $name, $config := $workloads -}}
+  {{- if not $config.component -}}
+    {{- $fail_message := printf "A component was not defined for workload \"%s\". You must define a component in \".Values.mozcloud.workloads.%s.component\". See values.yaml in the mozcloud-workload chart for more details." $name $name -}}
+    {{- fail $fail_message -}}
+  {{- end -}}
+{{- end -}}
+{{ $workloads | toYaml }}
+{{- end -}}

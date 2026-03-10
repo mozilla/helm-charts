@@ -43,7 +43,7 @@ httpRoutes:
         {{- end }}
         {{- $multiCluster := ($hostConfig).multiCluster }}
         {{- $gatewayNameParams := dict "appCode" $globals.app_code "type" $hostConfig.type "hasMultipleTypes" $hasMultipleTypes "multiCluster" $multiCluster }}
-        {{- $gatewayName = include "gateway.name" $gatewayNameParams }}
+        {{- $gatewayName = include "mozcloud.gateway.name" $gatewayNameParams }}
       {{- end }}
       - name: {{ $gatewayName }}
         {{- if $gatewayNamespace }}

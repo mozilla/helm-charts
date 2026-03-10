@@ -1,0 +1,42 @@
+{{/*
+Create label parameters to be used in library chart if defined as values.
+*/}}
+{{- define "mozcloud.labelParams" -}}
+{{- $params := dict "chart" (include "mozcloud.name" .) -}}
+{{- $label_params := list "app_code" "artifact_id" "chart" "env_code" "project_id" -}}
+{{- range $label_param := $label_params -}}
+  {{- if index $.Values.global.mozcloud $label_param -}}
+    {{- $_ := set $params $label_param (index $.Values.global.mozcloud $label_param) -}}
+  {{- end }}
+{{- end }}
+{{- $mozcloud_chart_labels := dict "mozcloud_chart" .Chart.Name "mozcloud_chart_version" .Chart.Version -}}
+{{- $params = mergeOverwrite $params $mozcloud_chart_labels -}}
+{{- /* Add preview PR as selector label if in preview mode */ -}}
+{{- if and .Values.global.preview .Values.global.preview.pr -}}
+  {{- $_ := set $params "preview_pr" .Values.global.preview.pr -}}
+{{- end -}}
+{{- $params | toYaml }}
+{{- end }}
+
+{{- /*
+Pulls labels from mozcloud-labels-lib library chart and supplies them to
+downstream templates.
+
+Params:
+
+context (dict): (required) The root context from the template calling this function.
+labels (dict): (optional) User-provided labels. These will always be overridden by MozCloud labels.
+*/ -}}
+{{- define "mozcloud.labels" -}}
+{{- $output := dict -}}
+{{- /* Generate labels */ -}}
+{{- $params := mergeOverwrite .context (dict "labels" .labels) -}}
+{{- $labels := include "mozcloud-labels-lib.labels" $params | fromYaml -}}
+{{- $labels = mergeOverwrite (default (dict) .labels) $labels -}}
+{{- $_ := set $output "labels" $labels -}}
+{{- /* Generate selector labels */ -}}
+{{- $selectorLabels := include "mozcloud-labels-lib.selectorLabels" $params | fromYaml -}}
+{{- $_ = set $output "selectorLabels" $selectorLabels -}}
+{{- /* Return output */ -}}
+{{ $output | toYaml }}
+{{- end -}}

@@ -9,7 +9,7 @@ context (dict): (required) The root context from the template calling this funct
 otel (dict): (optional) OTEL config, if applicable.
 type (string): (required) The type of resource in question. Options are: deployment, job.
 */ -}}
-{{- define "common.annotations" -}}
+{{- define "mozcloud.annotations" -}}
 {{- $annotations := default (dict) .annotations -}}
 {{- $context := .context -}}
 {{- $otel := default (dict) .otel -}}
@@ -17,7 +17,7 @@ type (string): (required) The type of resource in question. Options are: deploym
 {{- $params := dict "annotations" $annotations "type" $type "otel" $otel -}}
 {{- if $otel -}}
   {{- $params = dict "config" $otel "context" $context "type" $type -}}
-  {{- $otelAnnotations := include "common.annotations.otel" $params | fromYaml -}}
+  {{- $otelAnnotations := include "mozcloud.annotations.otel" $params | fromYaml -}}
   {{- $annotations = mergeOverwrite $annotations $otelAnnotations -}}
 {{- end -}}
 {{- $annotations | toYaml }}
@@ -33,9 +33,9 @@ Params:
 syncWave (string): (optional) User-provided sync wave value, if applicable.
 type (string): (required) The type of resource being handled -- used for defaults.
 */ -}}
-{{- define "common.annotations.argo" -}}
+{{- define "mozcloud.annotations.argo" -}}
 {{- $type := .type -}}
-{{- $syncWaveDefault := index (include "common.annotations.argo.syncWaveDefaults" . | fromYaml) $type -}}
+{{- $syncWaveDefault := index (include "mozcloud.annotations.argo.syncWaveDefaults" . | fromYaml) $type -}}
 {{- if has $type (list "jobPostDeployment" "jobPreDeployment") }}
 argocd.argoproj.io/hook: Sync
 argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
@@ -50,7 +50,7 @@ argocd.argoproj.io/sync-wave: {{ default $syncWaveDefault .syncWave | quote }}
 {{- /*
 Default sync wave values.
 */ -}}
-{{- define "common.annotations.argo.syncWaveDefaults" -}}
+{{- define "mozcloud.annotations.argo.syncWaveDefaults" -}}
 configMap: -11
 externalSecret: -11
 jobPostDeployment: 1
@@ -71,7 +71,7 @@ config (dict): (required) The OTEL config from values.yaml.
 context (dict): (required) The root context from the template calling this function.
 type (string): (required) The type of resource for auto instrumentation. Options are: deployment, job.
 */ -}}
-{{- define "common.annotations.otel" -}}
+{{- define "mozcloud.annotations.otel" -}}
 {{- $config := .config -}}
 {{- $context := deepCopy .context -}}
 {{- /* These are used for deployments and jobs */ -}}
@@ -82,7 +82,7 @@ type (string): (required) The type of resource for auto instrumentation. Options
   {{- $labels := include "mozcloud-labels-lib.labels" $context | fromYaml -}}
   {{- /* Resource annotations use values from labels */ -}}
 {{- /* The next line will include actual YAML */ -}}
-{{ include "common.annotations.otel.resources" (dict "labels" $labels) }}
+{{ include "mozcloud.annotations.otel.resources" (dict "labels" $labels) }}
   {{- /* Auto instrumentation */}}
   {{- $autoInstrumentationAnnotations := dict }}
   {{- $containers := default (list) $config.containers }}
@@ -90,7 +90,7 @@ type (string): (required) The type of resource for auto instrumentation. Options
   {{- if $autoInstrumentationEnabled }}
     {{- $params := dict "containers" $containers "language" $config.autoInstrumentation.language }}
 {{- /* The next line will include actual YAML */}}
-{{ include "common.annotations.otel.autoInstrumentation" $params }}
+{{ include "mozcloud.annotations.otel.autoInstrumentation" $params }}
   {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -104,7 +104,7 @@ Params:
 containers (list): (required) A list of containers to annotate.
 language (string): (required) The language to use for auto injection annotations.
 */ -}}
-{{- define "common.annotations.otel.autoInstrumentation" -}}
+{{- define "mozcloud.annotations.otel.autoInstrumentation" -}}
 instrumentation.opentelemetry.io/inject-{{ .language }}: "mozcloud-opentelemetry/mozcloud-opentelemetry-instrumentation"
 instrumentation.opentelemetry.io/{{ .language }}-container-names: {{ join "," .containers | quote }}
 {{- end -}}
@@ -117,65 +117,10 @@ Params:
 
 labels (dict): (required) The labels we need.
 */ -}}
-{{- define "common.annotations.otel.resources" -}}
+{{- define "mozcloud.annotations.otel.resources" -}}
 {{- $labels := .labels }}
 resource.opentelemetry.io/app_code: {{ $labels.app_code }}
 resource.opentelemetry.io/component_code: {{ $labels.component_code }}
 resource.opentelemetry.io/env_code: {{ $labels.env_code }}
 resource.opentelemetry.io/realm: {{ $labels.realm }}
-{{- end -}}
-
-
-{{- /*
-This function will attempt to merge user-defined containers with the default
-container configuration found in either of the following locations:
-
-  - .Values.tasks.jobs.mozcloud-job.containers.mozcloud-container
-  - .Values.workloads.mozcloud-workload.containers.mozcloud-container
-
-Params:
-
-containers (dict): (required) Configurations for all containers in question.
-type (string): (required) Either "containers" or "init-containers", depending on the type of container.
-*/ -}}
-{{- define "common.formatter.containers" -}}
-{{- $container_values := .containers -}}
-{{- $containers := .containers -}}
-{{- $default_key := ternary "mozcloud-init-container" "mozcloud-container" (eq .type "init-containers") -}}
-{{- /* Remove default containers key and merge with user-defined keys, if defined */ -}}
-{{- if or
-  (and (eq (keys $container_values | len) 1) (eq (keys $container_values | first) $default_key))
-  (gt (keys $container_values | len) 1)
-}}
-  {{- $containers = omit $containers $default_key -}}
-  {{- range $name, $config := $containers -}}
-    {{- $defaults := index $container_values $default_key -}}
-    {{- $_ := set $containers $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
-  {{- end -}}
-{{- end -}}
-{{ $containers | toYaml }}
-{{- end -}}
-
-
-{{- /*
-Pulls labels from mozcloud-labels-lib library chart and supplies them to
-downstream templates.
-
-Params:
-
-context (dict): (required) The root context from the template calling this function.
-labels (dict): (optional) User-provided labels. These will always be overridden by MozCloud labels.
-*/ -}}
-{{- define "common.labels" -}}
-{{- $output := dict -}}
-{{- /* Generate labels */ -}}
-{{- $params := mergeOverwrite .context (dict "labels" .labels) -}}
-{{- $labels := include "mozcloud-labels-lib.labels" $params | fromYaml -}}
-{{- $labels = mergeOverwrite (default (dict) .labels) $labels -}}
-{{- $_ := set $output "labels" $labels -}}
-{{- /* Generate selector labels */ -}}
-{{- $selectorLabels := include "mozcloud-labels-lib.selectorLabels" $params | fromYaml -}}
-{{- $_ = set $output "selectorLabels" $selectorLabels -}}
-{{- /* Return output */ -}}
-{{ $output | toYaml }}
 {{- end -}}

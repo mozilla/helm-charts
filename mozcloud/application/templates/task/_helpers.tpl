@@ -15,8 +15,8 @@ Params:
 common (dict): (optional) The common task configurations in .Values.common.
 cronJobs (dict): (required) The cron job configuration in .Values.tasks.cronJobs.
 */ -}}
-{{- define "mozcloud.cronJob.formatter" -}}
-{{- $common := default (dict) .common.cronJob -}}
+{{- define "mozcloud.task.formatter.cronJob" -}}
+{{- $common := default dict .common.cronJob -}}
 {{- $cronJobValues := .cronJobs -}}
 {{- $cronJobs := .cronJobs -}}
 {{- $defaultKey := "mozcloud-cronjob" -}}
@@ -62,8 +62,8 @@ Params:
 common (dict): (optional) The common task configurations in .Values.common.
 jobs (dict): (required) The job configuration in .Values.tasks.jobs.
 */ -}}
-{{- define "mozcloud.job.formatter" -}}
-{{- $common := default (dict) .common.job -}}
+{{- define "mozcloud.task.formatter.job" -}}
+{{- $common := default dict .common.job -}}
 {{- $jobValues := .jobs -}}
 {{- $jobs := .jobs -}}
 {{- $defaultKey := "mozcloud-job" -}}

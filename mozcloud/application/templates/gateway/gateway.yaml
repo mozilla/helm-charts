@@ -65,7 +65,7 @@ gateways:
   {{- range $configKey, $gatewayConfig := $gatewayConfigs }}
   {{- $multiCluster := contains "-mc" $gatewayConfig.className }}
   {{- $gatewayNameParams := dict "appCode" $globals.app_code "type" $gatewayConfig.type "hasMultipleTypes" $hasMultipleTypes "multiCluster" $multiCluster }}
-  {{- $gatewayName := include "gateway.name" $gatewayNameParams }}
+  {{- $gatewayName := include "mozcloud.gateway.name" $gatewayNameParams }}
   {{ $gatewayName }}:
     component: gateway
     type: {{ $gatewayConfig.type }}

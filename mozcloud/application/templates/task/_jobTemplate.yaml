@@ -34,7 +34,7 @@ template:
   {{- $otelContainerNames := default list ($jobConfig.otel).containers }}
   {{- $otelAutoInstrumentationEnabled := and $otelContainerNames (dig "otel" "autoInstrumentation" "enabled" false $jobConfig) (($jobConfig.otel).autoInstrumentation).language }}
   {{- $params := dict "context" $context "otel" ($jobConfig.otel) "type" "job" }}
-  {{- $annotations := include "common.annotations" $params | fromYaml }}
+  {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
   {{- if $annotations }}
   metadata:
     annotations:
@@ -43,7 +43,7 @@ template:
   spec:
     containers:
       {{- $params = dict "containers" $jobConfig.containers "type" "containers" }}
-      {{- $containers := include "common.formatter.containers" $params | fromYaml }}
+      {{- $containers := include "mozcloud.formatter.containers" $params | fromYaml }}
       {{- range $containerName, $containerConfig := $containers }}
         {{- $containerConfig = mergeOverwrite (deepCopy (default (dict) $common.container)) $containerConfig }}
       - name: {{ $containerName }}

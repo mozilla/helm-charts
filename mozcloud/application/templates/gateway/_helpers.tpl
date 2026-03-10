@@ -5,7 +5,7 @@ Parameters:
   .type - Gateway type ("external" or "internal")
   .hasMultipleTypes - Whether multiple gateway types exist (boolean)
 */}}
-{{- define "gateway.name" -}}
+{{- define "mozcloud.gateway.name" -}}
 {{- $appCode := .appCode -}}
 {{- $type := .type -}}
 {{- $hasMultipleTypes := .hasMultipleTypes -}}
