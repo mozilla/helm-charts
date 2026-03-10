@@ -35,7 +35,7 @@
   {{- end }}
 {{- end }}
 {{- /* Add nginx configmap volume if nginx is enabled */}}
-{{- $nginxConfigMapName := default (printf "%s-nginx" $workloadName) ($workloadConfig.nginx).configMap }}
+{{- $nginxConfigMapName := default (printf "%s-nginx" $workloadName) $workloadConfig.nginx.configMap }}
 {{- if $nginxEnabled }}
   {{- $nginxVolume := dict "type" "configMap" }}
   {{- $_ := set $volumes $nginxConfigMapName $nginxVolume }}
@@ -103,7 +103,7 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: ["ALL"]
-          image: {{ default "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29" ($workloadConfig.nginx).image }}
+          image: {{ $workloadConfig.nginx.image }}
           imagePullPolicy: Always
           lifecycle:
             preStop:
@@ -459,7 +459,7 @@ spec:
         {{- end }}
         {{- end }}
       {{- end }}
-{{- if and $nginxEnabled (not ($workloadConfig.nginx).configMap) }}
+{{- if and $nginxEnabled (not $workloadConfig.nginx.configMap) }}
 ---
 apiVersion: v1
 kind: ConfigMap
