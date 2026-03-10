@@ -138,25 +138,6 @@ Create label parameters to be used in library chart if defined as values.
 {{- end }}
 
 {{/*
-Workload helpers
-*/}}
-
-{{/*
-Pod monitorings
-*/}}
-{{- define "mozcloud.config.podMonitorings" -}}
-{{- $globals := .Values.global.mozcloud -}}
-podMonitorings:
-  {{- $globals.app_code }}:
-    endpoints:
-      {{- /* Defaults for all tenants */}}
-      - port: 8080
-        scheme: http
-        interval: 30s
-        path: /metrics
-{{- end -}}
-
-{{/*
 Formatting helpers
 */}}
 {{- define "mozcloud.formatter.host" -}}

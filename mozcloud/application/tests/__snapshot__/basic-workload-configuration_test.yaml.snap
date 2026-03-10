@@ -378,3 +378,30 @@ Configuration matches entire snapshot:
         apiVersion: apps/v1
         kind: Deployment
         name: test-service
+  7: |
+    apiVersion: monitoring.googleapis.com/v1
+    kind: PodMonitoring
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service-default
+    spec:
+      endpoints:
+        - interval: 30s
+          path: /metrics
+          port: 8080
+          scheme: http
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: web
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev

@@ -17,7 +17,7 @@ templates:
   - serviceaccount/serviceaccount.yaml
   - workload/deployment.yaml
   - workload/hpa.yaml
-  - workload/workload.yaml
+  - workload/podmonitoring.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -325,8 +325,27 @@ tests:
             apiVersion: apps/v1
             kind: Deployment
             name: test-service
+  - it: Tenant PodMonitoring resource is configured correctly
+    template: workload/podmonitoring.yaml
+    documentSelector:
+      path: $[?(@.kind == "PodMonitoring")].metadata.name
+      value: test-service-default
+    asserts:
+      - contains:
+          path: spec.endpoints
+          content:
+            interval: 30s
+            path: /metrics
+            port: 8080
+            scheme: http
+      - isSubset:
+          path: spec.selector.matchLabels
+          content:
+            app.kubernetes.io/component: web
+            app.kubernetes.io/name: mozcloud-test
+            env_code: dev
   - it: Schema rejects emptyDir with medium Memory but no sizeLimit
-    template: workload/workload.yaml
+    template: workload/deployment.yaml
     set:
       workloads.test-service.containers.app.volumes:
         - name: bad-volume
