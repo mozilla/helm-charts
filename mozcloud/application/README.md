@@ -158,6 +158,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.mozcloud-workload.initContainers.mozcloud-init-container.sidecar | bool | `false` |  |
 | workloads.mozcloud-workload.labels | object | `{}` |  |
 | workloads.mozcloud-workload.nginx.enabled | bool | `true` |  |
+| workloads.mozcloud-workload.nginx.image | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"` |  |
 | workloads.mozcloud-workload.otel.autoInstrumentation.enabled | bool | `false` |  |
 | workloads.mozcloud-workload.otel.autoInstrumentation.language | string | `""` |  |
 | workloads.mozcloud-workload.otel.containers | list | `[]` |  |
