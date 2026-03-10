@@ -137,6 +137,7 @@ CPU resources can only be integers/floats for an entire CPU or millicpu (m)
 {{- $resources | toYaml }}
 {{- end -}}
 
+
 {{- /*
 Generates a container-level security context that conforms to the Kubernetes
 restricted Pod Security Standards (PSS) profile. Drops ALL Linux capabilities
@@ -182,6 +183,7 @@ runAsGroup: {{ .group }}
 seccompProfile:
   type: "RuntimeDefault"
 {{- end -}}
+
 
 {{- /*
 Generates a pod-level security context that conforms to the Kubernetes

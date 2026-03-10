@@ -173,6 +173,7 @@ Example:
 {{ $output | toYaml }}
 {{- end -}}
 
+
 {{- /*
 Formatter for workload configurations. Merges each user-defined workload entry
 with defaults from the protected "mozcloud-workload" key, including nested

@@ -13,6 +13,7 @@ Returns:
 sslPolicy: mozilla-intermediate
 {{- end -}}
 
+
 {{- /*
 Collects all unique Gateway configurations from the provided workloads and
 builds the "gateways" structure expected by the mozcloud-gateway-lib library

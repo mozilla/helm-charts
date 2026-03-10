@@ -30,6 +30,7 @@ Returns:
 {{- $params | toYaml }}
 {{- end }}
 
+
 {{- /*
 Calls the mozcloud-labels-lib library chart to generate both the full set of
 MozCloud standard labels and the subset of selector labels, returning both in

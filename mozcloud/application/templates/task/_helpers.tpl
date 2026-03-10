@@ -91,6 +91,7 @@ Example:
 {{ $cronJobs | toYaml }}
 {{- end -}}
 
+
 {{- /*
 Formatter for Job configurations. Merges each user-defined Job entry with
 defaults from the protected "mozcloud-job" key, then merges in common task

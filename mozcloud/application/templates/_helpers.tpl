@@ -13,6 +13,7 @@ Returns:
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+
 {{- /*
 Creates a fully qualified app name for use in resource metadata. If preview
 mode is active, a PR-based prefix (e.g. "pr123-") is prepended. Resolution
@@ -42,6 +43,7 @@ Returns:
 {{- end }}
 {{- end }}
 {{- end }}
+
 
 {{- /*
 Creates a chart name and version string for use in the "helm.sh/chart" label.
