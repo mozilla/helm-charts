@@ -1,6 +1,18 @@
-{{/*
-Create label parameters to be used in library chart if defined as values.
-*/}}
+{{- /*
+Builds the label parameter dict to pass to the mozcloud-labels-lib library
+chart. Iterates over the standard MozCloud label keys ("app_code",
+"artifact_id", "chart", "env_code", "project_id") and populates the dict from
+.Values.global.mozcloud where values are set. Also appends chart metadata
+labels ("mozcloud_chart", "mozcloud_chart_version") and, when preview mode is
+active, a "preview_pr" selector label.
+
+Params:
+  . (dict): (required) The Helm root context.
+
+Returns:
+  (string) YAML-encoded dict of label parameters for use with
+           mozcloud-labels-lib.
+*/ -}}
 {{- define "mozcloud.labelParams" -}}
 {{- $params := dict "chart" (include "mozcloud.name" .) -}}
 {{- $labelParams := list "app_code" "artifact_id" "chart" "env_code" "project_id" -}}
@@ -19,13 +31,23 @@ Create label parameters to be used in library chart if defined as values.
 {{- end }}
 
 {{- /*
-Pulls labels from mozcloud-labels-lib library chart and supplies them to
-downstream templates.
+Calls the mozcloud-labels-lib library chart to generate both the full set of
+MozCloud standard labels and the subset of selector labels, returning both in
+a single dict. User-provided labels are included as a base but always
+overridden by MozCloud-managed label values.
 
 Params:
+  context (dict): (required) The Helm root context from the calling template.
+  labels (dict):  (optional) User-provided labels to merge in as a base. Any
+                  keys that conflict with MozCloud-managed labels will be
+                  overwritten.
 
-context (dict): (required) The root context from the template calling this function.
-labels (dict): (optional) User-provided labels. These will always be overridden by MozCloud labels.
+Returns:
+  (string) YAML-encoded dict with two keys:
+    labels (dict):         Full set of MozCloud standard labels for use in
+                           resource metadata.
+    selectorLabels (dict): Subset of labels suitable for use as Kubernetes
+                           selector/matchLabels fields.
 */ -}}
 {{- define "mozcloud.labels" -}}
 {{- $output := dict -}}

@@ -1,14 +1,38 @@
 {{- /*
-This function reworks config map data structures for preview environments.
-Specifically, a PR number will be prefixed to the config map name and, if
-desired, certain values will be transformed based on user configurations in
-.Values.preview.urlTransformKeys.
+Preview-mode formatter for ConfigMap configurations. When preview mode is
+active, prefixes each ConfigMap name with the preview PR prefix (e.g.
+"pr123-"). Additionally, for any data keys listed in
+.Values.preview.urlTransformKeys, replaces empty string values with the full
+preview host URL (e.g. "https://pr123-app.preview.mozilla.cloud").
+
+This allows preview environments to automatically populate URL-type environment
+variables that would otherwise reference production hostnames.
 
 Params:
+  configMaps (dict): (required) The full ConfigMap configuration from
+                     .Values.configMaps.
+  context (dict):    (required) The Helm root context from the calling
+                     template.
 
-configMaps (dict): (required) The full config map configuration defined in
-                   .Values.configMaps.
-context (dict): (required) The context of the template calling this function.
+Returns:
+  (string) YAML-encoded dict of ConfigMap configurations with preview-adjusted
+           names and data values, keyed by (prefixed) ConfigMap name.
+
+Example:
+  Input:
+    configMaps:
+      app-config:
+        data:
+          APP_URL: ""
+          LOG_LEVEL: info
+    # preview active: pr=123, host="pr123.preview.mozilla.cloud"
+    # .Values.preview.urlTransformKeys: [APP_URL]
+
+  Output:
+    pr123-app-config:
+      data:
+        APP_URL: "https://pr123.preview.mozilla.cloud"  # was empty, replaced
+        LOG_LEVEL: info                                 # non-empty, unchanged
 */ -}}
 {{- define "mozcloud.configMap.formatter.preview" -}}
 {{- $configMaps := .configMaps -}}

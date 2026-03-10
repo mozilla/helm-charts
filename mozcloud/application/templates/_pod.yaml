@@ -1,3 +1,44 @@
+{{- /*
+Validates CPU and memory resource requests and calculates resource limits,
+defaulting to 2× the request value for any limit not explicitly provided.
+
+CPU validation: accepts integer, float (whole CPUs), or millicpu notation
+(e.g. "250m"). Decimal millicpu values are rounded up using ceil to produce a
+valid integer millicpu string (e.g. "1.5m" → "2m").
+
+Memory validation: requires a positive number with one of the following unit
+suffixes: K, Ki, M, Mi, G, Gi.
+
+Params:
+  requests (dict): (required) Resource requests. Must include:
+    cpu (string):    (required) CPU request (e.g. "250m", "1", "0.5").
+    memory (string): (required) Memory request (e.g. "256Mi", "1Gi").
+  limits (dict):   (optional) Resource limits. If omitted or partially unset,
+                   missing values are auto-calculated as 2× the
+                   corresponding request value.
+    cpu (string):    (optional) CPU limit. Auto-calculated if absent.
+    memory (string): (optional) Memory limit. Auto-calculated if absent.
+
+Returns:
+  (string) YAML-encoded Kubernetes resources object with "requests" and
+           "limits" sub-keys, each containing validated "cpu" and "memory"
+           values.
+
+Example:
+  Input:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    # limits not provided
+
+  Output:
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"     # 2× request
+      memory: "512Mi" # 2× request
+*/ -}}
 {{- define "pod.container.resources" -}}
 {{- $requests := .requests -}}
 {{- $limits := default (dict) .limits -}}
@@ -96,6 +137,24 @@ CPU resources can only be integers/floats for an entire CPU or millicpu (m)
 {{- $resources | toYaml }}
 {{- end -}}
 
+{{- /*
+Generates a container-level security context that conforms to the Kubernetes
+restricted Pod Security Standards (PSS) profile. Drops ALL Linux capabilities
+by default and optionally adds back specific named capabilities. Sets the
+seccomp profile to RuntimeDefault. If only one of runAsUser or runAsGroup is
+specified, the other defaults to match it.
+
+Params:
+  addCapabilities (list): (optional) Linux capability names to add back after
+                          dropping ALL (e.g. ["NET_BIND_SERVICE"]).
+  user (int):             (optional) UID to run the container as.
+  group (int):            (optional) GID to run the container as. Defaults to
+                          the value of "user" if only "user" is set, and
+                          vice versa.
+
+Returns:
+  (string) YAML-encoded container security context.
+*/ -}}
 {{- define "pod.container.securityContext" -}}
 allowPrivilegeEscalation: false
 capabilities:
@@ -124,6 +183,20 @@ seccompProfile:
   type: "RuntimeDefault"
 {{- end -}}
 
+{{- /*
+Generates a pod-level security context that conforms to the Kubernetes
+restricted Pod Security Standards (PSS) profile, using the RuntimeDefault
+seccomp profile. Defaults to running as non-root with UID and GID 10001.
+
+Params:
+  runAsNonRoot (bool): (optional) Whether to enforce non-root execution.
+                       Defaults to true.
+  user (int):          (optional) UID to run the pod as. Defaults to 10001.
+  group (int):         (optional) GID to run the pod as. Defaults to 10001.
+
+Returns:
+  (string) YAML-encoded pod security context.
+*/ -}}
 {{- define "pod.securityContext" -}}
 # PSS https://kubernetes.io/docs/concepts/security/pod-security-standards/
 # restricted profile

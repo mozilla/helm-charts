@@ -2,9 +2,18 @@
 Preview template helpers
 */}}
 
-{{/*
-Check if preview mode is enabled and has required configuration
-*/}}
+{{- /*
+Checks whether preview mode is fully active. All three of the following must
+be true: .Values.preview.enabled is set, .Values.global.preview exists (the
+chart-injected preview config block), and .Values.global.preview.pr is set
+(the PR number). Returns an empty string when any condition is not met.
+
+Params:
+  . (dict): (required) The Helm root context.
+
+Returns:
+  (string) "true" if preview mode is active, empty string otherwise.
+*/ -}}
 {{- define "mozcloud.preview.enabled" -}}
 {{- if and .Values.preview.enabled .Values.global.preview .Values.global.preview.pr -}}
 true
@@ -12,10 +21,19 @@ true
 {{- end -}}
 
 
-{{/*
-Check if preview endpoint check should be enabled
-Defaults to true if not explicitly set
-*/}}
+{{- /*
+Checks whether the preview endpoint check Job should be rendered. Only
+relevant when preview mode is active (as determined by
+mozcloud.preview.enabled). Defaults to true unless explicitly disabled via
+.Values.preview.endpointCheck.enabled.
+
+Params:
+  . (dict): (required) The Helm root context.
+
+Returns:
+  (string) "true" if the endpoint check Job should be rendered, empty string
+           otherwise.
+*/ -}}
 {{- define "mozcloud.preview.endpointCheckEnabled" -}}
 {{- if include "mozcloud.preview.enabled" . -}}
   {{- $endpointCheckEnabled := true -}}
@@ -31,28 +49,42 @@ true
 {{- end -}}
 
 
-{{/*
-Get all preview hostnames from HTTP routes
+{{- /*
+Extracts all unique preview-transformed hostnames from an HTTP routes structure.
+For each route's hostname list, applies the same transformation logic as
+mozcloud.preview.transformHttpRoutes:
+  - Single route: the preview host is used directly as the hostname.
+  - Multiple routes: the first DNS label of each original hostname is prepended
+    to the preview host (e.g. "api.example.com" with preview host
+    "pr123.preview.mozilla.cloud" → "api-pr123.preview.mozilla.cloud").
 
-This helper transforms HTTP routes for preview mode and extracts all unique hostnames.
-Combines transformation and extraction in a single step for convenience.
+The resulting list is deduplicated before being returned.
 
 Params:
-  httpRoutes: The original httpRoutes structure from mozcloud.gateway.httpRoutes
-  previewHost: The base preview host from .Values.preview.host
+  httpRoutes (dict):    (required) The inner httpRoutes dict as returned by
+                        mozcloud.gateway.httpRoutes (the value under the
+                        "httpRoutes" key, not the wrapper dict).
+  previewHost (string): (required) The base preview hostname from
+                        .Values.global.preview.host.
 
 Returns:
-  A dict with a "hostnames" key containing a list of unique preview hostnames in YAML format
+  (string) YAML-encoded dict with a "hostnames" key containing a deduplicated
+           list of preview hostnames.
 
 Example:
   Input:
-    httpRoutes with original hostnames
-    previewHost: "pr456-test.preview.mozilla.cloud"
+    httpRoutes:
+      api-host:
+        hostnames: ["api.example.com"]
+      web-host:
+        hostnames: ["web.example.com"]
+    previewHost: pr123.preview.mozilla.cloud
+
   Output:
     hostnames:
-      - api-pr456-test.preview.mozilla.cloud
-      - web-pr456-test.preview.mozilla.cloud
-*/}}
+      - api-pr123.preview.mozilla.cloud
+      - web-pr123.preview.mozilla.cloud
+*/ -}}
 {{- define "mozcloud.preview.getAllHostnames" -}}
 {{- $httpRoutes := .httpRoutes -}}
 {{- $previewHost := .previewHost -}}
@@ -72,9 +104,18 @@ Example:
 {{- end -}}
 
 
-{{/*
-Generate preview prefix if preview mode is enabled
-*/}}
+{{- /*
+Returns the preview PR prefix string (e.g. "pr123-") when preview mode is
+active, or an empty string otherwise. Used to prefix resource names in preview
+environments so they do not conflict with production resources.
+
+Params:
+  . (dict): (required) The Helm root context.
+
+Returns:
+  (string) The preview prefix (e.g. "pr123-"), or empty string if not in
+           preview mode.
+*/ -}}
 {{- define "mozcloud.preview.prefix" -}}
 {{- if include "mozcloud.preview.enabled" . -}}
 {{- printf "pr%v-" .Values.global.preview.pr -}}
@@ -82,11 +123,39 @@ Generate preview prefix if preview mode is enabled
 {{- end -}}
 
 
-{{/*
-Transform ConfigMap data for preview mode
-Populates empty URL variables with preview host for keys specified in preview.urlTransformKeys
-No transformation occurs by default - keys must be explicitly listed
-*/}}
+{{- /*
+Transforms ConfigMap data values for preview environments. For each key listed
+in transformKeys, if the current value is empty, replaces it with the full
+preview host URL (e.g. "https://pr123-app.preview.mozilla.cloud"). Keys not
+in the transform list, or with non-empty values, are passed through unchanged.
+
+No transformation occurs by default — keys must be explicitly listed in
+transformKeys.
+
+Params:
+  data (dict):           (required) The ConfigMap data dict to transform.
+  previewHost (string):  (required) The base preview hostname from
+                         .Values.global.preview.host.
+  transformKeys (list):  (optional) List of data key names whose empty values
+                         should be replaced with the preview host URL.
+
+Returns:
+  (string) YAML-encoded dict of (potentially) transformed ConfigMap data.
+
+Example:
+  Input:
+    data:
+      APP_URL: ""
+      DATABASE_URL: postgres://prod-db:5432/myapp
+      STATIC_DOMAIN: ""
+    previewHost: pr123-myapp.preview.mozilla.cloud
+    transformKeys: [APP_URL, STATIC_DOMAIN]
+
+  Output:
+    APP_URL: "https://pr123-myapp.preview.mozilla.cloud"    # was empty, replaced
+    DATABASE_URL: postgres://prod-db:5432/myapp             # non-empty, unchanged
+    STATIC_DOMAIN: "https://pr123-myapp.preview.mozilla.cloud" # was empty, replaced
+*/ -}}
 {{- define "mozcloud.preview.transformConfigMapData" -}}
 {{- $data := .data -}}
 {{- $previewHost := .previewHost -}}
@@ -111,35 +180,46 @@ No transformation occurs by default - keys must be explicitly listed
 {{- end -}}
 
 
-{{/*
-Transform HTTP routes for preview mode
+{{- /*
+Transforms all HTTPRoute hostnames in the provided routes structure for preview
+mode. The full routes dict structure is preserved — only the "hostnames" list
+within each route config is replaced.
 
-This helper takes the full HTTP routes structure and transforms all hostnames
-for preview mode. For multiple routes, it prefixes each hostname with the first
-part of the original hostname.
+Hostname transformation rules:
+  - Single route: each hostname is replaced with the preview host directly.
+  - Multiple routes: the first DNS label of each original hostname is prepended
+    to the preview host (e.g. "api.example.com" with preview host
+    "pr123.preview.mozilla.cloud" → "api-pr123.preview.mozilla.cloud").
 
 Params:
-  httpRoutes: The httpRoutes structure from mozcloud.gateway.httpRoutes
-  previewHost: The base preview host from .Values.preview.host
+  httpRoutes (dict):    (required) The inner httpRoutes dict as returned by
+                        mozcloud.gateway.httpRoutes (the value under the
+                        "httpRoutes" key, not the wrapper dict).
+  previewHost (string): (required) The base preview hostname from
+                        .Values.global.preview.host.
 
 Returns:
-  The HTTP routes structure with transformed hostnames in YAML format
+  (string) YAML-encoded dict with an "httpRoutes" key containing the full
+           routes structure with transformed hostnames.
 
-Example input:
-  httpRoutes:
-    api-host:
-      hostnames: ["api.example.com"]
-    web-host:
-      hostnames: ["web.example.com"]
-  previewHost: "pr456-test.preview.mozilla.cloud"
+Example:
+  Input:
+    httpRoutes:
+      api-host:
+        hostnames: ["api.example.com"]
+      web-host:
+        hostnames: ["web.example.com"]
+    previewHost: pr456-test.preview.mozilla.cloud
 
-Example output:
-  httpRoutes:
-    api-host:
-      hostnames: ["api-pr456-test.preview.mozilla.cloud"]
-    web-host:
-      hostnames: ["web-pr456-test.preview.mozilla.cloud"]
-*/}}
+  Output:
+    httpRoutes:
+      api-host:
+        hostnames:
+          - api-pr456-test.preview.mozilla.cloud
+      web-host:
+        hostnames:
+          - web-pr456-test.preview.mozilla.cloud
+*/ -}}
 {{- define "mozcloud.preview.transformHttpRoutes" -}}
 {{- $httpRoutes := .httpRoutes -}}
 {{- $previewHost := .previewHost -}}
@@ -163,10 +243,23 @@ Example output:
 {{- end -}}
 
 
-{{/*
-Check if preview HTTPRoute should be used instead of standard
-Defaults to true if not explicitly set
-*/}}
+{{- /*
+Checks whether the preview HTTPRoute (pointing to the shared preview gateway)
+should be rendered instead of the standard HTTPRoute. Only relevant when
+preview mode is active. Defaults to true unless explicitly disabled via
+.Values.preview.httpRoute.enabled.
+
+When this returns "true", preview/httpRoute.yaml renders a PR-prefixed
+HTTPRoute pointing to the shared preview gateway, and the standard HTTPRoute
+in gateway/httproute.yaml is skipped.
+
+Params:
+  . (dict): (required) The Helm root context.
+
+Returns:
+  (string) "true" if the preview HTTPRoute should be rendered, empty string
+           otherwise.
+*/ -}}
 {{- define "mozcloud.preview.usePreviewHttpRoute" -}}
 {{- if include "mozcloud.preview.enabled" . -}}
   {{- $httpRouteEnabled := true -}}

@@ -1,14 +1,27 @@
 {{- /*
-This function creates the value structure needed for HTTPRoute templates in the
-mozcloud-gateway-lib library chart.
+Builds the "httpRoutes" configuration structure expected by the
+mozcloud-gateway-lib library chart from the hosts defined across all workloads.
+Only hosts with httpRoutes.createHttpRoutes set to true are included.
+
+For each qualifying host, constructs:
+  - A gateway reference — either from a sharedGateway config if present, or
+    derived from the local gateway name using mozcloud.gateway.name.
+  - The hostname list from the host's "domains" field.
+  - HTTP-to-HTTPS redirect behavior (disabled for internal hosts).
+  - Routing rules with backend references, supporting optional custom rules
+    with path/header matching and weighted backends for multi-cluster
+    scenarios.
 
 Params:
+  . (dict):         (required) The Helm root context merged with additional
+                      keys. Must include:
+    workloads (dict): (required) The formatted workloads dict as returned by
+                      mozcloud.formatter.workloads.
 
-globals (dict): (required) Global values from .Values.global.mozcloud.
-workloads (dict): (required) All of the workloads created using this chart. This
-                  is populated below this function via the workload formatter
-                  function.
-*/}}
+Returns:
+  (string) YAML-encoded dict with a top-level "httpRoutes" key containing
+           HTTPRoute configurations keyed by host name.
+*/ -}}
 {{- define "mozcloud.gateway.httpRoutes" -}}
 {{- $globals := .Values.global.mozcloud -}}
 {{- $workloads := .workloads -}}

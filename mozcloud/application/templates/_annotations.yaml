@@ -1,13 +1,22 @@
 {{- /*
-Populates Argo CD and OTEL Collector annotations as applicable by calling
-downstream helper functions.
+Assembles the full annotations dict for a resource by merging user-provided
+annotations with OTEL-specific annotations when OTEL config is present.
+Delegates OTEL annotation generation to mozcloud.annotations.otel.
 
 Params:
+  annotations (dict): (optional) User-provided annotations to include as a
+                      base. Merged and potentially overwritten by OTEL
+                      annotations.
+  context (dict):     (required) The Helm root context from the calling
+                      template.
+  otel (dict):        (optional) The OTEL configuration block from values
+                      (e.g. .Values.workloads.<name>.otel). When present,
+                      OTEL annotations are generated and merged in.
+  type (string):      (required) The resource type. Accepted values:
+                      "deployment", "job".
 
-annotations (dict): (optional) User-provided annotations.
-context (dict): (required) The root context from the template calling this function.
-otel (dict): (optional) OTEL config, if applicable.
-type (string): (required) The type of resource in question. Options are: deployment, job.
+Returns:
+  (string) YAML-encoded dict of merged annotations.
 */ -}}
 {{- define "mozcloud.annotations" -}}
 {{- $annotations := default (dict) .annotations -}}
@@ -25,13 +34,23 @@ type (string): (required) The type of resource in question. Options are: deploym
 
 
 {{- /*
-Provides Argo CD annotations. Defaults are pulled from a downstream helper
-function.
+Generates ArgoCD-specific annotations for a resource. For pre- and
+post-deployment jobs, adds hook and hook-delete-policy annotations to
+register the job with the ArgoCD sync lifecycle. For all non-deployment
+resources, adds a sync-wave annotation using either the user-supplied value
+or a type-specific default from mozcloud.annotations.argo.syncWaveDefaults.
 
 Params:
+  syncWave (string): (optional) Override for the ArgoCD sync-wave value.
+                     When omitted, a default is looked up by resource type.
+  type (string):     (required) The resource type. Used to determine sync-wave
+                     defaults and hook annotations. Accepted values:
+                     "configMap", "deployment", "externalSecret",
+                     "jobPostDeployment", "jobPreDeployment",
+                     "serviceAccount".
 
-syncWave (string): (optional) User-provided sync wave value, if applicable.
-type (string): (required) The type of resource being handled -- used for defaults.
+Returns:
+  (string) YAML-encoded key-value pairs of ArgoCD annotations.
 */ -}}
 {{- define "mozcloud.annotations.argo" -}}
 {{- $type := .type -}}
@@ -48,7 +67,16 @@ argocd.argoproj.io/sync-wave: {{ default $syncWaveDefault .syncWave | quote }}
 
 
 {{- /*
-Default sync wave values.
+Internal lookup table mapping resource types to their default ArgoCD sync-wave
+values. Referenced by mozcloud.annotations.argo to determine the sync-wave
+annotation when no override is provided by the caller.
+
+Params:
+  None.
+
+Returns:
+  (string) YAML-encoded dict mapping resource type names to integer sync-wave
+           values.
 */ -}}
 {{- define "mozcloud.annotations.argo.syncWaveDefaults" -}}
 configMap: -11
@@ -60,16 +88,26 @@ serviceAccount: -11
 
 
 {{- /*
-Checks OTEL config to see if it is enabled and, if so, calls a downstream
-helper function to populate resource annotations. Additionally, checks if auto
-instrumentation is enabled and, if so, calls a downstream helper function to
-populate auto injection annotations.
+Generates OTEL annotations for a resource when OTEL is enabled. Calls
+mozcloud.annotations.otel.resources to produce resource-level annotations,
+then conditionally calls mozcloud.annotations.otel.autoInstrumentation if
+auto-instrumentation is fully configured (containers list, enabled flag, and
+language are all set).
+
+OTEL is enabled by default for deployments and disabled by default for jobs
+unless the "enabled" field is explicitly set in the OTEL config block.
 
 Params:
+  config (dict):  (required) The OTEL configuration block from values
+                  (e.g. .Values.workloads.<name>.otel or
+                  .Values.tasks.jobs.<name>.otel).
+  context (dict): (required) The Helm root context from the calling template.
+  type (string):  (required) The resource type. Controls the OTEL enabled
+                  default. Accepted values: "deployment", "job".
 
-config (dict): (required) The OTEL config from values.yaml.
-context (dict): (required) The root context from the template calling this function.
-type (string): (required) The type of resource for auto instrumentation. Options are: deployment, job.
+Returns:
+  (string) YAML-encoded key-value pairs of OTEL annotations, or an empty
+           string if OTEL is disabled for this resource.
 */ -}}
 {{- define "mozcloud.annotations.otel" -}}
 {{- $config := .config -}}
@@ -97,12 +135,19 @@ type (string): (required) The type of resource for auto instrumentation. Options
 
 
 {{- /*
-Returns OTEL-specific auto injection annotations.
+Returns OTEL auto-injection annotations for the specified containers and
+language. These annotations instruct the OpenTelemetry operator to inject
+the named instrumentation resource into the listed containers.
 
 Params:
+  containers (list): (required) List of container names to enable auto-
+                     injection for (e.g. ["app", "worker"]).
+  language (string): (required) The instrumentation language identifier
+                     (e.g. "java", "python", "nodejs").
 
-containers (list): (required) A list of containers to annotate.
-language (string): (required) The language to use for auto injection annotations.
+Returns:
+  (string) YAML-encoded key-value pairs for OTEL auto-instrumentation
+           annotations.
 */ -}}
 {{- define "mozcloud.annotations.otel.autoInstrumentation" -}}
 instrumentation.opentelemetry.io/inject-{{ .language }}: "mozcloud-opentelemetry/mozcloud-opentelemetry-instrumentation"
@@ -111,11 +156,17 @@ instrumentation.opentelemetry.io/{{ .language }}-container-names: {{ join "," .c
 
 
 {{- /*
-Returns OTEL-specific resource annotations.
+Returns OTEL resource annotations derived from MozCloud standard labels.
+These annotations tag telemetry data with resource metadata so it can be
+routed and filtered correctly by the OTEL Collector.
 
 Params:
+  labels (dict): (required) A dict of MozCloud standard labels. Must contain
+                 the following keys: "app_code", "component_code",
+                 "env_code", "realm".
 
-labels (dict): (required) The labels we need.
+Returns:
+  (string) YAML-encoded key-value pairs for OTEL resource annotations.
 */ -}}
 {{- define "mozcloud.annotations.otel.resources" -}}
 {{- $labels := .labels }}

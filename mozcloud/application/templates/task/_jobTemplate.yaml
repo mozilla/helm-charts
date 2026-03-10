@@ -1,12 +1,33 @@
 {{- /*
-This is the template we use for jobs in both job.yaml and cronjob.yaml. Changes
-here will affect both templates.
+Shared job spec template used by both job.yaml and cronjob.yaml to render the
+full Kubernetes Job spec. Changes here affect all Jobs and CronJobs rendered
+by this chart.
+
+Merges common task configuration with the job-specific config before rendering
+to allow shared defaults (e.g. resource requests, security config) to be
+defined once and applied across all jobs.
+
+Renders the complete Job spec including:
+  - Optional top-level fields: activeDeadlineSeconds, backoffLimit,
+    parallelism, suspend, ttlSecondsAfterFinished.
+  - Pod template with OTEL annotations if applicable.
+  - Container definitions (image, command, args, env, envFrom, resources,
+    security context, and volume mounts).
+  - Pod-level security context.
+  - Optional service account reference.
+  - Volumes derived from container volume mount definitions.
 
 Params:
+  common (dict):  (optional) Common task configuration from
+                  .Values.tasks.common.
+  config (dict):  (required) The job configuration for this specific job
+                  (e.g. from .Values.tasks.jobs.<job_name> or a CronJob's
+                  jobConfig block).
+  context (dict): (required) The Helm root context from the calling template.
 
-common (dict): (optional) Common job configurations from .Values.tasks.common.job.
-config (dict): (required) The job configuration from .Values.tasks.jobs.<job_name>
-context (dict): (required) The root context from the template calling this function
+Returns:
+  (string) YAML-encoded Kubernetes Job spec body, from top-level fields
+           through the volumes list.
 */ -}}
 {{- define "mozcloud.job.jobTemplate" -}}
 {{- $common := deepCopy .common }}

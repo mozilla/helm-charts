@@ -1,3 +1,23 @@
+{{- /*
+Returns the default nginx configuration file content for the NGINX sidecar
+container used in workload deployments. The config sets up a reverse proxy on
+port 8080 that forwards all traffic to the app container at 127.0.0.1:8000.
+
+Key settings:
+  - Structured JSON access logging (time, remote addr, status, trace, etc.).
+  - HSTS header on all responses.
+  - Gzip compression for common text/web content types.
+  - Keepalive timeout of 620 seconds (to accommodate GCP load balancer idle
+    timeouts).
+  - /__nginxheartbeat__ endpoint returning 200 for NGINX liveness probes.
+  - /nginx_status stub endpoint for local metrics (localhost-only).
+
+Params:
+  None.
+
+Returns:
+  (string) The nginx.conf file content as a plain text string.
+*/ -}}
 {{- define "workload.nginx.conf" -}}
 # The nginx docker container has ln -sf /dev/stderr /var/log/nginx/error.log
 error_log  /var/log/nginx/error.log warn;

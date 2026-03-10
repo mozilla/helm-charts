@@ -1,18 +1,99 @@
-{{/*
-Formatting helpers
-*/}}
+{{- /*
+# Formatter helpers — background and rationale
+
+Formatter helpers solve a specific limitation of Helm's values merging: Helm
+can deep-merge dicts across values files (e.g. values.yaml + values-dev.yaml),
+but it cannot merge lists — it replaces them wholesale. This means that if
+workloads, containers, or hosts were defined as lists, users would have no way
+to set chart-level defaults and then selectively override individual items in
+environment-specific values files.
+
+To work around this, all collections that need default + override behavior are
+defined as dicts, where the key is the object's name and the value is its
+configuration. Helm can deep-merge dicts, so a user can define a workload in
+values.yaml and override specific fields in values-dev.yaml without repeating
+the entire definition.
+
+This still left the problem of where to put chart-level defaults. The solution
+is a set of protected keys — one per collection type — that act as default
+templates within the dict:
+
+  Collection        Protected key
+  ----------        -------------
+  workloads         mozcloud-workload
+  containers        mozcloud-container
+  init-containers   mozcloud-init-container
+  cronJobs          mozcloud-cronjob
+  jobs              mozcloud-job
+
+Users are instructed in values.yaml not to name their objects after these keys.
+If a user defines only a single object and names it after the protected key
+(e.g. only one workload called "mozcloud-workload"), that object is treated as
+a regular workload and rendered as-is rather than stripped and used only as a
+defaults source.
+
+Each formatter function:
+  1. Receives the raw dict (which may contain the protected default key and/or
+     user-defined named entries) from the calling template.
+  2. Strips the protected key from the working copy of the dict.
+  3. Deep-merges the protected key's values as a base under each user-defined
+     entry, with the user's values taking precedence (mergeOverwrite).
+  4. Returns the consolidated dict for use by the calling template.
+
+This allows chart maintainers to set sensible defaults in values.yaml under
+the protected keys without those defaults ever rendering as real Kubernetes
+objects.
+*/ -}}
 
 {{- /*
-This function will attempt to merge user-defined containers with the default
-container configuration found in either of the following locations:
+Formatter for container and init-container configurations. Merges each
+user-defined container entry with defaults from the protected key
+("mozcloud-container" for containers, "mozcloud-init-container" for init
+containers), then returns the consolidated containers dict.
 
-  - .Values.tasks.jobs.mozcloud-job.containers.mozcloud-container
-  - .Values.workloads.mozcloud-workload.containers.mozcloud-container
+The protected key acts as a defaults template: it is stripped from the output
+and its values are deep-merged as a base under each named container. If only
+the protected key is present (no user-defined containers), it is passed through
+as-is so that the single default container still renders.
+
+See the formatter background notes in _formatter.yaml for the full rationale.
 
 Params:
+  containers (dict): (required) The containers dict from values. May contain
+                     the protected default key and/or user-defined named
+                     container entries (e.g.
+                     .Values.workloads.<name>.containers).
+  type (string):     (required) Determines which protected key to use.
+                     Accepted values: "containers", "init-containers".
 
-containers (dict): (required) Configurations for all containers in question.
-type (string): (required) Either "containers" or "init-containers", depending on the type of container.
+Returns:
+  (string) YAML-encoded dict of consolidated container configurations, keyed
+           by container name.
+
+Example:
+  Input:
+    containers:
+      mozcloud-container:       # protected default key
+        port: 8000
+        resources:
+          cpu: 250m
+          memory: 256Mi
+      app:                      # user-defined container
+        resources:
+          cpu: 500m
+        image:
+          repository: us-docker.pkg.dev/my-project/my-app
+          tag: latest
+
+  Output:
+    app:
+      port: 8000                # inherited from default
+      resources:
+        cpu: 500m               # user value wins (mergeOverwrite)
+        memory: 256Mi           # inherited from default
+      image:
+        repository: us-docker.pkg.dev/my-project/my-app
+        tag: latest
 */ -}}
 {{- define "mozcloud.formatter.containers" -}}
 {{- $containerValues := .containers -}}
@@ -33,6 +114,45 @@ type (string): (required) Either "containers" or "init-containers", depending on
 {{- end -}}
 
 
+{{- /*
+Filters a hosts dict to include only entries whose "api" field matches the
+given component type, returning at most one matching entry per workload. Used
+by mozcloud.formatter.workloads to split a workload's hosts by API type (e.g.
+separating "gateway" hosts from "ingress" hosts).
+
+If the matching host's key is the protected name "name", it is renamed to the
+workload name in the output dict.
+
+Params:
+  component (string):    (required) The API type to filter by (e.g. "gateway",
+                         "ingress").
+  hosts (dict):          (required) The merged hosts dict for a workload,
+                         keyed by host name.
+  workloadName (string): (required) The name of the workload that owns these
+                         hosts. Used as a fallback key if the matched host's
+                         key is the protected "name" value.
+
+Returns:
+  (string) YAML-encoded dict of filtered host configurations, keyed by host
+           name.
+
+Example:
+  Input:
+    component: gateway
+    workloadName: my-app
+    hosts:
+      web-host:
+        api: gateway
+        domains: ["web.example.com"]
+      api-host:
+        api: ingress
+        domains: ["api.example.com"]
+
+  Output:
+    web-host:
+      api: gateway
+      domains: ["web.example.com"]
+*/ -}}
 {{- define "mozcloud.formatter.host" -}}
 {{- $component := .component -}}
 {{- $hosts := .hosts -}}
@@ -53,6 +173,68 @@ type (string): (required) Either "containers" or "init-containers", depending on
 {{ $output | toYaml }}
 {{- end -}}
 
+{{- /*
+Formatter for workload configurations. Merges each user-defined workload entry
+with defaults from the protected "mozcloud-workload" key, including nested
+host defaults from the "name" key under
+.Values.workloads.mozcloud-workload.hosts, then returns the consolidated
+workloads dict.
+
+The protected key acts as a defaults template: it is stripped from the output
+and its values are deep-merged as a base under each named workload. If only
+the protected key is present (no user-defined workloads), it is passed through
+as-is so that the single default workload still renders.
+
+When "api" is provided, host entries within each workload are additionally
+filtered to only those matching that API type using mozcloud.formatter.host.
+
+In preview mode, workload names are prefixed with "pr<PR number>-".
+
+A validation step ensures every workload has a "component" field set, and
+fails the render with an informative error message if one is missing.
+
+See the formatter background notes in _formatter.yaml for the full rationale.
+
+Params:
+  api (string):     (optional) If set, filters each workload's hosts to only
+                    those matching this API type. Accepted values:
+                    "gateway", "ingress".
+  preview (dict):   (optional) Merged preview config from
+                    .Values.global.preview and .Values.preview. When
+                    preview.enabled and preview.pr are both set, workload
+                    names are prefixed with "pr<PR number>-".
+  workloads (dict): (required) The workloads dict from values (e.g.
+                    .Values.workloads).
+
+Returns:
+  (string) YAML-encoded dict of consolidated workload configurations, keyed
+           by workload name (with preview prefix applied if applicable).
+
+Example:
+  Input:
+    workloads:
+      mozcloud-workload:        # protected default key
+        component: web
+        containers:
+          mozcloud-container:
+            resources:
+              cpu: 250m
+              memory: 256Mi
+      my-app:                   # user-defined workload
+        containers:
+          mozcloud-container:
+            resources:
+              cpu: 500m
+
+  Output:
+    my-app:
+      component: web            # inherited from default
+      containers:
+        mozcloud-container:
+          resources:
+            cpu: 500m           # user value wins (mergeOverwrite)
+            memory: 256Mi       # inherited from default
+*/ -}}
 {{- define "mozcloud.formatter.workloads" -}}
 {{- $api := .api -}}
 {{- $workloadValues := .workloads -}}
