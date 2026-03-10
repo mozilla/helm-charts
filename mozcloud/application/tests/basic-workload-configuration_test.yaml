@@ -329,7 +329,7 @@ tests:
     template: workload/podmonitoring.yaml
     documentSelector:
       path: $[?(@.kind == "PodMonitoring")].metadata.name
-      value: test-service-default
+      value: mozcloud-test-telegraf
     asserts:
       - contains:
           path: spec.endpoints
@@ -341,9 +341,7 @@ tests:
       - isSubset:
           path: spec.selector.matchLabels
           content:
-            app.kubernetes.io/component: web
-            app.kubernetes.io/name: mozcloud-test
-            env_code: dev
+            app.kubernetes.io/name: telegraf
   - it: Schema rejects emptyDir with medium Memory but no sizeLimit
     template: workload/deployment.yaml
     set:

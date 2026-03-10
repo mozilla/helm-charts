@@ -99,7 +99,6 @@ backends:
   {{- end }}
 {{- end -}}
 
-{{- if .Values.enabled }}
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
 {{- $context := deepCopy . }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
@@ -128,5 +127,3 @@ templates/ingress handles service creation for "api: ingress" workloads.
 {{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $labelParams) }}
   {{- end }}
 {{- end }}
-
-{{- end -}}

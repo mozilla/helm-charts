@@ -1,4 +1,3 @@
-{{- if .Values.enabled }}
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
 {{- $context := deepCopy . }}
 {{- $files := .Files }}
@@ -126,11 +125,11 @@ spec:
               {{- $container = index $containers $key }}
             {{- end }}
             httpGet:
-              {{- if ((($container.healthCheck).readiness).httpGet).httpHeaders }}
+              {{- if (($container.healthCheck).readiness).httpHeaders }}
               httpHeaders:
-                {{- $container.readinessProbe.httpGet.httpHeaders | toYaml | nindent 16 }}
+                {{- $container.healthCheck.readiness.httpHeaders | toYaml | nindent 16 }}
               {{- end }}
-              path: {{ default "/__lbheartbeat__" ((($container.healthCheck).readiness).httpGet).path }}
+              path: {{ default "/__lbheartbeat__" (($container.healthCheck).readiness).path }}
               port: http
             {{- $probeSettings := default dict (($container.healthCheck).readiness).probes }}
             initialDelaySeconds: {{ default 10 ($probeSettings.initialDelaySeconds) }}
@@ -470,6 +469,5 @@ metadata:
 data:
   nginx.conf: |
     {{ include "workload.nginx.conf" . | nindent 4 }}
-{{- end }}
 {{- end }}
 {{- end }}

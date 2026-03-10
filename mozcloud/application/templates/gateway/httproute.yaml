@@ -118,7 +118,6 @@ httpRoutes:
   {{- end }}
 {{- end -}}
 
-{{- if .Values.enabled }}
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
 {{- $context := deepCopy . }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
@@ -151,6 +150,4 @@ Only include HTTPRoute resources if we have Gateway hosts defined
 {{ include "mozcloud-gateway-lib.httpRoute" (mergeOverwrite $params $labelParams) -}}
     {{- end }}
   {{- end }}
-{{- end -}}
-
 {{- end -}}

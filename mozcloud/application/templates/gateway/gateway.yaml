@@ -94,7 +94,6 @@ gateways:
   {{- end }}
 {{- end -}}
 
-{{- if .Values.enabled }}
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
 {{- $context := deepCopy . }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
@@ -138,5 +137,4 @@ Only include Gateway and related resources if we have Gateway hosts defined
 {{ include "mozcloud-gateway-lib.gatewayPolicy" (mergeOverwrite $params $labelParams) -}}
 {{- end }}
 
-{{- end -}}
 {{- end }}
