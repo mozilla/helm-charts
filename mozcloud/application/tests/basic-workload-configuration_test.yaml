@@ -16,6 +16,7 @@ templates:
   - externalsecret/externalsecret.yaml
   - serviceaccount/serviceaccount.yaml
   - workload/deployment.yaml
+  - workload/hpa.yaml
   - workload/workload.yaml
 tests:
   - it: Ensure no failures occur
@@ -298,7 +299,7 @@ tests:
       - isNotNullOrEmpty:
           path: data["nginx.conf"]
   - it: HPA is configured correctly
-    template: workload/workload.yaml
+    template: workload/hpa.yaml
     documentSelector:
       path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
       value: test-service

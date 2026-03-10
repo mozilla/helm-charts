@@ -142,52 +142,6 @@ Workload helpers
 */}}
 
 {{/*
-Autoscaling (HPAs)
-*/}}
-{{- define "mozcloud.config.autoscaling" -}}
-{{- $workloads := .workloads -}}
-hpas:
-  {{- range $workload_name, $workload_config := $workloads }}
-  {{- if (dig "autoscaling" "enabled" true $workload_config) }}
-  {{ $workload_name }}:
-    component: {{ $workload_config.component }}
-    minReplicas: {{ default 1 (($workload_config.autoscaling).replicas).min }}
-    maxReplicas: {{ default 30 (($workload_config.autoscaling).replicas).max }}
-    scaleTargetRef:
-      {{/*
-      The following 3 lines will need to be tweaked when we officially support
-      Argo Rollout resources
-      */}}
-      apiVersion: apps/v1
-      kind: Deployment
-      name: {{ $workload_name }}
-    metrics:
-      {{- range $metric := (default (list) ($workload_config.autoscaling).metrics) }}
-      {{- if eq $metric.type "network" }}
-      - type: Object
-        object:
-          describedObject:
-            kind: Service
-            name: {{ $workload_name }}
-          metric:
-            name: {{ default "autoscaling.googleapis.com|gclb-capacity-fullness" $metric.customMetric }}
-          target:
-            averageValue: {{ $metric.threshold | quote }}
-            type: AverageValue
-      {{- else }}
-      - type: Resource
-        resource:
-          name: {{ $metric.type }}
-          target:
-            type: Utilization
-            averageUtilization: {{ $metric.threshold }}
-      {{- end }}
-      {{- end }}
-  {{- end }}
-  {{- end }}
-{{- end -}}
-
-{{/*
 Pod monitorings
 */}}
 {{- define "mozcloud.config.podMonitorings" -}}

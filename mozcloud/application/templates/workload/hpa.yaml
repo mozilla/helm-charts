@@ -1,0 +1,56 @@
+{{- if .Values.enabled }}
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $context := deepCopy . }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- /* Format workloads, removing default container and merging user-defined values with defaults */}}
+{{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- $formatterParams := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+
+{{- range $workloadName, $workloadConfig := $workloads }}
+{{- if (dig "autoscaling" "enabled" true $workloadConfig) }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ $workloadName }}
+  labels:
+    {{- $component := dict "component_code" $workloadConfig.component }}
+    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+    {{- $labels := include "common.labels" $params | fromYaml }}
+    {{- $labels.labels | toYaml | nindent 4 }}
+spec:
+  scaleTargetRef:
+    {{- /*
+    We will need to update the apiVersion and kind when we add Rollouts suport.
+    */}}
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ $workloadName }}
+  minReplicas: {{ default 1 (($workloadConfig.autoscaling).replicas).min }}
+  maxReplicas: {{ default 30 (($workloadConfig.autoscaling).replicas).max }}
+  metrics:
+    {{- range $metric := (default list ($workloadConfig.autoscaling).metrics) }}
+    {{- if eq $metric.type "network" }}
+    - type: Object
+      object:
+        describedObject:
+          kind: Service
+          name: {{ $workloadName }}
+        metric:
+          name: {{ default "autoscaling.googleapis.com|gclb-capacity-fullness" $metric.customMetric }}
+        target:
+          averageValue: {{ $metric.threshold | quote }}
+          type: AverageValue
+    {{- else }}
+    - type: Resource
+      resource:
+        name: {{ $metric.type }}
+        target:
+          type: Utilization
+          averageUtilization: {{ $metric.threshold }}
+    {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

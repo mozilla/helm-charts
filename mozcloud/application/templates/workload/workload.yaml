@@ -11,18 +11,6 @@
 {{- $params := $label_params -}}
 
 {{- /*
-HPAs - Skip in preview mode as preview environments don't need autoscaling
-*/}}
-{{- if not (include "mozcloud.preview.enabled" .) }}
-{{- $hpas := include "mozcloud.config.autoscaling" $helper_params | fromYaml }}
-{{- range $hpa_name, $hpa_config := $hpas.hpas }}
-{{- $_ := set $label_params "component_code" $hpa_config.component }}
-{{- $_ = set $params "hpas" (dict $hpa_name (omit $hpa_config "component")) }}
-{{ include "workload.hpa" (mergeOverwrite $params $label_params) }}
-{{- end }}
-{{- end }}
-
-{{- /*
 Pod Monitorings
 */}}
 {{- $pod_monitorings := include "mozcloud.config.podMonitorings" $helper_params | fromYaml }}
