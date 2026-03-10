@@ -207,9 +207,9 @@ spec:
           {{- end }}
           envFrom:
             {{- if $containerConfig.configMaps }}
-            {{- range $config_map := $containerConfig.configMaps }}
+            {{- range $configMap := $containerConfig.configMaps }}
             - configMapRef:
-                name: {{ $config_map }}
+                name: {{ $configMap }}
             {{- end }}
             {{- end }}
             - secretRef:

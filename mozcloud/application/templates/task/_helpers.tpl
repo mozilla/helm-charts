@@ -38,12 +38,12 @@ cronJobs (dict): (required) The cron job configuration in .Values.tasks.cronJobs
 {{- /* Apply preview prefix to cronjob names if in preview mode */ -}}
 {{- if include "mozcloud.preview.enabled" $ -}}
   {{- $prefix := include "mozcloud.preview.prefix" $ -}}
-  {{- $prefixed_cronJobs := dict -}}
+  {{- $prefixedCronJobs := dict -}}
   {{- range $name, $config := $cronJobs -}}
-    {{- $prefixed_name := printf "%s%s" $prefix $name -}}
-    {{- $_ := set $prefixed_cronJobs $prefixed_name $config -}}
+    {{- $prefixedName := printf "%s%s" $prefix $name -}}
+    {{- $_ := set $prefixedCronJobs $prefixedName $config -}}
   {{- end -}}
-  {{- $cronJobs = $prefixed_cronJobs -}}
+  {{- $cronJobs = $prefixedCronJobs -}}
 {{- end -}}
 {{ $cronJobs | toYaml }}
 {{- end -}}

@@ -3,8 +3,8 @@
 {{- $context := deepCopy . }}
 {{- $globals := .Values.global.mozcloud }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
-{{- $formatter_params := mergeOverwrite (. | deepCopy) (dict "common" $common "jobs" (default (dict) .Values.tasks.jobs)) }}
-{{- $jobs := include "mozcloud.task.formatter.job" $formatter_params | fromYaml }}
+{{- $formatterParams := mergeOverwrite (. | deepCopy) (dict "common" $common "jobs" (default (dict) .Values.tasks.jobs)) }}
+{{- $jobs := include "mozcloud.task.formatter.job" $formatterParams | fromYaml }}
 {{- if $jobs }}
 {{- $_ := set $context "component_code" "job" -}}
 {{- range $name, $config := $jobs }}
