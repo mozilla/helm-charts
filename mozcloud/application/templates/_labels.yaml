@@ -1,0 +1,65 @@
+{{- /*
+Builds the label parameter dict to pass to the mozcloud-labels-lib library
+chart. Iterates over the standard MozCloud label keys ("app_code",
+"artifact_id", "chart", "env_code", "project_id") and populates the dict from
+.Values.global.mozcloud where values are set. Also appends chart metadata
+labels ("mozcloud_chart", "mozcloud_chart_version") and, when preview mode is
+active, a "preview_pr" selector label.
+
+Params:
+  . (dict): (required) The Helm root context.
+
+Returns:
+  (string) YAML-encoded dict of label parameters for use with
+           mozcloud-labels-lib.
+*/ -}}
+{{- define "mozcloud.labelParams" -}}
+{{- $params := dict "chart" (include "mozcloud.name" .) -}}
+{{- $labelParams := list "app_code" "artifact_id" "chart" "env_code" "project_id" -}}
+{{- range $labelParam := $labelParams -}}
+  {{- if index $.Values.global.mozcloud $labelParam -}}
+    {{- $_ := set $params $labelParam (index $.Values.global.mozcloud $labelParam) -}}
+  {{- end }}
+{{- end }}
+{{- $mozcloudChartLabels := dict "mozcloud_chart" .Chart.Name "mozcloud_chart_version" .Chart.Version -}}
+{{- $params = mergeOverwrite $params $mozcloudChartLabels -}}
+{{- /* Add preview PR as selector label if in preview mode */ -}}
+{{- if and .Values.global.preview .Values.global.preview.pr -}}
+  {{- $_ := set $params "preview_pr" .Values.global.preview.pr -}}
+{{- end -}}
+{{- $params | toYaml }}
+{{- end }}
+
+
+{{- /*
+Calls the mozcloud-labels-lib library chart to generate both the full set of
+MozCloud standard labels and the subset of selector labels, returning both in
+a single dict. User-provided labels are included as a base but always
+overridden by MozCloud-managed label values.
+
+Params:
+  context (dict): (required) The Helm root context from the calling template.
+  labels (dict):  (optional) User-provided labels to merge in as a base. Any
+                  keys that conflict with MozCloud-managed labels will be
+                  overwritten.
+
+Returns:
+  (string) YAML-encoded dict with two keys:
+    labels (dict):         Full set of MozCloud standard labels for use in
+                           resource metadata.
+    selectorLabels (dict): Subset of labels suitable for use as Kubernetes
+                           selector/matchLabels fields.
+*/ -}}
+{{- define "mozcloud.labels" -}}
+{{- $output := dict -}}
+{{- /* Generate labels */ -}}
+{{- $params := mergeOverwrite .context (dict "labels" .labels) -}}
+{{- $labels := include "mozcloud-labels-lib.labels" $params | fromYaml -}}
+{{- $labels = mergeOverwrite (default (dict) .labels) $labels -}}
+{{- $_ := set $output "labels" $labels -}}
+{{- /* Generate selector labels */ -}}
+{{- $selectorLabels := include "mozcloud-labels-lib.selectorLabels" $params | fromYaml -}}
+{{- $_ = set $output "selectorLabels" $selectorLabels -}}
+{{- /* Return output */ -}}
+{{ $output | toYaml }}
+{{- end -}}
