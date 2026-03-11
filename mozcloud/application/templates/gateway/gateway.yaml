@@ -1,22 +1,46 @@
 {{- /*
-This function configures the params for the gatewayPolicy template in the
-mozcloud-gateway-lib library chart.
-*/}}
+Returns the gateway policy configuration for use with the mozcloud-gateway-lib
+library chart. Currently sets the SSL policy to "mozilla-intermediate" for all
+Gateway resources in this release.
+
+Params:
+  None.
+
+Returns:
+  (string) YAML-encoded gateway policy configuration.
+*/ -}}
 {{- define "mozcloud.gateway.gatewayPolicy" -}}
 sslPolicy: mozilla-intermediate
 {{- end -}}
 
+
 {{- /*
-This function creates the value structure needed for gateway templates in the
-mozcloud-gateway-lib library chart.
+Collects all unique Gateway configurations from the provided workloads and
+builds the "gateways" structure expected by the mozcloud-gateway-lib library
+chart. Gateways are deduplicated by a key composed of their type, class name,
+and address list — so multiple workloads that share the same gateway attributes
+produce only one Gateway resource.
+
+For each unique configuration, determines:
+  - GKE gateway class ("gke-l7-global-external-managed" for single-cluster,
+    "gke-l7-global-external-managed-mc" for multi-cluster).
+  - Static IP address(es), defaulting to "<app_code>-<env_code>-ip-v4".
+  - TLS certificate references for external gateways, defaulting to
+    "<app_code>-<realm>-<env_code>".
+
+Hosts that reference a sharedGateway are excluded since their Gateway resource
+is managed externally.
 
 Params:
+  globals (dict):   (required) Global MozCloud values from
+                    .Values.global.mozcloud.
+  workloads (dict): (required) The formatted workloads dict as returned by
+                    mozcloud.formatter.workloads.
 
-globals (dict): (required) Global values from .Values.global.mozcloud.
-workloads (dict): (required) All of the workloads created using this chart. This
-                  is populated below this function via the workload formatter
-                  function.
-*/}}
+Returns:
+  (string) YAML-encoded dict with a top-level "gateways" key containing
+           gateway configurations keyed by gateway name.
+*/ -}}
 {{- define "mozcloud.gateway.gateways" -}}
 {{- $globals := .globals -}}
 {{- $workloads := .workloads }}
@@ -65,7 +89,7 @@ gateways:
   {{- range $configKey, $gatewayConfig := $gatewayConfigs }}
   {{- $multiCluster := contains "-mc" $gatewayConfig.className }}
   {{- $gatewayNameParams := dict "appCode" $globals.app_code "type" $gatewayConfig.type "hasMultipleTypes" $hasMultipleTypes "multiCluster" $multiCluster }}
-  {{- $gatewayName := include "gateway.name" $gatewayNameParams }}
+  {{- $gatewayName := include "mozcloud.gateway.name" $gatewayNameParams }}
   {{ $gatewayName }}:
     component: gateway
     type: {{ $gatewayConfig.type }}
@@ -94,7 +118,6 @@ gateways:
   {{- end }}
 {{- end -}}
 
-{{- if .Values.enabled }}
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
 {{- $context := deepCopy . }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
@@ -138,5 +161,4 @@ Only include Gateway and related resources if we have Gateway hosts defined
 {{ include "mozcloud-gateway-lib.gatewayPolicy" (mergeOverwrite $params $labelParams) -}}
 {{- end }}
 
-{{- end -}}
 {{- end }}

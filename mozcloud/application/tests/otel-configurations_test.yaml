@@ -12,7 +12,7 @@ values:
   - values/globals.yaml
   - values/otel-configurations.yaml
 templates:
-  - workload/workload.yaml
+  - workload/deployment.yaml
 tests:
   - it: Ensure no failures occur
     asserts:

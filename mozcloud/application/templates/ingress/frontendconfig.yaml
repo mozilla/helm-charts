@@ -1,13 +1,21 @@
 {{- /*
-This function creates the value structure needed for frontendConfig templates in
-the mozcloud-ingress-lib library chart.
+Builds the "frontendConfigs" configuration structure expected by the
+mozcloud-ingress-lib library chart. Only processes hosts with type "external"
+since frontend configs (HTTP→HTTPS redirects and SSL policies) are only
+applicable to externally-exposed Ingress resources.
+
+For each qualifying host, produces a frontend config entry with:
+  - HTTP-to-HTTPS redirect enabled (MOVED_PERMANENTLY_DEFAULT).
+  - SSL policy set to "mozilla-intermediate".
 
 Params:
+  workloads (dict): (required) The formatted workloads dict as returned by
+                    mozcloud.formatter.workloads.
 
-workloads (dict): (required) All of the workloads created using this chart. This
-                  is populated below this function via the workload formatter
-                  function.
-*/}}
+Returns:
+  (string) YAML-encoded dict with a top-level "frontendConfigs" key containing
+           frontend config entries keyed by host name.
+*/ -}}
 {{- define "mozcloud.config.frontendConfigs" -}}
 {{- $workloads := .workloads }}
 frontendConfigs:

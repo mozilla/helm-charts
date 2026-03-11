@@ -15,7 +15,9 @@ templates:
   - configmap/configmap.yaml
   - externalsecret/externalsecret.yaml
   - serviceaccount/serviceaccount.yaml
-  - workload/workload.yaml
+  - workload/deployment.yaml
+  - workload/hpa.yaml
+  - workload/podmonitoring.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -81,7 +83,7 @@ tests:
           path: metadata.annotations["iam.gke.io/gcp-service-account"]
           value: gke-dev@moz-fx-mozcloud-test-nonprod.iam.gserviceaccount.com
   - it: Deployment (containers excluded) is configured correctly
-    template: workload/workload.yaml
+    template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -138,7 +140,7 @@ tests:
               name: test-service-secret
             name: test-service-secret
   - it: Deployment (app container) is configured correctly
-    template: workload/workload.yaml
+    template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -206,7 +208,7 @@ tests:
             seccompProfile:
               type: RuntimeDefault
   - it: Deployment (nginx container) is configured correctly
-    template: workload/workload.yaml
+    template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -289,7 +291,7 @@ tests:
             readOnly: true
             subPath: nginx.conf
   - it: NGINX config map is configured correctly
-    template: workload/workload.yaml
+    template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "ConfigMap")].metadata.name
       value: test-service-nginx
@@ -297,7 +299,7 @@ tests:
       - isNotNullOrEmpty:
           path: data["nginx.conf"]
   - it: HPA is configured correctly
-    template: workload/workload.yaml
+    template: workload/hpa.yaml
     documentSelector:
       path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
       value: test-service
@@ -323,8 +325,25 @@ tests:
             apiVersion: apps/v1
             kind: Deployment
             name: test-service
+  - it: Tenant PodMonitoring resource is configured correctly
+    template: workload/podmonitoring.yaml
+    documentSelector:
+      path: $[?(@.kind == "PodMonitoring")].metadata.name
+      value: mozcloud-test-telegraf
+    asserts:
+      - contains:
+          path: spec.endpoints
+          content:
+            interval: 30s
+            path: /metrics
+            port: 8080
+            scheme: http
+      - isSubset:
+          path: spec.selector.matchLabels
+          content:
+            app.kubernetes.io/name: telegraf
   - it: Schema rejects emptyDir with medium Memory but no sizeLimit
-    template: workload/workload.yaml
+    template: workload/deployment.yaml
     set:
       workloads.test-service.containers.app.volumes:
         - name: bad-volume

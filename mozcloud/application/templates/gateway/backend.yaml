@@ -1,13 +1,25 @@
 {{- /*
-This function creates the value structure needed for the service, backendPolicy,
-and healthCheckPolicy templates in the mozcloud-gateway-lib library chart.
+Builds the "backends" configuration structure expected by the
+mozcloud-gateway-lib library chart. For each workload host, produces backend
+entries that drive Service, BackendPolicy, and HealthCheckPolicy resource
+generation.
+
+When a host defines explicit "backends" entries, those are used as-is with
+optional backendPolicy and healthCheck overrides. When no explicit backends are
+defined, a default backend is generated for the workload with:
+  - A Service on port 8080.
+  - A BackendPolicy with access logging enabled (and optional IAP, sample rate,
+    and timeout settings from host options).
+  - A HealthCheckPolicy derived from host options or healthCheckEndpoints.
 
 Params:
+  workloads (dict): (required) The formatted workloads dict as returned by
+                    mozcloud.formatter.workloads.
 
-workloads (dict): (required) All of the workloads created using this chart. This
-                  is populated below this function via the workload formatter
-                  function.
-*/}}
+Returns:
+  (string) YAML-encoded dict with a top-level "backends" key containing
+           backend configurations keyed by backend or workload name.
+*/ -}}
 {{- define "mozcloud.gateway.backends" -}}
 {{- $workloads := .workloads -}}
 backends:
@@ -99,7 +111,6 @@ backends:
   {{- end }}
 {{- end -}}
 
-{{- if .Values.enabled }}
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
 {{- $context := deepCopy . }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
@@ -128,5 +139,3 @@ templates/ingress handles service creation for "api: ingress" workloads.
 {{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $labelParams) }}
   {{- end }}
 {{- end }}
-
-{{- end -}}

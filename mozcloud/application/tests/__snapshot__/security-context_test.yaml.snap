@@ -1,52 +1,5 @@
 Configuration matches entire snapshot:
   1: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app.kubernetes.io/component: pvc
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: pvc
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: pvc-rwm
-    spec:
-      accessModes:
-        - ReadWriteOnce
-        - ReadWriteMany
-      resources:
-        requests:
-          storage: 50Gi
-      storageClassName: mozilla-enterprise-rwx
-  2: |
-    apiVersion: v1
-    kind: PersistentVolumeClaim
-    metadata:
-      labels:
-        app.kubernetes.io/component: pvc
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: pvc
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: pvc-rwo
-    spec:
-      accessModes:
-        - ReadWriteOnce
-      resources:
-        requests:
-          storage: 10Gi
-      storageClassName: standard
-  3: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -127,26 +80,18 @@ Configuration matches entire snapshot:
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
+                  add:
+                    - NET_BIND_SERVICE
                   drop:
                     - ALL
+                runAsGroup: 12000
+                runAsUser: 11000
                 seccompProfile:
                   type: RuntimeDefault
-              volumeMounts:
-                - mountPath: /data/pvc-rwo
-                  name: pvc-rwo
-                - mountPath: /data/pvc-rwm
-                  name: pvc-rwm
           securityContext:
-            runAsGroup: 10001
-            runAsNonRoot: true
-            runAsUser: 10001
+            runAsGroup: 14000
+            runAsNonRoot: false
+            runAsUser: 13000
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: mozcloud-test
-          volumes:
-            - name: pvc-rwm
-              persistentVolumeClaim:
-                claimName: pvc-rwm
-            - name: pvc-rwo
-              persistentVolumeClaim:
-                claimName: pvc-rwo

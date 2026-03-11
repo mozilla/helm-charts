@@ -491,12 +491,12 @@ tasks:
           # Configuration options:
           #
           # security:
-          #   # The 'uid' and 'gid' values to use for the container, if
+          #   # The 'user' and 'group' values to use for the container, if
           #   # non-default.
           #   #
           #   # The default value for both is 10001.
-          #   uid: 10001
-          #   gid: 10001
+          #   user: 10001
+          #   group: 10001
           #
           #   # By default, all OS capabilities are dropped. If needed, you can
           #   # list one or more capabilities to add to the container here.
@@ -941,12 +941,12 @@ workloads:
         # Configuration options:
         #
         # security:
-        #   # The 'uid' and 'gid' values to use for the container, if
+        #   # The 'user' and 'group' values to use for the container, if
         #   # non-default.
         #   #
         #   # The default value for both is 10001.
-        #   uid: 10001
-        #   gid: 10001
+        #   user: 10001
+        #   group: 10001
         #
         #   # By default, all OS capabilities are dropped. If needed, you can
         #   # list one or more capabilities to add to the container here.
@@ -1376,12 +1376,12 @@ workloads:
         # Configuration options:
         #
         # security:
-        #   # The 'uid' and 'gid' values to use for the container, if
+        #   # The 'user' and 'group' values to use for the container, if
         #   # non-default.
         #   #
         #   # The default value for both is 10001.
-        #   uid: 10001
-        #   gid: 10001
+        #   user: 10001
+        #   group: 10001
         #
         #   # By default, all OS capabilities are dropped. If needed, you can
         #   # list one or more capabilities to add to the container here.
@@ -1494,6 +1494,10 @@ workloads:
     #     # For example:
     #     #
     #     #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/openresty-oidc:1.21.4.1-0-alpine
+    #     #
+    #     # Default:
+    #     #
+    #     #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
     #     image: ''
     #
     #     # Optionally define an NGINX configuration to use for nginx.conf. This
@@ -1516,6 +1520,7 @@ workloads:
     #       memory: 128Mi
     nginx:
       enabled: true
+      image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
 
     # Configure auto instrumentation for the OTEL Collector.
     #
@@ -1567,6 +1572,13 @@ workloads:
     # Configuration options:
     #
     # security:
+    #   # The 'user' and 'group' values to use for the container, if
+    #   # non-default.
+    #   #
+    #   # The default value for both is 10001.
+    #   user: 10001
+    #   group: 10001
+    #
     #   # By default, no containers should run as root. The few exceptions to
     #   # this rule can configure this by setting "runAsRoot" to "true".
     #   #
