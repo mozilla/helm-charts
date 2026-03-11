@@ -126,7 +126,10 @@ Configuration matches entire snapshot:
                 seccompProfile:
                   type: RuntimeDefault
           initContainers:
-            - image: test-repo/image3:3.0.0
+            - envFrom:
+                - secretRef:
+                    name: test-chart-secrets
+              image: test-repo/image3:3.0.0
               imagePullPolicy: Always
               name: init-container-1
               resources:
@@ -144,7 +147,10 @@ Configuration matches entire snapshot:
                     - ALL
                 seccompProfile:
                   type: RuntimeDefault
-            - image: test-repo/image4:4.0.0
+            - envFrom:
+                - secretRef:
+                    name: test-chart-secrets
+              image: test-repo/image4:4.0.0
               imagePullPolicy: Always
               name: init-container-2
               resources:

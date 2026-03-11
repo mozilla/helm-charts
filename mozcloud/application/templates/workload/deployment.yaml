@@ -349,7 +349,6 @@ spec:
               value: {{ $envVarValue | quote }}
             {{- end }}
           {{- end }}
-          {{- if $containerConfig.envFrom }}
           envFrom:
             {{- if $containerConfig.configMaps }}
             {{- range $configMap := $containerConfig.configMaps }}
@@ -365,7 +364,6 @@ spec:
                 name: {{ $externalSecret }}
             {{- end }}
             {{- end }}
-          {{- end }}
           {{- if or
               $workloadConfig.hosts
               (($containerConfig.healthCheck).readiness).enabled
