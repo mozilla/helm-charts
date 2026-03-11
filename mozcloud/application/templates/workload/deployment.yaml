@@ -448,10 +448,11 @@ spec:
           {{- else }}
           {{- if eq $volumeConfig.type "configMap" }}
           configMap:
+            name: {{ $volumeName }}
           {{- else if eq $volumeConfig.type "secret" }}
           secret:
+            secretName: {{ $volumeName }}
           {{- end }}
-            name: {{ $volumeName }}
           {{- end }}
         {{- end }}
         {{- end }}
