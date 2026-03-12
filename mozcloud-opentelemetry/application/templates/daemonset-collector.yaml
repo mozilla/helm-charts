@@ -42,7 +42,7 @@ spec:
           http: {}
 
       statsd:
-        endpoint: ${env:POD_IP}:8125
+        endpoint: 0.0.0.0:8125
         aggregation_interval: 30s
         enable_metric_type: true
         enable_simple_tags: true
