@@ -35,6 +35,15 @@ collectors:
       headless:
         endpoint: "mozcloud-opentelemetry-gateway-collector-headless"
         port: "4317"
+      statsd:
+        endpoint: "mozcloud-opentelemetry-gateway-statsd"
+        port: "8125"
+    statsdService:
+      # Creates a separate ClusterIP Service with sessionAffinity: ClientIP targeting
+      # the gateway collector pods. This ensures statsd traffic from the same source IP
+      # is consistently routed to the same collector, so aggregation works correctly.
+      enabled: true
+      sessionAffinityTimeoutSeconds: 10800
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:
