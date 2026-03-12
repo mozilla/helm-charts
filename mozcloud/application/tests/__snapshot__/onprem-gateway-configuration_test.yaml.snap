@@ -1,0 +1,127 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  2: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: Gateway
+    metadata:
+      labels:
+        app.kubernetes.io/component: gateway
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: gateway
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mozcloud-test
+    spec:
+      gatewayClassName: nginx
+      listeners:
+        - allowedRoutes:
+            namespaces:
+              from: Same
+          name: http
+          port: 80
+          protocol: HTTP
+        - allowedRoutes:
+            namespaces:
+              from: Same
+          name: https
+          port: 443
+          protocol: HTTPS
+          tls:
+            certificateRefs:
+              - name: test-service-tls
+            mode: Terminate
+  3: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service
+    spec:
+      hostnames:
+        - test-service.dev.test-domain.com
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: mozcloud-test
+          sectionName: https
+      rules:
+        - backendRefs:
+            - group: ""
+              kind: Service
+              name: test-service
+              port: 8080
+  4: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service-http-redirect
+    spec:
+      hostnames:
+        - test-service.dev.test-domain.com
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: mozcloud-test
+          sectionName: http
+      rules:
+        - filters:
+            - requestRedirect:
+                scheme: https
+                statusCode: 302
+              type: RequestRedirect
+          matches:
+            - path:
+                type: PathPrefix
+                value: /

@@ -33,8 +33,8 @@ frontendConfigs:
   {{- end }}
 {{- end -}}
 
-{{- /* We do not use ingress resources for preview environments */}}
-{{- if and .Values.enabled (not (include "mozcloud.preview.enabled" .)) }}
+{{- /* We do not use ingress resources for preview environments, and FrontendConfig is GKE-only */}}
+{{- if and .Values.enabled (not (include "mozcloud.preview.enabled" .)) (eq (index (index .Values "cloud" | default dict) "provider" | default "gke") "gke") }}
   {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
   {{- $context := deepCopy . }}
   {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}

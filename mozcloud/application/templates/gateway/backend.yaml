@@ -127,6 +127,7 @@ Backend services, backend policies, and health check policies.
 Only create these for workloads with "api: gateway" or "api: none".
 templates/ingress handles service creation for "api: ingress" workloads.
 */}}
+{{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" }}
 {{- $backendParams := mergeOverwrite $context $workloads }}
 {{- $backends := include "mozcloud.gateway.backends" $backendParams | fromYaml }}
 {{- range $backendName, $backendConfig := $backends.backends }}
@@ -135,7 +136,9 @@ templates/ingress handles service creation for "api: ingress" workloads.
     {{- $_ := set $labelParams "component_code" $backendConfig.component }}
     {{- $params := dict "backendConfig" (dict "backends" (dict $backendName (omit $backendConfig "component" "api"))) }}
 {{ include "mozcloud-gateway-lib.service" (mergeOverwrite $params $labelParams) }}
+    {{- if eq $provider "gke" }}
 {{ include "mozcloud-gateway-lib.backendPolicy" (mergeOverwrite $params $labelParams) }}
 {{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $labelParams) }}
+    {{- end }}
   {{- end }}
 {{- end }}
