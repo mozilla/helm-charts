@@ -17,7 +17,6 @@ templates:
   - serviceaccount/serviceaccount.yaml
   - workload/deployment.yaml
   - workload/hpa.yaml
-  - workload/podmonitoring.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
