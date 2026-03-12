@@ -14,6 +14,7 @@ values:
 templates:
   - configmap/configmap.yaml
   - externalsecret/externalsecret.yaml
+  - gke/podmonitoring.yaml
   - serviceaccount/serviceaccount.yaml
   - workload/deployment.yaml
   - workload/hpa.yaml
@@ -325,7 +326,7 @@ tests:
             kind: Deployment
             name: test-service
   - it: Tenant PodMonitoring resource is configured correctly
-    template: workload/podmonitoring.yaml
+    template: gke/podmonitoring.yaml
     documentSelector:
       path: $[?(@.kind == "PodMonitoring")].metadata.name
       value: mozcloud-test-telegraf
