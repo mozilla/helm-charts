@@ -27,57 +27,6 @@ Configuration matches entire snapshot:
         env_code: dev
       type: ClusterIP
   2: |
-    apiVersion: networking.gke.io/v1
-    kind: GCPBackendPolicy
-    metadata:
-      labels:
-        app.kubernetes.io/component: api
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: api
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: gateway-service
-    spec:
-      default:
-        logging:
-          enabled: true
-          sampleRate: 100000
-      targetRef:
-        group: ""
-        kind: Service
-        name: gateway-service
-  3: |
-    apiVersion: networking.gke.io/v1
-    kind: HealthCheckPolicy
-    metadata:
-      labels:
-        app.kubernetes.io/component: api
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: api
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: gateway-service
-    spec:
-      default:
-        config:
-          httpHealthCheck:
-            requestPath: /__lbheartbeat__
-          type: HTTP
-      targetRef:
-        group: ""
-        kind: Service
-        name: gateway-service
-  4: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: Gateway
     metadata:
@@ -113,30 +62,7 @@ Configuration matches entire snapshot:
           name: https
           port: 443
           protocol: HTTPS
-  5: |
-    apiVersion: networking.gke.io/v1
-    kind: GCPGatewayPolicy
-    metadata:
-      labels:
-        app.kubernetes.io/component: gateway
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: gateway
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: mozcloud-test
-    spec:
-      default:
-        sslPolicy: mozilla-intermediate
-      targetRef:
-        group: gateway.networking.k8s.io
-        kind: Gateway
-        name: mozcloud-test
-  6: |
+  3: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -166,7 +92,7 @@ Configuration matches entire snapshot:
               kind: Service
               name: gateway-service
               port: 8080
-  7: |
+  4: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -200,7 +126,58 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /
-  8: |
+  5: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: api
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: gateway-service
+    spec:
+      default:
+        logging:
+          enabled: true
+          sampleRate: 100000
+      targetRef:
+        group: ""
+        kind: Service
+        name: gateway-service
+  6: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: api
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: gateway-service
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: gateway-service
+  7: |
     apiVersion: networking.gke.io/v1beta1
     kind: FrontendConfig
     metadata:
@@ -221,7 +198,69 @@ Configuration matches entire snapshot:
         enabled: true
         responseCodeName: MOVED_PERMANENTLY_DEFAULT
       sslPolicy: mozilla-intermediate
+  8: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPGatewayPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: gateway
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: gateway
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mozcloud-test
+    spec:
+      default:
+        sslPolicy: mozilla-intermediate
+      targetRef:
+        group: gateway.networking.k8s.io
+        kind: Gateway
+        name: mozcloud-test
   9: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: ingress-service
+    spec:
+      logging:
+        enable: true
+        sampleRate: 0.1
+  10: |
+    apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mcrt-ingress-service-dev-test-domain-com
+    spec:
+      domains:
+        - ingress-service.dev.test-domain.com
+  11: |
     apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
@@ -248,45 +287,6 @@ Configuration matches entire snapshot:
           name: ingress-service
           port:
             number: 8080
-  10: |
-    apiVersion: cloud.google.com/v1
-    kind: BackendConfig
-    metadata:
-      labels:
-        app.kubernetes.io/component: web
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: web
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: ingress-service
-    spec:
-      logging:
-        enable: true
-        sampleRate: 0.1
-  11: |
-    apiVersion: networking.gke.io/v1
-    kind: ManagedCertificate
-    metadata:
-      labels:
-        app.kubernetes.io/component: web
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: web
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: mcrt-ingress-service-dev-test-domain-com
-    spec:
-      domains:
-        - ingress-service.dev.test-domain.com
   12: |
     apiVersion: v1
     kind: Service

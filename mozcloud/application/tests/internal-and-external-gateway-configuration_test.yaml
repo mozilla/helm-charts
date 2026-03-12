@@ -11,6 +11,7 @@ values:
 templates:
   - gateway/gateway.yaml
   - gateway/httproute.yaml
+  - gke/gateway.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -22,7 +23,7 @@ tests:
     template: gateway/gateway.yaml
     asserts:
       - hasDocuments:
-          count: 3
+          count: 2
   - it: External gateway is configured correctly
     template: gateway/gateway.yaml
     documentSelector:
@@ -101,7 +102,7 @@ tests:
       - notExists:
           path: metadata.annotations["networking.gke.io/certmap"]
   - it: External gateway policy is configured correctly
-    template: gateway/gateway.yaml
+    template: gke/gateway.yaml
     documentSelector:
       path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
       value: mozcloud-test-external
@@ -113,13 +114,13 @@ tests:
           path: spec.targetRef.name
           value: mozcloud-test-external
   - it: Only external gateway policy exists (internal has no HTTPS listener)
-    template: gateway/gateway.yaml
+    template: gke/gateway.yaml
     asserts:
-      - documentIndex: 2
+      - documentIndex: 0
         equal:
           path: kind
           value: GCPGatewayPolicy
-      - documentIndex: 2
+      - documentIndex: 0
         equal:
           path: metadata.name
           value: mozcloud-test-external

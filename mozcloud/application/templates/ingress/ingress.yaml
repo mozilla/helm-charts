@@ -118,10 +118,6 @@ ingresses:
       {{- $_ := set $labelParams "component_code" $ingressConfig.component }}
       {{- $_ = set $params "ingressConfig" (dict $ingressName (omit $ingressConfig "component")) }}
 {{ include "mozcloud-ingress-lib.ingress" (mergeOverwrite $params $labelParams) }}
-      {{- if eq $provider "gke" }}
-{{ include "mozcloud-ingress-lib.backendConfig" (mergeOverwrite $params $labelParams) }}
-{{ include "mozcloud-ingress-lib.managedCertificate" (mergeOverwrite $params $labelParams) }}
-      {{- end }}
 {{ include "mozcloud-ingress-lib.service" (mergeOverwrite $params $labelParams) }}
     {{- end }}
   {{- end }}

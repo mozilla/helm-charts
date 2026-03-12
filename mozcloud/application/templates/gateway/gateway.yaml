@@ -169,18 +169,6 @@ Only include Gateway and related resources if we have Gateway hosts defined
       {{- $params = dict "gatewayConfig" (dict "gateways" (dict $gatewayName (omit $gatewayConfig "component"))) }}
 {{ include "mozcloud-gateway-lib.gateway" (mergeOverwrite $params $labelParams) }}
     {{- end }}
-    {{- if eq $provider "gke" }}
-    {{- /* Prepare gatewayConfig with all gateways for policy rendering */}}
-    {{- $allGatewaysConfig := dict }}
-    {{- range $gatewayName, $gatewayConfig := $gateways.gateways }}
-      {{- $_ := set $allGatewaysConfig $gatewayName (omit $gatewayConfig "component") }}
-    {{- end }}
-    {{- $gatewayPolicyConfig := include "mozcloud.gateway.gatewayPolicy" . | fromYaml }}
-    {{- $_ := set $labelParams "component_code" "gateway" }}
-    {{- $params = dict "gatewayConfig" (dict "gateways" $allGatewaysConfig) }}
-    {{- $_ = set $params "gatewayPolicyConfig" $gatewayPolicyConfig }}
-{{ include "mozcloud-gateway-lib.gatewayPolicy" (mergeOverwrite $params $labelParams) -}}
-    {{- end }}
 {{- end }}
 
 {{- end }}
