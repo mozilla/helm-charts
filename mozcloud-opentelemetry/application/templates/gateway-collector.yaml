@@ -43,11 +43,12 @@ spec:
             endpoint: "0.0.0.0:{{ .Values.collectors.gateway.endpoints.otlp.collectorMetricsPort }}"
 
       statsd:
-        endpoint: ${env:POD_IP}:8125
+        endpoint: 0.0.0.0:8125
         aggregation_interval: 30s
         enable_metric_type: true
         enable_simple_tags: true
         is_monotonic_counter: true
+        enable_ip_only_aggregation: true
 
     processors:
       # Attach certain label attributes to datapoints, reducing the need for group_left promql functions
@@ -148,6 +149,7 @@ spec:
           processors:
           - memory_limiter
           - k8sattributes
+          - resourcedetection
           - transform/mozcloud
           - resource/gcp_project_id
           exporters:
