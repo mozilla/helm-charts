@@ -144,6 +144,30 @@
                       "type": "string"
                     }
                   }
+                },
+                "statsd": {
+                  "type": "object",
+                  "properties": {
+                    "endpoint": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "statsdService": {
+              "type": "object",
+              "properties": {
+                "enabled": {
+                  "description": "Create a separate ClusterIP Service with sessionAffinity: ClientIP for statsd traffic, ensuring the same source IP always reaches the same gateway collector pod.",
+                  "type": "boolean"
+                },
+                "sessionAffinityTimeoutSeconds": {
+                  "description": "Seconds the kube-proxy remembers a client IP → pod mapping. Defaults to 10800 (3 hours).",
+                  "type": "integer"
                 }
               }
             },
