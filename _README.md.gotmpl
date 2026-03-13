@@ -2,6 +2,12 @@
 {{- $deprecatedCharts := list
   "mozcloud-job"
   "mozcloud-job-lib"
+  "mozcloud-preview"
+  "mozcloud-preview-lib"
+  "mozcloud-workload"
+  "mozcloud-workload-core-lib"
+  "mozcloud-workload-stateless"
+  "mozcloud-workload-stateless-lib"
 }}
 {{- if and .Deprecated (has .Name $deprecatedCharts) }}
 > [!CAUTION]

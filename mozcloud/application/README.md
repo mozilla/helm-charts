@@ -19,7 +19,11 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
+<<<<<<< HEAD
     version: ~0.10.7
+=======
+    version: ~0.10.2
+>>>>>>> 7ad7073 (chore: deprecate preview and workload charts)
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
