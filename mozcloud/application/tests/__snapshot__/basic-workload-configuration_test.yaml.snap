@@ -268,7 +268,6 @@ Configuration matches entire snapshot:
               name: test-service-memory
             - name: test-service-secret
               secret:
-                name: test-service-secret
                 secretName: test-service-secret
   6: |
     apiVersion: v1
