@@ -111,14 +111,13 @@ ingresses:
     {{- /*
     Ingresses and related resources
     */}}
-    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads) }}
+    {{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" }}
+    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads "provider" $provider) }}
     {{- $ingresses := (include "mozcloud.config.ingresses" $params | fromYaml).ingresses }}
     {{- range $ingressName, $ingressConfig := $ingresses }}
       {{- $_ := set $labelParams "component_code" $ingressConfig.component }}
       {{- $_ = set $params "ingressConfig" (dict $ingressName (omit $ingressConfig "component")) }}
 {{ include "mozcloud-ingress-lib.ingress" (mergeOverwrite $params $labelParams) }}
-{{ include "mozcloud-ingress-lib.backendConfig" (mergeOverwrite $params $labelParams) }}
-{{ include "mozcloud-ingress-lib.managedCertificate" (mergeOverwrite $params $labelParams) }}
 {{ include "mozcloud-ingress-lib.service" (mergeOverwrite $params $labelParams) }}
     {{- end }}
   {{- end }}

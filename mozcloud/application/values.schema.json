@@ -118,7 +118,9 @@
             "default": "latest"
           }
         },
-        "required": ["gsmSecretName"]
+        "required": [
+          "gsmSecretName"
+        ]
       }
     },
     "persistentVolumes": {
@@ -138,7 +140,9 @@
                 "ReadWriteMany"
               ]
             },
-            "default": ["ReadWriteOnce"]
+            "default": [
+              "ReadWriteOnce"
+            ]
           },
           "size": {
             "type": "string",
@@ -171,6 +175,13 @@
               "projectId": {
                 "type": "string"
               }
+            }
+          },
+          "annotations": {
+            "type": "object",
+            "description": "Additional annotations to apply to the ServiceAccount.",
+            "additionalProperties": {
+              "type": "string"
             }
           }
         }
@@ -279,7 +290,10 @@
                     }
                   }
                 },
-                "required": ["type", "containers"]
+                "required": [
+                  "type",
+                  "containers"
+                ]
               }
             ]
           }
@@ -757,7 +771,8 @@
                       "enum": [
                         "certmap",
                         "ManagedCertificate",
-                        "pre-shared"
+                        "pre-shared",
+                        "secret"
                       ],
                       "default": "certmap"
                     }
@@ -822,6 +837,10 @@
                       }
                     }
                   }
+                },
+                "gatewayClass": {
+                  "type": "string",
+                  "description": "Gateway API gatewayClassName. Required when cloud.provider is not \"gke\"."
                 }
               },
               "required": [
@@ -911,6 +930,17 @@
           "component",
           "containers"
         ]
+      }
+    },
+    "cloud": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "provider": {
+          "type": "string",
+          "description": "Cloud provider. Use \"gke\" for Google Kubernetes Engine (default), or \"on-prem\" for self hosted clusters.",
+          "default": "gke"
+        }
       }
     }
   },
@@ -1099,7 +1129,9 @@
           "type": "boolean"
         }
       },
-      "required": ["schedule"]
+      "required": [
+        "schedule"
+      ]
     },
     "job": {
       "type": "object",

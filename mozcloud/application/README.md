@@ -43,6 +43,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| cloud.provider | string | `"gke"` |  |
 | configMaps | object | `{}` |  |
 | enabled | bool | `true` |  |
 | externalSecrets | object | `{}` |  |

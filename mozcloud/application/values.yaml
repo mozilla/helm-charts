@@ -1,6 +1,21 @@
 # If disabled, no resources in the chart will be created.
 enabled: true
 
+# Cloud provider configuration.
+# Set to "gke" (default) for Google Kubernetes Engine deployments.
+# Set to "on-prem" for on-premises. Currently we only support on-premises deployments
+# by removing GKE specific CRDs and annotations.
+#   - BackendConfig / FrontendConfig / ManagedCertificate (cloud.google.com, networking.gke.io)
+#   - GCPBackendPolicy / HealthCheckPolicy / GCPGatewayPolicy (networking.gke.io)
+#   - Service NEG and backend-config annotations (cloud.google.com)
+#   - Ingress GCE class, static-IP, managed-cert, FrontendConfig annotations
+#   - Gateway certmap / pre-shared-certs annotations (networking.gke.io)
+#
+# Future release of the chart should support other Cloud Providers or on-premises
+ # features as required
+cloud:
+  provider: gke
+
 # Preview mode configuration - when enabled, all resources will be prefixed with "pr{PR}-"
 # and configured for preview environments using a shared preview gateway.
 #
