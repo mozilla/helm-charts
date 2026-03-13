@@ -1,6 +1,9 @@
 # mozcloud-preview-lib
 
-![Version: 0.2.37](https://img.shields.io/badge/Version-0.2.37-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
+> [!CAUTION]
+> **This chart is deprecated.** Please use the mozcloud chart located [here](../../mozcloud/application).
+
+![Version: 0.2.38](https://img.shields.io/badge/Version-0.2.38-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
 
 A library chart that creates preview http routes and supporting resources
 
@@ -19,7 +22,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-preview-lib
-    version: ~0.2.37
+    version: ~0.2.38
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
