@@ -22,18 +22,21 @@ repos:
         name: helm update dependencies
         entry: make update-dependencies
         files: '^.*\/(application|library)\/.*(\.yaml|\.tpl)$'
+        exclude: '^deprecated/'
         language: system
         pass_filenames: false
   - repo: https://github.com/gruntwork-io/pre-commit
     rev: v0.1.30
     hooks:
       - id: helmlint
+        exclude: '^deprecated/'
   - repo: local
     hooks:
       - id: helm-unittest
         name: helm unittest
         entry: make unit-tests
         files: '^.*\/(application|library)\/.*(\.yaml|\.tpl)$'
+        exclude: '^deprecated/'
         language: system
         pass_filenames: false
   - repo: https://github.com/norwoodj/helm-docs
