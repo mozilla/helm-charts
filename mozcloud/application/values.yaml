@@ -235,7 +235,8 @@ tasks:
       generateName: false
       #activeDeadlineSeconds:
       backoffLimit: 6
-      otel: {}
+      otel:
+        enabled: true
       parallelism: 1
       restartPolicy: Never
       security: {}
@@ -563,9 +564,11 @@ tasks:
       # This can only be enabled for applications written in one of the
       # supported languages. See below for a list of supported languages.
       #
-      # OTEL Collector integration is disabled for jobs by default.
+      # OTEL Collector integration is enabled for jobs by default. When enabled,
+      # resource.opentelemetry.io/* annotations are added to pod templates
+      # regardless of whether auto-instrumentation is configured.
       otel:
-        enabled: false
+        enabled: true
 
         # A list of the containers on which the OTEL collector will be enabled.
         #

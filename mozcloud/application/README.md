@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 0.10.1](https://img.shields.io/badge/Version-0.10.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.10.2](https://img.shields.io/badge/Version-0.10.2-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~0.10.1
+    version: ~0.10.2
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -75,7 +75,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.common.cronJob.schedule | string | `""` |  |
 | tasks.common.job.backoffLimit | int | `6` |  |
 | tasks.common.job.generateName | bool | `false` |  |
-| tasks.common.job.otel | object | `{}` |  |
+| tasks.common.job.otel.enabled | bool | `true` |  |
 | tasks.common.job.parallelism | int | `1` |  |
 | tasks.common.job.restartPolicy | string | `"Never"` |  |
 | tasks.common.job.security | object | `{}` |  |
@@ -100,7 +100,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.mozcloud-job.otel.autoInstrumentation.enabled | bool | `false` |  |
 | tasks.jobs.mozcloud-job.otel.autoInstrumentation.language | string | `""` |  |
 | tasks.jobs.mozcloud-job.otel.containers | list | `[]` |  |
-| tasks.jobs.mozcloud-job.otel.enabled | bool | `false` |  |
+| tasks.jobs.mozcloud-job.otel.enabled | bool | `true` |  |
 | tasks.jobs.mozcloud-job.security | object | `{}` |  |
 | tasks.jobs.mozcloud-job.serviceAccount | string | `""` |  |
 | tasks.jobs.mozcloud-job.type | string | `"preDeployment"` |  |
