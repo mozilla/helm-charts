@@ -16,10 +16,6 @@ repos:
         types_or: [python, pyi, jupyter, toml]
         exclude: 'uv\.lock$'
         args: [--fix]
-  - repo: https://github.com/gruntwork-io/pre-commit
-    rev: v0.1.30
-    hooks:
-      - id: helmlint
   - repo: local
     hooks:
       - id: helm-update-dependencies
@@ -28,6 +24,12 @@ repos:
         files: '^.*\/(application|library)\/.*(\.yaml|\.tpl)$'
         language: system
         pass_filenames: false
+  - repo: https://github.com/gruntwork-io/pre-commit
+    rev: v0.1.30
+    hooks:
+      - id: helmlint
+  - repo: local
+    hooks:
       - id: helm-unittest
         name: helm unittest
         entry: make unit-tests
