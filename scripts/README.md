@@ -122,8 +122,8 @@ uv run chartkit version list mozcloud
 #### Bump version
 Bumps the version of a chart and cascades to dependents.
 
-[!NOTE]
-Deprecated charts are ignored.
+> [!NOTE]
+> Deprecated charts are ignored.
 
 ```sh
 $ uv run chartkit version bump --help
