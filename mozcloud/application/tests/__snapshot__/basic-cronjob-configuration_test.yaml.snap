@@ -22,6 +22,23 @@ Configuration matches entire snapshot:
           backoffLimit: 6
           parallelism: 1
           template:
+            metadata:
+              annotations:
+                resource.opentelemetry.io/app_code: mozcloud-test
+                resource.opentelemetry.io/component_code: cronjob
+                resource.opentelemetry.io/env_code: dev
+                resource.opentelemetry.io/realm: nonprod
+              labels:
+                app.kubernetes.io/component: cronjob
+                app.kubernetes.io/managed-by: argocd
+                app.kubernetes.io/name: mozcloud-test
+                app_code: mozcloud-test
+                component_code: cronjob
+                env_code: dev
+                helm.sh/chart: test-chart
+                mozcloud_chart: mozcloud
+                mozcloud_chart_version: 1.0.0
+                realm: nonprod
             spec:
               containers:
                 - args:

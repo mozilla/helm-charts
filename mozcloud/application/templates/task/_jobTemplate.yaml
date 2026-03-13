@@ -34,6 +34,11 @@ Returns:
 {{- $context := .context }}
 {{- $jobConfig := mergeOverwrite (default (dict) $common.job) .config }}
 {{- $volumes := dict }}
+{{- /* Compute labels for the pod template using the mozcloud-labels library */ -}}
+{{- $chartMetadata := dict "Chart" $context.Chart "Release" $context.Release }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" $context | fromYaml) }}
+{{- $labelsParams := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) "labels" (default (dict) $jobConfig.labels) }}
+{{- $podLabels := (include "mozcloud.labels" $labelsParams | fromYaml).labels }}
 {{- if $jobConfig.activeDeadlineSeconds }}
 activeDeadlineSeconds: {{ $jobConfig.activeDeadlineSeconds }}
 {{- end }}
@@ -54,13 +59,16 @@ template:
   {{- $otelEnabled := dig "otel" "enabled" true $jobConfig }}
   {{- $otelContainerNames := default list ($jobConfig.otel).containers }}
   {{- $otelAutoInstrumentationEnabled := and $otelContainerNames (dig "otel" "autoInstrumentation" "enabled" false $jobConfig) (($jobConfig.otel).autoInstrumentation).language }}
-  {{- $params := dict "context" $context "otel" ($jobConfig.otel) "type" "job" }}
+  {{- $enrichedContext := mergeOverwrite (deepCopy $context) $labelParams }}
+  {{- $params := dict "context" $enrichedContext "otel" ($jobConfig.otel) "type" "job" }}
   {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
-  {{- if $annotations }}
   metadata:
+    labels:
+      {{- $podLabels | toYaml | nindent 6 }}
+    {{- if $annotations }}
     annotations:
-      {{- $annotations | toYaml | nindent 8 }}
-  {{- end }}
+      {{- $annotations | toYaml | nindent 6 }}
+    {{- end }}
   spec:
     containers:
       {{- $params = dict "containers" $jobConfig.containers "type" "containers" }}
