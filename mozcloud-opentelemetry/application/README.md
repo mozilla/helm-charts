@@ -1,6 +1,6 @@
 # mozcloud-opentelemetry
 
-![Version: 0.2.24](https://img.shields.io/badge/Version-0.2.24-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.2.26](https://img.shields.io/badge/Version-0.2.26-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart for MozCloud OpenTelemetry signals collection
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-opentelemetry
-    version: ~0.2.24
+    version: ~0.2.26
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -58,6 +58,8 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | collectors.gateway.endpoints.otlp.collectorMetricsPort | string | `"14318"` |  |
 | collectors.gateway.endpoints.otlp.endpoint | string | `"mozcloud-opentelemetry-gateway-collector"` |  |
 | collectors.gateway.endpoints.otlp.port | string | `"4317"` |  |
+| collectors.gateway.endpoints.statsd.endpoint | string | `"mozcloud-opentelemetry-gateway-statsd"` |  |
+| collectors.gateway.endpoints.statsd.port | string | `"8125"` |  |
 | collectors.gateway.resources.limits.cpu | string | `"400m"` |  |
 | collectors.gateway.resources.limits.memory | string | `"2Gi"` |  |
 | collectors.gateway.resources.requests.cpu | string | `"300m"` |  |
@@ -69,6 +71,8 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | collectors.gateway.securityContext.runAsNonRoot | bool | `true` |  |
 | collectors.gateway.securityContext.runAsUser | int | `10001` |  |
 | collectors.gateway.securityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
+| collectors.gateway.statsdService.enabled | bool | `true` |  |
+| collectors.gateway.statsdService.sessionAffinityTimeoutSeconds | int | `10800` |  |
 | global.mozcloud.app_code | string | `"mozcloud-opentelemetry"` |  |
 | global.mozcloud.chart | string | `"mozcloud-opentelemetry"` |  |
 | global.mozcloud.component_code | string | `"mozcloud-opentelemetry"` |  |

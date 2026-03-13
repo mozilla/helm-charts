@@ -137,7 +137,7 @@ tests:
           path: spec.template.spec.volumes[4]
           content:
             secret:
-              name: test-service-secret
+              secretName: test-service-secret
             name: test-service-secret
   - it: Deployment (app container) is configured correctly
     template: workload/deployment.yaml
