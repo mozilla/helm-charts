@@ -1034,7 +1034,7 @@ workloads:
         #       type: persistentVolume
         #       path: /path/to/mount
         #     - name: cache-volume
-        #       type: emptyDir:
+        #       type: emptyDir
         #       path: /path/to/dir
         #     - name: another-cache-volume
         #       path: /path/to/another/dir
@@ -1476,7 +1476,7 @@ workloads:
         #       type: persistentVolume
         #       path: /path/to/mount
         #     - name: cache-volume
-        #       type: emptyDir:
+        #       type: emptyDir
         #       path: /path/to/dir
         #     - name: another-cache-volume
         #       path: /path/to/another/dir
@@ -1587,7 +1587,7 @@ workloads:
     # Configuration options:
     #
     # security:
-    #   # The 'user' and 'group' values to use for the container, if
+    #   # The 'user' and 'group' values to use for all containers in the pod, if
     #   # non-default.
     #   #
     #   # The default value for both is 10001.
