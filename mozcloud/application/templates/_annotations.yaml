@@ -115,7 +115,7 @@ Returns:
 {{- /* These are used for deployments and jobs */ -}}
 {{- $type := .type -}}
 {{- /* This checks if OTEL is enabled, relying on defaults (deployment: true, job: false) if not specified */ -}}
-{{- $enabled := dig "enabled" (ternary true false (eq $type "deployment")) $config -}}
+{{- $enabled := dig "enabled" (ternary true false (has $type (list "deployment" "job"))) $config -}}
 {{- if $enabled -}}
   {{- $labels := include "mozcloud-labels-lib.labels" $context | fromYaml -}}
   {{- /* Resource annotations use values from labels */ -}}
