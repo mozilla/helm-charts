@@ -1603,6 +1603,12 @@ workloads:
     #   # Note: The webservices-high and dataservices-high Kubernetes clusters
     #   # will not allow you to deploy containers using the root user.
     #   runAsRoot: false
+    #
+    #   # Group ID applied to mounted volumes (maps to securityContext.fsGroup).
+    #   fsGroup: 10001
+    #   # Controls when volume ownership is changed to match fsGroup.
+    #   # "Always" (default) or "OnRootMismatch" (faster for large volumes).
+    #   fsGroupChangePolicy: OnRootMismatch
     security: {}
 
     # Optionally use a custom service account for the container. The value

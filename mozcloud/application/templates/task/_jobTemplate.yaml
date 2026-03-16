@@ -176,7 +176,7 @@ template:
     */}}
     securityContext:
       {{- $runAsNonRoot := ternary false true (dig "security" "runAsRoot" false $jobConfig) }}
-      {{- $params := dict "runAsNonRoot" $runAsNonRoot }}
+      {{- $params := mergeOverwrite (omit (default dict $jobConfig.security) "runAsRoot") (dict "runAsNonRoot" $runAsNonRoot) }}
       {{- include "pod.securityContext" $params | nindent 6 }}
     {{- if $jobConfig.serviceAccount }}
     serviceAccountName: {{ $jobConfig.serviceAccount }}
