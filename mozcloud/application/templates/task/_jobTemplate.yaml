@@ -33,6 +33,7 @@ Returns:
 {{- $common := deepCopy .common }}
 {{- $context := .context }}
 {{- $jobConfig := mergeOverwrite (default (dict) $common.job) .config }}
+{{- $prefix := include "mozcloud.preview.prefix" $context }}
 {{- $volumes := dict }}
 {{- /* Compute labels for the pod template using the mozcloud-labels library */ -}}
 {{- $chartMetadata := dict "Chart" $context.Chart "Release" $context.Release }}
@@ -122,11 +123,11 @@ template:
         envFrom:
           {{- range $configMap := default (list) $containerConfig.configMaps }}
           - configMapRef:
-              name: {{ $configMap }}
+              name: {{ printf "%s%s" $prefix $configMap }}
           {{- end }}
           {{- range $secret := default (list) $containerConfig.externalSecrets }}
           - secretRef:
-              name: {{ $secret }}
+              name: {{ printf "%s%s" $prefix $secret }}
           {{- end }}
         {{- end }}
         {{- /*
@@ -179,7 +180,7 @@ template:
       {{- $params := mergeOverwrite (omit (default dict $jobConfig.security) "runAsRoot") (dict "runAsNonRoot" $runAsNonRoot) }}
       {{- include "pod.securityContext" $params | nindent 6 }}
     {{- if $jobConfig.serviceAccount }}
-    serviceAccountName: {{ $jobConfig.serviceAccount }}
+    serviceAccountName: {{ printf "%s%s" $prefix $jobConfig.serviceAccount }}
     {{- end }}
     {{- if gt (keys $volumes | len) 0 }}
     volumes:
