@@ -209,7 +209,7 @@ spec:
             {{- if $containerConfig.configMaps }}
             {{- range $configMap := $containerConfig.configMaps }}
             - configMapRef:
-                name: {{ $configMap }}
+                name: {{ printf "%s%s" $prefix $configMap }}
             {{- end }}
             {{- end }}
             - secretRef:
@@ -217,7 +217,7 @@ spec:
             {{- if $containerConfig.externalSecrets }}
             {{- range $externalSecret := $containerConfig.externalSecrets }}
             - secretRef:
-                name: {{ $externalSecret }}
+                name: {{ printf "%s%s" $prefix $externalSecret }}
             {{- end }}
             {{- end }}
           {{- if or
@@ -353,7 +353,7 @@ spec:
             {{- if $containerConfig.configMaps }}
             {{- range $configMap := $containerConfig.configMaps }}
             - configMapRef:
-                name: {{ $configMap }}
+                name: {{ printf "%s%s" $prefix $configMap }}
             {{- end }}
             {{- end }}
             - secretRef:
@@ -361,7 +361,7 @@ spec:
             {{- if $containerConfig.externalSecrets }}
             {{- range $externalSecret := $containerConfig.externalSecrets }}
             - secretRef:
-                name: {{ $externalSecret }}
+                name: {{ printf "%s%s" $prefix $externalSecret }}
             {{- end }}
             {{- end }}
           {{- if or
