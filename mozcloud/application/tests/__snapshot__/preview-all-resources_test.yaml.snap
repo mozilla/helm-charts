@@ -415,7 +415,12 @@ Configuration matches entire snapshot:
             realm: nonprod
         spec:
           containers:
-            - image: test-repo/processor:1.0.0
+            - envFrom:
+                - configMapRef:
+                    name: pr789-app-config
+                - secretRef:
+                    name: pr789-app-external-secret
+              image: test-repo/processor:1.0.0
               imagePullPolicy: Always
               name: processor
               resources:
@@ -439,6 +444,7 @@ Configuration matches entire snapshot:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: pr789-app-service-account
   13: |
     apiVersion: apps/v1
     kind: Deployment

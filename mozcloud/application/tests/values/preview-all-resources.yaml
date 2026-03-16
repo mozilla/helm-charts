@@ -23,11 +23,16 @@ tasks:
   jobs:
     background-processor:
       type: postDeployment
+      serviceAccount: app-service-account
       containers:
         processor:
           image:
             repository: test-repo/processor
             tag: 1.0.0
+          configMaps:
+            - app-config
+          externalSecrets:
+            - app-external-secret
 
 # Workload
 workloads:
