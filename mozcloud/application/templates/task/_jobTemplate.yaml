@@ -188,13 +188,12 @@ template:
         {{- if eq $volumeConfig.type "persistentVolume" }}
         persistentVolumeClaim:
           claimName: {{ $volumeName }}
-        {{- else }}
-        {{- if eq $volumeConfig.type "configMap" }}
+        {{- else if eq $volumeConfig.type "configMap" }}
         configMap:
+          name: {{ $volumeName }}
         {{- else if eq $volumeConfig.type "secret" }}
         secret:
-        {{- end }}
-          name: {{ $volumeName }}
+          secretName: {{ $volumeName }}
         {{- end }}
       {{- end }}
     {{- end }}
