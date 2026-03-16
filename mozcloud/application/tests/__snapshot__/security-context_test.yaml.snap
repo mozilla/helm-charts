@@ -90,6 +90,7 @@ Configuration matches entire snapshot:
                   type: RuntimeDefault
           securityContext:
             fsGroup: 15000
+            fsGroupChangePolicy: OnRootMismatch
             runAsGroup: 14000
             runAsNonRoot: false
             runAsUser: 13000

@@ -16,3 +16,4 @@ workloads:
       group: 14000
       runAsRoot: true
       fsGroup: 15000
+      fsGroupChangePolicy: OnRootMismatch

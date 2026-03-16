@@ -209,5 +209,8 @@ runAsUser: {{ default 10001 .user }}
 runAsGroup: {{ default 10001 .group }}
 {{- if .fsGroup }}
 fsGroup: {{ .fsGroup }}
+  {{- if .fsGroupChangePolicy }}
+fsGroupChangePolicy: {{ .fsGroupChangePolicy }}
+  {{- end }}
 {{- end }}
 {{- end -}}
