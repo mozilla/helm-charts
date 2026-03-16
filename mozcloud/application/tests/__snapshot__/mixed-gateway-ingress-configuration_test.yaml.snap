@@ -219,7 +219,6 @@ Configuration matches entire snapshot:
     spec:
       redirectToHttps:
         enabled: true
-        responseCodeName: MOVED_PERMANENTLY_DEFAULT
       sslPolicy: mozilla-intermediate
   9: |
     apiVersion: networking.k8s.io/v1

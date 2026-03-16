@@ -38,6 +38,10 @@ workloads:
         image:
           repository: test-repo/api-image
           tag: 1.0.0
+        configMaps:
+          - app-config
+        externalSecrets:
+          - app-external-secret
     hosts:
       api-host:
         domains:

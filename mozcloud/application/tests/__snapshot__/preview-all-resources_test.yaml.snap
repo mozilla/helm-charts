@@ -538,8 +538,12 @@ Configuration matches entire snapshot:
                   readOnly: true
                   subPath: nginx.conf
             - envFrom:
+                - configMapRef:
+                    name: pr789-app-config
                 - secretRef:
                     name: pr789-test-chart-secrets
+                - secretRef:
+                    name: pr789-app-external-secret
               image: test-repo/api-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:

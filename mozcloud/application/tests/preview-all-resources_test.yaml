@@ -149,8 +149,28 @@ tests:
       path: $[?(@.kind == "Deployment")]
     asserts:
       - equal:
-          path: spec.template.spec.containers[?(@.name=="app")].envFrom[0].secretRef.name
+          path: spec.template.spec.containers[?(@.name=="app")].envFrom[1].secretRef.name
           value: pr789-test-chart-secrets
+
+  # Test that configMapRef is prefixed in workload containers
+  - it: Workload container configMapRef should reference prefixed ConfigMap
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].envFrom[0].configMapRef.name
+          value: pr789-app-config
+
+  # Test that user-defined externalSecret secretRef is prefixed in workload containers
+  - it: Workload container user-defined secretRef should reference prefixed ExternalSecret
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].envFrom[2].secretRef.name
+          value: pr789-app-external-secret
 
   # Test that serviceAccount reference is prefixed in workload spec
   - it: Workload serviceAccountName should reference prefixed ServiceAccount
