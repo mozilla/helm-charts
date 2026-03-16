@@ -32,6 +32,7 @@ tests:
             runAsGroup: 14000
             runAsNonRoot: false
             runAsUser: 13000
+            fsGroup: 15000
             seccompProfile:
               type: RuntimeDefault
   - it: Deployment container security context set correctly

@@ -1206,6 +1206,11 @@
         "runAsRoot": {
           "type": "boolean",
           "default": false
+        },
+        "fsGroup": {
+          "description": "Group ID applied to mounted volumes. All files created in a volume will be owned by this GID (maps to securityContext.fsGroup).",
+          "type": "integer",
+          "minimum": 0
         }
       }
     }
