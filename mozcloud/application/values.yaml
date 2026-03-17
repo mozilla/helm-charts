@@ -205,7 +205,9 @@ persistentVolumes: {}
 #       # GCP project ID. If not specified, the value automatically set in
 #       # .Values.global.mozcloud.project_id will be used.
 #       #projectId: ''
-serviceAccounts: {}
+serviceAccounts:
+  default:
+    enabled: true
 
 # The consolidation of all jobs to tasks is coming soon.
 tasks:
