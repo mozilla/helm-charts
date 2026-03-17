@@ -1,0 +1,38 @@
+---
+suite: "mozcloud: HPA configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/hpa-configuration.yaml
+templates:
+  - workload/hpa.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: HPA has sync-wave annotation set to 1
+    documentSelector:
+      path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "1"
+  - it: HPA targets the correct deployment
+    documentSelector:
+      path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Deployment
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: test-service

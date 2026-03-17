@@ -354,6 +354,8 @@ Configuration matches entire snapshot:
     apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
     metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
       labels:
         app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
