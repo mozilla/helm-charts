@@ -36,12 +36,14 @@ spec:
         kind: {{ default "Service" $backend_ref.kind }}
         name: {{ $backend_ref.name }}
         port: {{ $backend_ref.port }}
-        {{- if or (eq (toString $backend_ref.weight) "0") (gt (int $backend_ref.weight) 0) }}
+        {{- if kindIs "invalid" $backend_ref.weight }}
+        weight: 1
+        {{- else }}
         weight: {{ $backend_ref.weight }}
         {{- end }}
       {{- end }}
-      {{- if $rule.matches }}
       matches:
+        {{- if $rule.matches }}
         {{- range $match := $rule.matches }}
         {{- if and $match.path $match.headers }}
         - path:
@@ -64,7 +66,11 @@ spec:
             {{- end }}
         {{- end }}
         {{- end }}
-      {{- end }}
+        {{- else }}
+        - path:
+            type: PathPrefix
+            value: /
+        {{- end }}
       {{- if $rule.rewrite }}
       filters:
         - type: URLRewrite
