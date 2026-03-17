@@ -46,7 +46,7 @@ Params:
   type (string):     (required) The resource type. Used to determine sync-wave
                      defaults and hook annotations. Accepted values:
                      "configMap", "deployment", "externalSecret", "hpa",
-                     "jobPostDeployment", "jobPreDeployment",
+                     "jobPostDeployment", "jobPreDeployment", "pvc",
                      "serviceAccount".
 
 Returns:
@@ -85,6 +85,7 @@ externalSecret: -11
 hpa: 1
 jobPostDeployment: 1
 jobPreDeployment: -1
+pvc: -11
 serviceAccount: -11
 {{- end -}}
 
