@@ -1,6 +1,9 @@
 # mozcloud-workload-core-lib
 
-![Version: 0.6.22](https://img.shields.io/badge/Version-0.6.22-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
+> [!CAUTION]
+> **This chart is deprecated.** Please use the mozcloud chart located [here](../../mozcloud/application).
+
+![Version: 0.6.23](https://img.shields.io/badge/Version-0.6.23-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
 
 A library chart that creates core components needed for MozCloud workloads
 
@@ -19,7 +22,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-workload-core-lib
-    version: ~0.6.22
+    version: ~0.6.23
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 

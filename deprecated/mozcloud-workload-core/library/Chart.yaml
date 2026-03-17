@@ -1,6 +1,7 @@
 apiVersion: v2
-name: mozcloud-job-lib
-description: A library chart that creates Job and CronJob resources
+name: mozcloud-workload-core-lib
+description: A library chart that creates core components needed for MozCloud 
+  workloads
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -15,15 +16,12 @@ type: library
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.6.0
+version: 0.6.23
 
-# This chart has been deprecated. Please create jobs and cron jobs using the mozcloud chart.
+# This chart has been deprecated. Please see mozcloud chart.
 deprecated: true
+
 dependencies:
   - name: mozcloud-labels-lib
     version: 0.3.16
     repository: file://../../mozcloud-labels/library
-
-  - name: mozcloud-workload-core-lib
-    version: 0.6.22
-    repository: file://../../mozcloud-workload-core/library

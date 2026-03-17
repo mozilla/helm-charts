@@ -1,5 +1,8 @@
 # mozcloud-preview
 
+> [!CAUTION]
+> **This chart is deprecated.** Please use the mozcloud chart located [here](../../mozcloud/application).
+
 ![Version: 0.3.38](https://img.shields.io/badge/Version-0.3.38-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 A Helm chart for Kubernetes
