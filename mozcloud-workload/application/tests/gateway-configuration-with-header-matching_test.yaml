@@ -53,6 +53,7 @@ tests:
             kind: Service
             name: test-service
             port: 8080
+            weight: 1
       - exists:
           path: spec.rules[0].matches
       - exists:

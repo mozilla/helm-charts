@@ -1,6 +1,6 @@
 # mozcloud-preview-lib
 
-![Version: 0.2.37](https://img.shields.io/badge/Version-0.2.37-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
+![Version: 0.2.38](https://img.shields.io/badge/Version-0.2.38-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
 
 A library chart that creates preview http routes and supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-preview-lib
-    version: ~0.2.37
+    version: ~0.2.38
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -43,7 +43,7 @@ If params other than the current context, specify those in place of the `.`:
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.25 |
+| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.4.26 |
 | file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.16 |
 | file://../../mozcloud-service/library | mozcloud-service-lib | 0.2.22 |
 

@@ -294,6 +294,11 @@ Configuration matches entire snapshot:
               kind: Service
               name: pr789-api-service
               port: 8080
+              weight: 1
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
   9: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
