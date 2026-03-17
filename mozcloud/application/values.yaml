@@ -181,7 +181,11 @@ persistentVolumes: {}
 #   gke-<environment>@<gcp_project_id>.iam.serviceaccount.com
 #
 # Any service accounts created here will be created IN ADDITION to that tenant
-# service account.
+# service account. To disable the default service account, set:
+#
+# serviceAccounts:
+#   default:
+#     enabled: false
 #
 # Example and configuration options:
 #
