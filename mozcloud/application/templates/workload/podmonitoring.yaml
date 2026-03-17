@@ -1,15 +1,19 @@
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
 {{- $context := deepCopy . }}
 {{- $_ := set $context "component_code" "podmonitoring" }}
-{{- $globals := .Values.global.mozcloud -}}
-{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) -}}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- /* Format workloads, removing default container and merging user-defined values with defaults */}}
+{{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- $formatterParams := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
 
+{{- if $workloads }}
 {{- /* Default PodMonitoring template for all tenants */}}
 ---
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
-  name: {{ $globals.app_code }}-telegraf
+  name: {{ $labelParams.app_code }}-telegraf
   labels:
     {{- $params := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) }}
     {{- $labels := include "mozcloud.labels" $params | fromYaml }}
@@ -23,3 +27,4 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: telegraf
+{{- end }}

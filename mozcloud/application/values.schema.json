@@ -162,6 +162,19 @@
     },
     "serviceAccounts": {
       "type": "object",
+      "properties": {
+        "default": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "description": "Whether to create the default service account. Defaults to true.",
+              "type": "boolean",
+              "default": true
+            }
+          }
+        }
+      },
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,

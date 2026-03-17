@@ -6,3 +6,5 @@ __pycache__/
 *.pyo
 .venv/
 *.egg-info/
+.vscode/settings.json
+.debug/mozcloud-workload/templates/workload.yaml
