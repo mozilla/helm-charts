@@ -183,7 +183,7 @@ def bump(
     json: bool = False,
     staged: bool = False,
 ):
-    """Bumps the version of a chart and cascades to dependents."""
+    """Bumps the version of a chart and cascades to dependents. Deprecated charts are ignored."""
 
     charts = get_chart_arguments(graph, charts, staged)
     vm = VersionManager(graph)
