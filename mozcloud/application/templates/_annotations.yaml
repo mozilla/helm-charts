@@ -45,8 +45,8 @@ Params:
                      When omitted, a default is looked up by resource type.
   type (string):     (required) The resource type. Used to determine sync-wave
                      defaults and hook annotations. Accepted values:
-                     "configMap", "deployment", "externalSecret",
-                     "jobPostDeployment", "jobPreDeployment",
+                     "configMap", "deployment", "externalSecret", "hpa",
+                     "jobPostDeployment", "jobPreDeployment", "pvc",
                      "serviceAccount".
 
 Returns:
@@ -66,6 +66,7 @@ argocd.argoproj.io/sync-wave: {{ default $syncWaveDefault .syncWave | quote }}
 {{- end -}}
 
 
+
 {{- /*
 Internal lookup table mapping resource types to their default ArgoCD sync-wave
 values. Referenced by mozcloud.annotations.argo to determine the sync-wave
@@ -81,8 +82,10 @@ Returns:
 {{- define "mozcloud.annotations.argo.syncWaveDefaults" -}}
 configMap: -11
 externalSecret: -11
+hpa: 1
 jobPostDeployment: 1
 jobPreDeployment: -1
+pvc: -11
 serviceAccount: -11
 {{- end -}}
 

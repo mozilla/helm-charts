@@ -3,6 +3,8 @@ Configuration matches entire snapshot:
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-11"
       labels:
         app.kubernetes.io/component: pvc
         app.kubernetes.io/managed-by: argocd
@@ -27,6 +29,8 @@ Configuration matches entire snapshot:
     apiVersion: v1
     kind: PersistentVolumeClaim
     metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-11"
       labels:
         app.kubernetes.io/component: pvc
         app.kubernetes.io/managed-by: argocd
