@@ -39,9 +39,21 @@
   {{- $nginxVolume := dict "type" "configMap" }}
   {{- $_ := set $volumes $nginxConfigMapName $nginxVolume }}
 {{- end }}
+{{- /* Determine if this workload should render as an Argo Rollout or a standard Deployment.
+     A map-shaped strategy (e.g. type: canary) signals progressive delivery via Argo Rollouts.
+     A string strategy (e.g. RollingUpdate) signals a standard Deployment. */}}
+{{- $strategyType := "" }}
+{{- if kindIs "map" $workloadConfig.strategy }}
+{{-   $strategyType = $workloadConfig.strategy.type }}
+{{- end }}
 ---
+{{- if kindIs "map" $workloadConfig.strategy }}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+{{- else }}
 apiVersion: apps/v1
 kind: Deployment
+{{- end }}
 metadata:
   name: {{ $workloadName }}
   labels:
@@ -59,8 +71,13 @@ spec:
   selector:
     matchLabels:
       {{- $labels.selectorLabels | toYaml | nindent 6 }}
+{{- if kindIs "map" $workloadConfig.strategy }}
+  strategy:
+    {{- dict $strategyType (omit $workloadConfig.strategy "type") | toYaml | nindent 4 }}
+{{- else }}
   strategy:
     type: {{ default "RollingUpdate" $workloadConfig.strategy }}
+{{- end }}
   template:
     metadata:
       {{- /* Annotations, including OTEL if applicable */}}
