@@ -73,6 +73,7 @@ tests:
             kind: Service
             name: gateway-service
             port: 8080
+            weight: 1
 
   # Ingress template tests - should only create resources for ingress-service
   - it: Frontend template creates resources for ingress workload

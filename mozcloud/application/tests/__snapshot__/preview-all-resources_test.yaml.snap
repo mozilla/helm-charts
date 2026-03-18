@@ -39,13 +39,13 @@ Configuration matches entire snapshot:
         mozcloud_chart_version: 1.0.0
         preview_pr: "789"
         realm: nonprod
-      name: pr789-test-chart-secrets
+      name: pr789-app-external-secret
     spec:
       dataFrom:
         - extract:
             conversionStrategy: Default
             decodingStrategy: None
-            key: dev-gke-app-secrets
+            key: my-gsm-secret
             metadataPolicy: None
             version: latest
       refreshInterval: 5m
@@ -54,7 +54,7 @@ Configuration matches entire snapshot:
         name: secret-store
       target:
         creationPolicy: Owner
-        name: pr789-test-chart-secrets
+        name: pr789-app-external-secret
   3: |
     apiVersion: external-secrets.io/v1beta1
     kind: ExternalSecret
@@ -73,13 +73,13 @@ Configuration matches entire snapshot:
         mozcloud_chart_version: 1.0.0
         preview_pr: "789"
         realm: nonprod
-      name: pr789-app-external-secret
+      name: pr789-test-chart-secrets
     spec:
       dataFrom:
         - extract:
             conversionStrategy: Default
             decodingStrategy: None
-            key: my-gsm-secret
+            key: dev-gke-app-secrets
             metadataPolicy: None
             version: latest
       refreshInterval: 5m
@@ -88,7 +88,7 @@ Configuration matches entire snapshot:
         name: secret-store
       target:
         creationPolicy: Owner
-        name: pr789-app-external-secret
+        name: pr789-test-chart-secrets
   4: |
     apiVersion: v1
     kind: Service
@@ -241,6 +241,11 @@ Configuration matches entire snapshot:
               kind: Service
               name: pr789-api-service
               port: 8080
+              weight: 1
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
   7: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
@@ -342,9 +347,32 @@ Configuration matches entire snapshot:
       backoffLimit: 6
       parallelism: 1
       template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: job
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: job
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: job
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            preview_pr: "789"
+            realm: nonprod
         spec:
           containers:
-            - image: test-repo/processor:1.0.0
+            - envFrom:
+                - configMapRef:
+                    name: pr789-app-config
+                - secretRef:
+                    name: pr789-app-external-secret
+              image: test-repo/processor:1.0.0
               imagePullPolicy: Always
               name: processor
               resources:
@@ -368,6 +396,7 @@ Configuration matches entire snapshot:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: pr789-app-service-account
   11: |
     apiVersion: apps/v1
     kind: Deployment
@@ -467,8 +496,12 @@ Configuration matches entire snapshot:
                   readOnly: true
                   subPath: nginx.conf
             - envFrom:
+                - configMapRef:
+                    name: pr789-app-config
                 - secretRef:
                     name: pr789-test-chart-secrets
+                - secretRef:
+                    name: pr789-app-external-secret
               image: test-repo/api-image:1.0.0
               imagePullPolicy: Always
               livenessProbe:
@@ -521,7 +554,7 @@ Configuration matches entire snapshot:
   12: |
     apiVersion: v1
     data:
-      nginx.conf: |
+      nginx.conf: |2
         # The nginx docker container has ln -sf /dev/stderr /var/log/nginx/error.log
         error_log  /var/log/nginx/error.log warn;
         pid        /tmp/nginx.pid;

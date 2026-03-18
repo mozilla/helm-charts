@@ -1,0 +1,77 @@
+{
+  "skill_name": "chart-standards",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I need to add a new named template that merges pod affinity configs with defaults for workloads. Where should this file live, what file extension should it use, and what should the template be named?",
+      "expected_output": "Correctly identifies that affinity is pod-level config so it belongs in _pod.yaml (not a new _helpers.tpl), uses the pod. prefix for the template name, and explains the _*.yaml vs _helpers.tpl distinction",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Recommends _pod.yaml as the file location (not a new file or workload/_helpers.tpl)",
+          "passing_criteria": "Response explicitly mentions _pod.yaml or templates/_pod.yaml as the correct location"
+        },
+        {
+          "text": "Uses pod. prefix for the template name (e.g., pod.affinity)",
+          "passing_criteria": "Response suggests a template name starting with pod. such as pod.affinity or pod.container.affinity"
+        },
+        {
+          "text": "Does NOT suggest creating _common.tpl or workload/_helpers.tpl",
+          "passing_criteria": "Response does not recommend _common.tpl, common. prefix, or workload/_helpers.tpl as the location"
+        },
+        {
+          "text": "Explains the _*.yaml vs _helpers.tpl file type distinction",
+          "passing_criteria": "Response distinguishes between YAML/Helm template-driven files (_*.yaml) and pure Go template helpers (_helpers.tpl)"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "I want to add a new `serviceMonitor` resource type to the mozcloud chart that reads from a top-level `serviceMonitors` key in values.yaml. Walk me through how to structure the template files and any helpers I might need.",
+      "expected_output": "Creates templates/servicemonitor/ folder matching the values.yaml key, suggests a servicemonitor.yaml template, any helpers go in templates/servicemonitor/_helpers.tpl with mozcloud.serviceMonitor. prefix, mentions helm unittest requirement",
+      "files": [],
+      "assertions": [
+        {
+          "text": "Suggests templates/servicemonitor/ folder matching the values.yaml key",
+          "passing_criteria": "Response recommends creating a templates/servicemonitor/ (or templates/serviceMonitor/) directory"
+        },
+        {
+          "text": "Places any helpers in templates/servicemonitor/_helpers.tpl",
+          "passing_criteria": "Response recommends _helpers.tpl inside the servicemonitor subdirectory for helper functions"
+        },
+        {
+          "text": "Uses mozcloud.serviceMonitor. prefix for helper template names",
+          "passing_criteria": "Response suggests helper names prefixed with mozcloud.serviceMonitor. or similar scoped prefix"
+        },
+        {
+          "text": "Mentions helm unittest and make unit-tests requirement",
+          "passing_criteria": "Response explicitly mentions writing helm unittest tests and/or running make unit-tests"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "I'm updating the mozcloud-gateway-lib chart to add a new helper function. What do I need to keep in mind, and what happens to the mozcloud chart when I publish this change?",
+      "expected_output": "Mentions that library chart changes require a new version of the mozcloud chart to be published, any new helpers should follow camelCase naming, need to run make unit-tests, and should ask for approval for changes outside the current task",
+      "files": [],
+      "assertions": [
+        {
+          "text": "States that mozcloud chart must be republished/versioned after library chart changes",
+          "passing_criteria": "Response explicitly states that a new version of mozcloud chart must be published when a library chart changes"
+        },
+        {
+          "text": "Mentions camelCase naming convention for helper functions",
+          "passing_criteria": "Response mentions camelCase naming for function or variable names"
+        },
+        {
+          "text": "Mentions running make unit-tests or helm unittest",
+          "passing_criteria": "Response explicitly mentions make unit-tests or helm unittest as a requirement"
+        },
+        {
+          "text": "Mentions seeking approval for changes outside the current task scope",
+          "passing_criteria": "Response mentions asking for approval or prompting before making changes outside the stated task"
+        }
+      ]
+    }
+  ]
+}

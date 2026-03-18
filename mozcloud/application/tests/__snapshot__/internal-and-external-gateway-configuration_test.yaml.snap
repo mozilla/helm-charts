@@ -93,6 +93,11 @@ Configuration matches entire snapshot:
               kind: Service
               name: test-service
               port: 8080
+              weight: 1
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
   4: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
@@ -157,6 +162,11 @@ Configuration matches entire snapshot:
               kind: Service
               name: test-internal-service
               port: 8080
+              weight: 1
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
   6: |
     apiVersion: networking.gke.io/v1
     kind: GCPGatewayPolicy

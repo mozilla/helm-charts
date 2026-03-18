@@ -28,6 +28,9 @@ tests:
       value: pvc-rwo
     asserts:
       - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-11"
+      - equal:
           path: metadata.labels.component_code
           value: pvc
       - equal:

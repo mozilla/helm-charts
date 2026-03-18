@@ -84,6 +84,30 @@ tests:
           path: metadata.name
           value: pr789-background-processor
 
+  # Test that configMapRef is prefixed in job containers
+  - it: Job container configMapRef should reference prefixed ConfigMap
+    template: task/job.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="processor")].envFrom[0].configMapRef.name
+          value: pr789-app-config
+
+  # Test that externalSecret secretRef is prefixed in job containers
+  - it: Job container secretRef should reference prefixed ExternalSecret
+    template: task/job.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="processor")].envFrom[1].secretRef.name
+          value: pr789-app-external-secret
+
+  # Test that serviceAccount reference is prefixed in job spec
+  - it: Job serviceAccountName should reference prefixed ServiceAccount
+    template: task/job.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: pr789-app-service-account
+
   # Test Deployment (workload) is prefixed
   - it: Deployment is prefixed with PR number
     template: workload/deployment.yaml
@@ -149,8 +173,28 @@ tests:
       path: $[?(@.kind == "Deployment")]
     asserts:
       - equal:
-          path: spec.template.spec.containers[?(@.name=="app")].envFrom[0].secretRef.name
+          path: spec.template.spec.containers[?(@.name=="app")].envFrom[1].secretRef.name
           value: pr789-test-chart-secrets
+
+  # Test that configMapRef is prefixed in workload containers
+  - it: Workload container configMapRef should reference prefixed ConfigMap
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].envFrom[0].configMapRef.name
+          value: pr789-app-config
+
+  # Test that user-defined externalSecret secretRef is prefixed in workload containers
+  - it: Workload container user-defined secretRef should reference prefixed ExternalSecret
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].envFrom[2].secretRef.name
+          value: pr789-app-external-secret
 
   # Test that serviceAccount reference is prefixed in workload spec
   - it: Workload serviceAccountName should reference prefixed ServiceAccount

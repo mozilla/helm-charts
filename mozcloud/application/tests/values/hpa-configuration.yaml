@@ -1,0 +1,17 @@
+---
+workloads:
+  test-service:
+    component: web
+    autoscaling:
+      enabled: true
+      replicas:
+        min: 2
+        max: 10
+      metrics:
+        - type: cpu
+          threshold: 60
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0

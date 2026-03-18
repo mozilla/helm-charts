@@ -40,7 +40,7 @@ Options:
 ## Chart Command
 Displays information about a single chart. Can print dependency/dependent tree for the given chart or chart details.
 ```sh
-$ uv run chartkit chart --help                                    
+$ uv run chartkit chart --help
 Usage: chartkit chart [OPTIONS] CHART
 
   Prints Helm either a single chart details or the a tree of dependents or
@@ -55,7 +55,7 @@ Options:
 
 #### View the depency tree of a single chart
 ```sh
-uv run chartkit chart mozcloud-preview --mode dependency
+uv run chartkit chart mozcloud --mode dependency
 ```
 
 ## Mermaid Command
@@ -80,7 +80,7 @@ uv run chartkit mermaid
 
 #### Generate mermaid chart svg
 ```sh
-uv run chartkit mermaid --svg-output mozcloud-workload.svg mozcloud-workload 
+uv run chartkit mermaid --svg-output mozcloud.svg mozcloud
 ```
 
 ## Update Dependencies Command
@@ -116,15 +116,21 @@ Options:
 
 ##### Example
 ```sh
-uv run chartkit version list mozcloud-workload
+uv run chartkit version list mozcloud
 ```
 
 #### Bump version
+Bumps the version of a chart and cascades to dependents.
+
+> [!NOTE]
+> Deprecated charts are ignored.
+
 ```sh
 $ uv run chartkit version bump --help
 Usage: chartkit version bump [OPTIONS] [CHARTS]...
 
-  Bumps the version of a chart and cascades to dependents.
+  Bumps the version of a chart and cascades to dependents. Deprecated charts
+  are ignored.
 
 Options:
   --part [major|minor|patch]  Part of the version to bump.
@@ -139,18 +145,13 @@ For example you can take a list of changed charts and update all their versions 
 $ uv run chartkit version bump \
     mozcloud-gateway \
     mozcloud-gateway-lib \
-    mozcloud-preview-lib
 Updating chart versions:
-mozcloud-gateway: 0.4.3
-    - dependency: mozcloud-gateway-lib -> 0.4.3
-mozcloud-gateway-lib: 0.4.3
-mozcloud-preview: 0.3.12
-    - dependency: mozcloud-preview-lib -> 0.2.13
-mozcloud-preview-lib: 0.2.13
-    - dependency: mozcloud-gateway-lib -> 0.4.3
-mozcloud-workload: 0.0.3
-    - dependency: mozcloud-gateway-lib -> 0.4.3
-Chart versions updated. 
+mozcloud-gateway: 0.4.28
+    - dependency: mozcloud-gateway-lib -> 0.4.25
+mozcloud-gateway-lib: 0.4.25
+mozcloud: 0.10.2
+    - dependency: mozcloud-gateway-lib -> 0.4.25
+Chart versions updated.
 ```
 
 #### Check Versions

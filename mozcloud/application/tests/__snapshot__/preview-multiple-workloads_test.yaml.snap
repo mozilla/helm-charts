@@ -152,6 +152,11 @@ Configuration matches entire snapshot:
               kind: Service
               name: pr456-admin-service
               port: 8080
+              weight: 1
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
   3: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
@@ -220,6 +225,11 @@ Configuration matches entire snapshot:
               kind: Service
               name: pr456-api-service
               port: 8080
+              weight: 1
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
   5: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
@@ -288,6 +298,11 @@ Configuration matches entire snapshot:
               kind: Service
               name: pr456-web-service
               port: 8080
+              weight: 1
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
   7: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
@@ -477,7 +492,7 @@ Configuration matches entire snapshot:
   9: |
     apiVersion: v1
     data:
-      nginx.conf: |
+      nginx.conf: |2
         # The nginx docker container has ln -sf /dev/stderr /var/log/nginx/error.log
         error_log  /var/log/nginx/error.log warn;
         pid        /tmp/nginx.pid;
@@ -734,7 +749,7 @@ Configuration matches entire snapshot:
   11: |
     apiVersion: v1
     data:
-      nginx.conf: |
+      nginx.conf: |2
         # The nginx docker container has ln -sf /dev/stderr /var/log/nginx/error.log
         error_log  /var/log/nginx/error.log warn;
         pid        /tmp/nginx.pid;
@@ -991,7 +1006,7 @@ Configuration matches entire snapshot:
   13: |
     apiVersion: v1
     data:
-      nginx.conf: |
+      nginx.conf: |2
         # The nginx docker container has ln -sf /dev/stderr /var/log/nginx/error.log
         error_log  /var/log/nginx/error.log warn;
         pid        /tmp/nginx.pid;

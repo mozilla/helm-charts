@@ -104,6 +104,10 @@ Configuration matches entire snapshot:
               name: mozcloud-test-europe-west1
               port: 8080
               weight: 0
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
   5: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute

@@ -59,6 +59,7 @@ class ChartInfo:
     version: str
     path: Path
     dependencies: List[dict[str, str]]  # names of dependent charts
+    deprecated: bool = False
 
     def __repr__(self) -> str:
         return f"""Chart: {self.name}
@@ -100,6 +101,7 @@ class ChartInfo:
             version=data.get("version", ""),
             path=chart_path.parent,
             dependencies=data.get("dependencies", []) or [],
+            deprecated=bool(data.get("deprecated", False)),
         )
 
     def save_chart_yaml(self):
@@ -187,6 +189,8 @@ class ChartGraph:
         for chart_path in self.chart_files:
             chart_info = ChartInfo.from_yaml(chart_path)
             if not chart_info:
+                continue
+            if chart_info.deprecated:
                 continue
             charts[chart_info.name] = chart_info
         return charts

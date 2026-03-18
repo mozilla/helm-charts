@@ -51,6 +51,7 @@ preview:
     backoffLimit: 1         # Default: 1
     activeDeadlineSeconds: 900  # Default: 900 seconds (15 minutes)
 
+
 # In this section, you can create ConfigMap resources that can be used
 # by all workloads and jobs. To use ConfigMaps created here in a workload,
 # you must list the ConfigMap name you wish to include in each workload or
@@ -73,6 +74,20 @@ preview:
 #     a-different-configmap-name:
 #       data:
 #         KEY3: VALUE3
+#
+# EXPERIMENTAL: Support for embedded templates in the ConfigMap value string.
+# This can be enabled by setting "tplEnabled: true" in the configMap object.
+# When enabled you can embed simple helm templates into the value strings of 
+# ConfigMap data. Templates are restricted to direct access of `.Values` and
+# calling the `default` template function with `.Values` access 
+#
+# Example:
+#
+#   configMaps:
+#     my-config-map:
+#       tplEnabled: true
+#       data:
+#         ORIGIN: "https://{{ .Values.global.hostname }}/"
 configMaps: {}
 
 # External secret names and versions to mount in containers.
@@ -181,7 +196,11 @@ persistentVolumes: {}
 #   gke-<environment>@<gcp_project_id>.iam.serviceaccount.com
 #
 # Any service accounts created here will be created IN ADDITION to that tenant
-# service account.
+# service account. To disable the default service account, set:
+#
+# serviceAccounts:
+#   default:
+#     enabled: false
 #
 # Example and configuration options:
 #
@@ -201,7 +220,9 @@ persistentVolumes: {}
 #       # GCP project ID. If not specified, the value automatically set in
 #       # .Values.global.mozcloud.project_id will be used.
 #       #projectId: ''
-serviceAccounts: {}
+serviceAccounts:
+  default:
+    enabled: true
 
 # The consolidation of all jobs to tasks is coming soon.
 tasks:
@@ -250,7 +271,8 @@ tasks:
       generateName: false
       #activeDeadlineSeconds:
       backoffLimit: 6
-      otel: {}
+      otel:
+        enabled: true
       parallelism: 1
       restartPolicy: Never
       security: {}
@@ -578,9 +600,11 @@ tasks:
       # This can only be enabled for applications written in one of the
       # supported languages. See below for a list of supported languages.
       #
-      # OTEL Collector integration is disabled for jobs by default.
+      # OTEL Collector integration is enabled for jobs by default. When enabled,
+      # resource.opentelemetry.io/* annotations are added to pod templates
+      # regardless of whether auto-instrumentation is configured.
       otel:
-        enabled: false
+        enabled: true
 
         # A list of the containers on which the OTEL collector will be enabled.
         #
@@ -1034,7 +1058,7 @@ workloads:
         #       type: persistentVolume
         #       path: /path/to/mount
         #     - name: cache-volume
-        #       type: emptyDir:
+        #       type: emptyDir
         #       path: /path/to/dir
         #     - name: another-cache-volume
         #       path: /path/to/another/dir
@@ -1476,7 +1500,7 @@ workloads:
         #       type: persistentVolume
         #       path: /path/to/mount
         #     - name: cache-volume
-        #       type: emptyDir:
+        #       type: emptyDir
         #       path: /path/to/dir
         #     - name: another-cache-volume
         #       path: /path/to/another/dir
@@ -1587,7 +1611,7 @@ workloads:
     # Configuration options:
     #
     # security:
-    #   # The 'user' and 'group' values to use for the container, if
+    #   # The 'user' and 'group' values to use for all containers in the pod, if
     #   # non-default.
     #   #
     #   # The default value for both is 10001.
@@ -1600,6 +1624,12 @@ workloads:
     #   # Note: The webservices-high and dataservices-high Kubernetes clusters
     #   # will not allow you to deploy containers using the root user.
     #   runAsRoot: false
+    #
+    #   # Group ID applied to mounted volumes (maps to securityContext.fsGroup).
+    #   fsGroup: 10001
+    #   # Controls when volume ownership is changed to match fsGroup.
+    #   # "Always" (default) or "OnRootMismatch" (faster for large volumes).
+    #   fsGroupChangePolicy: OnRootMismatch
     security: {}
 
     # Optionally use a custom service account for the container. The value

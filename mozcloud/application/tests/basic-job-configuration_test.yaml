@@ -13,7 +13,13 @@ values:
   - values/basic-job-configuration.yaml
 templates:
   - task/job.yaml
+  - gke/podmonitoring.yaml
 tests:
+  - it: PodMonitoring should not render when no workloads are defined
+    template: gke/podmonitoring.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
   - it: Ensure no failures occur
     asserts:
       - notFailedTemplate: {}

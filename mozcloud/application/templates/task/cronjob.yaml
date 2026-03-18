@@ -18,6 +18,12 @@ metadata:
     {{- $params := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) "labels" (default (dict) $config.labels) }}
     {{- $labels := include "mozcloud.labels" $params | fromYaml }}
     {{- $labels.labels | toYaml | nindent 4 }}
+  {{- $params = dict "annotations" (default (dict) $config.annotations) "context" ($context | deepCopy) "otel" ($config.otel) "type" "cronJob" }}
+  {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | toYaml | nindent 4 }}
+  {{- end }}
 spec:
   {{- if ($config.jobHistory).successful }}
   successfulJobsHistoryLimit: {{ $config.jobHistory.successful }}
