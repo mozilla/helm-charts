@@ -1622,16 +1622,46 @@ workloads:
     # section.
     serviceAccount: ''
 
-    # Define the strategy Kubernetes should use when replacing pods. Below are
-    # the options:
+    # Define the strategy to use when deploying a new version of this workload.
     #
-    #   Recreate: All existing pods will be removed before replacement pods are
-    #             deployed.
+    # --- Standard deployment strategies ---
     #
-    #   RollingUpdate: Pods are gradually replaced when a new version of the
-    #                  deployment is created.
+    # These options use a standard Kubernetes Deployment resource.
     #
-    # The default value is "RollingUpdate".
+    # TODO: These option names reflect Kubernetes Deployment terminology. As we
+    # add support for more workload types, we should revisit these names to make
+    # them more delivery-behavior-focused and less implementation-specific.
+    #
+    #   Recreate:      All existing pods are stopped before new pods are created.
+    #                  Causes a brief period of downtime.
+    #
+    #   RollingUpdate: Pods are replaced gradually. No downtime, but both the old
+    #                  and new version run simultaneously for a short window.
+    #
+    # --- Progressive delivery strategies ---
+    #
+    # These options use an Argo Rollout resource instead of a standard Deployment.
+    # The chart handles this switch automatically — you don't need to configure
+    # anything else. Requires the Argo Rollouts controller to be installed in the
+    # cluster.
+    #
+    #   canary: Traffic is shifted to the new version incrementally, following the
+    #           steps you define. Each step is either a traffic weight (setWeight)
+    #           or a pause before proceeding.
+    #
+    #           Example:
+    #             strategy:
+    #               type: canary
+    #               steps:
+    #                 - setWeight: 20
+    #                 - pause:
+    #                     duration: 30s
+    #                 - setWeight: 80
+    #                 - pause:
+    #                     duration: 30s
+    #
+    #           pause accepts either a duration string (e.g. "30s", "5m") or an
+    #           empty value ({}) to pause indefinitely until manually promoted.
     #
     strategy: RollingUpdate
 
@@ -1646,6 +1676,6 @@ workloads:
 #
 # To do list:
 #   - Add support for additional PodMonitoring definitions
-#   - Add support for Rollout steps (enabling canary deployments through Argo
-#     Rollouts)
 #   - Add support for StatefulSet resources
+#   - Add support for BlueGreen rollout strategy
+#   - Add support for AnalysisTemplate resources
