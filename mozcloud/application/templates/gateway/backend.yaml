@@ -74,7 +74,7 @@ backends:
         enabled: true
       {{- if ($hostConfig.options).logSampleRate }}
         {{- $sampleRate := $hostConfig.options.logSampleRate | float64 }}
-        sampleRate: {{ mulf $sampleRate 10000 | round 0 | int }}
+        sampleRate: {{ mulf $sampleRate 10000 | int }}
       {{- end }}
       {{- if ($hostConfig.options).iap }}
       iap:
