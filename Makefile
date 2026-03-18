@@ -27,7 +27,9 @@ args = `arg="$(filter-out $@,$(MAKECMDGOALS))" && echo $${arg:-${1}}`
 
 
 
-.PHONY: help, install, update-dependencies, bump-charts, unit-tests, clean
+MOZILLA_CRD_SCHEMAS = https://raw.githubusercontent.com/mozilla/mozcloud/main/crdSchemas/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
+
+.PHONY: help, install, update-dependencies, bump-charts, unit-tests, kubeconform, clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -66,6 +68,17 @@ unit-tests: ## Run unit tests for all charts (set UPDATE_SNAPSHOTS=1 to update s
 	fi
 	@echo "$(UNIT_TEST_MESSAGE)"
 	@bash -c 'dirname $$(find **/application -type f -name "Chart.yaml" -exec grep -L "deprecated: true" {} \;) | xargs -I {} helm unittest {} -s $(UPDATE_SNAPSHOTS_ARG)'
+
+kubeconform: ## Validate snapshot resources against Kubernetes and GKE CRD schemas
+	@echo "Running kubeconform against test snapshots..."
+	@for snap in mozcloud/application/tests/__snapshot__/*.snap; do \
+		yq '.[] | .[]' "$$snap" | awk '/^apiVersion:/{print "---"}{print}'; \
+	done | kubeconform \
+		-schema-location default \
+		-schema-location '$(MOZILLA_CRD_SCHEMAS)' \
+		-ignore-missing-schemas \
+		-summary \
+		-output pretty
 
 clean: ## Remove all downloaded chart dependencies
 	@echo "Removing downloaded chart dependencies..."
