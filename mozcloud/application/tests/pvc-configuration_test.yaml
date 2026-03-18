@@ -13,7 +13,7 @@ values:
   - values/pvc.yaml
 templates:
   - pvc/pvc.yaml
-  - workload/deployment.yaml
+  - workload/workload.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -61,7 +61,7 @@ tests:
           path: spec.storageClassName
           value: mozilla-enterprise-rwx
   - it: Container is configured to use PVCs as volumes
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service

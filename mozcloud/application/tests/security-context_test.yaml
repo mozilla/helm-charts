@@ -12,7 +12,7 @@ values:
   - values/globals.yaml
   - values/security-context.yaml
 templates:
-  - workload/deployment.yaml
+  - workload/workload.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -21,7 +21,7 @@ tests:
     asserts:
       - matchSnapshot: {}
   - it: Deployment pod security context set correctly
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -37,7 +37,7 @@ tests:
             seccompProfile:
               type: RuntimeDefault
   - it: Deployment container security context set correctly
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service

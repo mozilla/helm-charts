@@ -15,7 +15,7 @@ templates:
   - configmap/configmap.yaml
   - externalsecret/externalsecret.yaml
   - serviceaccount/serviceaccount.yaml
-  - workload/deployment.yaml
+  - workload/workload.yaml
   - workload/hpa.yaml
   - workload/podmonitoring.yaml
 tests:
@@ -83,7 +83,7 @@ tests:
           path: metadata.annotations["iam.gke.io/gcp-service-account"]
           value: gke-dev@moz-fx-mozcloud-test-nonprod.iam.gserviceaccount.com
   - it: Deployment (containers excluded) is configured correctly
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -140,7 +140,7 @@ tests:
               secretName: test-service-secret
             name: test-service-secret
   - it: Deployment (app container) is configured correctly
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -208,7 +208,7 @@ tests:
             seccompProfile:
               type: RuntimeDefault
   - it: Deployment (nginx container) is configured correctly
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -291,7 +291,7 @@ tests:
             readOnly: true
             subPath: nginx.conf
   - it: NGINX config map is configured correctly
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "ConfigMap")].metadata.name
       value: test-service-nginx
@@ -343,7 +343,7 @@ tests:
           content:
             app.kubernetes.io/name: telegraf
   - it: Schema rejects emptyDir with medium Memory but no sizeLimit
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     set:
       workloads.test-service.containers.app.volumes:
         - name: bad-volume

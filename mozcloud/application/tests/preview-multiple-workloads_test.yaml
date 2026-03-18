@@ -16,14 +16,14 @@ templates:
   - gateway/httproute.yaml
   - preview/httpRoute.yaml
   - preview/endpointCheck.yaml
-  - workload/deployment.yaml
+  - workload/workload.yaml
 tests:
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
   # Test that all three workload deployments are created with correct prefixes
   - it: API deployment is prefixed with PR number
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment" && @.metadata.name == "pr456-api-service")]
     asserts:
@@ -32,7 +32,7 @@ tests:
           value: pr456-api-service
 
   - it: Web deployment is prefixed with PR number
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment" && @.metadata.name == "pr456-web-service")]
     asserts:
@@ -41,7 +41,7 @@ tests:
           value: pr456-web-service
 
   - it: Admin deployment is prefixed with PR number
-    template: workload/deployment.yaml
+    template: workload/workload.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment" && @.metadata.name == "pr456-admin-service")]
     asserts:
