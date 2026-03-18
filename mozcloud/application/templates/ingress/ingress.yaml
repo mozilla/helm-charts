@@ -55,7 +55,7 @@ ingresses:
                   sampleRate: {{ divf $sampleRate 100 }}
                 {{- end }}
                 {{- if ($hostConfig.options).timeoutSec }}
-                  timeoutSec: {{ $hostConfig.options.timeoutSec }}
+                timeoutSec: {{ $hostConfig.options.timeoutSec }}
                 {{- end }}
               service:
                 name: {{ $workloadName }}
