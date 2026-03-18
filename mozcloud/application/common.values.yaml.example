@@ -78,3 +78,34 @@ serviceAccounts:
 
     # Any labels that should be added.
     #labels: {}
+
+workloads:
+  my-service:
+    component: web
+
+    containers:
+      app:
+        image:
+          repository: us-docker.pkg.dev/moz-fx-my-project/my-service/my-service
+          tag: latest
+
+    # Standard deployment strategy (default). Replaces pods gradually with no
+    # downtime. Use "Recreate" instead if you need all old pods stopped before
+    # new ones start.
+    strategy: RollingUpdate
+
+    # --- OR --- progressive delivery via Argo Rollouts:
+    #
+    # Shifts traffic to the new version incrementally. The chart automatically
+    # creates an Argo Rollout resource instead of a standard Deployment.
+    # Requires the Argo Rollouts controller to be installed in the cluster.
+    #
+    #strategy:
+    #  type: canary
+    #  steps:
+    #    - setWeight: 20
+    #    - pause:
+    #        duration: 30s
+    #    - setWeight: 80
+    #    - pause:
+    #        duration: 30s
