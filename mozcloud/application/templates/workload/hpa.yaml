@@ -25,11 +25,13 @@ metadata:
   {{- end }}
 spec:
   scaleTargetRef:
-    {{- /*
-    We will need to update the apiVersion and kind when we add Rollouts suport.
-    */}}
+    {{- if kindIs "map" $workloadConfig.strategy }}
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    {{- else }}
     apiVersion: apps/v1
     kind: Deployment
+    {{- end }}
     name: {{ $workloadName }}
   minReplicas: {{ default 1 (($workloadConfig.autoscaling).replicas).min }}
   maxReplicas: {{ default 30 (($workloadConfig.autoscaling).replicas).max }}
