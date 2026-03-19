@@ -1,0 +1,30 @@
+---
+suite: "mozcloud: Disabled workload suppresses all resources"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/workload-disabled.yaml
+templates:
+  - workload/deployment.yaml
+  - workload/hpa.yaml
+  - gke/podmonitoring.yaml
+tests:
+  - it: Deployment is not rendered for disabled workload
+    template: workload/deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: HPA is not rendered for disabled workload
+    template: workload/hpa.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: PodMonitoring is not rendered for disabled workload
+    template: gke/podmonitoring.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

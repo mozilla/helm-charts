@@ -281,6 +281,14 @@ Example:
   {{- end -}}
   {{- $workloads = $prefixedWorkloads -}}
 {{- end -}}
+{{- /* Filter out disabled workloads */}}
+{{- $filteredWorkloads := dict -}}
+{{- range $name, $config := $workloads -}}
+  {{- if ne (dig "enabled" true $config) false -}}
+    {{- $_ := set $filteredWorkloads $name $config -}}
+  {{- end -}}
+{{- end -}}
+{{- $workloads = $filteredWorkloads -}}
 {{- range $name, $config := $workloads -}}
   {{- if not $config.component -}}
     {{- $failMessage := printf "A component was not defined for workload \"%s\". You must define a component in \".Values.mozcloud.workloads.%s.component\". See values.yaml in the mozcloud-workload chart for more details." $name $name -}}

@@ -694,6 +694,11 @@ workloads:
   # Each workload should be specified in this dictionary format, where the key
   # is the name of the workload and the values are the configurations.
   mozcloud-workload:
+    # If false, all resources for this workload (Deployment, HPA, Service,
+    # Gateways, HTTPRoutes, PodMonitoring) are suppressed without removing
+    # the config block. Useful for staged rollouts or incident response.
+    enabled: true
+
     # The specific unit within an application that performs a distinct function,
     # typically aligned to a microservice or deployable artifact.
     #
