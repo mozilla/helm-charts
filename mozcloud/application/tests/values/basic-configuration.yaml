@@ -53,4 +53,6 @@ workloads:
           # this chart is applied.
           certs:
             - test-service-nonprod-dev
+        options:
+          logSampleRate: 50
 
