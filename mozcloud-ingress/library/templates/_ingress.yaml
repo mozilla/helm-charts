@@ -1,5 +1,6 @@
 {{- define "mozcloud-ingress-lib.ingress" -}}
 {{- $name_override := default "" .nameOverride }}
+{{- $provider := default "gke" .provider }}
 {{- $backend_defaults := include "mozcloud-ingress-lib.defaults.backendConfig" . | fromYaml }}
 {{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml }}
 {{- $managed_certificates := include "mozcloud-ingress-lib.config.managedCertificates" . | fromYamlArray }}
@@ -13,6 +14,7 @@ metadata:
     {{- $label_params := mergeOverwrite ($ | deepCopy) (dict "labels" (default (dict) $ingress.labels)) }}
     {{- $labels := include "mozcloud-ingress-lib.labels" (mergeOverwrite $ $label_params) | fromYaml }}
     {{- $labels | toYaml | nindent 4 }}
+  {{- if eq $provider "gke" }}
   annotations:
     kubernetes.io/ingress.class: "gce"
     kubernetes.io/ingress.global-static-ip-name: {{ default "mozcloud-ingress-dev-ip-v4" $ingress.staticIpName }}
@@ -31,6 +33,7 @@ metadata:
     ingress.gcp.kubernetes.io/pre-shared-cert: {{ index $ingresses "preSharedCerts" $ingress.name }}
     {{- end }}
     networking.gke.io/v1beta1.FrontendConfig: {{ $ingress.name }}
+  {{- end }}
 spec:
   {{- if and (eq (len $ingress.hosts) 1) (eq (len (first $ingress.hosts).paths) 1) }}
   {{- range $host := $ingress.hosts }}

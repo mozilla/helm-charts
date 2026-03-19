@@ -1,0 +1,29 @@
+{{- /*
+GKE-specific ingress resources: BackendConfig, ManagedCertificate.
+Only rendered when cloud.provider is "gke".
+*/ -}}
+{{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" }}
+{{- if and .Values.enabled (not (include "mozcloud.preview.enabled" .)) (eq $provider "gke") }}
+  {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+  {{- $context := deepCopy . }}
+  {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+  {{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+  {{- $formatterParams := dict "api" "ingress" "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+  {{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+  {{- $hosts := list }}
+  {{- range $workloadName, $workloadConfig := $workloads }}
+    {{- range $hostName, $hostConfig := $workloadConfig.hosts }}
+      {{- $hosts = append $hosts $hostName }}
+    {{- end }}
+  {{- end }}
+  {{- if gt (len $hosts) 0 }}
+    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads "provider" $provider) }}
+    {{- $ingresses := (include "mozcloud.config.ingresses" $params | fromYaml).ingresses }}
+    {{- range $ingressName, $ingressConfig := $ingresses }}
+      {{- $_ := set $labelParams "component_code" $ingressConfig.component }}
+      {{- $_ = set $params "ingressConfig" (dict $ingressName (omit $ingressConfig "component")) }}
+{{ include "mozcloud-ingress-lib.backendConfig" (mergeOverwrite $params $labelParams) }}
+{{ include "mozcloud-ingress-lib.managedCertificate" (mergeOverwrite $params $labelParams) }}
+    {{- end }}
+  {{- end }}
+{{- end }}

@@ -16,6 +16,8 @@ templates:
   - gateway/backend.yaml
   - gateway/gateway.yaml
   - gateway/httproute.yaml
+  - gke/backend.yaml
+  - gke/gateway.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -55,7 +57,7 @@ tests:
       - isAPIVersion:
           of: net.gke.io/v1
   - it: HealthCheckPolicy is configured correctly (primary region)
-    template: gateway/backend.yaml
+    template: gke/backend.yaml
     documentSelector:
       path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
       value: mozcloud-test-us-west1
@@ -73,7 +75,7 @@ tests:
             kind: ServiceImport
             name: mozcloud-test-us-west1
   - it: HealthCheckPolicy is configured correctly (additional region)
-    template: gateway/backend.yaml
+    template: gke/backend.yaml
     documentSelector:
       path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
       value: mozcloud-test-europe-west1
@@ -91,7 +93,7 @@ tests:
             kind: ServiceImport
             name: mozcloud-test-europe-west1
   - it: GCPBackendPolicy is configured correctly (primary region)
-    template: gateway/backend.yaml
+    template: gke/backend.yaml
     documentSelector:
       path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
       value: mozcloud-test-us-west1
@@ -103,7 +105,7 @@ tests:
             kind: ServiceImport
             name: mozcloud-test-us-west1
   - it: GCPBackendPolicy is configured correctly (additional region)
-    template: gateway/backend.yaml
+    template: gke/backend.yaml
     documentSelector:
       path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
       value: mozcloud-test-europe-west1
@@ -189,7 +191,7 @@ tests:
             port: 8080
             weight: 0
   - it: GCPGatewayPolicy is configured correctly
-    template: gateway/gateway.yaml
+    template: gke/gateway.yaml
     documentSelector:
       path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
       value: mozcloud-test

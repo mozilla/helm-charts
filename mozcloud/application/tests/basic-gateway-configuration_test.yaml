@@ -15,6 +15,8 @@ templates:
   - gateway/backend.yaml
   - gateway/gateway.yaml
   - gateway/httproute.yaml
+  - gke/backend.yaml
+  - gke/gateway.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -23,7 +25,7 @@ tests:
     asserts:
       - matchSnapshot: {}
   - it: GCP backend policy is configured correctly
-    template: gateway/backend.yaml
+    template: gke/backend.yaml
     documentSelector:
       path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
       value: test-service
@@ -72,7 +74,7 @@ tests:
           path: spec.gatewayClassName
           pattern: ^gke-l7-global-external-managed(-mc)?$
   - it: Gateway policy is configured correctly
-    template: gateway/gateway.yaml
+    template: gke/gateway.yaml
     documentSelector:
       path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
       value: mozcloud-test
@@ -87,7 +89,7 @@ tests:
             kind: Gateway
             name: mozcloud-test
   - it: Healthcheck policy is configured correctly
-    template: gateway/backend.yaml
+    template: gke/backend.yaml
     documentSelector:
       path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
       value: test-service

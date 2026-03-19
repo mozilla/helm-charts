@@ -13,7 +13,8 @@ values:
   - values/basic-ingress-configuration.yaml
 templates:
   - gateway/gateway.yaml
-  - ingress/frontendconfig.yaml
+  - gke/frontendconfig.yaml
+  - gke/ingress.yaml
   - ingress/ingress.yaml
 tests:
   - it: Ensure no failures occur
@@ -23,7 +24,7 @@ tests:
     asserts:
       - matchSnapshot: {}
   - it: Backend is configured correctly
-    template: ingress/ingress.yaml
+    template: gke/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "BackendConfig")].metadata.name
       value: test-service
@@ -35,7 +36,7 @@ tests:
               enable: true
               sampleRate: 0.1
   - it: Frontend is configured correctly
-    template: ingress/frontendconfig.yaml
+    template: gke/frontendconfig.yaml
     documentSelector:
       path: $[?(@.kind == "FrontendConfig")].metadata.name
       value: test-service
@@ -69,7 +70,7 @@ tests:
                 port:
                   number: 8080
   - it: Managed certificate is configured correctly
-    template: ingress/ingress.yaml
+    template: gke/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "ManagedCertificate")].metadata.name
       value: mcrt-test-service-dev-test-domain-com

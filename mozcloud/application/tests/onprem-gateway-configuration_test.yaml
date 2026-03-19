@@ -1,0 +1,144 @@
+---
+suite: "mozcloud: On-prem gateway configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/onprem-gateway-configuration.yaml
+templates:
+  - gateway/backend.yaml
+  - gateway/gateway.yaml
+  - gateway/httproute.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+
+  # GKE CRDs must not be emitted
+  - it: No GCPBackendPolicy is rendered
+    template: gateway/backend.yaml
+    asserts:
+      - notContains:
+          path: $[*].kind
+          content: GCPBackendPolicy
+        documentIndex: 0
+
+  - it: No HealthCheckPolicy is rendered
+    template: gateway/backend.yaml
+    asserts:
+      - notContains:
+          path: $[*].kind
+          content: HealthCheckPolicy
+        documentIndex: 0
+
+  - it: No GCPGatewayPolicy is rendered
+    template: gateway/gateway.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: Only a Service is rendered in backend template
+    template: gateway/backend.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: kind
+          value: Service
+        documentIndex: 0
+
+  # Gateway resource assertions
+  - it: Gateway uses user-specified gatewayClass
+    template: gateway/gateway.yaml
+    documentSelector:
+      path: $[?(@.kind == "Gateway")].metadata.name
+      value: mozcloud-test
+    asserts:
+      - equal:
+          path: spec.gatewayClassName
+          value: nginx
+
+  - it: Gateway has no static IP addresses (no NamedAddress)
+    template: gateway/gateway.yaml
+    documentSelector:
+      path: $[?(@.kind == "Gateway")].metadata.name
+      value: mozcloud-test
+    asserts:
+      - isNull:
+          path: spec.addresses
+
+  - it: Gateway has no GKE certmap annotation
+    template: gateway/gateway.yaml
+    documentSelector:
+      path: $[?(@.kind == "Gateway")].metadata.name
+      value: mozcloud-test
+    asserts:
+      - isNull:
+          path: metadata.annotations["networking.gke.io/certmap"]
+
+  - it: Gateway TLS uses Kubernetes secret certificateRefs
+    template: gateway/gateway.yaml
+    documentSelector:
+      path: $[?(@.kind == "Gateway")].metadata.name
+      value: mozcloud-test
+    asserts:
+      - contains:
+          path: spec.listeners
+          content:
+            allowedRoutes:
+              namespaces:
+                from: Same
+            name: https
+            port: 443
+            protocol: HTTPS
+            tls:
+              mode: Terminate
+              certificateRefs:
+                - name: test-service-tls
+
+  - it: Service has no GKE NEG annotation
+    template: gateway/backend.yaml
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: test-service
+    asserts:
+      - isNull:
+          path: metadata.annotations["cloud.google.com/neg"]
+
+  - it: Service has no GKE backend-config annotation
+    template: gateway/backend.yaml
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: test-service
+    asserts:
+      - isNull:
+          path: metadata.annotations["cloud.google.com/backend-config"]
+
+  # HTTPRoutes should still render normally
+  - it: HTTPRoutes are still rendered
+    template: gateway/httproute.yaml
+    asserts:
+      - hasDocuments:
+          count: 2
+
+  - it: HTTPS HTTPRoute references the Gateway correctly
+    template: gateway/httproute.yaml
+    documentSelector:
+      path: $[?(@.kind == "HTTPRoute")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.parentRefs
+          count: 1
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: mozcloud-test
+            sectionName: https

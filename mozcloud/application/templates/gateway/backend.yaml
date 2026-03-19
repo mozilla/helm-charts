@@ -22,6 +22,7 @@ Returns:
 */ -}}
 {{- define "mozcloud.gateway.backends" -}}
 {{- $workloads := .workloads -}}
+{{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" -}}
 backends:
   {{- range $workloadName, $workloadConfig := $workloads }}
   {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
@@ -34,7 +35,7 @@ backends:
     service:
       {{- $backend.service | toYaml | nindent 6 }}
     {{- end }}
-    {{- if $backend.backendPolicy }}
+    {{- if and $backend.backendPolicy (eq $provider "gke") }}
     backendPolicy:
       targetRef:
         {{- if and $backend.backendPolicy.targetRef.kind (eq $backend.backendPolicy.targetRef.kind "ServiceImport" )}}
@@ -44,7 +45,7 @@ backends:
         kind: {{ $backend.backendPolicy.targetRef.kind }}
         name: {{ $backend.backendPolicy.targetRef.name }}
     {{- end }}
-    {{- if $backend.healthCheck }}
+    {{- if and $backend.healthCheck (eq $provider "gke") }}
     healthCheck:
       path: {{ $backend.healthCheck.path }}
       {{- if ($backend.healthCheck).port }}
@@ -69,6 +70,7 @@ backends:
     service:
       port: 8080
       targetPort: http
+    {{- if eq $provider "gke" }}
     backendPolicy:
       logging:
         enabled: true
@@ -106,6 +108,7 @@ backends:
       path: {{ default "/__lbheartbeat__" ($hostConfig.healthCheckEndpoints.loadBalancer).path }}
       {{- end }}
       protocol: HTTP
+    {{- end }}
   {{- end }}
   {{- end }}
   {{- end }}
@@ -135,7 +138,5 @@ templates/ingress handles service creation for "api: ingress" workloads.
     {{- $_ := set $labelParams "component_code" $backendConfig.component }}
     {{- $params := dict "backendConfig" (dict "backends" (dict $backendName (omit $backendConfig "component" "api"))) }}
 {{ include "mozcloud-gateway-lib.service" (mergeOverwrite $params $labelParams) }}
-{{ include "mozcloud-gateway-lib.backendPolicy" (mergeOverwrite $params $labelParams) }}
-{{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $labelParams) }}
   {{- end }}
 {{- end }}

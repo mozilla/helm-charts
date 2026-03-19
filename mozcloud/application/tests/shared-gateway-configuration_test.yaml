@@ -12,6 +12,8 @@ templates:
   - gateway/backend.yaml
   - gateway/gateway.yaml
   - gateway/httproute.yaml
+  - gke/backend.yaml
+  - gke/gateway.yaml
 tests:
   - it: Ensure no failures occur
     asserts:
@@ -59,7 +61,7 @@ tests:
             namespace: preview-shared-infrastructure
             sectionName: http
   - it: Does not create GCPGatewayPolicy when using shared gateway
-    template: gateway/gateway.yaml
+    template: gke/gateway.yaml
     asserts:
       - isNull:
           path: $[?(@.kind == "GCPGatewayPolicy")]
@@ -73,7 +75,7 @@ tests:
           path: spec.type
           value: ClusterIP
   - it: Creates GCPBackendPolicy for the backend service
-    template: gateway/backend.yaml
+    template: gke/backend.yaml
     documentSelector:
       path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
       value: test-service
@@ -82,7 +84,7 @@ tests:
           path: spec.targetRef.name
           value: test-service
   - it: Creates HealthCheckPolicy for the backend service
-    template: gateway/backend.yaml
+    template: gke/backend.yaml
     documentSelector:
       path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
       value: test-service

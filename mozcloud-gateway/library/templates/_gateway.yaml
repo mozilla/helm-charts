@@ -28,11 +28,13 @@ metadata:
   {{- end }}
 spec:
   gatewayClassName: {{ $gateway.className }}
+  {{- if $gateway.addresses }}
   addresses:
     {{- range $address := $gateway.addresses }}
     - type: NamedAddress
       value: {{ $address }}
     {{- end }}
+  {{- end }}
   listeners:
     {{- range $listener := $gateway.listeners }}
     - name: {{ $listener.name }}

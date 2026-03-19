@@ -64,29 +64,6 @@ Configuration matches entire snapshot:
           port: 80
           protocol: HTTP
   3: |
-    apiVersion: networking.gke.io/v1
-    kind: GCPGatewayPolicy
-    metadata:
-      labels:
-        app.kubernetes.io/component: gateway
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: gateway
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: mozcloud-test-external
-    spec:
-      default:
-        sslPolicy: mozilla-intermediate
-      targetRef:
-        group: gateway.networking.k8s.io
-        kind: Gateway
-        name: mozcloud-test-external
-  4: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -121,7 +98,7 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /
-  5: |
+  4: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -155,7 +132,7 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /
-  6: |
+  5: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -190,3 +167,26 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /
+  6: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPGatewayPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: gateway
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: gateway
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mozcloud-test-external
+    spec:
+      default:
+        sslPolicy: mozilla-intermediate
+      targetRef:
+        group: gateway.networking.k8s.io
+        kind: Gateway
+        name: mozcloud-test-external

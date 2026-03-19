@@ -54,6 +54,31 @@ Configuration matches entire snapshot:
         creationPolicy: Owner
         name: test-chart-secrets
   3: |
+    apiVersion: monitoring.googleapis.com/v1
+    kind: PodMonitoring
+    metadata:
+      labels:
+        app.kubernetes.io/component: podmonitoring
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: podmonitoring
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mozcloud-test-telegraf
+    spec:
+      endpoints:
+        - interval: 30s
+          path: /metrics
+          port: 8080
+          scheme: http
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: telegraf
+  4: |
     apiVersion: v1
     kind: ServiceAccount
     metadata:
@@ -72,7 +97,7 @@ Configuration matches entire snapshot:
         mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: mozcloud-test
-  4: |
+  5: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -244,7 +269,7 @@ Configuration matches entire snapshot:
             - name: test-service-secret
               secret:
                 secretName: test-service-secret
-  5: |
+  6: |
     apiVersion: v1
     data:
       nginx.conf: |
@@ -350,7 +375,7 @@ Configuration matches entire snapshot:
         mozcloud_chart_version: 1.0.0
         realm: nonprod
       name: test-service-nginx
-  6: |
+  7: |
     apiVersion: autoscaling/v2
     kind: HorizontalPodAutoscaler
     metadata:
@@ -382,28 +407,3 @@ Configuration matches entire snapshot:
         apiVersion: apps/v1
         kind: Deployment
         name: test-service
-  7: |
-    apiVersion: monitoring.googleapis.com/v1
-    kind: PodMonitoring
-    metadata:
-      labels:
-        app.kubernetes.io/component: podmonitoring
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: podmonitoring
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: mozcloud-test-telegraf
-    spec:
-      endpoints:
-        - interval: 30s
-          path: /metrics
-          port: 8080
-          scheme: http
-      selector:
-        matchLabels:
-          app.kubernetes.io/name: telegraf

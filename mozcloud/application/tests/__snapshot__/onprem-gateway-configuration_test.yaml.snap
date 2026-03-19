@@ -28,40 +28,39 @@ Configuration matches entire snapshot:
       type: ClusterIP
   2: |
     apiVersion: gateway.networking.k8s.io/v1
-    kind: HTTPRoute
+    kind: Gateway
     metadata:
       labels:
-        app.kubernetes.io/component: web
+        app.kubernetes.io/component: gateway
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        component_code: web
+        component_code: gateway
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: shared-gateway-host
+      name: mozcloud-test
     spec:
-      hostnames:
-        - shared.test-domain.com
-      parentRefs:
-        - group: gateway.networking.k8s.io
-          kind: Gateway
-          name: sandbox-high-preview-gateway
-          namespace: preview-shared-infrastructure
-          sectionName: https
-      rules:
-        - backendRefs:
-            - group: ""
-              kind: Service
-              name: test-service
-              port: 8080
-              weight: 1
-          matches:
-            - path:
-                type: PathPrefix
-                value: /
+      gatewayClassName: nginx
+      listeners:
+        - allowedRoutes:
+            namespaces:
+              from: Same
+          name: http
+          port: 80
+          protocol: HTTP
+        - allowedRoutes:
+            namespaces:
+              from: Same
+          name: https
+          port: 443
+          protocol: HTTPS
+          tls:
+            certificateRefs:
+              - name: test-service-tls
+            mode: Terminate
   3: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
@@ -77,15 +76,49 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: shared-gateway-host-http-redirect
+      name: test-service
     spec:
       hostnames:
-        - shared.test-domain.com
+        - test-service.dev.test-domain.com
       parentRefs:
         - group: gateway.networking.k8s.io
           kind: Gateway
-          name: sandbox-high-preview-gateway
-          namespace: preview-shared-infrastructure
+          name: mozcloud-test
+          sectionName: https
+      rules:
+        - backendRefs:
+            - group: ""
+              kind: Service
+              name: test-service
+              port: 8080
+              weight: 1
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
+  4: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service-http-redirect
+    spec:
+      hostnames:
+        - test-service.dev.test-domain.com
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: mozcloud-test
           sectionName: http
       rules:
         - filters:
@@ -97,54 +130,3 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /
-  4: |
-    apiVersion: networking.gke.io/v1
-    kind: GCPBackendPolicy
-    metadata:
-      labels:
-        app.kubernetes.io/component: web
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: web
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: test-service
-    spec:
-      default:
-        logging:
-          enabled: true
-          sampleRate: 100000
-      targetRef:
-        group: ""
-        kind: Service
-        name: test-service
-  5: |
-    apiVersion: networking.gke.io/v1
-    kind: HealthCheckPolicy
-    metadata:
-      labels:
-        app.kubernetes.io/component: web
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: web
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: test-service
-    spec:
-      default:
-        config:
-          httpHealthCheck:
-            requestPath: /__lbheartbeat__
-          type: HTTP
-      targetRef:
-        group: ""
-        kind: Service
-        name: test-service
