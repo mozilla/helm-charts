@@ -67,7 +67,7 @@ unit-tests: ## Run unit tests for all charts (set UPDATE_SNAPSHOTS=1 to update s
 		$(MAKE) update-dependencies; \
 	fi
 	@echo "$(UNIT_TEST_MESSAGE)"
-	@bash -c 'dirname $$(find **/application -type f -name "Chart.yaml" -exec grep -L "deprecated: true" {} \;) | xargs -I {} helm unittest {} -s $(UPDATE_SNAPSHOTS_ARG)'
+	@$(CHART_KIT) unittest $(UPDATE_SNAPSHOTS_ARG)
 
 kubeconform: ## Validate snapshot resources against Kubernetes and GKE CRD schemas
 	@echo "Running kubeconform against test snapshots..."

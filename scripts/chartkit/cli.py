@@ -130,6 +130,39 @@ def mermaid(
         click.echo(diagram.mermaid_str)
 
 
+@cli.command("unittest")
+@click.option(
+    "--update-snapshot",
+    "-u",
+    is_flag=True,
+    default=False,
+    help="Update snapshots.",
+)
+@click.option(
+    "--parallel",
+    "-p",
+    default=None,
+    help="Number of parallel workers (default: CPU count).",
+)
+@click.option(
+    "--verbose",
+    is_flag=True,
+    default=False,
+    envvar="CI",
+    help="Verbose output. Enabled automatically when the CI environment variable is set.",
+)
+@click.pass_obj
+def run_unittest(
+    graph: ChartGraph, update_snapshot: bool, parallel: int, verbose: bool
+):
+    """Run helm unit tests in parallel for all non-deprecated charts."""
+    passed = graph.run_unit_tests(
+        update_snapshot=update_snapshot, parallel=parallel, verbose=verbose
+    )
+    if not passed:
+        raise SystemExit(1)
+
+
 @cli.group()
 def version():
     """Manage chart versions."""
