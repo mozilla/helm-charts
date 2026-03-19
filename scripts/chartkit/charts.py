@@ -1,20 +1,49 @@
+import json
+import os
+import re
+import subprocess
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
-import subprocess
 from typing import Any, Callable, Dict, List, NamedTuple, Optional, Set
 
-# import yaml
-import click
-from git import Blob
-import ruamel.yaml
-import json
 
-from .git import get_commit_blob
+import click
+import ruamel.yaml
+from git import Blob
+
 from .files import files_to_chart_files, find_chart_files, load_chart
+from .git import get_commit_blob
 
 # YAML setup for round-trip and comment preservation
 yaml = ruamel.yaml.YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
+
+
+def _print_suite_summary(passed: bool, output: str) -> None:
+    """Print a compact one-line summary of a suite result.
+
+    Parses the suite name, test counts, and elapsed time from helm unittest
+    output. Full failure output is deferred and printed by the caller after
+    all suites complete, so failures don't interleave with other results.
+    """
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
+    suite_name = tests = time = ""
+    for line in output.splitlines():
+        line = ansi_escape.sub("", line)
+        if m := re.match(r"^\s+(?:PASS|FAIL)\s+(.+?)\t", line):
+            suite_name = m.group(1).strip()
+        elif m := re.match(r"^Tests:\s+(.+)$", line):
+            tests = m.group(1).strip()
+        elif m := re.match(r"^Time:\s+(.+)$", line):
+            time = m.group(1).strip()
+
+    status = (
+        click.style(" PASS ", fg="white", bg="green", bold=True)
+        if passed
+        else click.style(" FAIL ", fg="white", bg="red", bold=True)
+    )
+    click.echo(f"{status}  {suite_name}  ({tests}, {time})")
 
 
 class ChartEdge(NamedTuple):
@@ -143,6 +172,13 @@ class ChartInfo:
                 )
         else:
             click.echo(f"No dependencies to update for chart {self.name}.")
+
+    def find_test_suites(self) -> List[Path]:
+        """Return all helm-unittest suite files for this chart."""
+        tests_dir = self.path / "tests"
+        if not tests_dir.is_dir():
+            return []
+        return sorted(tests_dir.glob("*_test.yaml"))
 
     def get_previous_version(self, commit: str = "HEAD") -> Optional[str]:
         """Check the version of the chart in a specific commit."""
@@ -374,6 +410,61 @@ class ChartGraph:
                 click.echo(chart)
         else:
             click.echo(f"Chart '{chart_name}' not found.", err=True)
+
+    def run_unit_tests(
+        self,
+        update_snapshot: bool = False,
+        parallel: Optional[int] = None,
+        verbose: bool = False,
+    ) -> bool:
+        """Run helm unit tests in parallel for all non-deprecated charts."""
+        workers = parallel or os.cpu_count() or 4
+
+        suites = [
+            (chart, testfile)
+            for chart in self.charts.values()
+            for testfile in chart.find_test_suites()
+        ]
+
+        if not suites:
+            click.echo("No test suites found.")
+            return True
+
+        click.echo(f"Running {len(suites)} test suites with PARALLEL={workers}...")
+
+        def run_suite(chart: ChartInfo, testfile: Path) -> tuple[bool, str]:
+            cmd = [
+                "helm",
+                "unittest",
+                str(chart.path),
+                "-f",
+                str(testfile),
+                "--with-subchart=false",
+            ]
+            if update_snapshot:
+                cmd.append("-u")
+            cmd.append("--color")
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            return result.returncode == 0, result.stdout + result.stderr
+
+        failures: List[str] = []
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            futures = [executor.submit(run_suite, chart, tf) for chart, tf in suites]
+            for future in as_completed(futures):
+                passed, output = future.result()
+                if verbose:
+                    click.echo(output, nl=False)
+                else:
+                    _print_suite_summary(passed, output)
+                if not passed:
+                    failures.append(output)
+
+        if not verbose and failures:
+            click.echo("\n--- Failures ---\n")
+            for output in failures:
+                click.echo(output, nl=False)
+
+        return not failures
 
     def update_dependencies(
         self, chart_names: List[str], all: bool = False, dry_run: bool = False
