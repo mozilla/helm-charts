@@ -21,6 +21,46 @@ Configuration matches entire snapshot:
         responseCodeName: MOVED_PERMANENTLY_DEFAULT
       sslPolicy: mozilla-intermediate
   2: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service
+    spec:
+      logging:
+        enable: true
+        sampleRate: 0.1
+      timeoutSec: 600
+  3: |
+    apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mcrt-test-service-dev-test-domain-com
+    spec:
+      domains:
+        - test-service.dev.test-domain.com
+  4: |
     apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
@@ -47,46 +87,6 @@ Configuration matches entire snapshot:
           name: test-service
           port:
             number: 8080
-  3: |
-    apiVersion: cloud.google.com/v1
-    kind: BackendConfig
-    metadata:
-      labels:
-        app.kubernetes.io/component: app
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: app
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: test-service
-    spec:
-      logging:
-        enable: true
-        sampleRate: 0.1
-      timeoutSec: 600
-  4: |
-    apiVersion: networking.gke.io/v1
-    kind: ManagedCertificate
-    metadata:
-      labels:
-        app.kubernetes.io/component: app
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: app
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: mcrt-test-service-dev-test-domain-com
-    spec:
-      domains:
-        - test-service.dev.test-domain.com
   5: |
     apiVersion: v1
     kind: Service

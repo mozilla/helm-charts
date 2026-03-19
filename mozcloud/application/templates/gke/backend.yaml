@@ -1,0 +1,23 @@
+{{- /*
+GKE-specific gateway backend resources: GCPBackendPolicy, HealthCheckPolicy.
+Only rendered when cloud.provider is "gke".
+*/ -}}
+{{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" }}
+{{- if eq $provider "gke" }}
+  {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+  {{- $context := deepCopy . }}
+  {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+  {{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+  {{- $formatterParams := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+  {{- $workloads := dict "workloads" (include "mozcloud.formatter.workloads" $formatterParams | fromYaml) }}
+  {{- $backendParams := mergeOverwrite $context $workloads }}
+  {{- $backends := include "mozcloud.gateway.backends" $backendParams | fromYaml }}
+  {{- range $backendName, $backendConfig := $backends.backends }}
+    {{- if ne $backendConfig.api "ingress" }}
+      {{- $_ := set $labelParams "component_code" $backendConfig.component }}
+      {{- $params := dict "backendConfig" (dict "backends" (dict $backendName (omit $backendConfig "component" "api"))) }}
+{{ include "mozcloud-gateway-lib.backendPolicy" (mergeOverwrite $params $labelParams) }}
+{{ include "mozcloud-gateway-lib.healthCheckPolicy" (mergeOverwrite $params $labelParams) }}
+    {{- end }}
+  {{- end }}
+{{- end }}

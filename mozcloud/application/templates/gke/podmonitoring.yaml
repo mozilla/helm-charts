@@ -1,3 +1,4 @@
+{{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" }}
 {{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
 {{- $context := deepCopy . }}
 {{- $_ := set $context "component_code" "podmonitoring" }}
@@ -9,6 +10,7 @@
 
 {{- if $workloads }}
 {{- /* Default PodMonitoring template for all tenants */}}
+{{- if and .Values.enabled (not (include "mozcloud.preview.enabled" .)) (eq $provider "gke") }}
 ---
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
@@ -27,4 +29,5 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: telegraf
+{{- end }}
 {{- end }}

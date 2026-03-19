@@ -13,7 +13,8 @@ values:
   - values/ingress-backend-options-configuration.yaml
 templates:
   - gateway/gateway.yaml
-  - ingress/frontendconfig.yaml
+  - gke/frontendconfig.yaml
+  - gke/ingress.yaml
   - ingress/ingress.yaml
 tests:
   - it: Ensure no failures occur
@@ -23,7 +24,7 @@ tests:
     asserts:
       - matchSnapshot: {}
   - it: timeoutSec is rendered at the BackendConfig spec root level
-    template: ingress/ingress.yaml
+    template: gke/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "BackendConfig")].metadata.name
       value: test-service
@@ -32,7 +33,7 @@ tests:
           path: spec.timeoutSec
           value: 600
   - it: timeoutSec is not nested under logging
-    template: ingress/ingress.yaml
+    template: gke/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "BackendConfig")].metadata.name
       value: test-service
@@ -40,7 +41,7 @@ tests:
       - notExists:
           path: spec.logging.timeoutSec
   - it: logSampleRate is rendered as a ratio in BackendConfig logging spec
-    template: ingress/ingress.yaml
+    template: gke/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "BackendConfig")].metadata.name
       value: test-service

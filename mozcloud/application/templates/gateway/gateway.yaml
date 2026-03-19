@@ -44,6 +44,7 @@ Returns:
 {{- define "mozcloud.gateway.gateways" -}}
 {{- $globals := .globals -}}
 {{- $workloads := .workloads }}
+{{- $provider := default "gke" .provider }}
 {{- /* Collect all unique gateway configurations */}}
 {{- $gatewayConfigs := dict }}
 {{- range $workloadName, $workloadConfig := $workloads }}
@@ -51,15 +52,24 @@ Returns:
     {{- /* Skip if using a shared gateway */}}
     {{- if not ($hostConfig).sharedGateway }}
       {{- /* Build gateway configuration key based on unique attributes */}}
-      {{- $className := "gke-l7-global-external-managed" }}
-      {{- if ($hostConfig).multiCluster }}
-        {{- $className = "gke-l7-global-external-managed-mc" }}
+      {{- $className := "" }}
+      {{- if eq $provider "gke" }}
+        {{- $className = "gke-l7-global-external-managed" }}
+        {{- if ($hostConfig).multiCluster }}
+          {{- $className = "gke-l7-global-external-managed-mc" }}
+        {{- end }}
+      {{- else }}
+        {{- $className = required "hosts[].gatewayClass must be set when cloud.provider is not \"gke\"" ($hostConfig).gatewayClass }}
       {{- end }}
       {{- $addresses := list }}
-      {{- if $hostConfig.addresses }}
+      {{- if eq $provider "gke" }}
+        {{- if $hostConfig.addresses }}
+          {{- $addresses = $hostConfig.addresses }}
+        {{- else }}
+          {{- $addresses = list (printf "%s-%s-ip-v4" $globals.app_code $globals.env_code) }}
+        {{- end }}
+      {{- else if $hostConfig.addresses }}
         {{- $addresses = $hostConfig.addresses }}
-      {{- else }}
-        {{- $addresses = list (printf "%s-%s-ip-v4" $globals.app_code $globals.env_code) }}
       {{- end }}
       {{- $certs := list }}
       {{- if eq $hostConfig.type "external" }}
@@ -77,6 +87,15 @@ Returns:
         {{- $_ = set $gatewayConfig "className" $className }}
         {{- $_ = set $gatewayConfig "addresses" $addresses }}
         {{- $_ = set $gatewayConfig "certs" $certs }}
+        {{- $tlsType := ($hostConfig.tls).type }}
+        {{- if not $tlsType }}
+          {{- if eq $provider "gke" }}
+            {{- $tlsType = "certmap" }}
+          {{- else }}
+            {{- $tlsType = "secret" }}
+          {{- end }}
+        {{- end }}
+        {{- $_ = set $gatewayConfig "tlsType" $tlsType }}
         {{- $_ = set $gatewayConfigs $configKey $gatewayConfig }}
       {{- end }}
     {{- end }}
@@ -113,7 +132,7 @@ gateways:
         {{- range $cert := $gatewayConfig.certs }}
         - {{ $cert }}
         {{- end }}
-      type: certmap
+      type: {{ $gatewayConfig.tlsType }}
     {{- end }}
   {{- end }}
 {{- end -}}
@@ -142,23 +161,14 @@ Only include Gateway and related resources if we have Gateway hosts defined
   Gateways and Gateway policies - Skip if preview mode is using shared gateway
   */}}
   {{- if not (include "mozcloud.preview.usePreviewHttpRoute" .) }}
-    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads) }}
+    {{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" }}
+    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads "provider" $provider) }}
     {{- $gateways := include "mozcloud.gateway.gateways" $params | fromYaml }}
     {{- range $gatewayName, $gatewayConfig := $gateways.gateways }}
       {{- $_ := set $labelParams "component_code" $gatewayConfig.component }}
       {{- $params = dict "gatewayConfig" (dict "gateways" (dict $gatewayName (omit $gatewayConfig "component"))) }}
 {{ include "mozcloud-gateway-lib.gateway" (mergeOverwrite $params $labelParams) }}
     {{- end }}
-    {{- /* Prepare gatewayConfig with all gateways for policy rendering */}}
-    {{- $allGatewaysConfig := dict }}
-    {{- range $gatewayName, $gatewayConfig := $gateways.gateways }}
-      {{- $_ := set $allGatewaysConfig $gatewayName (omit $gatewayConfig "component") }}
-    {{- end }}
-    {{- $gatewayPolicyConfig := include "mozcloud.gateway.gatewayPolicy" . | fromYaml }}
-    {{- $_ := set $labelParams "component_code" "gateway" }}
-    {{- $params = dict "gatewayConfig" (dict "gateways" $allGatewaysConfig) }}
-    {{- $_ = set $params "gatewayPolicyConfig" $gatewayPolicyConfig }}
-{{ include "mozcloud-gateway-lib.gatewayPolicy" (mergeOverwrite $params $labelParams) -}}
 {{- end }}
 
 {{- end }}

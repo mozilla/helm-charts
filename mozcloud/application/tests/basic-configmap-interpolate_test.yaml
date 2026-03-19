@@ -21,7 +21,8 @@ tests:
   - it: URLBASE is transformed when empty and explicitly listed
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "app-config")]
+      path: $[?(@.kind == "ConfigMap")].metadata.name
+      value: app-config
     asserts:
       - equal:
           path: data.URLBASE
@@ -30,7 +31,8 @@ tests:
   - it: ATTACHMENT_BASE is transformed when empty and explicitly listed
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "app-config")]
+      path: $[?(@.kind == "ConfigMap")].metadata.name
+      value: app-config
     asserts:
       - equal:
           path: data.ATTACHMENT_BASE
@@ -40,7 +42,8 @@ tests:
   - it: URL_BASE is not transformed when not in urlTransformKeys list
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "app-config")]
+      path: $[?(@.kind == "ConfigMap")].metadata.name
+      value: app-config
     asserts:
       - equal:
           path: data.URL_BASE
@@ -50,7 +53,8 @@ tests:
   - it: Non-empty values are not overwritten
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "app-config")]
+      path: $[?(@.kind == "ConfigMap")].metadata.name
+      value: app-config
     asserts:
       - equal:
           path: data.OTHER_VAR
@@ -60,7 +64,8 @@ tests:
   - it: HOSTNAME evaluates to yaml value defined in same file
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "app-config")]
+      path: $[?(@.kind == "ConfigMap")].metadata.name
+      value: app-config
     asserts:
       - equal:
           path: data.HOSTNAME
@@ -70,7 +75,8 @@ tests:
   - it: DEFAULT is set to 'default'
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "app-config")]
+      path: $[?(@.kind == "ConfigMap")].metadata.name
+      value: app-config
     asserts:
       - equal:
           path: data.DEFAULT

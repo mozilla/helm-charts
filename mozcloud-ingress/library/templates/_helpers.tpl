@@ -276,7 +276,7 @@ Service template helpers
       {{- if hasKey $backend_service "createNeg" -}}
         {{- $create_neg = $backend_service.createNeg -}}
       {{- end -}}
-      {{- $annotation_params := dict "backendName" $service_name "createNeg" $create_neg -}}
+      {{- $annotation_params := dict "backendName" $service_name "createNeg" $create_neg "provider" (default "gke" $context.provider) -}}
       {{- if $ingress.annotations -}}
         {{- $_ := set $annotation_params "annotations" $ingress.annotations -}}
       {{- end -}}
@@ -317,10 +317,12 @@ Service template helpers
 {{- if .annotations -}}
 {{ .annotations | toYaml }}
 {{- end }}
+{{- if eq .provider "gke" -}}
 {{- if .createNeg -}}
 cloud.google.com/neg: '{"ingress": true}'
 {{- end }}
 cloud.google.com/backend-config: '{"default": "{{ .backendName }}"}'
+{{- end }}
 {{- end -}}
 
 {{- define "mozcloud-ingress-lib.config.service.config" -}}

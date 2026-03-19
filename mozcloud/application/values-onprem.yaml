@@ -1,0 +1,51 @@
+# On-premises / non-GKE values profile for the mozcloud chart.
+#
+# Usage:
+#   helm template my-release . -f values.yaml -f values-onprem.yaml
+#
+# This profile disables all GKE-specific CRDs and annotations so the chart
+# renders cleanly on any standard Kubernetes cluster (bare-metal, other cloud
+# providers, self-hosted, etc.).
+#
+# GKE resources suppressed when cloud.provider != "gke":
+#   CRDs:        BackendConfig, FrontendConfig, ManagedCertificate
+#                GCPBackendPolicy, HealthCheckPolicy, GCPGatewayPolicy
+#   Annotations: cloud.google.com/neg, cloud.google.com/backend-config
+#                kubernetes.io/ingress.class (gce), networking.gke.io/*
+#                ingress.gcp.kubernetes.io/pre-shared-cert
+#                iam.gke.io/gcp-service-account (omit gcpServiceAccount)
+
+cloud:
+  provider: on-prem
+
+# Each workload host that uses api: gateway must specify gatewayClass.
+# Set it to whatever Gateway API implementation your cluster runs, e.g.:
+#   Envoy Gateway:    envoy-gateway (or your GatewayClass name)
+#   NGINX GF:         nginx
+#   Traefik:          traefik
+#   Cilium:           cilium
+#
+# Example workload host configuration for on-prem:
+#
+# workloads:
+#   my-app:
+#     hosts:
+#       my-host:
+#         type: external
+#         api: gateway
+#         gatewayClass: nginx          # required when cloud.provider != "gke"
+#         domains:
+#           - my-app.example.com
+#         tls:
+#           type: secret               # use a k8s TLS Secret instead of certmap
+#           certs:
+#             - my-tls-secret          # name of the Secret in the same namespace
+#
+# For internal (non-TLS) hosts:
+#
+#       my-internal-host:
+#         type: internal
+#         api: gateway
+#         gatewayClass: nginx
+#         domains:
+#           - my-app.internal.example.com
