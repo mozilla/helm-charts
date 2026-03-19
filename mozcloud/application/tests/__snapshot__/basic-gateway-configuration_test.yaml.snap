@@ -151,7 +151,7 @@ Configuration matches entire snapshot:
       default:
         logging:
           enabled: true
-          sampleRate: 100000
+          sampleRate: 500000
       targetRef:
         group: ""
         kind: Service
