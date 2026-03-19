@@ -27,8 +27,10 @@ def _print_suite_summary(passed: bool, output: str) -> None:
     output. Full failure output is deferred and printed by the caller after
     all suites complete, so failures don't interleave with other results.
     """
+    ansi_escape = re.compile(r"\x1b\[[0-9;]*m")
     suite_name = tests = time = ""
     for line in output.splitlines():
+        line = ansi_escape.sub("", line)
         if m := re.match(r"^\s+(?:PASS|FAIL)\s+(.+?)\t", line):
             suite_name = m.group(1).strip()
         elif m := re.match(r"^Tests:\s+(.+)$", line):
@@ -36,8 +38,12 @@ def _print_suite_summary(passed: bool, output: str) -> None:
         elif m := re.match(r"^Time:\s+(.+)$", line):
             time = m.group(1).strip()
 
-    status = "PASS" if passed else "FAIL"
-    click.echo(f" {status}  {suite_name}  ({tests}, {time})")
+    status = (
+        click.style(" PASS ", fg="white", bg="green", bold=True)
+        if passed
+        else click.style(" FAIL ", fg="white", bg="red", bold=True)
+    )
+    click.echo(f"{status}  {suite_name}  ({tests}, {time})")
 
 
 class ChartEdge(NamedTuple):
@@ -437,6 +443,7 @@ class ChartGraph:
             ]
             if update_snapshot:
                 cmd.append("-u")
+            cmd.append("--color")
             result = subprocess.run(cmd, capture_output=True, text=True)
             return result.returncode == 0, result.stdout + result.stderr
 
