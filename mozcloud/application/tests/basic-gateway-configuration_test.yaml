@@ -33,7 +33,7 @@ tests:
           content:
             logging:
               enabled: true
-              sampleRate: 100000
+              sampleRate: 500000
       - equal:
           path: spec.targetRef.name
           value: test-service
