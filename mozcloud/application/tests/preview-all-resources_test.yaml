@@ -20,6 +20,7 @@ templates:
   - workload/deployment.yaml
   - gateway/backend.yaml
   - gateway/httproute.yaml
+  - gke/backend.yaml
   - preview/httpRoute.yaml
   - preview/endpointCheck.yaml
 tests:

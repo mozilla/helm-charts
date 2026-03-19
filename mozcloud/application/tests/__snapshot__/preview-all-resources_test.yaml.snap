@@ -119,6 +119,59 @@ Configuration matches entire snapshot:
         preview_pr: "789"
       type: ClusterIP
   5: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: api
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "789"
+        realm: nonprod
+      name: pr789-api-service
+    spec:
+      default:
+        logging:
+          enabled: true
+          sampleRate: 100000
+      targetRef:
+        group: ""
+        kind: Service
+        name: pr789-api-service
+  6: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: api
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: api
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        preview_pr: "789"
+        realm: nonprod
+      name: pr789-api-service
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: pr789-api-service
+  7: |
     apiVersion: batch/v1
     kind: Job
     metadata:
@@ -209,7 +262,7 @@ Configuration matches entire snapshot:
             runAsUser: 1000
             seccompProfile:
               type: RuntimeDefault
-  6: |
+  8: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -246,7 +299,7 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /
-  7: |
+  9: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -282,7 +335,7 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /
-  8: |
+  10: |
     apiVersion: v1
     kind: ServiceAccount
     metadata:
@@ -302,7 +355,7 @@ Configuration matches entire snapshot:
         preview_pr: "789"
         realm: nonprod
       name: pr789-mozcloud-test
-  9: |
+  11: |
     apiVersion: v1
     kind: ServiceAccount
     metadata:
@@ -322,7 +375,7 @@ Configuration matches entire snapshot:
         preview_pr: "789"
         realm: nonprod
       name: pr789-app-service-account
-  10: |
+  12: |
     apiVersion: batch/v1
     kind: Job
     metadata:
@@ -397,7 +450,7 @@ Configuration matches entire snapshot:
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: pr789-app-service-account
-  11: |
+  13: |
     apiVersion: apps/v1
     kind: Deployment
     metadata:
@@ -551,7 +604,7 @@ Configuration matches entire snapshot:
             - configMap:
                 name: pr789-api-service-nginx
               name: nginx-conf
-  12: |
+  14: |
     apiVersion: v1
     data:
       nginx.conf: |
