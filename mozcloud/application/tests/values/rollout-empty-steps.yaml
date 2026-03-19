@@ -1,0 +1,13 @@
+---
+workloads:
+  test-service:
+    component: web
+    type: rollout
+    strategy:
+      canary:
+        steps: []
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
