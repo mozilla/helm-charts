@@ -22,3 +22,23 @@ workloads:
         api: ingress
         tls:
           type: ManagedCertificate
+
+  nginx-disabled-service:
+    component: web
+    nginx:
+      enabled: false
+    containers:
+      web-server:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      nginx-disabled-service:
+        domains:
+          - nginx-disabled-service.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: ingress
+        targetPort: web-server
+        tls:
+          type: ManagedCertificate
