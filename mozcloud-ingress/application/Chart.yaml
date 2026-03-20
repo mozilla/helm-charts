@@ -25,5 +25,5 @@ appVersion: 0.4.2
 
 dependencies:
   - name: mozcloud-ingress-lib
-    version: 0.5.0
+    version: 0.6.0
     repository: file://../library
