@@ -467,6 +467,6 @@ metadata:
     {{- $labels.labels | toYaml | nindent 4 }}
 data:
   nginx.conf: |
-    {{ include "workload.nginx.conf" . | nindent 4 }}
+    {{- include "workload.nginx.conf" . | nindent 4 }}
 {{- end }}
 {{- end }}
