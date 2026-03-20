@@ -1,0 +1,6 @@
+workloads:
+  test-service:
+    enabled: false
+    component: web
+    containers:
+      app: {}
