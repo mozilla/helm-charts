@@ -60,6 +60,12 @@ spec:
   selector:
     matchLabels:
       {{- $labels.selectorLabels | toYaml | nindent 6 }}
+  {{/* if we run into issues in the future where the Argo Rollouts CRD expects a specific
+    non-string type but the template is supplying a value as a string, toYaml is 
+    the culprit. If we encounter issues like that in the future, we'll just need
+    to make sure we're a bit more explicit about the expected format of the data
+    structure here
+  */}}
   strategy:
     {{- $workloadConfig.strategy | toYaml | nindent 4 }}
   template:
