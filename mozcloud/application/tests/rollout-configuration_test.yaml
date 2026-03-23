@@ -1,0 +1,97 @@
+---
+suite: "mozcloud: Rollout configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/rollout-configuration.yaml
+templates:
+  - workload/rollout.yaml
+  - workload/hpa.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Renders a Rollout instead of a Deployment
+    template: workload/rollout.yaml
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: apiVersion
+          value: argoproj.io/v1alpha1
+      - equal:
+          path: kind
+          value: Rollout
+  - it: Rollout has canary strategy with correct steps
+    template: workload/rollout.yaml
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      - isNotEmpty:
+          path: spec.strategy.canary.steps
+      - contains:
+          path: spec.strategy.canary.steps
+          content:
+            setWeight: 20
+      - contains:
+          path: spec.strategy.canary.steps
+          content:
+            pause:
+              duration: 30s
+  - it: Rollout does not have a Deployment-style strategy type
+    template: workload/rollout.yaml
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      - notExists:
+          path: spec.strategy.type
+  - it: HPA targets the Rollout instead of a Deployment
+    template: workload/hpa.yaml
+    documentSelector:
+      path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.apiVersion
+          value: argoproj.io/v1alpha1
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: Rollout
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: test-service
+  - it: Schema rejects canary as a plain string strategy
+    template: workload/rollout.yaml
+    set:
+      workloads.test-service.strategy: canary
+    asserts:
+      - failedTemplate:
+          errorPattern: "value must be one of 'Recreate', 'RollingUpdate'"
+  - it: Schema rejects canary strategy with empty steps
+    template: workload/rollout.yaml
+    values:
+      - values/globals.yaml
+      - values/rollout-empty-steps.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "minItems: got 0, want 1"
+  - it: Schema rejects unsupported strategy type
+    template: workload/rollout.yaml
+    values:
+      - values/globals.yaml
+      - values/rollout-configuration.yaml
+    set:
+      workloads.test-service.strategy.blueGreen.steps[0].setWeight: 20
+    asserts:
+      - failedTemplate:
+          errorPattern: "additional properties 'blueGreen' not allowed"

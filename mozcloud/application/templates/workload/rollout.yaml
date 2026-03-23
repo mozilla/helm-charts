@@ -39,10 +39,10 @@
   {{- $nginxVolume := dict "type" "configMap" }}
   {{- $_ := set $volumes $nginxConfigMapName $nginxVolume }}
 {{- end }}
-{{- if eq (default "deployment" $workloadConfig.type) "deployment" }}
+{{- if eq (default "deployment" $workloadConfig.type) "rollout" }}
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: {{ $workloadName }}
   labels:
@@ -60,8 +60,14 @@ spec:
   selector:
     matchLabels:
       {{- $labels.selectorLabels | toYaml | nindent 6 }}
+  {{/* if we run into issues in the future where the Argo Rollouts CRD expects a specific
+    non-string type but the template is supplying a value as a string, toYaml is 
+    the culprit. If we encounter issues like that in the future, we'll just need
+    to make sure we're a bit more explicit about the expected format of the data
+    structure here
+  */}}
   strategy:
-    type: {{ default "RollingUpdate" $workloadConfig.strategy }}
+    {{- $workloadConfig.strategy | toYaml | nindent 4 }}
   template:
     metadata:
       {{- /* Annotations, including OTEL if applicable */}}
@@ -227,7 +233,7 @@ spec:
               (($containerConfig.healthCheck).liveness).enabled
           }}
           ports:
-            - name: {{ $containerName }}
+            - name: app
               containerPort: {{ $containerConfig.port }}
           {{- end }}
           {{- if (dig "healthCheck" "liveness" "enabled" true $containerConfig) }}
@@ -247,7 +253,7 @@ spec:
                 {{- end }}
               {{- end }}
               path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.liveness.path }}
-              port: {{ $containerName }}
+              port: app
             {{- /* If liveness probe settings are defined, use those */}}
             {{- if (($containerConfig.healthCheck).liveness).probes }}
             {{- range $k, $v := $containerConfig.healthCheck.liveness.probes }}
@@ -271,7 +277,7 @@ spec:
                 {{- end }}
               {{- end }}
               path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.readiness.path }}
-              port: {{ $containerName }}
+              port: app
             {{- if (($containerConfig.healthCheck).readiness).probes }}
             {{- range $k, $v := $containerConfig.healthCheck.readiness.probes }}
             {{ $k }}: {{ $v }}
@@ -468,7 +474,7 @@ metadata:
     {{- $labels.labels | toYaml | nindent 4 }}
 data:
   nginx.conf: |
-    {{- include "workload.nginx.conf" . | nindent 4 }}
+    {{ include "workload.nginx.conf" . | nindent 4 }}
 {{- end }}
 {{- end }}
 {{- end }}
