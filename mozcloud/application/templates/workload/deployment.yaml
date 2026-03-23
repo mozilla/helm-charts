@@ -226,7 +226,7 @@ spec:
               (($containerConfig.healthCheck).liveness).enabled
           }}
           ports:
-            - name: app
+            - name: {{ $containerName }}
               containerPort: {{ $containerConfig.port }}
           {{- end }}
           {{- if (dig "healthCheck" "liveness" "enabled" true $containerConfig) }}
@@ -246,7 +246,7 @@ spec:
                 {{- end }}
               {{- end }}
               path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.liveness.path }}
-              port: app
+              port: {{ $containerName }}
             {{- /* If liveness probe settings are defined, use those */}}
             {{- if (($containerConfig.healthCheck).liveness).probes }}
             {{- range $k, $v := $containerConfig.healthCheck.liveness.probes }}
@@ -270,7 +270,7 @@ spec:
                 {{- end }}
               {{- end }}
               path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.readiness.path }}
-              port: app
+              port: {{ $containerName }}
             {{- if (($containerConfig.healthCheck).readiness).probes }}
             {{- range $k, $v := $containerConfig.healthCheck.readiness.probes }}
             {{ $k }}: {{ $v }}

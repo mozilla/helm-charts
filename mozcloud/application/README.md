@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 0.11.1](https://img.shields.io/badge/Version-0.11.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.12.0](https://img.shields.io/badge/Version-0.12.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~0.11.1
+    version: ~0.12.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -143,6 +143,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.mozcloud-workload.hosts.name.api | string | `"gateway"` |  |
 | workloads.mozcloud-workload.hosts.name.domains[0] | string | `"example.com"` |  |
 | workloads.mozcloud-workload.hosts.name.httpRoutes.createHttpRoutes | bool | `true` |  |
+| workloads.mozcloud-workload.hosts.name.targetPort | string | `"http"` |  |
 | workloads.mozcloud-workload.hosts.name.tls.certs | list | `[]` |  |
 | workloads.mozcloud-workload.hosts.name.tls.create | bool | `true` |  |
 | workloads.mozcloud-workload.hosts.name.tls.type | string | `"certmap"` |  |

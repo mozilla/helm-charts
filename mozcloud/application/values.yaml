@@ -1223,6 +1223,14 @@ workloads:
         #  # If not specified, assumes the gateway is in the same namespace.
         #  #namespace: shared-gateway-namespace
 
+        # The port name or number on the pod that the ingress Service should
+        # route traffic to. Only applicable when "api" is set to "ingress".
+        #
+        # Defaults to "http", which routes to the nginx sidecar. Set this to
+        # your container name (e.g. "my-container") or a port number when nginx
+        # is disabled and the ingress should route directly to an app container.
+        targetPort: http
+
         # Global certificate details for external gateways. Certificates MUST be
         # specified if one or more listener(s) uses the HTTPS procotol.
         #
