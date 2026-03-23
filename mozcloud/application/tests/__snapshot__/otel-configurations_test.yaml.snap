@@ -99,7 +99,7 @@ Configuration matches entire snapshot:
                 failureThreshold: 5
                 httpGet:
                   path: /__lbheartbeat__
-                  port: app
+                  port: sidecar
                 initialDelaySeconds: 10
                 periodSeconds: 6
                 successThreshold: 1
@@ -107,12 +107,12 @@ Configuration matches entire snapshot:
               name: sidecar
               ports:
                 - containerPort: 8000
-                  name: app
+                  name: sidecar
               readinessProbe:
                 failureThreshold: 3
                 httpGet:
                   path: /__lbheartbeat__
-                  port: app
+                  port: sidecar
                 initialDelaySeconds: 10
                 periodSeconds: 6
                 successThreshold: 1
@@ -234,7 +234,7 @@ Configuration matches entire snapshot:
                 failureThreshold: 5
                 httpGet:
                   path: /__lbheartbeat__
-                  port: app
+                  port: sidecar
                 initialDelaySeconds: 10
                 periodSeconds: 6
                 successThreshold: 1
@@ -242,12 +242,12 @@ Configuration matches entire snapshot:
               name: sidecar
               ports:
                 - containerPort: 8000
-                  name: app
+                  name: sidecar
               readinessProbe:
                 failureThreshold: 3
                 httpGet:
                   path: /__lbheartbeat__
-                  port: app
+                  port: sidecar
                 initialDelaySeconds: 10
                 periodSeconds: 6
                 successThreshold: 1

@@ -14,13 +14,73 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: test-service
+      name: nginx-disabled-service
     spec:
       redirectToHttps:
         enabled: true
         responseCodeName: MOVED_PERMANENTLY_DEFAULT
       sslPolicy: mozilla-intermediate
   2: |
+    apiVersion: networking.gke.io/v1beta1
+    kind: FrontendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service
+    spec:
+      redirectToHttps:
+        enabled: true
+        responseCodeName: MOVED_PERMANENTLY_DEFAULT
+      sslPolicy: mozilla-intermediate
+  3: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: nginx-disabled-service
+    spec:
+      logging:
+        enable: true
+        sampleRate: 0.1
+  4: |
+    apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mcrt-nginx-disabled-service-dev-test-domain-com
+    spec:
+      domains:
+        - nginx-disabled-service.dev.test-domain.com
+  5: |
     apiVersion: cloud.google.com/v1
     kind: BackendConfig
     metadata:
@@ -40,7 +100,7 @@ Configuration matches entire snapshot:
       logging:
         enable: true
         sampleRate: 0.1
-  3: |
+  6: |
     apiVersion: networking.gke.io/v1
     kind: ManagedCertificate
     metadata:
@@ -59,7 +119,64 @@ Configuration matches entire snapshot:
     spec:
       domains:
         - test-service.dev.test-domain.com
-  4: |
+  7: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: gce
+        kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
+        networking.gke.io/managed-certificates: mcrt-nginx-disabled-service-dev-test-domain-com
+        networking.gke.io/v1beta1.FrontendConfig: nginx-disabled-service
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: nginx-disabled-service
+    spec:
+      defaultBackend:
+        service:
+          name: nginx-disabled-service
+          port:
+            number: 8080
+  8: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "nginx-disabled-service"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: nginx-disabled-service
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: web-server
+      selector:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  9: |
     apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
@@ -86,7 +203,7 @@ Configuration matches entire snapshot:
           name: test-service
           port:
             number: 8080
-  5: |
+  10: |
     apiVersion: v1
     kind: Service
     metadata:

@@ -772,6 +772,17 @@
                     "name"
                   ]
                 },
+                "targetPort": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "default": "http"
+                },
                 "tls": {
                   "type": "object",
                   "additionalProperties": false,

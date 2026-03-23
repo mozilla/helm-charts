@@ -102,3 +102,17 @@ tests:
       - equal:
           path: spec.type
           value: ClusterIP
+  - it: Service for nginx-disabled workload routes to explicit targetPort
+    template: ingress/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: nginx-disabled-service
+    asserts:
+      - contains:
+          path: spec.ports
+          count: 1
+          content:
+            name: http
+            port: 8080
+            protocol: TCP
+            targetPort: web-server

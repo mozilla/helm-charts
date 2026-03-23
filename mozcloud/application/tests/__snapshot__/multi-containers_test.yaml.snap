@@ -52,7 +52,7 @@ Configuration matches entire snapshot:
                 failureThreshold: 5
                 httpGet:
                   path: /__lbheartbeat__
-                  port: app
+                  port: container-1
                 initialDelaySeconds: 10
                 periodSeconds: 6
                 successThreshold: 1
@@ -60,12 +60,12 @@ Configuration matches entire snapshot:
               name: container-1
               ports:
                 - containerPort: 8000
-                  name: app
+                  name: container-1
               readinessProbe:
                 failureThreshold: 3
                 httpGet:
                   path: /__lbheartbeat__
-                  port: app
+                  port: container-1
                 initialDelaySeconds: 10
                 periodSeconds: 6
                 successThreshold: 1
@@ -93,7 +93,7 @@ Configuration matches entire snapshot:
                 failureThreshold: 5
                 httpGet:
                   path: /__lbheartbeat__
-                  port: app
+                  port: container-2
                 initialDelaySeconds: 10
                 periodSeconds: 6
                 successThreshold: 1
@@ -101,12 +101,12 @@ Configuration matches entire snapshot:
               name: container-2
               ports:
                 - containerPort: 8000
-                  name: app
+                  name: container-2
               readinessProbe:
                 failureThreshold: 3
                 httpGet:
                   path: /__lbheartbeat__
-                  port: app
+                  port: container-2
                 initialDelaySeconds: 10
                 periodSeconds: 6
                 successThreshold: 1
