@@ -330,6 +330,11 @@
           "component": {
             "type": "string"
           },
+          "type": {
+            "type": "string",
+            "enum": ["deployment", "rollout"],
+            "default": "deployment"
+          },
           "autoscaling": {
             "type": "object",
             "additionalProperties": false,
@@ -945,10 +950,34 @@
             "type": "string"
           },
           "strategy": {
-            "type": "string",
-            "enum": [
-              "Recreate",
-              "RollingUpdate"
+            "oneOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "Recreate",
+                  "RollingUpdate"
+                ]
+              },
+              {
+                "type": "object",
+                "required": ["canary"],
+                "additionalProperties": false,
+                "properties": {
+                  "canary": {
+                    "type": "object",
+                    "required": ["steps"],
+                    "properties": {
+                      "steps": {
+                        "type": "array",
+                        "minItems": 1,
+                        "items": {
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             ]
           },
           "terminationGracePeriodSeconds": {
