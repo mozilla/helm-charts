@@ -1,5 +1,4 @@
 # If disabled, no resources in the chart will be created.
-# junk change to demonstrate affected-only CI test run
 enabled: true
 
 # Name to be used for all resources if not specified at the resource level.

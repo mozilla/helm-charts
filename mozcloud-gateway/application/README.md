@@ -1,6 +1,6 @@
 # mozcloud-gateway
 
-![Version: 0.4.30](https://img.shields.io/badge/Version-0.4.30-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.4.29](https://img.shields.io/badge/Version-0.4.29-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 A Helm chart that creates gateways and supporting Gateway API resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-gateway
-    version: ~0.4.30
+    version: ~0.4.29
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
