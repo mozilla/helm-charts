@@ -1,5 +1,7 @@
+import subprocess
 from pathlib import Path
 from typing import Optional
+import click
 from git import Blob, Repo
 
 
@@ -14,12 +16,30 @@ def git_root() -> Path:
 
 
 def staged_files() -> list[str]:
-    """Get a list of staged files in the git repository."""
-    return [
-        item.a_path
-        for item in repo.index.diff("HEAD")
-        if item.a_path and item.change_type == "M"
-    ]
+    """Get files staged for commit."""
+    # a_path = path in HEAD, b_path = path in index; both collected to handle renames
+    paths = set()
+    for diff in repo.index.diff("HEAD"):
+        if diff.a_path:
+            paths.add(diff.a_path)
+        if diff.b_path:
+            paths.add(diff.b_path)
+    return list(paths)
+
+
+def diff_files(base_ref: str) -> list[str]:
+    """Get files changed between base_ref and HEAD (three-dot diff)."""
+    result = subprocess.run(
+        ["git", "diff", "--name-only", f"{base_ref}...HEAD"],
+        capture_output=True,
+        text=True,
+        cwd=str(git_root()),
+    )
+    if result.returncode != 0:
+        raise click.ClickException(
+            f"git diff failed for ref '{base_ref}':\n{result.stderr.strip()}"
+        )
+    return [line for line in result.stdout.splitlines() if line]
 
 
 def get_commit_tree(commit: str):
