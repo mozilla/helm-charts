@@ -1,3 +1,5 @@
+import os
+import stat
 import sys
 from typing import List, Optional
 import click
@@ -211,7 +213,10 @@ def run_unittest(
       chartkit affected --base origin/main | chartkit unittest
     """
     chart_list = list(charts)
-    piped = not sys.stdin.isatty()
+    fileno = sys.stdin.fileno()
+    # S_ISFIFO distinguishes an actual pipe from a non-TTY CI environment
+    piped = not os.isatty(fileno) and stat.S_ISFIFO(os.fstat(fileno).st_mode)
+
     if not chart_list and piped:
         chart_list = [line.strip() for line in sys.stdin if line.strip()]
 
