@@ -411,8 +411,22 @@ class ChartGraph:
         else:
             click.echo(f"Chart '{chart_name}' not found.", err=True)
 
+    def get_affected_charts(self, files: List[str]) -> List[str]:
+        """Return charts affected by the given files, including their dependents."""
+        changed_names = files_to_chart_files(files)
+        affected: Set[str] = set()
+        for name in changed_names:
+            if name not in self.charts:
+                continue
+            subtree = self.find_subtree(name, self.dependent_selector())
+            for chart_info in subtree.flatten():
+                if chart_info.name in self.charts:
+                    affected.add(chart_info.name)
+        return sorted(affected)
+
     def run_unit_tests(
         self,
+        chart_names: Optional[List[str]] = None,
         update_snapshot: bool = False,
         parallel: Optional[int] = None,
         verbose: bool = False,
@@ -420,9 +434,15 @@ class ChartGraph:
         """Run helm unit tests in parallel for all non-deprecated charts."""
         workers = parallel or os.cpu_count() or 4
 
+        charts_to_test = (
+            [self.charts[n] for n in chart_names if n in self.charts]
+            if chart_names is not None
+            else list(self.charts.values())
+        )
+
         suites = [
             (chart, testfile)
-            for chart in self.charts.values()
+            for chart in charts_to_test
             for testfile in chart.find_test_suites()
         ]
 

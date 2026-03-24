@@ -29,7 +29,7 @@ args = `arg="$(filter-out $@,$(MAKECMDGOALS))" && echo $${arg:-${1}}`
 
 MOZILLA_CRD_SCHEMAS = https://raw.githubusercontent.com/mozilla/mozcloud/main/crdSchemas/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
 
-.PHONY: help, install, update-dependencies, bump-charts, unit-tests, kubeconform, clean
+.PHONY: help, install, update-dependencies, bump-charts, unit-tests, unit-tests-affected, kubeconform, clean
 
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -68,6 +68,9 @@ unit-tests: ## Run unit tests for all charts (set UPDATE_SNAPSHOTS=1 to update s
 	fi
 	@echo "$(UNIT_TEST_MESSAGE)"
 	@$(CHART_KIT) unittest $(UPDATE_SNAPSHOTS_ARG)
+
+unit-tests-affected: ## Run unit tests for staged charts and their dependents
+	@$(CHART_KIT) affected | $(CHART_KIT) unittest $(UPDATE_SNAPSHOTS_ARG)
 
 kubeconform: ## Validate snapshot resources against Kubernetes and GKE CRD schemas
 	@echo "Running kubeconform against test snapshots..."
