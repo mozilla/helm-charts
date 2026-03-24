@@ -1,0 +1,21 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers:
+      # This name is intentionally > 15 characters to test truncation.
+      # It also intentionally contains `_` characters to test substitution.
+      # Expected port name: "my-long-contain" (truncated from "my-long-container")
+      my-long_container:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      test-service:
+        domains:
+          - test-service.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        tls:
+          certs:
+            - test-service-nonprod-dev
