@@ -229,14 +229,14 @@ ManagedCertificate template helpers
       {{- if $name_override -}}
         {{- $_ := set $params "nameOverride" $name_override -}}
       {{- end -}}
-      {{- $name = include "mozcloud-ingress-lib.config.name" $params | replace "." "-" | trunc 63 -}}
+      {{- $name = include "mozcloud-ingress-lib.config.name" $params | replace "." "-" | trunc 63 | trimSuffix "-" -}}
       {{- $managed_cert = dict "name" $name "domains" $host.domains "createCertificate" $create_cert -}}
     {{- else -}}
       {{- range $domain := $host.domains -}}
         {{- if $prefix -}}
-          {{- $name = printf "%s-%s" $prefix $domain | replace "." "-" | trunc 63 -}}
+          {{- $name = printf "%s-%s" $prefix $domain | replace "." "-" | trunc 63 | trimSuffix "-" -}}
         {{- else -}}
-          {{- $name = $domain | replace "." "-" | trunc 63 -}}
+          {{- $name = $domain | replace "." "-" | trunc 63 | trimSuffix "-" -}}
         {{- end -}}
         {{- $managed_cert = dict "name" $name "domains" (list $domain) "createCertificate" $create_cert -}}
       {{- end -}}
