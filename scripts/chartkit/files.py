@@ -30,8 +30,16 @@ def files_to_chart_files(file_paths: List[str]) -> Set[str]:
             chart_yaml = path
         elif path.name in ["values.yaml", "values.schema.json"]:
             chart_yaml = Path(path).parent / "Chart.yaml"
-        elif path.suffix == ".tpl" or "templates" in path.parts:
-            chart_yaml = Path(path).parent.parent / "Chart.yaml"
+        elif (
+            path.suffix == ".tpl" or "templates" in path.parts or "tests" in path.parts
+        ):
+            # find the directory containing 'templates' or 'tests'
+            parts = path.parts
+            idx = next(
+                (i for i, p in enumerate(parts) if p in ("templates", "tests")), None
+            )
+            if idx is not None:
+                chart_yaml = Path(*parts[:idx]) / "Chart.yaml"
         if chart_yaml and chart_yaml.exists():
             charts.add(chart_yaml)
 

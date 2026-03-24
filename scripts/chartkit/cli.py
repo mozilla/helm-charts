@@ -1,8 +1,9 @@
+import sys
 from typing import List, Optional
 import click
 from semver import Version
 
-from .git import git_root, staged_files
+from .git import diff_files, git_root, staged_files
 from .charts import ChartGraph
 from .mermaid import MermaidDiagram
 from .versions import VersionManager
@@ -130,7 +131,37 @@ def mermaid(
         click.echo(diagram.mermaid_str)
 
 
+@cli.command("affected")
+@click.option(
+    "--base",
+    default=None,
+    help="Git ref to diff against (e.g. origin/main). Defaults to staged files.",
+)
+@click.pass_obj
+def affected(graph: ChartGraph, base: Optional[str]):
+    """List charts affected by file changes (one per line).
+
+    Includes changed charts and all their dependents.
+    With no --base, uses staged git files.
+
+    \b
+    Examples:
+      # Show charts affected by staged changes
+      chartkit affected
+
+      # Show charts affected by a PR branch
+      chartkit affected --base origin/main
+
+      # Run tests for affected charts
+      chartkit affected --base origin/main | chartkit unittest
+    """
+    files = diff_files(base) if base else staged_files()
+    for chart in graph.get_affected_charts(files):
+        click.echo(chart)
+
+
 @cli.command("unittest")
+@click.argument("charts", nargs=-1, type=str)
 @click.option(
     "--update-snapshot",
     "-u",
@@ -153,11 +184,45 @@ def mermaid(
 )
 @click.pass_obj
 def run_unittest(
-    graph: ChartGraph, update_snapshot: bool, parallel: int, verbose: bool
+    graph: ChartGraph,
+    charts: tuple,
+    update_snapshot: bool,
+    parallel: int,
+    verbose: bool,
 ):
-    """Run helm unit tests in parallel for all non-deprecated charts."""
+    """Run helm unit tests in parallel for all non-deprecated charts.
+
+    If CHART arguments are given, only those charts are tested.
+    If stdin is a pipe, chart names are read from stdin.
+    If neither, all non-deprecated charts are tested.
+
+    \b
+    Examples:
+      # Run all tests
+      chartkit unittest
+
+      # Run tests for specific charts
+      chartkit unittest mozcloud mozcloud-gateway
+
+      # Run tests for charts affected by staged changes
+      chartkit affected | chartkit unittest
+
+      # Run tests for charts affected by a PR branch (CI)
+      chartkit affected --base origin/main | chartkit unittest
+    """
+    chart_list = list(charts)
+    piped = not sys.stdin.isatty()
+    if not chart_list and piped:
+        chart_list = [line.strip() for line in sys.stdin if line.strip()]
+
+    # None means "run all"; an empty list (from an empty pipe) means "run none"
+    chart_names = None if (not chart_list and not piped) else chart_list
+
     passed = graph.run_unit_tests(
-        update_snapshot=update_snapshot, parallel=parallel, verbose=verbose
+        chart_names=chart_names,
+        update_snapshot=update_snapshot,
+        parallel=parallel,
+        verbose=verbose,
     )
     if not passed:
         raise SystemExit(1)
