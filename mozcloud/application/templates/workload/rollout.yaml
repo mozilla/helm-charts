@@ -165,6 +165,7 @@ spec:
         App containers
         */}}
         {{- range $containerName, $containerConfig := $containers }}
+        {{- $portName := $containerName | trunc 15 | trimSuffix "-" }}
         - name: {{ $containerName }}
           {{- /*
           We first look for an image and tag in the container config YAML. If
@@ -233,7 +234,7 @@ spec:
               (($containerConfig.healthCheck).liveness).enabled
           }}
           ports:
-            - name: app
+            - name: {{ $portName }}
               containerPort: {{ $containerConfig.port }}
           {{- end }}
           {{- if (dig "healthCheck" "liveness" "enabled" true $containerConfig) }}
@@ -253,7 +254,7 @@ spec:
                 {{- end }}
               {{- end }}
               path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.liveness.path }}
-              port: app
+              port: {{ $portName }}
             {{- /* If liveness probe settings are defined, use those */}}
             {{- if (($containerConfig.healthCheck).liveness).probes }}
             {{- range $k, $v := $containerConfig.healthCheck.liveness.probes }}
@@ -277,7 +278,7 @@ spec:
                 {{- end }}
               {{- end }}
               path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.readiness.path }}
-              port: app
+              port: {{ $portName }}
             {{- if (($containerConfig.healthCheck).readiness).probes }}
             {{- range $k, $v := $containerConfig.healthCheck.readiness.probes }}
             {{ $k }}: {{ $v }}
@@ -317,6 +318,7 @@ spec:
       {{- if $initContainers }}
       initContainers:
         {{- range $containerName, $containerConfig := $initContainers }}
+        {{- $portName := $containerName | trunc 15 | trimSuffix "-" }}
         - name: {{ $containerName }}
           {{- /*
           We first look for an image and tag in the container config YAML. If
@@ -377,7 +379,7 @@ spec:
               (($containerConfig.healthCheck).liveness).enabled
           }}
           ports:
-            - name: {{ $containerName }}
+            - name: {{ $portName }}
               containerPort: {{ $containerConfig.port }}
           {{- end }}
           resources:
