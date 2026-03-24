@@ -62,6 +62,27 @@ Returns:
 
 
 {{- /*
+Produces an RFC 6335-compliant port name from an arbitrary string. Lowercases
+the input, replaces any character that is not a letter, digit, or hyphen with a
+hyphen, truncates to 15 characters, and strips any trailing hyphen.
+
+Note: regexReplaceAll takes (regex, inputString, replacement) — the input must
+be passed as an explicit argument, not via pipeline, to avoid it being treated
+as the replacement value.
+
+Params:
+  . (string): (required) The source string (e.g. a container name).
+
+Returns:
+  (string) An RFC 6335-compliant port name.
+*/ -}}
+{{- define "mozcloud.portName" -}}
+{{- $s := . | toString | lower -}}
+{{- regexReplaceAll "[^a-z0-9-]" $s "-" | trunc 15 | trimSuffix "-" -}}
+{{- end }}
+
+
+{{- /*
 A debug utility that serializes the piped-in value as pretty-printed JSON and
 immediately fails the template render with that output as the error message.
 Use this to inspect any Helm variable or context dict during template
