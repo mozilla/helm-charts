@@ -165,7 +165,7 @@ spec:
         App containers
         */}}
         {{- range $containerName, $containerConfig := $containers }}
-        {{- $portName := $containerName | trunc 15 | trimSuffix "-" }}
+        {{- $portName := include "mozcloud.portName" $containerName }}
         - name: {{ $containerName }}
           {{- /*
           We first look for an image and tag in the container config YAML. If
@@ -318,7 +318,7 @@ spec:
       {{- if $initContainers }}
       initContainers:
         {{- range $containerName, $containerConfig := $initContainers }}
-        {{- $portName := $containerName | trunc 15 | trimSuffix "-" }}
+        {{- $portName := include "mozcloud.portName" $containerName }}
         - name: {{ $containerName }}
           {{- /*
           We first look for an image and tag in the container config YAML. If
