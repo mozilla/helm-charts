@@ -34,7 +34,7 @@ repos:
     hooks:
       - id: helm-unittest
         name: helm unittest
-        entry: make unit-tests
+        entry: make unit-tests-affected
         files: '^.*\/(application|library)\/.*(\.yaml|\.tpl)$'
         exclude: '^deprecated/'
         language: system
