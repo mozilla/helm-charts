@@ -76,7 +76,7 @@ tests:
       workloads.test-service.strategy: canary
     asserts:
       - failedTemplate:
-          errorPattern: "must be one of the following"
+          errorPattern: "value must be one of 'Recreate', 'RollingUpdate'"
   - it: Schema rejects canary strategy with empty steps
     template: workload/rollout.yaml
     values:
@@ -84,7 +84,7 @@ tests:
       - values/rollout-empty-steps.yaml
     asserts:
       - failedTemplate:
-          errorPattern: "at least 1 items"
+          errorPattern: "minItems: got 0, want 1"
   - it: Schema rejects unsupported strategy type
     template: workload/rollout.yaml
     values:
@@ -94,4 +94,4 @@ tests:
       workloads.test-service.strategy.blueGreen.steps[0].setWeight: 20
     asserts:
       - failedTemplate:
-          errorPattern: "blueGreen is not allowed"
+          errorPattern: "additional properties 'blueGreen' not allowed"
