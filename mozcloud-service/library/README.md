@@ -1,4 +1,3 @@
-
 # mozcloud-service-lib
 
 ![Version: 0.2.22](https://img.shields.io/badge/Version-0.2.22-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)

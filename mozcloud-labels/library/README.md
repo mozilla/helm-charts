@@ -1,4 +1,3 @@
-
 # mozcloud-labels-lib
 
 ![Version: 0.3.16](https://img.shields.io/badge/Version-0.3.16-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)

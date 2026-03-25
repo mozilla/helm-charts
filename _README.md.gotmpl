@@ -4,23 +4,7 @@
   Called by mozcloud.readme and by application charts with custom Contributing sections.
 */ -}}
 {{- define "mozcloud.readme.preamble" -}}
-{{- $deprecatedCharts := list
-  "mozcloud-job"
-  "mozcloud-job-lib"
-  "mozcloud-preview"
-  "mozcloud-preview-lib"
-  "mozcloud-workload"
-  "mozcloud-workload-core-lib"
-  "mozcloud-workload-stateless"
-  "mozcloud-workload-stateless-lib"
-}}
 {{ template "chart.header" . }}
-{{- if and .Deprecated (has .Name $deprecatedCharts) }}
-> [!CAUTION]
-> **This chart is deprecated.** Please use the mozcloud chart located [here](../../mozcloud/application).
-{{- else }}
-{{ template "chart.deprecationWarning" . }}
-{{- end }}
 
 {{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}
 
@@ -93,8 +77,19 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for contribution workflows, unit te
 {{- end -}}
 
 {{- /*
-  Shared partials used by application charts with custom Contributing sections.
+  Shared partials.
 */ -}}
+
+{{- /*
+  deprecated.use-mozcloud
+  Standard deprecation notice for charts superseded by the unified mozcloud chart.
+  Prepend this to mozcloud.readme in a chart's README.md.gotmpl.
+  For a custom message, write the notice inline instead of calling this template.
+*/ -}}
+{{- define "deprecated.use-mozcloud" -}}
+> [!CAUTION]
+> **This chart is deprecated.** Please use the mozcloud chart located [here](../../mozcloud/application).
+{{- end -}}
 
 {{- define "contributing.general-link" -}}
 For general contribution workflows, unit testing conventions, JSON schema standards, and chart authoring standards that apply across all charts in this repository, see [CONTRIBUTING.md](../../CONTRIBUTING.md).
