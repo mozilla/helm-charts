@@ -35,7 +35,7 @@ metadata:
     networking.gke.io/v1beta1.FrontendConfig: {{ $ingress.name }}
   {{- end }}
 spec:
-  {{- if and (eq (len $ingress.hosts) 1) (eq (len (first $ingress.hosts).paths) 1) }}
+  {{- if and (eq $provider "gke") (eq (len $ingress.hosts) 1) (eq (len (first $ingress.hosts).paths) 1) }}
   {{- range $host := $ingress.hosts }}
   {{- range $path := $host.paths }}
   {{- $backend := mergeOverwrite $backend_defaults (default (dict) $path.backend.config) }}
@@ -65,11 +65,11 @@ spec:
               pathType: {{ $path.pathType }}
               backend:
                 service:
-                  {{- $params := dict "backendConfig" $backend "backendService" $backend_service "ingressConfig" }}
+                  {{- $params := dict "backendConfig" $backend "backendService" $backend_service "ingressConfig" $ingress }}
                   {{- if $name_override }}
                   {{- $_ := set $params "nameOverride" $name_override }}
                   {{- end }}
-                  name: {{ include "mozcloud-ingress-lib.config.service.name" $params }}
+                  name: {{ include "mozcloud-ingress-lib.config.backend.name" $params }}
                   port:
                     number: {{ $backend_service.port }}
             {{- end }}

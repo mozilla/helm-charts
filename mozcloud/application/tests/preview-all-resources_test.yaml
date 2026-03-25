@@ -31,7 +31,8 @@ tests:
   - it: Top-level ConfigMap is prefixed with PR number
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-app-config")]
+      path: metadata.name
+      value: pr789-app-config
     asserts:
       - equal:
           path: metadata.name
@@ -41,7 +42,8 @@ tests:
   - it: Top-level ServiceAccount is prefixed with PR number
     template: serviceaccount/serviceaccount.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-app-service-account")]
+      path: metadata.name
+      value: pr789-app-service-account
     asserts:
       - equal:
           path: metadata.name
@@ -51,7 +53,8 @@ tests:
   - it: Default ServiceAccount is prefixed with PR number
     template: serviceaccount/serviceaccount.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-mozcloud-test")]
+      path: metadata.name
+      value: pr789-mozcloud-test
     asserts:
       - equal:
           path: metadata.name
@@ -61,7 +64,8 @@ tests:
   - it: Top-level ExternalSecret is prefixed with PR number
     template: externalsecret/externalsecret.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-app-external-secret")]
+      path: metadata.name
+      value: pr789-app-external-secret
     asserts:
       - equal:
           path: metadata.name
@@ -71,7 +75,8 @@ tests:
   - it: Default ExternalSecret is prefixed with PR number
     template: externalsecret/externalsecret.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-test-chart-secrets")]
+      path: metadata.name
+      value: pr789-test-chart-secrets
     asserts:
       - equal:
           path: metadata.name
@@ -113,7 +118,8 @@ tests:
   - it: Deployment is prefixed with PR number
     template: workload/deployment.yaml
     documentSelector:
-      path: $[?(@.kind == "Deployment")]
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: pr789-api-service
     asserts:
       - equal:
           path: metadata.name
@@ -123,7 +129,8 @@ tests:
   - it: Service is prefixed with PR number
     template: gateway/backend.yaml
     documentSelector:
-      path: $[?(@.kind == "Service")]
+      path: $[?(@.kind == "Service")].metadata.name
+      value: pr789-api-service
     asserts:
       - equal:
           path: metadata.name
@@ -133,7 +140,8 @@ tests:
   - it: HTTPRoute has correct preview hostname
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-api-host")]
+      path: metadata.name
+      value: pr789-api-host
     asserts:
       - contains:
           path: spec.hostnames
@@ -143,7 +151,8 @@ tests:
   - it: HTTPRoute routes to prefixed service
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-api-host")]
+      path: metadata.name
+      value: pr789-api-host
     asserts:
       - equal:
           path: spec.rules[0].backendRefs[0].name
@@ -171,7 +180,8 @@ tests:
   - it: Workload container secretRef should reference prefixed secret
     template: workload/deployment.yaml
     documentSelector:
-      path: $[?(@.kind == "Deployment")]
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: pr789-api-service
     asserts:
       - equal:
           path: spec.template.spec.containers[?(@.name=="app")].envFrom[1].secretRef.name
@@ -181,7 +191,8 @@ tests:
   - it: Workload container configMapRef should reference prefixed ConfigMap
     template: workload/deployment.yaml
     documentSelector:
-      path: $[?(@.kind == "Deployment")]
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: pr789-api-service
     asserts:
       - equal:
           path: spec.template.spec.containers[?(@.name=="app")].envFrom[0].configMapRef.name
@@ -191,7 +202,8 @@ tests:
   - it: Workload container user-defined secretRef should reference prefixed ExternalSecret
     template: workload/deployment.yaml
     documentSelector:
-      path: $[?(@.kind == "Deployment")]
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: pr789-api-service
     asserts:
       - equal:
           path: spec.template.spec.containers[?(@.name=="app")].envFrom[2].secretRef.name
@@ -201,7 +213,8 @@ tests:
   - it: Workload serviceAccountName should reference prefixed ServiceAccount
     template: workload/deployment.yaml
     documentSelector:
-      path: $[?(@.kind == "Deployment")]
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: pr789-api-service
     asserts:
       - equal:
           path: spec.template.spec.serviceAccountName
