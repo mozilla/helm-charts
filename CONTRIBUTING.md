@@ -103,7 +103,7 @@ Each scenario-specific values file should contain only the values that make that
 
 ### Assertions
 
-helm-unittest provides a range of assertion types. The most commonly used in this repo:
+helm-unittest provides a range of assertion types. The most commonly used in this repo are listed below. For the full reference, see the [helm-unittest documentation](https://github.com/helm-unittest/helm-unittest/blob/main/DOCUMENT.md).
 
 | Assertion | What it checks |
 |---|---|
@@ -240,7 +240,9 @@ Helm can deep-merge dicts across values files (e.g. `values.yaml` + `values-prod
 
 Charts that use dict-based collections can designate a **protected key** per collection type to act as a chart-level defaults template. The key is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry, with user values taking precedence.
 
-Each chart that uses this pattern documents its specific protected keys in its own `README.md`. Avoid naming your objects after a chart's protected keys, as those entries are treated as defaults rather than real objects (unless they are the only entry in the collection).
+For example, the `mozcloud` chart defines `mozcloud-workload` as the protected key for the `workloads` collection and `mozcloud-container` for the `containers` collection. A user who defines a workload named `my-service` will automatically inherit all defaults from the `mozcloud-workload` entry without having to repeat them. The `mozcloud-gateway` chart similarly uses `mozcloud-gateway` as the protected key for the `gateway.gateways`, `httpRoute.httpRoutes`, and `backends` collections.
+
+Avoid naming your objects after a chart's protected keys, as those entries are treated as defaults rather than real objects (unless they are the only entry in the collection). The full list of protected keys for each application chart can be found in that chart's `README.md`, as applicable.
 
 ---
 
