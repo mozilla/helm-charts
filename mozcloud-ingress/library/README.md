@@ -1,3 +1,4 @@
+
 # mozcloud-ingress-lib
 
 ![Version: 0.6.2](https://img.shields.io/badge/Version-0.6.2-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
@@ -24,7 +25,7 @@ dependencies:
 ```
 
 > [!IMPORTANT]
-> Make sure to set a valid version for your dependencies. Helm supports pinning exact versions as well as version ranges, see [chart best practices - dependencies - versions](https://helm.sh/docs/chart_best_practices/dependencies/#versions) for more details.
+> Make sure to set a valid version for your dependencies. Helm supports pinning exact versions as well as version ranges. See [chart best practices - dependencies - versions](https://helm.sh/docs/chart_best_practices/dependencies/#versions) for more details.
 
 Library chart templates can be included using the following format:
 ```go
@@ -35,7 +36,6 @@ If params other than the current context, specify those in place of the `.`:
 ```go
 {{ include "template-name" $myDict }}
 ```
-
 > [!TIP]
 > We're building OCI artifacts automatically with [GHA](/.github/workflows/auto-push-tag-helm-charts.yaml). When a new artifact has been built, we add a matching [tag](https://github.com/mozilla/helm-charts/tags) to this repo as well. Use this to find out about available chart versions and/or to browse the chart's code for a specific version.
 

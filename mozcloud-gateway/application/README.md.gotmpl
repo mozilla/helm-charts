@@ -1,56 +1,14 @@
-{{ template "chart.header" . }}
-{{ template "chart.deprecationWarning" . }}
-
-{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}
-
-{{ template "chart.description" . }}
-
-## Usage
-
-The chart is distributed as an [OCI artifact](https://helm.sh/docs/topics/registries/) on [Google Artifact Registry](https://cloud.google.com/artifact-registry/docs/helm).
-
-* OCI registry: `oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts`
-
-To use this chart, include it as a [dependency](https://helm.sh/docs/chart_best_practices/dependencies/) in your tenant chart, e.g.:
-
-```yaml
-apiVersion: v2
-name: my-mozcloud-tenant-chart
-version: 0.1.0
-type: application
-dependencies:
-  - name: {{ .Name }}
-    version: ~{{ .Version }}
-    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
-```
-
-> [!IMPORTANT]
-> Make sure to set a valid version for your dependencies. Helm supports pinning exact versions as well as version ranges, see [chart best practices - dependencies - versions](https://helm.sh/docs/chart_best_practices/dependencies/#versions) for more details.
-
-Next, update your tenant's values. Shared charts are meant to be self-documented. We ship a verbose [values file](values.yaml) as well as a [JSON schema](values.schema.json).
-
-> [!TIP]
-> We're building OCI artifacts automatically with [GHA](/.github/workflows/auto-push-tag-helm-charts.yaml). When a new artifact has been built, we add a matching [tag](https://github.com/mozilla/helm-charts/tags) to this repo as well. Use this to find out about available chart versions and/or to browse the chart's code for a specific version.
-
-{{ template "chart.homepageLine" . }}
-
-{{ template "chart.maintainersSection" . }}
-
-{{ template "chart.sourcesSection" . }}
-
-{{ template "chart.requirementsSection" . }}
-
-{{ template "chart.valuesSection" . }}
+{{ template "mozcloud.readme.preamble" . }}
 
 ---
 
 ## Contributing
 
-For general contribution workflows, unit testing conventions, JSON schema standards, and chart authoring standards that apply across all charts in this repository, see [CONTRIBUTING.md](../../CONTRIBUTING.md).
+{{ template "contributing.general-link" . }}
 
 ### Protected default keys
 
-This chart uses dict-based collections with a protected key per collection type that acts as a chart-level defaults template. The key is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry.
+{{ template "protected-keys-intro" . }}
 
 | Collection | Protected key |
 |---|---|
@@ -60,19 +18,6 @@ This chart uses dict-based collections with a protected key per collection type 
 
 Avoid naming your objects after these keys. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for a full explanation of how the protected key pattern works.
 
-### JSON schema validation
-
-**Any change to `values.yaml` must be accompanied by a corresponding update to `values.schema.json`.** Letting the two files drift causes unrecognized keys to pass through silently or valid keys to be rejected with confusing errors.
-
-See [CONTRIBUTING.md](../../CONTRIBUTING.md) for schema conventions. The quick reference for what to update when changing values:
-
-| Change type | Schema action required |
-|---|---|
-| Add a new key | Add a matching property with type, description, and (if applicable) default |
-| Remove a key | Remove its property from the schema (and from any `required` arrays) |
-| Rename a key | Remove the old property, add the new one |
-| Restrict a string to specific values | Add or update an `enum` constraint |
-| Add a new collection type | Add an `additionalProperties` entry with the item shape (or a `$ref`) |
-| Extract a repeated shape | Move it into `$defs` and replace inline copies with `$ref` |
+{{ template "json-schema-validation" . }}
 
 {{ template "helm-docs.versionFooter" . }}

@@ -1,4 +1,9 @@
-{{ template "chart.header" . }}
+{{- /*
+  mozcloud.readme.preamble
+  Renders everything from the chart header through the values section.
+  Called by mozcloud.readme and by application charts with custom Contributing sections.
+*/ -}}
+{{- define "mozcloud.readme.preamble" -}}
 {{- $deprecatedCharts := list
   "mozcloud-job"
   "mozcloud-job-lib"
@@ -9,6 +14,7 @@
   "mozcloud-workload-stateless"
   "mozcloud-workload-stateless-lib"
 }}
+{{ template "chart.header" . }}
 {{- if and .Deprecated (has .Name $deprecatedCharts) }}
 > [!CAUTION]
 > **This chart is deprecated.** Please use the mozcloud chart located [here](../../mozcloud/application).
@@ -40,11 +46,11 @@ dependencies:
 ```
 
 > [!IMPORTANT]
-> Make sure to set a valid version for your dependencies. Helm supports pinning exact versions as well as version ranges, see [chart best practices - dependencies - versions](https://helm.sh/docs/chart_best_practices/dependencies/#versions) for more details.
+> Make sure to set a valid version for your dependencies. Helm supports pinning exact versions as well as version ranges. See [chart best practices - dependencies - versions](https://helm.sh/docs/chart_best_practices/dependencies/#versions) for more details.
 
-{{ if eq .Type "application" }}
+{{ if eq .Type "application" -}}
 Next, update your tenant's values. Shared charts are meant to be self-documented. We ship a verbose [values file](values.yaml) as well as a [JSON schema](values.schema.json).
-{{ else if eq .Type "library" }}
+{{ else if eq .Type "library" -}}
 Library chart templates can be included using the following format:
 ```go
 {{ "{{" }} include "template-name" . {{ "}}" }}
@@ -54,7 +60,7 @@ If params other than the current context, specify those in place of the `.`:
 ```go
 {{ "{{" }} include "template-name" $myDict {{ "}}" }}
 ```
-{{- end }}
+{{ end -}}
 
 > [!TIP]
 > We're building OCI artifacts automatically with [GHA](/.github/workflows/auto-push-tag-helm-charts.yaml). When a new artifact has been built, we add a matching [tag](https://github.com/mozilla/helm-charts/tags) to this repo as well. Use this to find out about available chart versions and/or to browse the chart's code for a specific version.
@@ -68,6 +74,14 @@ If params other than the current context, specify those in place of the `.`:
 {{ template "chart.requirementsSection" . }}
 
 {{ template "chart.valuesSection" . }}
+{{- end -}}
+
+{{- /*
+  mozcloud.readme
+  Full standard README. Used by charts that do not need a custom Contributing section.
+*/ -}}
+{{- define "mozcloud.readme" -}}
+{{ template "mozcloud.readme.preamble" . }}
 
 ---
 
@@ -76,3 +90,33 @@ If params other than the current context, specify those in place of the `.`:
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for contribution workflows, unit testing conventions, JSON schema standards, and general chart authoring standards.
 
 {{ template "helm-docs.versionFooter" . }}
+{{- end -}}
+
+{{- /*
+  Shared partials used by application charts with custom Contributing sections.
+*/ -}}
+
+{{- define "contributing.general-link" -}}
+For general contribution workflows, unit testing conventions, JSON schema standards, and chart authoring standards that apply across all charts in this repository, see [CONTRIBUTING.md](../../CONTRIBUTING.md).
+{{- end -}}
+
+{{- define "protected-keys-intro" -}}
+This chart uses dict-based collections with a protected key per collection type that acts as a chart-level defaults template. The key is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry.
+{{- end -}}
+
+{{- define "json-schema-validation" }}
+### JSON schema validation
+
+**Any change to `values.yaml` must be accompanied by a corresponding update to `values.schema.json`.** Letting the two files drift causes unrecognized keys to pass through silently or valid keys to be rejected with confusing errors.
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for schema conventions. The quick reference for what to update when changing values:
+
+| Change type | Schema action required |
+|---|---|
+| Add a new key | Add a matching property with type, description, and (if applicable) default |
+| Remove a key | Remove its property from the schema (and from any `required` arrays) |
+| Rename a key | Remove the old property, add the new one |
+| Restrict a string to specific values | Add or update an `enum` constraint |
+| Add a new collection type | Add an `additionalProperties` entry with the item shape (or a `$ref`) |
+| Extract a repeated shape | Move it into `$defs` and replace inline copies with `$ref` |
+{{ end -}}
