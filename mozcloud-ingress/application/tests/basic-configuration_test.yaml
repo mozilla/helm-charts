@@ -30,6 +30,8 @@ tests:
             logging:
               enable: true
               sampleRate: 0.1
+      - notExists:
+          path: spec.securityPolicy
   - it: Frontend is configured correctly
     template: frontendconfig.yaml
     documentSelector:
