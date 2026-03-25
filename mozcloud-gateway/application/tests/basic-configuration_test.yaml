@@ -33,6 +33,8 @@ tests:
       - equal:
           path: spec.targetRef.name
           value: test-service
+      - notExists:
+          path: spec.default.securityPolicy
   - it: External gateway is configured correctly
     template: gateway.yaml
     documentSelector:
