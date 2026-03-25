@@ -16,11 +16,17 @@ Configuration matches entire snapshot:
         realm: nonprod
       name: test-service
     spec:
-      defaultBackend:
-        service:
-          name: test-service
-          port:
-            number: 8080
+      rules:
+        - host: test-service.dev.test-domain.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: test-service
+                    port:
+                      number: 8080
+                path: /
+                pathType: Prefix
   2: |
     apiVersion: v1
     kind: Service
