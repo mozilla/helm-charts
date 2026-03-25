@@ -1,0 +1,148 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}
+
+{{ template "chart.description" . }}
+
+## Usage
+
+The chart is distributed as an [OCI artifact](https://helm.sh/docs/topics/registries/) on [Google Artifact Registry](https://cloud.google.com/artifact-registry/docs/helm).
+
+* OCI registry: `oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts`
+
+To use this chart, include it as a [dependency](https://helm.sh/docs/chart_best_practices/dependencies/) in your tenant chart, e.g.:
+
+```yaml
+apiVersion: v2
+name: my-mozcloud-tenant-chart
+version: 0.1.0
+type: application
+dependencies:
+  - name: {{ .Name }}
+    version: ~{{ .Version }}
+    repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+```
+
+> [!IMPORTANT]
+> Make sure to set a valid version for your dependencies. Helm supports pinning exact versions as well as version ranges, see [chart best practices - dependencies - versions](https://helm.sh/docs/chart_best_practices/dependencies/#versions) for more details.
+
+Next, update your tenant's values. Shared charts are meant to be self-documented. We ship a verbose [values file](values.yaml) as well as a [JSON schema](values.schema.json).
+
+> [!TIP]
+> We're building OCI artifacts automatically with [GHA](/.github/workflows/auto-push-tag-helm-charts.yaml). When a new artifact has been built, we add a matching [tag](https://github.com/mozilla/helm-charts/tags) to this repo as well. Use this to find out about available chart versions and/or to browse the chart's code for a specific version.
+
+{{ template "chart.homepageLine" . }}
+
+{{ template "chart.maintainersSection" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
+
+---
+
+## Contributing
+
+This section covers standards specific to this chart. For general contribution workflows, unit testing conventions, JSON schema standards, and chart authoring standards that apply across all charts in this repository, see [CONTRIBUTING.md](../../CONTRIBUTING.md).
+
+### Template organization
+
+Template folders must mirror top-level keys in `values.yaml`. For example, a `configmaps` key in values corresponds to a `templates/configmap/` folder; `workloads` corresponds to `templates/workload/`, and so on. This 1:1 mapping makes it straightforward to locate the template responsible for any given value.
+
+**Shared templates** that serve multiple resource types (annotations, labels, pod specs, formatters) live as `_<name>.yaml` files directly in `templates/`. These are named template definitions used across multiple subfolders, not helpers in the traditional sense.
+
+**Resource-specific templates** (e.g. `deployment.yaml`, `cronjob.yaml`) live in the subfolder for their resource type.
+
+### Helper file placement
+
+Helper functions belong in a `_helpers.tpl` file located in the same folder as the templates they serve:
+
+- Helpers used only by workload templates: `templates/workload/_helpers.tpl`
+- Helpers used only by task templates: `templates/task/_helpers.tpl`
+- Helpers used chart-wide: `templates/_helpers.tpl`
+
+A helper should live in the most specific scope where it is used. Do not place a workload-specific helper in the root `_helpers.tpl` just because it seems "important". Scope it correctly.
+
+> [!NOTE]
+> An exception applies for unusually complex logic that would make a template significantly harder to read on its own. In that case, extracting the logic into a helper is encouraged even if it is only called once.
+
+### When to write a helper vs. keep logic in a template
+
+Templates are the primary site of rendering and interpolation. They should be readable at a glance.
+
+If you find yourself writing loops, conditionals, or data transformations inside a template, first ask:
+
+1. **Can the data structure be simplified** so the template doesn't need to do that work?
+2. **Should this be a helper** that returns a clean value the template can use directly?
+
+If neither applies, the logic can stay in the template. This should be the exception, not the rule.
+
+### Helper authoring standards
+
+- **Always use named parameters.** Helpers must accept a dict with named keys rather than relying on positional arguments or raw context. This makes call sites self-documenting.
+
+  ```yaml
+  {{- include "mozcloud.myHelper" (dict "name" $name "context" $) }}
+  ```
+
+- **Parameters must be single-purpose and non-overlapping.** Do not define both `config` and `jobConfig`, or both `workloadContainerConfig` and `jobContainerConfig`, as parameters to the same helper. Each parameter should have one clear role.
+
+- **Keep helpers concise.** A helper that spans many lines is usually doing too much. Break it into smaller, focused helpers if needed.
+
+- **Avoid accumulating too many helpers in a single file.** When a `_helpers.tpl` becomes hard to scan, consider whether the helpers can be split into more targeted shared templates (e.g. `_annotations.yaml`, `_labels.yaml`).
+
+- **Document every helper.** Each helper must have a block comment above its `define` statement that describes what it does, its parameters (name, type, required/optional), and its return value. Follow the established format used throughout this chart:
+
+  ```
+  {{- /*
+  Short description of what this helper does.
+
+  Params:
+    paramName (type): (required|optional) What this parameter is for.
+
+  Returns:
+    (type) What the helper produces.
+  */ -}}
+  ```
+
+### Protected default keys
+
+This chart uses dict-based collections with a protected key per collection type that acts as a chart-level defaults template. The key is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry.
+
+| Collection       | Protected key              |
+|------------------|----------------------------|
+| `workloads`      | `mozcloud-workload`        |
+| `containers`     | `mozcloud-container`       |
+| `initContainers` | `mozcloud-init-container`  |
+| `tasks.cronJobs` | `mozcloud-cronjob`         |
+| `tasks.jobs`     | `mozcloud-job`             |
+
+Users are instructed in `values.yaml` not to name their objects after these keys. If a protected key is the only entry in a collection (no user-defined entries), it is treated as a regular object and rendered as-is.
+
+When adding a new collection type, you must:
+
+1. Define a corresponding protected key in `values.yaml`.
+2. Add a formatter helper (following the pattern in `templates/_formatter.yaml`) that applies the same strip-and-merge logic.
+3. Call the formatter from the template before iterating over the collection.
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the general explanation of why this pattern exists.
+
+### JSON schema validation
+
+**Any change to `values.yaml` must be accompanied by a corresponding update to `values.schema.json`.** Letting the two files drift causes unrecognised keys to pass through silently or valid keys to be rejected with confusing errors.
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for schema conventions. The quick reference for what to update when changing values:
+
+| Change type | Schema action required |
+|---|---|
+| Add a new key | Add a matching property with type, description, and (if applicable) default |
+| Remove a key | Remove its property from the schema (and from any `required` arrays) |
+| Rename a key | Remove the old property, add the new one |
+| Restrict a string to specific values | Add or update an `enum` constraint |
+| Add a new collection type | Add an `additionalProperties` entry with the item shape (or a `$ref`) |
+| Extract a repeated shape | Move it into `$defs` and replace inline copies with `$ref` |
+
+{{ template "helm-docs.versionFooter" . }}
