@@ -1298,7 +1298,15 @@ workloads:
         #
         #  # Backend service timeout period in seconds.
         #  #timeoutSec: 30
+        #
+        #  # Cloud Armor security policy to attach to the load balancer backend.
+        #  # This should match the name of an existing Cloud Armor policy in GCP.
         #  #
+        #  # NOTE: This option exists only to support migration of existing
+        #  # applications that already use Cloud Armor. New applications should
+        #  # NOT use this — use Fastly for WAF instead.
+        #  #securityPolicy: my-app-policy
+        #
         #  # Custom config for backend health check
         #  #healthCheck:
         #  #  #path: /readiness/
