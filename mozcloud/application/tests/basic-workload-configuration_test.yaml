@@ -352,4 +352,4 @@ tests:
           medium: Memory
     asserts:
       - failedTemplate:
-          errorPattern: missing property 'sizeLimit'
+          errorPattern: "sizeLimit is required"
