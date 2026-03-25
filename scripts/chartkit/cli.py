@@ -1,6 +1,3 @@
-import os
-import stat
-import sys
 from typing import List, Optional
 import click
 from semver import Version
@@ -195,8 +192,7 @@ def run_unittest(
     """Run helm unit tests in parallel for all non-deprecated charts.
 
     If CHART arguments are given, only those charts are tested.
-    If stdin is a pipe, chart names are read from stdin.
-    If neither, all non-deprecated charts are tested.
+    If no arguments are given, all non-deprecated charts are tested.
 
     \b
     Examples:
@@ -205,26 +201,9 @@ def run_unittest(
 
       # Run tests for specific charts
       chartkit unittest mozcloud mozcloud-gateway
-
-      # Run tests for charts affected by staged changes
-      chartkit affected | chartkit unittest
-
-      # Run tests for charts affected by a PR branch (CI)
-      chartkit affected --base origin/main | chartkit unittest
     """
-    chart_list = list(charts)
-    fileno = sys.stdin.fileno()
-    # S_ISFIFO distinguishes an actual pipe from a non-TTY CI environment
-    piped = not os.isatty(fileno) and stat.S_ISFIFO(os.fstat(fileno).st_mode)
-
-    if not chart_list and piped:
-        chart_list = [line.strip() for line in sys.stdin if line.strip()]
-
-    # None means "run all"; an empty list (from an empty pipe) means "run none"
-    chart_names = None if (not chart_list and not piped) else chart_list
-
     passed = graph.run_unit_tests(
-        chart_names=chart_names,
+        chart_names=list(charts) or None,
         update_snapshot=update_snapshot,
         parallel=parallel,
         verbose=verbose,

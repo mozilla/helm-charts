@@ -58,8 +58,10 @@ jobs:
       - name: Run unit tests
         run: |
           if [ "${{ github.event_name }}" == "pull_request" ]; then
-            uv run --directory ./scripts chartkit affected --base origin/${{ github.base_ref }} \
-              | uv run --directory ./scripts chartkit unittest
+            affected=$(uv run --directory ./scripts chartkit affected --base origin/${{ github.base_ref }})
+            if [ -n "$affected" ]; then
+              uv run --directory ./scripts chartkit unittest $affected
+            fi
           else
             make unit-tests
           fi
