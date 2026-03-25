@@ -82,7 +82,7 @@ Conventions to follow:
 - **Always include `matchSnapshot`.** See [Snapshots](#snapshots) below.
 - **Scope your `templates` list to only the templates relevant to the scenario.** Rendering every template in every suite adds noise and slows tests down.
 
-### Values organisation
+### Values organization
 
 Shared values that every test suite needs (e.g. global platform values the chart requires) live in `tests/values/globals.yaml`. Scenario-specific values live in separate named files:
 
@@ -99,7 +99,7 @@ tests/
   __snapshot__/                     # Auto-generated; do not edit by hand
 ```
 
-Each scenario-specific values file should contain only the values that make that scenario distinct. Share as little as possible between scenarios so that test failures are easy to localise.
+Each scenario-specific values file should contain only the values that make that scenario distinct. Share as little as possible between scenarios so that test failures are easy to localize.
 
 ### Assertions
 
@@ -173,13 +173,13 @@ make unit-tests-affected
 
 Every application chart ships a `values.schema.json` that Helm validates against when rendering the chart. **Any addition, removal, or rename of a key in `values.yaml` must be reflected in `values.schema.json`.**
 
-Letting the two files drift causes one of two problems: unrecognised keys silently pass through without validation, or valid keys are rejected with confusing errors. The schema also surfaces documentation in editor tooling (e.g. the VS Code YAML extension), so keeping it accurate and well-described benefits every team using the chart.
+Letting the two files drift causes one of two problems: unrecognized keys silently pass through without validation, or valid keys are rejected with confusing errors. The schema also surfaces documentation in editor tooling (e.g. the VS Code YAML extension), so keeping it accurate and well-described benefits every team using the chart.
 
 ### Schema conventions
 
 All application chart schemas in this repo target [JSON Schema draft 2020-12](https://json-schema.org/draft/2020-12/schema) and follow these conventions:
 
-- **`additionalProperties: false`** is set on every object whose shape is fully known. This turns typos and unrecognised keys into hard errors rather than silent no-ops, which is one of the most effective ways to catch misconfiguration early.
+- **`additionalProperties: false`** is set on every object whose shape is fully known. This turns typos and unrecognized keys into hard errors rather than silent no-ops, which is one of the most effective ways to catch misconfiguration early.
 
 - **`$defs`** are used for schema fragments that appear in more than one place. Add a new `$def` whenever a type is referenced from two or more locations and reference it with `$ref: "#/$defs/<name>"`. Do not copy-paste the same shape inline.
 
@@ -232,7 +232,7 @@ The same principle applies to round-tripping through strings: avoid `toYaml` / `
 
 ### Collections: dicts over lists
 
-Collections that users configure should be defined as **dicts keyed by name**, not lists, wherever merging behaviour matters.
+Collections that users configure should be defined as **dicts keyed by name**, not lists, wherever merging behavior matters.
 
 Helm can deep-merge dicts across values files (e.g. `values.yaml` + `values-prod.yaml`), but it replaces lists wholesale. Using dicts allows users to define a base configuration in `values.yaml` and selectively override individual items in environment-specific files without repeating the entire definition.
 
