@@ -84,7 +84,7 @@ dependencies:
 
 Each application chart ships a verbose `values.yaml` and a `values.schema.json`. These are the primary reference for understanding what a chart accepts. Start there before consulting any other documentation.
 
-New chart versions are published automatically via GitHub Actions when changes are merged. A corresponding [tag](https://github.com/mozilla/helm-charts/tags) is added to this repository for each release. Use the tags to browse chart code at a specific version.
+New chart versions are published automatically when a PR is merged. The release type (`major`, `minor`, `patch`) is inferred from the PR title using conventional commit format and applied as a label. You can override the label at any time before merging. A `no-release` label skips publishing entirely. A corresponding [tag](https://github.com/mozilla/helm-charts/tags) is added to this repository for each release. See [CONTRIBUTING.md](CONTRIBUTING.md) for full details.
 
 ---
 
@@ -94,7 +94,14 @@ New chart versions are published automatically via GitHub Actions when changes a
 Development workflows are driven by [`uv`](https://docs.astral.sh/uv/). Install it before anything else.
 
 ### `pre-commit`
-Pre-commit hooks enforce version bumps and regenerate READMEs via helm-docs. Install with:
+Pre-commit hooks run on commit and handle the following automatically:
+- **ruff** — formats and lints Python/TOML files (with auto-fix)
+- **helm update dependencies** — runs `make update-dependencies` when chart files change
+- **helm lint** — lints all non-deprecated charts
+- **helm unittest** — runs `make unit-tests-affected` when chart files change
+- **helm-docs** — regenerates `README.md` files from `.gotmpl` templates
+
+Install with:
 ```sh
 uv tool install pre-commit
 ```
@@ -152,7 +159,10 @@ make unit-tests-affected UPDATE_SNAPSHOTS=1
 ```
 
 ### `make bump-charts`
-Bumps the version of charts that are staged for commit. Works in tandem with the pre-commit hook that checks whether a version bump is needed. Can also target specific charts by name:
+> [!WARNING]
+> Version bumps are handled automatically by CI when a PR is merged. Running this manually before merging will cause a version conflict — CI will attempt to bump again on top of your local bump. Only use this if you fully understand the release process and have a specific reason to bypass CI.
+
+Bumps chart versions locally for staged files:
 ```sh
 make bump-charts
 make bump-charts mozcloud-gateway-lib

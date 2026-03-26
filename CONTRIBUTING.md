@@ -13,24 +13,66 @@ The typical loop for any change:
 1. Make your changes.
 2. Write or update unit tests to cover them.
 3. Run `make update-dependencies && make unit-tests` to verify everything passes.
-4. Stage your changes, then run `make bump-charts` to increment the version of any chart you touched.
-5. Commit. Pre-commit hooks will verify versions and regenerate READMEs.
+4. Commit. Pre-commit hooks regenerate READMEs and run lint and tests automatically.
+5. Open a PR. CI infers a release label from your PR title. Override it if needed (see [Release process](#release-process)).
+6. Merge. CI bumps chart versions, updates docs, and publishes charts to the registry automatically.
 
 ---
 
-## Version bumps
+## Release process
 
-Every change to a chart, including changes to its library dependencies, requires a version bump in that chart's `Chart.yaml`. The pre-commit hook will catch missing bumps, and `make bump-charts` will apply them automatically for staged files.
+Chart versions are bumped and charts are published automatically when a PR is merged. You do not need to bump versions manually.
 
-When a library chart changes, bump the library chart's version **and** bump every application chart that depends on it, then update the dependency version reference in those dependent charts' `Chart.yaml` files.
+### How the release type is determined
+
+When you open a PR, CI reads the title and applies a release label automatically:
+
+| PR title pattern | Label applied |
+|---|---|
+| `feat!:`, `fix!:`, or contains "breaking change" | `major` |
+| `feat:` | `minor` |
+| Everything else (`fix:`, `chore:`, `docs:`, `refactor:`, etc.) | `patch` |
+
+### One release type per PR
+
+The release label applies uniformly to every chart changed in the PR. When a PR touches multiple charts with changes of different severity, all of them are bumped at the highest level present. For example, if one chart receives a breaking change and another only a bug fix, both get a `major` bump. This is a known limitation of the model. If the mismatch matters, split the changes into separate PRs so each chart gets the appropriate release type.
+
+### Overriding the release label
+
+If the inferred label is wrong, apply the correct one manually from the PR sidebar before merging:
+
+- `major` — breaking change, incompatible with previous versions
+- `minor` — new functionality, backwards compatible
+- `patch` — bug fix or non-functional change
+- `no-release` — merge without bumping or publishing (e.g. docs-only changes)
+
+`no-release` takes precedence over any other label. To use it, add `no-release` to the PR. The other labels follow highest-severity-wins: if both `minor` and `patch` are present, `minor` wins. To avoid confusion, remove any label you are replacing rather than adding on top of it.
+
+### What happens on merge
+
+When the PR is merged, CI:
+
+1. Bumps the version of every changed chart using the release type
+2. Cascades the bump to any dependent charts and updates their dependency version references
+3. Regenerates all `README.md` files via helm-docs
+4. Commits the result directly to `main`
+5. Packages and pushes the updated charts to the OCI registry
+6. Creates a git tag for each published chart
+
+### Releasing without a PR
+
+To bump and publish charts without opening a PR (for example, to cut a hotfix or perform an administrative bump), use the **manually release helm charts** workflow dispatch from the GitHub Actions tab. It accepts a comma-separated list of chart paths and a release type.
 
 ---
 
 ## Pre-commit hooks
 
-Running `make install` sets up pre-commit hooks that will:
-- Verify chart versions have been bumped for any modified chart
-- Regenerate `README.md` files via helm-docs
+Running `make install` sets up pre-commit hooks that run automatically on commit:
+- **ruff** — formats and lints Python/TOML files (with auto-fix)
+- **helm update dependencies** — runs `make update-dependencies` when chart files change
+- **helm lint** — lints all non-deprecated charts
+- **helm unittest** — runs `make unit-tests-affected` when chart files change
+- **helm-docs** — regenerates `README.md` files from `.gotmpl` templates
 
 If a hook fails, address the reported issue before committing. Do not skip hooks.
 

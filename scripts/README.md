@@ -133,11 +133,11 @@ Usage: chartkit version bump [OPTIONS] [CHARTS]...
   are ignored.
 
 Options:
-  --part [major|minor|patch]  Part of the version to bump.
-  --dry-run                   Show what would be changed, but do not write
-                              changes.
-  --json                      Output results as JSON.
-  --help                      Show this message and exit.
+  --release-type [major|minor|patch]  Semver part to increment.
+  --dry-run                           Show what would be changed, but do not
+                                      write changes.
+  --format [text|json|markdown]       Output format for results.
+  --help                              Show this message and exit.
 ```
 ##### Example
 For example you can take a list of changed charts and update all their versions and dependencies in one command:
