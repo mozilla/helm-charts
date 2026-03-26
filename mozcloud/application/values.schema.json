@@ -1169,6 +1169,12 @@
             }
           }
         },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "security": {
           "type": "object",
           "additionalProperties": false,
