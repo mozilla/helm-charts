@@ -11,10 +11,30 @@ enabled: true
 #   - Ingress GCE class, static-IP, managed-cert, FrontendConfig annotations
 #   - Gateway certmap / pre-shared-certs annotations (networking.gke.io)
 #
-# Future release of the chart should support other Cloud Providers or on-premises
- # features as required
+# ingress: (non-GKE only) Configures the default ingress controller and per-controller
+# settings. The "default" key selects which controller is used when a host does not
+# explicitly set gatewayClass. Each named controller sub-section is optional — if omitted,
+# the controller key name is used as both the gatewayClass and ingressClass value.
+# Per-host gatewayClass always takes precedence over this default.
+#
+# Example — Traefik as the default ingress controller:
+#   ingress:
+#     default: traefik
+#     traefik:
+#       gatewayClass: traefik   # optional, defaults to "traefik"
+#       ingressClass: traefik   # optional, defaults to "traefik"
+#
+# Example — multiple controllers, traefik as default:
+#   ingress:
+#     default: traefik
+#     traefik:
+#       gatewayClass: traefik
+#     nginx:
+#       gatewayClass: nginx
 cloud:
   provider: gke
+  # ingress:
+  #   default: traefik
 
 # Preview mode configuration - when enabled, all resources will be prefixed with "pr{PR}-"
 # and configured for preview environments using a shared preview gateway.

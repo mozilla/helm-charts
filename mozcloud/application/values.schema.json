@@ -1000,6 +1000,31 @@
           "type": "string",
           "description": "Cloud provider. Use \"gke\" for Google Kubernetes Engine (default), or \"on-prem\" for self hosted clusters.",
           "default": "gke"
+        },
+        "ingress": {
+          "type": "object",
+          "description": "Ingress controller configuration for non-GKE deployments. Ignored when cloud.provider is \"gke\".",
+          "properties": {
+            "default": {
+              "type": "string",
+              "description": "Default ingress controller key. Used as the gatewayClass/ingressClass when a host does not specify an explicit gatewayClass."
+            }
+          },
+          "additionalProperties": {
+            "type": "object",
+            "description": "Per-controller configuration. The key is the controller name (e.g. \"traefik\", \"nginx\").",
+            "properties": {
+              "gatewayClass": {
+                "type": "string",
+                "description": "Gateway API GatewayClass name. Defaults to the controller key name if omitted."
+              },
+              "ingressClass": {
+                "type": "string",
+                "description": "Kubernetes Ingress class name used for the kubernetes.io/ingress.class annotation. Defaults to the controller key name if omitted."
+              }
+            },
+            "additionalProperties": false
+          }
         }
       }
     }
