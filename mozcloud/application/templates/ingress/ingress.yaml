@@ -30,7 +30,7 @@ Returns:
 {{- $workloads := .workloads }}
 ingresses:
   {{- range $workloadName, $workloadConfig := $workloads }}
-  {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
+  {{- range $hostName, $hostConfig := default dict $workloadConfig.hosts }}
   {{- if eq $hostConfig.type "external" }}
   {{ $hostName }}:
     component: {{ $workloadConfig.component }}

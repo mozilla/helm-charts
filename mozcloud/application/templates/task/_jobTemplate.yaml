@@ -32,13 +32,13 @@ Returns:
 {{- define "mozcloud.job.jobTemplate" -}}
 {{- $common := deepCopy .common }}
 {{- $context := .context }}
-{{- $jobConfig := mergeOverwrite (default (dict) $common.job) .config }}
+{{- $jobConfig := mergeOverwrite (default dict $common.job) .config }}
 {{- $prefix := include "mozcloud.preview.prefix" $context }}
 {{- $volumes := dict }}
 {{- /* Compute labels for the pod template using the mozcloud-labels library */ -}}
 {{- $chartMetadata := dict "Chart" $context.Chart "Release" $context.Release }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" $context | fromYaml) }}
-{{- $labelsParams := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) "labels" (default (dict) $jobConfig.labels) }}
+{{- $labelsParams := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) "labels" (default dict $jobConfig.labels) }}
 {{- $podLabels := (include "mozcloud.labels" $labelsParams | fromYaml).labels }}
 {{- if $jobConfig.activeDeadlineSeconds }}
 activeDeadlineSeconds: {{ $jobConfig.activeDeadlineSeconds }}
@@ -75,9 +75,9 @@ template:
       {{- $params = dict "containers" $jobConfig.containers "type" "containers" }}
       {{- $containers := include "mozcloud.formatter.containers" $params | fromYaml }}
       {{- range $containerName, $containerConfig := $containers }}
-        {{- $containerConfig = mergeOverwrite (deepCopy (default (dict) $common.container)) $containerConfig }}
+        {{- $containerConfig = mergeOverwrite (deepCopy (default dict $common.container)) $containerConfig }}
       - name: {{ $containerName }}
-        {{- $globalImage := default (dict) $context.Values.global.mozcloud.image }}
+        {{- $globalImage := default dict $context.Values.global.mozcloud.image }}
         {{- $imageRepo := default (($globalImage).repository) ($containerConfig.image).repository }}
         {{- $imageTag := default (($globalImage).tag) ($containerConfig.image).tag }}
         {{- if not $imageRepo }}
@@ -119,13 +119,13 @@ template:
             value: {{ $envVarValue | quote }}
           {{- end }}
         {{- end }}
-        {{- if or $containerConfig.configMaps $containerConfig.externalSecrets }}
+        {{- if or $containerConfig.configMaps $containerConfig.secrets }}
         envFrom:
-          {{- range $configMap := default (list) $containerConfig.configMaps }}
+          {{- range $configMap := default list $containerConfig.configMaps }}
           - configMapRef:
               name: {{ printf "%s%s" $prefix $configMap }}
           {{- end }}
-          {{- range $secret := default (list) $containerConfig.externalSecrets }}
+          {{- range $secret := default list $containerConfig.secrets }}
           - secretRef:
               name: {{ printf "%s%s" $prefix $secret }}
           {{- end }}

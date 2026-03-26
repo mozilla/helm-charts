@@ -48,7 +48,7 @@ Returns:
 {{- /* Collect all unique gateway configurations */}}
 {{- $gatewayConfigs := dict }}
 {{- range $workloadName, $workloadConfig := $workloads }}
-  {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
+  {{- range $hostName, $hostConfig := default dict $workloadConfig.hosts }}
     {{- /* Skip if using a shared gateway */}}
     {{- if not ($hostConfig).sharedGateway }}
       {{- /* Build gateway configuration key based on unique attributes */}}
@@ -73,7 +73,7 @@ Returns:
       {{- end }}
       {{- $certs := list }}
       {{- if eq $hostConfig.type "external" }}
-        {{- if gt (len (default (list) $hostConfig.tls.certs)) 0 }}
+        {{- if gt (len (default list $hostConfig.tls.certs)) 0 }}
           {{- $certs = $hostConfig.tls.certs }}
         {{- else }}
           {{- $certs = list (printf "%s-%s-%s" $globals.app_code $globals.realm $globals.env_code) }}

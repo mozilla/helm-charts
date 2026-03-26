@@ -31,7 +31,7 @@ tasks:
             tag: 1.0.0
           configMaps:
             - app-config
-          externalSecrets:
+          secrets:
             - app-external-secret
 
 # Workload
@@ -45,7 +45,7 @@ workloads:
           tag: 1.0.0
         configMaps:
           - app-config
-        externalSecrets:
+        secrets:
           - app-external-secret
     hosts:
       api-host:

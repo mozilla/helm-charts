@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 0.15.0](https://img.shields.io/badge/Version-0.15.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.16.0](https://img.shields.io/badge/Version-0.16.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~0.15.0
+    version: ~0.16.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -65,10 +65,10 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.common.container.command | list | `[]` |  |
 | tasks.common.container.configMaps | list | `[]` |  |
 | tasks.common.container.envVars | object | `{}` |  |
-| tasks.common.container.externalSecrets | list | `[]` |  |
 | tasks.common.container.image | object | `{}` |  |
 | tasks.common.container.resources.cpu | string | `"100m"` |  |
 | tasks.common.container.resources.memory | string | `"128Mi"` |  |
+| tasks.common.container.secrets | list | `[]` |  |
 | tasks.common.container.security | object | `{}` |  |
 | tasks.common.container.volumes | list | `[]` |  |
 | tasks.common.cronJob.jobHistory | object | `{}` |  |
@@ -90,10 +90,10 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.containers.default.command | list | `[]` |  |
 | tasks.jobs.default.containers.default.configMaps | list | `[]` |  |
 | tasks.jobs.default.containers.default.envVars | object | `{}` |  |
-| tasks.jobs.default.containers.default.externalSecrets | list | `[]` |  |
 | tasks.jobs.default.containers.default.image.repository | string | `""` |  |
 | tasks.jobs.default.containers.default.image.tag | string | `""` |  |
 | tasks.jobs.default.containers.default.resources | object | `{}` |  |
+| tasks.jobs.default.containers.default.secrets | list | `[]` |  |
 | tasks.jobs.default.containers.default.security | object | `{}` |  |
 | tasks.jobs.default.containers.default.volumes | list | `[]` |  |
 | tasks.jobs.default.generateName | bool | `false` |  |
@@ -114,7 +114,6 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.command | list | `[]` |  |
 | workloads.default.containers.default.configMaps | list | `[]` |  |
 | workloads.default.containers.default.envVars | object | `{}` |  |
-| workloads.default.containers.default.externalSecrets | list | `[]` |  |
 | workloads.default.containers.default.healthCheck.liveness.enabled | bool | `true` |  |
 | workloads.default.containers.default.healthCheck.liveness.httpHeaders | list | `[]` |  |
 | workloads.default.containers.default.healthCheck.liveness.path | string | `"/__lbheartbeat__"` |  |
@@ -136,6 +135,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.port | int | `8000` |  |
 | workloads.default.containers.default.resources.cpu | string | `"100m"` |  |
 | workloads.default.containers.default.resources.memory | string | `"128Mi"` |  |
+| workloads.default.containers.default.secrets | list | `[]` |  |
 | workloads.default.containers.default.security | object | `{}` |  |
 | workloads.default.enabled | bool | `true` |  |
 | workloads.default.hosts.default.addresses | list | `[]` |  |
@@ -151,11 +151,11 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.initContainers.default.command | list | `[]` |  |
 | workloads.default.initContainers.default.configMaps | list | `[]` |  |
 | workloads.default.initContainers.default.envVars | object | `{}` |  |
-| workloads.default.initContainers.default.externalSecrets | list | `[]` |  |
 | workloads.default.initContainers.default.image.repository | string | `""` |  |
 | workloads.default.initContainers.default.image.tag | string | `""` |  |
 | workloads.default.initContainers.default.resources.cpu | string | `"100m"` |  |
 | workloads.default.initContainers.default.resources.memory | string | `"128Mi"` |  |
+| workloads.default.initContainers.default.secrets | list | `[]` |  |
 | workloads.default.initContainers.default.security | object | `{}` |  |
 | workloads.default.initContainers.default.sidecar | bool | `false` |  |
 | workloads.default.labels | object | `{}` |  |
