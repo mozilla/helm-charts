@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 0.13.3](https://img.shields.io/badge/Version-0.13.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.14.0](https://img.shields.io/badge/Version-0.14.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~0.13.3
+    version: ~0.14.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -35,7 +35,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | Repository | Name | Version |
 |------------|------|---------|
 | file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.5.0 |
-| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.6.2 |
+| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.7.0 |
 | file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.16 |
 
 ## Values
@@ -45,7 +45,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | cloud.provider | string | `"gke"` |  |
 | configMaps | object | `{}` |  |
 | enabled | bool | `true` |  |
-| externalSecrets | object | `{}` |  |
+| externalSecrets.default.enabled | bool | `true` |  |
 | persistentVolumes | object | `{}` |  |
 | preview.enabled | bool | `false` |  |
 | preview.endpointCheck.activeDeadlineSeconds | int | `900` |  |

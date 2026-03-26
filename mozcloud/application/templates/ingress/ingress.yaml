@@ -61,7 +61,7 @@ ingresses:
                 name: {{ $workloadName }}
                 port: 8080
                 protocol: TCP
-                targetPort: {{ default "http" $hostConfig.targetPort }}
+                targetPort: {{ include "mozcloud.portName" (default "http" $hostConfig.targetPort) }}
         tls:
           {{- $type := ($hostConfig.tls.type) }}
           {{- if or (not $type) (eq $type "certmap") }}
