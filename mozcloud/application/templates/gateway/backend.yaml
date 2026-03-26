@@ -25,9 +25,9 @@ Returns:
 {{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" -}}
 backends:
   {{- range $workloadName, $workloadConfig := $workloads }}
-  {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
+  {{- range $hostName, $hostConfig := default dict $workloadConfig.hosts }}
   {{- if $hostConfig.backends }}
-  {{- range $backend := (default (list) $hostConfig.backends) }}
+  {{- range $backend := (default list $hostConfig.backends) }}
   {{ $backend.name }}:
     component: {{ $workloadConfig.component }}
     api: {{ default "gateway" $hostConfig.api }}

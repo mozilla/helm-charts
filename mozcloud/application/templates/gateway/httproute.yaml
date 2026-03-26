@@ -27,7 +27,7 @@ Returns:
 {{- $workloads := .workloads -}}
 httpRoutes:
   {{- range $workloadName, $workloadConfig := $workloads }}
-  {{- range $hostName, $hostConfig := default (dict) $workloadConfig.hosts }}
+  {{- range $hostName, $hostConfig := default dict $workloadConfig.hosts }}
   {{- if (($hostConfig).httpRoutes).createHttpRoutes }}
   {{ $hostName }}:
     component: {{ $workloadConfig.component }}
@@ -45,7 +45,7 @@ httpRoutes:
         {{- $hasMultipleTypes := false }}
         {{- $types := dict }}
         {{- range $wlName, $wlConfig := $workloads }}
-          {{- range $hName, $hConfig := default (dict) $wlConfig.hosts }}
+          {{- range $hName, $hConfig := default dict $wlConfig.hosts }}
             {{- if not ($hConfig).sharedGateway }}
               {{- $_ := set $types $hConfig.type true }}
             {{- end }}

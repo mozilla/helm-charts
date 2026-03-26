@@ -55,7 +55,7 @@ Returns:
 {{- /* Generate labels */ -}}
 {{- $params := mergeOverwrite .context (dict "labels" .labels) -}}
 {{- $labels := include "mozcloud-labels-lib.labels" $params | fromYaml -}}
-{{- $labels = mergeOverwrite (default (dict) .labels) $labels -}}
+{{- $labels = mergeOverwrite (default dict .labels) $labels -}}
 {{- $_ := set $output "labels" $labels -}}
 {{- /* Generate selector labels */ -}}
 {{- $selectorLabels := include "mozcloud-labels-lib.selectorLabels" $params | fromYaml -}}
