@@ -3,13 +3,13 @@ Formatting helpers
 */}}
 {{- /*
 Formatter for CronJob configurations. Merges each user-defined CronJob entry
-with defaults from the protected "mozcloud-cronjob" key, then merges in common
+with defaults from the protected "default" key, then merges in common
 task settings from .Values.tasks.common.cronJob, and returns the consolidated
 CronJobs dict.
 
 The protected key acts as a defaults template: it is stripped from the output
 and its values are deep-merged as a base under each named CronJob before
-applying common config. If only the protected key is present (no user-defined
+applying common config. If only the protected "default" key is present (no user-defined
 CronJobs), it is passed through as-is so that the single default CronJob still
 renders.
 
@@ -34,17 +34,17 @@ Example:
       cronJob:
         ttlSecondsAfterFinished: 300
     cronJobs:
-      mozcloud-cronjob:         # protected default key
+      default:                  # protected default key
         schedule: "0 * * * *"
         containers:
-          mozcloud-container:
+          default:
             resources:
               cpu: 250m
               memory: 256Mi
       cleanup-job:              # user-defined CronJob
         schedule: "0 2 * * *"
         containers:
-          mozcloud-container:
+          default:
             resources:
               cpu: 500m
 
@@ -53,7 +53,7 @@ Example:
       schedule: "0 2 * * *"    # user value
       ttlSecondsAfterFinished: 300  # from common.cronJob
       containers:
-        mozcloud-container:
+        default:
           resources:
             cpu: 500m           # user value wins (mergeOverwrite)
             memory: 256Mi       # inherited from default
@@ -62,7 +62,7 @@ Example:
 {{- $common := default dict .common.cronJob -}}
 {{- $cronJobValues := .cronJobs -}}
 {{- $cronJobs := .cronJobs -}}
-{{- $defaultKey := "mozcloud-cronjob" -}}
+{{- $defaultKey := "default" -}}
 {{- /* Remove default job key and merge with user-defined keys, if defined */ -}}
 {{- if or
   (and
@@ -94,12 +94,12 @@ Example:
 
 {{- /*
 Formatter for Job configurations. Merges each user-defined Job entry with
-defaults from the protected "mozcloud-job" key, then merges in common task
+defaults from the protected "default" key, then merges in common task
 settings from .Values.tasks.common.job, and returns the consolidated Jobs dict.
 
 The protected key acts as a defaults template: it is stripped from the output
 and its values are deep-merged as a base under each named Job before applying
-common config. If only the protected key is present (no user-defined Jobs), it
+common config. If only the protected "default" key is present (no user-defined Jobs), it
 is passed through as-is so that the single default Job still renders.
 
 In preview mode, Job names are prefixed with "pr<PR number>-".
@@ -124,15 +124,15 @@ Example:
         restartPolicy: Never
         ttlSecondsAfterFinished: 300
     jobs:
-      mozcloud-job:             # protected default key
+      default:                  # protected default key
         containers:
-          mozcloud-container:
+          default:
             resources:
               cpu: 250m
               memory: 256Mi
       db-migrate:               # user-defined Job
         containers:
-          mozcloud-container:
+          default:
             resources:
               cpu: 500m
 
@@ -141,7 +141,7 @@ Example:
       restartPolicy: Never          # from common.job
       ttlSecondsAfterFinished: 300  # from common.job
       containers:
-        mozcloud-container:
+        default:
           resources:
             cpu: 500m           # user value wins (mergeOverwrite)
             memory: 256Mi       # inherited from default
@@ -150,7 +150,7 @@ Example:
 {{- $common := default dict .common.job -}}
 {{- $jobValues := .jobs -}}
 {{- $jobs := .jobs -}}
-{{- $defaultKey := "mozcloud-job" -}}
+{{- $defaultKey := "default" -}}
 {{- /* Remove default job key and merge with user-defined keys, if defined */ -}}
 {{- if or
   (and

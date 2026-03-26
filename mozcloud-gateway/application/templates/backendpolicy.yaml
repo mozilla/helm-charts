@@ -2,12 +2,12 @@
 {{- $backends := .Values.backends }}
 {{- /* Remove default key and merge with user-defined keys, if defined */}}
 {{- if or
-  (and (eq (keys .Values.backends | len) 1) (ne (keys .Values.backends | first) "mozcloud-gateway"))
+  (and (eq (keys .Values.backends | len) 1) (ne (keys .Values.backends | first) "default"))
   (gt (keys .Values.backends | len) 1)
 }}
-  {{- $backends = omit .Values.backends "mozcloud-gateway" }}
+  {{- $backends = omit .Values.backends "default" }}
   {{- range $name, $config := $backends }}
-    {{- $_ := set $backends $name (mergeOverwrite (index $.Values.backends "mozcloud-gateway") $config) }}
+    {{- $_ := set $backends $name (mergeOverwrite (index $.Values.backends "default") $config) }}
   {{- end }}
 {{- end }}
 {{- $params := dict "backendConfig" (dict "backends" $backends) "backendPolicyConfig" .Values.backendPolicy "Chart" .Chart "Release" .Release }}

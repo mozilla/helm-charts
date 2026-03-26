@@ -66,11 +66,12 @@ Resources in mozcloud use dicts keyed by resource name rather than lists. Within
 
 | Dict (values.yaml) | Protected default key |
 |---|---|
-| `workloads` | `mozcloud-workload` |
-| `workloads.*.containers` | `mozcloud-container` |
-| `workloads.*.initContainers` | `mozcloud-init-container` |
-| `tasks.cronJobs` | `mozcloud-cronjob` |
-| `tasks.jobs` | `mozcloud-job` |
+| `workloads` | `default` |
+| `workloads.*.containers` | `default` |
+| `workloads.*.initContainers` | `default` |
+| `workloads.*.hosts` | `default` |
+| `tasks.cronJobs` | `default` |
+| `tasks.jobs` | `default` |
 
 When adding a new resource type that follows this pattern, define its protected key, omit it from rendering, and merge it into each real entry using the formatter helpers.
 
