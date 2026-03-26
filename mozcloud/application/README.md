@@ -65,10 +65,10 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.common.container.command | list | `[]` |  |
 | tasks.common.container.configMaps | list | `[]` |  |
 | tasks.common.container.envVars | object | `{}` |  |
-| tasks.common.container.externalSecrets | list | `[]` |  |
 | tasks.common.container.image | object | `{}` |  |
 | tasks.common.container.resources.cpu | string | `"100m"` |  |
 | tasks.common.container.resources.memory | string | `"128Mi"` |  |
+| tasks.common.container.secrets | list | `[]` |  |
 | tasks.common.container.security | object | `{}` |  |
 | tasks.common.container.volumes | list | `[]` |  |
 | tasks.common.cronJob.jobHistory | object | `{}` |  |
@@ -92,10 +92,10 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.containers.default.configMaps | list | `[]` |  |
 | tasks.jobs.default.containers.default.envFromFields | object | `{}` |  |
 | tasks.jobs.default.containers.default.envVars | object | `{}` |  |
-| tasks.jobs.default.containers.default.externalSecrets | list | `[]` |  |
 | tasks.jobs.default.containers.default.image.repository | string | `""` |  |
 | tasks.jobs.default.containers.default.image.tag | string | `""` |  |
 | tasks.jobs.default.containers.default.resources | object | `{}` |  |
+| tasks.jobs.default.containers.default.secrets | list | `[]` |  |
 | tasks.jobs.default.containers.default.security | object | `{}` |  |
 | tasks.jobs.default.containers.default.volumes | list | `[]` |  |
 | tasks.jobs.default.generateName | bool | `false` |  |
@@ -119,7 +119,6 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.command | list | `[]` |  |
 | workloads.default.containers.default.configMaps | list | `[]` |  |
 | workloads.default.containers.default.envVars | object | `{}` |  |
-| workloads.default.containers.default.externalSecrets | list | `[]` |  |
 | workloads.default.containers.default.healthCheck.liveness.enabled | bool | `true` |  |
 | workloads.default.containers.default.healthCheck.liveness.httpHeaders | list | `[]` |  |
 | workloads.default.containers.default.healthCheck.liveness.path | string | `"/__lbheartbeat__"` |  |
@@ -141,6 +140,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.port | int | `8000` |  |
 | workloads.default.containers.default.resources.cpu | string | `"100m"` |  |
 | workloads.default.containers.default.resources.memory | string | `"128Mi"` |  |
+| workloads.default.containers.default.secrets | list | `[]` |  |
 | workloads.default.containers.default.security | object | `{}` |  |
 | workloads.default.enabled | bool | `true` |  |
 | workloads.default.hosts.default.addresses | list | `[]` |  |
@@ -156,11 +156,11 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.initContainers.default.command | list | `[]` |  |
 | workloads.default.initContainers.default.configMaps | list | `[]` |  |
 | workloads.default.initContainers.default.envVars | object | `{}` |  |
-| workloads.default.initContainers.default.externalSecrets | list | `[]` |  |
 | workloads.default.initContainers.default.image.repository | string | `""` |  |
 | workloads.default.initContainers.default.image.tag | string | `""` |  |
 | workloads.default.initContainers.default.resources.cpu | string | `"100m"` |  |
 | workloads.default.initContainers.default.resources.memory | string | `"128Mi"` |  |
+| workloads.default.initContainers.default.secrets | list | `[]` |  |
 | workloads.default.initContainers.default.security | object | `{}` |  |
 | workloads.default.initContainers.default.sidecar | bool | `false` |  |
 | workloads.default.labels | object | `{}` |  |

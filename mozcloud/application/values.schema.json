@@ -1133,7 +1133,7 @@
             "type": "string"
           }
         },
-        "externalSecrets": {
+        "secrets": {
           "type": "array",
           "items": {
             "type": "string"

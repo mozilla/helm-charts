@@ -19,9 +19,9 @@ Returns:
   (string) YAML-encoded dict of merged annotations.
 */ -}}
 {{- define "mozcloud.annotations" -}}
-{{- $annotations := default (dict) .annotations -}}
+{{- $annotations := default dict .annotations -}}
 {{- $context := .context -}}
-{{- $otel := default (dict) .otel -}}
+{{- $otel := default dict .otel -}}
 {{- $type := .type -}}
 {{- $params := dict "annotations" $annotations "type" $type "otel" $otel -}}
 {{- if $otel -}}
@@ -126,7 +126,7 @@ Returns:
 {{ include "mozcloud.annotations.otel.resources" (dict "labels" $labels) }}
   {{- /* Auto instrumentation */}}
   {{- $autoInstrumentationAnnotations := dict }}
-  {{- $containers := default (list) $config.containers }}
+  {{- $containers := default list $config.containers }}
   {{- $autoInstrumentationEnabled := and $containers (dig "autoInstrumentation" "enabled" false $config) ($config.autoInstrumentation).language }}
   {{- if $autoInstrumentationEnabled }}
     {{- $params := dict "containers" $containers "language" $config.autoInstrumentation.language }}
