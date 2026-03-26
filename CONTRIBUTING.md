@@ -240,9 +240,9 @@ Helm can deep-merge dicts across values files (e.g. `values.yaml` + `values-prod
 
 Charts that use dict-based collections can designate a **protected key** per collection type to act as a chart-level defaults template. The key is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry, with user values taking precedence.
 
-For example, the `mozcloud` chart defines `mozcloud-workload` as the protected key for the `workloads` collection and `mozcloud-container` for the `containers` collection. A user who defines a workload named `my-service` will automatically inherit all defaults from the `mozcloud-workload` entry without having to repeat them. The `mozcloud-gateway` chart similarly uses `mozcloud-gateway` as the protected key for the `gateway.gateways`, `httpRoute.httpRoutes`, and `backends` collections.
+All charts that use this pattern designate `default` as the protected key for each collection. A user who defines a workload named `my-service` will automatically inherit all defaults from the `default` entry without having to repeat them.
 
-Avoid naming your objects after a chart's protected keys, as those entries are treated as defaults rather than real objects (unless they are the only entry in the collection). The full list of protected keys for each application chart can be found in that chart's `README.md`, as applicable.
+Avoid naming your objects `default`, as that entry is treated as a defaults template rather than a real object (unless it is the only entry in the collection).
 
 ---
 

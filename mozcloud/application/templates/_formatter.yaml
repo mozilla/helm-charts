@@ -20,15 +20,15 @@ templates within the dict:
 
   Collection        Protected key
   ----------        -------------
-  workloads         mozcloud-workload
-  containers        mozcloud-container
-  init-containers   mozcloud-init-container
-  cronJobs          mozcloud-cronjob
-  jobs              mozcloud-job
+  workloads         default
+  containers        default
+  init-containers   default
+  cronJobs          default
+  jobs              default
 
 Users are instructed in values.yaml not to name their objects after these keys.
 If a user defines only a single object and names it after the protected key
-(e.g. only one workload called "mozcloud-workload"), that object is treated as
+(e.g. only one workload called "default"), that object is treated as
 a regular workload and rendered as-is rather than stripped and used only as a
 defaults source.
 
@@ -48,8 +48,7 @@ objects.
 {{- /*
 Formatter for container and init-container configurations. Merges each
 user-defined container entry with defaults from the protected key
-("mozcloud-container" for containers, "mozcloud-init-container" for init
-containers), then returns the consolidated containers dict.
+("default" for both containers and init-containers), then returns the consolidated containers dict.
 
 The protected key acts as a defaults template: it is stripped from the output
 and its values are deep-merged as a base under each named container. If only
@@ -73,7 +72,7 @@ Returns:
 Example:
   Input:
     containers:
-      mozcloud-container:       # protected default key
+      default:                  # protected default key
         port: 8000
         resources:
           cpu: 250m
@@ -98,7 +97,7 @@ Example:
 {{- define "mozcloud.formatter.containers" -}}
 {{- $containerValues := .containers -}}
 {{- $containers := .containers -}}
-{{- $defaultKey := ternary "mozcloud-init-container" "mozcloud-container" (eq .type "init-containers") -}}
+{{- $defaultKey := "default" -}}
 {{- /* Remove default containers key and merge with user-defined keys, if defined */ -}}
 {{- if or
   (and (eq (keys $containerValues | len) 1) (eq (keys $containerValues | first) $defaultKey))
@@ -120,8 +119,8 @@ given component type, returning at most one matching entry per workload. Used
 by mozcloud.formatter.workloads to split a workload's hosts by API type (e.g.
 separating "gateway" hosts from "ingress" hosts).
 
-If the matching host's key is the protected name "name", it is renamed to the
-workload name in the output dict.
+If the matching host's key is the protected name "default", it is renamed to
+the workload name in the output dict.
 
 Params:
   component (string):    (required) The API type to filter by (e.g. "gateway",
@@ -130,7 +129,7 @@ Params:
                          keyed by host name.
   workloadName (string): (required) The name of the workload that owns these
                          hosts. Used as a fallback key if the matched host's
-                         key is the protected "name" value.
+                         key is the protected "default" value.
 
 Returns:
   (string) YAML-encoded dict of filtered host configurations, keyed by host
@@ -164,7 +163,7 @@ Example:
     If, for some reason, a user does not set a real name under
     .Values.workloads.hosts, use the workload name.
     */}}
-    {{- if eq $hostName "name" -}}
+    {{- if eq $hostName "default" -}}
       {{- $hostName = $workloadName -}}
     {{- end -}}
     {{- $_ := set $output $hostName $hostConfig -}}
@@ -176,9 +175,9 @@ Example:
 
 {{- /*
 Formatter for workload configurations. Merges each user-defined workload entry
-with defaults from the protected "mozcloud-workload" key, including nested
-host defaults from the "name" key under
-.Values.workloads.mozcloud-workload.hosts, then returns the consolidated
+with defaults from the protected "default" key, including nested
+host defaults from the "default" key under
+.Values.workloads.default.hosts, then returns the consolidated
 workloads dict.
 
 The protected key acts as a defaults template: it is stripped from the output
@@ -214,16 +213,16 @@ Returns:
 Example:
   Input:
     workloads:
-      mozcloud-workload:        # protected default key
+      default:                  # protected default key
         component: web
         containers:
-          mozcloud-container:
+          default:
             resources:
               cpu: 250m
               memory: 256Mi
       my-app:                   # user-defined workload
         containers:
-          mozcloud-container:
+          default:
             resources:
               cpu: 500m
 
@@ -231,7 +230,7 @@ Example:
     my-app:
       component: web            # inherited from default
       containers:
-        mozcloud-container:
+        default:
           resources:
             cpu: 500m           # user value wins (mergeOverwrite)
             memory: 256Mi       # inherited from default
@@ -242,18 +241,18 @@ Example:
 {{- $workloads := .workloads -}}
 {{- /* Remove default workloads key and merge with user-defined keys, if defined */}}
 {{- if or
-  (and (eq (keys $workloadValues | len) 1) (keys $workloadValues | first) "mozcloud-workload")
+  (and (eq (keys $workloadValues | len) 1) (keys $workloadValues | first) "default")
   (gt (keys $workloadValues | len) 1)
 }}
-  {{- $workloads = omit $workloads "mozcloud-workload" -}}
+  {{- $workloads = omit $workloads "default" -}}
   {{- range $name, $config := $workloads -}}
-    {{- $defaultWorkload := index $workloadValues "mozcloud-workload" -}}
+    {{- $defaultWorkload := index $workloadValues "default" -}}
     {{- /* Merge host configs with defaults */}}
     {{- $hostValues := $defaultWorkload.hosts -}}
     {{- $hosts := dict -}}
     {{- $configHosts := default (dict) $config.hosts -}}
     {{- range $hostName, $hostConfig := $configHosts -}}
-      {{- $_ := set $hosts $hostName (mergeOverwrite ($hostValues.name | deepCopy) $hostConfig) -}}
+      {{- $_ := set $hosts $hostName (mergeOverwrite ($hostValues.default | deepCopy) $hostConfig) -}}
     {{- end -}}
     {{- if gt (keys $hosts | len) 0 -}}
       {{- /*
@@ -291,7 +290,7 @@ Example:
 {{- $workloads = $filteredWorkloads -}}
 {{- range $name, $config := $workloads -}}
   {{- if not $config.component -}}
-    {{- $failMessage := printf "A component was not defined for workload \"%s\". You must define a component in \".Values.mozcloud.workloads.%s.component\". See values.yaml in the mozcloud-workload chart for more details." $name $name -}}
+    {{- $failMessage := printf "A component was not defined for workload \"%s\". You must define a component in \".Values.mozcloud.workloads.%s.component\". See values.yaml in the mozcloud chart for more details." $name $name -}}
     {{- fail $failMessage -}}
   {{- end -}}
 {{- end -}}

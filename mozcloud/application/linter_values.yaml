@@ -7,5 +7,5 @@ global:
     realm: nonprod
 
 workloads:
-  mozcloud-workload:
+  default:
     component: mock-component
