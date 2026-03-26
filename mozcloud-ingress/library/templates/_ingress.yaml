@@ -35,7 +35,12 @@ metadata:
     networking.gke.io/v1beta1.FrontendConfig: {{ $ingress.name }}
   {{- end }}
 spec:
-  {{- if and (eq $provider "gke") (eq (len $ingress.hosts) 1) (eq (len (first $ingress.hosts).paths) 1) }}
+  {{- if and
+    (eq $provider "gke")
+    (eq (len $ingress.hosts) 1)
+    (eq (len (first $ingress.hosts).paths) 1)
+    (eq (len (first $ingress.hosts).domains) 1)
+  }}
   {{- range $host := $ingress.hosts }}
   {{- range $path := $host.paths }}
   {{- $backend := mergeOverwrite $backend_defaults (default (dict) $path.backend.config) }}
