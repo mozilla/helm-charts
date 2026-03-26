@@ -176,8 +176,8 @@ Only include Gateway and related resources if we have Gateway hosts defined
   Gateways and Gateway policies - Skip if preview mode is using shared gateway
   */}}
   {{- if not (include "mozcloud.preview.usePreviewHttpRoute" .) }}
-    {{- $cloudConfig := index .Values "cloud" | default dict }}
-    {{- $provider := $cloudConfig.provider | default "gke" }}
+    {{- $cloudConfig := default dict .Values.cloud }}
+    {{- $provider := default "gke" $cloudConfig.provider }}
     {{- $ingressConfig := default dict $cloudConfig.ingress }}
     {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads "provider" $provider "ingressConfig" $ingressConfig) }}
     {{- $gateways := include "mozcloud.gateway.gateways" $params | fromYaml }}
