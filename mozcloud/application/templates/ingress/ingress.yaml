@@ -111,8 +111,17 @@ ingresses:
     {{- /*
     Ingresses and related resources
     */}}
-    {{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" }}
-    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads "provider" $provider) }}
+    {{- $cloudConfig := index .Values "cloud" | default dict }}
+    {{- $provider := $cloudConfig.provider | default "gke" }}
+    {{- $cloudIngressConfig := default dict $cloudConfig.ingress }}
+    {{- /* Resolve ingressClass: cloud.ingress.<default>.ingressClass → cloud.ingress.default → "" */}}
+    {{- $defaultController := $cloudIngressConfig.default }}
+    {{- $controllerConfig := dict }}
+    {{- if $defaultController }}
+      {{- $controllerConfig = default dict (index $cloudIngressConfig $defaultController) }}
+    {{- end }}
+    {{- $ingressClass := default $defaultController $controllerConfig.ingressClass }}
+    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads "provider" $provider "ingressClass" $ingressClass) }}
     {{- $ingresses := (include "mozcloud.config.ingresses" $params | fromYaml).ingresses }}
     {{- range $ingressName, $ingressConfig := $ingresses }}
       {{- $_ := set $labelParams "component_code" $ingressConfig.component }}
