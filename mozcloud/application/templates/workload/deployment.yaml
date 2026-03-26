@@ -10,6 +10,7 @@
 {{- /* In preview mode, use prefixed names matching ExternalSecret; otherwise maintain backwards compatibility */}}
 {{- $prefix := include "mozcloud.preview.prefix" . }}
 {{- $defaultSecretName := printf "%s%s-secrets" $prefix $globals.chart }}
+{{- $defaultSecretEnabled := dig "default" "enabled" true (default dict .Values.externalSecrets) }}
 {{- $defaultServiceAccount := printf "%s%s" $prefix $globals.app_code -}}
 
 {{- range $workloadName, $workloadConfig := $workloads }}
@@ -207,6 +208,7 @@ spec:
               value: {{ $envVarValue | quote }}
             {{- end }}
           {{- end }}
+          {{- if or $containerConfig.configMaps $defaultSecretEnabled $containerConfig.externalSecrets }}
           envFrom:
             {{- if $containerConfig.configMaps }}
             {{- range $configMap := $containerConfig.configMaps }}
@@ -214,14 +216,17 @@ spec:
                 name: {{ printf "%s%s" $prefix $configMap }}
             {{- end }}
             {{- end }}
+            {{- if $defaultSecretEnabled }}
             - secretRef:
                 name: {{ $defaultSecretName }}
+            {{- end }}
             {{- if $containerConfig.externalSecrets }}
             {{- range $externalSecret := $containerConfig.externalSecrets }}
             - secretRef:
                 name: {{ printf "%s%s" $prefix $externalSecret }}
             {{- end }}
             {{- end }}
+          {{- end }}
           {{- if or
               $workloadConfig.hosts
               (($containerConfig.healthCheck).readiness).enabled
@@ -352,6 +357,7 @@ spec:
               value: {{ $envVarValue | quote }}
             {{- end }}
           {{- end }}
+          {{- if or $containerConfig.configMaps $defaultSecretEnabled $containerConfig.externalSecrets }}
           envFrom:
             {{- if $containerConfig.configMaps }}
             {{- range $configMap := $containerConfig.configMaps }}
@@ -359,14 +365,17 @@ spec:
                 name: {{ printf "%s%s" $prefix $configMap }}
             {{- end }}
             {{- end }}
+            {{- if $defaultSecretEnabled }}
             - secretRef:
                 name: {{ $defaultSecretName }}
+            {{- end }}
             {{- if $containerConfig.externalSecrets }}
             {{- range $externalSecret := $containerConfig.externalSecrets }}
             - secretRef:
                 name: {{ printf "%s%s" $prefix $externalSecret }}
             {{- end }}
             {{- end }}
+          {{- end }}
           {{- if or
               $workloadConfig.hosts
               (($containerConfig.healthCheck).readiness).enabled
