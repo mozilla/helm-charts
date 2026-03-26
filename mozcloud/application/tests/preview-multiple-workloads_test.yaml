@@ -25,7 +25,8 @@ tests:
   - it: API deployment is prefixed with PR number
     template: workload/deployment.yaml
     documentSelector:
-      path: $[?(@.kind == "Deployment" && @.metadata.name == "pr456-api-service")]
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: pr456-api-service
     asserts:
       - equal:
           path: metadata.name
@@ -34,7 +35,8 @@ tests:
   - it: Web deployment is prefixed with PR number
     template: workload/deployment.yaml
     documentSelector:
-      path: $[?(@.kind == "Deployment" && @.metadata.name == "pr456-web-service")]
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: pr456-web-service
     asserts:
       - equal:
           path: metadata.name
@@ -43,7 +45,8 @@ tests:
   - it: Admin deployment is prefixed with PR number
     template: workload/deployment.yaml
     documentSelector:
-      path: $[?(@.kind == "Deployment" && @.metadata.name == "pr456-admin-service")]
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: pr456-admin-service
     asserts:
       - equal:
           path: metadata.name
@@ -53,7 +56,8 @@ tests:
   - it: API HTTPRoute has correct preview hostname
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-api-host")]
+      path: metadata.name
+      value: pr456-api-host
     asserts:
       - contains:
           path: spec.hostnames
@@ -62,7 +66,8 @@ tests:
   - it: API HTTPRoute uses shared preview gateway
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-api-host")]
+      path: metadata.name
+      value: pr456-api-host
     asserts:
       - isSubset:
           path: spec.parentRefs[0]
@@ -73,7 +78,8 @@ tests:
   - it: API HTTPRoute routes to prefixed service
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-api-host")]
+      path: metadata.name
+      value: pr456-api-host
     asserts:
       - equal:
           path: spec.rules[0].backendRefs[0].name
@@ -82,7 +88,8 @@ tests:
   - it: API HTTPRoute has correct component label
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-api-host")]
+      path: metadata.name
+      value: pr456-api-host
     asserts:
       - equal:
           path: metadata.labels.component_code
@@ -92,7 +99,8 @@ tests:
   - it: Web HTTPRoute has correct preview hostname
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-web-host")]
+      path: metadata.name
+      value: pr456-web-host
     asserts:
       - contains:
           path: spec.hostnames
@@ -101,7 +109,8 @@ tests:
   - it: Web HTTPRoute uses shared preview gateway
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-web-host")]
+      path: metadata.name
+      value: pr456-web-host
     asserts:
       - isSubset:
           path: spec.parentRefs[0]
@@ -112,7 +121,8 @@ tests:
   - it: Web HTTPRoute routes to prefixed service
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-web-host")]
+      path: metadata.name
+      value: pr456-web-host
     asserts:
       - equal:
           path: spec.rules[0].backendRefs[0].name
@@ -121,7 +131,8 @@ tests:
   - it: Web HTTPRoute has correct component label
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-web-host")]
+      path: metadata.name
+      value: pr456-web-host
     asserts:
       - equal:
           path: metadata.labels.component_code
@@ -131,7 +142,8 @@ tests:
   - it: Admin HTTPRoute has correct preview hostname
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-admin-host")]
+      path: metadata.name
+      value: pr456-admin-host
     asserts:
       - contains:
           path: spec.hostnames
@@ -140,7 +152,8 @@ tests:
   - it: Admin HTTPRoute uses shared preview gateway
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-admin-host")]
+      path: metadata.name
+      value: pr456-admin-host
     asserts:
       - isSubset:
           path: spec.parentRefs[0]
@@ -151,7 +164,8 @@ tests:
   - it: Admin HTTPRoute routes to prefixed service
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-admin-host")]
+      path: metadata.name
+      value: pr456-admin-host
     asserts:
       - equal:
           path: spec.rules[0].backendRefs[0].name
@@ -160,7 +174,8 @@ tests:
   - it: Admin HTTPRoute has correct component label
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-admin-host")]
+      path: metadata.name
+      value: pr456-admin-host
     asserts:
       - equal:
           path: metadata.labels.component_code
@@ -170,7 +185,8 @@ tests:
   - it: API HTTP to HTTPS redirect route is created
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-api-host-http-redirect")]
+      path: metadata.name
+      value: pr456-api-host-http-redirect
     asserts:
       - contains:
           path: spec.hostnames
@@ -185,7 +201,8 @@ tests:
   - it: Web HTTP to HTTPS redirect route is created
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-web-host-http-redirect")]
+      path: metadata.name
+      value: pr456-web-host-http-redirect
     asserts:
       - contains:
           path: spec.hostnames
@@ -194,7 +211,8 @@ tests:
   - it: Admin HTTP to HTTPS redirect route is created
     template: preview/httpRoute.yaml
     documentSelector:
-      path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "pr456-admin-host-http-redirect")]
+      path: metadata.name
+      value: pr456-admin-host-http-redirect
     asserts:
       - contains:
           path: spec.hostnames
