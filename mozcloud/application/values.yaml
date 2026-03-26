@@ -90,15 +90,19 @@ preview:
 #         ORIGIN: "https://{{ .Values.global.hostname }}/"
 configMaps: {}
 
-# External secret names and versions to mount in containers.
+# External secrets to sync from Google Secret Manager (GSM) into Kubernetes
+# secrets. Each entry here creates an ExternalSecret resource that produces a
+# Kubernetes secret. The key name (e.g. "kubernetes-secret-name") becomes the
+# name of the resulting Kubernetes secret. Use that same name in the `secrets`
+# list within container and init container configurations to mount the contents
+# of that secret as environment variables.
 #
 # Format:
 #
 #   externalSecrets:
-#     # This is the name of the Kubernetes secret you will be mounting to
-#     # workload and/or job containers as environment variables. This is the
-#     # name you will reference in `externalSecrets` sections in container
-#     # configurations.
+#     # This is the name of the resulting Kubernetes secret. Reference this
+#     # same name in the `secrets` list of any container or init container
+#     # configuration to have it mounted as environment variables.
 #     kubernetes-secret-name:
 #       # This should be the name of the secret in Google Secret Manager (GSM).
 #       gsmSecretName: ''
@@ -247,7 +251,7 @@ tasks:
       command: []
       configMaps: []
       envVars: {}
-      externalSecrets: []
+      secrets: []
       image: {}
       resources:
         cpu: 100m
@@ -446,24 +450,23 @@ tasks:
           #     KEY2: VALUE2
           envVars: {}
 
-          # A list of external secret names and versions to mount in containers.
-          # External secrets can be defined using the externalSecrets key above.
+          # A list of Kubernetes secret names to mount in this container as
+          # environment variables. Each entry is the name of a Kubernetes secret
+          # whose contents will be injected via envFrom.
           #
-          # By default an external secret called "app-secrets" will be created. This
-          # will map to a GSM secret called "xxxx-gke-app-secrets" where "xxxx" is
-          # the value defined in `.Values.global.mozcloud.env_code` (ie. "dev",
-          # "stage", "prod"). There will be a corresponding Kubernetes secret called
-          # "app-secrets" which will automatically be mounted in your app container
-          # using the "latest" version.
+          # Kubernetes secrets managed by this chart are defined in the top-level
+          # `externalSecrets` section. The key name you define there is the
+          # Kubernetes secret name to reference here.
           #
-          # Any secrets you define here will be created IN ADDITION to that secret.
+          # You may also reference any Kubernetes secret not managed by this
+          # chart (e.g. secrets created externally).
           #
           # Format:
           #
-          #   externalSecrets:
-          #     - external-secret-name
-          #     - another-external-secret-name
-          externalSecrets: []
+          #   secrets:
+          #     - kubernetes-secret-name
+          #     - another-kubernetes-secret-name
+          secrets: []
 
           # The image repo, name, and tag to use for the container. The format is:
           #
@@ -820,25 +823,27 @@ workloads:
         #     KEY2: VALUE2
         envVars: {}
 
-        # A list of external secret names and versions to mount in containers.
-        # External secrets can be defined using the externalSecrets key above.
+        # A list of Kubernetes secret names to mount in this container as
+        # environment variables. Each entry is the name of a Kubernetes secret
+        # whose contents will be injected via envFrom.
         #
-        # By default an external secret called "app-secrets" will be created.
-        # This will map to a GSM secret called "xxxx-gke-app-secrets" where
-        # "xxxx" is the value defined in `.Values.global.mozcloud.env_code`
-        # (ie. "dev", "stage", "prod"). There will be a corresponding
-        # Kubernetes secret called "app-secrets" which will automatically
-        # be mounted in your app container using the "latest" version.
+        # Kubernetes secrets managed by this chart are defined in the top-level
+        # `externalSecrets` section. The key name you define there is the
+        # Kubernetes secret name to reference here.
         #
-        # Any secrets you define here will be created IN ADDITION to that
-        # secret.
+        # You may also reference any Kubernetes secret not managed by this
+        # chart (e.g. secrets created externally).
+        #
+        # Note: the default Kubernetes secret ("<app>-secrets") is automatically
+        # mounted in all containers (if enabled) and does not need to be listed
+        # here. See the top-level `externalSecrets` section to disable it.
         #
         # Format:
         #
-        #   externalSecrets:
-        #     - external-secret-name
-        #     - another-external-secret-name
-        externalSecrets: []
+        #   secrets:
+        #     - kubernetes-secret-name
+        #     - another-kubernetes-secret-name
+        secrets: []
 
         # Health check configurations for the container.
         healthCheck:
@@ -1358,25 +1363,27 @@ workloads:
         #     KEY2: VALUE2
         envVars: {}
 
-        # A list of external secret names and versions to mount in containers.
-        # External secrets can be defined using the externalSecrets key above.
+        # A list of Kubernetes secret names to mount in this init container as
+        # environment variables. Each entry is the name of a Kubernetes secret
+        # whose contents will be injected via envFrom.
         #
-        # By default an external secret called "app-secrets" will be created.
-        # This will map to a GSM secret called "xxxx-gke-app-secrets" where
-        # "xxxx" is the value defined in `.Values.global.mozcloud.env_code`
-        # (ie. "dev", "stage", "prod"). There will be a corresponding
-        # Kubernetes secret called "app-secrets" which will automatically
-        # be mounted in your app container using the "latest" version.
+        # Kubernetes secrets managed by this chart are defined in the top-level
+        # `externalSecrets` section. The key name you define there is the
+        # Kubernetes secret name to reference here.
         #
-        # Any secrets you define here will be created IN ADDITION to that
-        # secret.
+        # You may also reference any Kubernetes secret not managed by this
+        # chart (e.g. secrets created externally).
+        #
+        # Note: the default Kubernetes secret ("<app>-secrets") is automatically
+        # mounted in all init containers (if enabled) and does not need to be
+        # listed here. See the top-level `externalSecrets` section to disable it.
         #
         # Format:
         #
-        #   externalSecrets:
-        #     - external-secret-name
-        #     - another-external-secret-name
-        externalSecrets: []
+        #   secrets:
+        #     - kubernetes-secret-name
+        #     - another-kubernetes-secret-name
+        secrets: []
 
         # The image repo, name, and tag to use for the container. The format is:
         #

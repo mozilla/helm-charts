@@ -250,7 +250,7 @@ Example:
     {{- /* Merge host configs with defaults */}}
     {{- $hostValues := $defaultWorkload.hosts -}}
     {{- $hosts := dict -}}
-    {{- $configHosts := default (dict) $config.hosts -}}
+    {{- $configHosts := default dict $config.hosts -}}
     {{- range $hostName, $hostConfig := $configHosts -}}
       {{- $_ := set $hosts $hostName (mergeOverwrite ($hostValues.default | deepCopy) $hostConfig) -}}
     {{- end -}}

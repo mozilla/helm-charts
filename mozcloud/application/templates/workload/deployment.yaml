@@ -76,7 +76,7 @@ spec:
       {{- if gt (keys $volumes | len) 0 }}
         {{- range $volumeName, $volumeConfig := $volumes }}
           {{- if eq $volumeConfig.type "configMap" }}
-            {{- $configMapData := index (default (dict) $context.Values.configMaps) $volumeName }}
+            {{- $configMapData := index (default dict $context.Values.configMaps) $volumeName }}
             {{- if $configMapData }}
               {{- $checksumKey := printf "checksum/configmap-%s" $volumeName }}
               {{- $_ := set $configMapChecksums $checksumKey ($configMapData | toYaml | sha256sum) }}
@@ -208,7 +208,7 @@ spec:
               value: {{ $envVarValue | quote }}
             {{- end }}
           {{- end }}
-          {{- if or $containerConfig.configMaps $defaultSecretEnabled $containerConfig.externalSecrets }}
+          {{- if or $containerConfig.configMaps $defaultSecretEnabled $containerConfig.secrets }}
           envFrom:
             {{- if $containerConfig.configMaps }}
             {{- range $configMap := $containerConfig.configMaps }}
@@ -220,10 +220,10 @@ spec:
             - secretRef:
                 name: {{ $defaultSecretName }}
             {{- end }}
-            {{- if $containerConfig.externalSecrets }}
-            {{- range $externalSecret := $containerConfig.externalSecrets }}
+            {{- if $containerConfig.secrets }}
+            {{- range $secret := $containerConfig.secrets }}
             - secretRef:
-                name: {{ printf "%s%s" $prefix $externalSecret }}
+                name: {{ printf "%s%s" $prefix $secret }}
             {{- end }}
             {{- end }}
           {{- end }}
@@ -357,7 +357,7 @@ spec:
               value: {{ $envVarValue | quote }}
             {{- end }}
           {{- end }}
-          {{- if or $containerConfig.configMaps $defaultSecretEnabled $containerConfig.externalSecrets }}
+          {{- if or $containerConfig.configMaps $defaultSecretEnabled $containerConfig.secrets }}
           envFrom:
             {{- if $containerConfig.configMaps }}
             {{- range $configMap := $containerConfig.configMaps }}
@@ -369,10 +369,10 @@ spec:
             - secretRef:
                 name: {{ $defaultSecretName }}
             {{- end }}
-            {{- if $containerConfig.externalSecrets }}
-            {{- range $externalSecret := $containerConfig.externalSecrets }}
+            {{- if $containerConfig.secrets }}
+            {{- range $secret := $containerConfig.secrets }}
             - secretRef:
-                name: {{ printf "%s%s" $prefix $externalSecret }}
+                name: {{ printf "%s%s" $prefix $secret }}
             {{- end }}
             {{- end }}
           {{- end }}
