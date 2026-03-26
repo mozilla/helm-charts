@@ -1,0 +1,256 @@
+---
+name: PR Chart Management
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - closed
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
+
+env:
+  GAR_PROJECT_ID: moz-fx-platform-artifacts
+  HELM_REGISTRY: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+
+jobs:
+  detect:
+    runs-on:
+      - ubuntu-latest
+
+    outputs:
+      chart-paths: ${{ steps.get-charts.outputs.chart-paths }}
+      has-charts: ${{ steps.get-charts.outputs.has-charts }}
+      release-type: ${{ steps.get-label.outputs.release-type }}
+      is-merge-event: >-
+        ${{ github.event_name == 'pull_request'
+          && github.event.action == 'closed'
+          && github.event.pull_request.merged == true }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@ed68ef82c095e0d48ec87eccea555d944a631a4c # v46
+        with:
+          matrix: true
+
+      - name: Get modified charts
+        id: get-charts
+        uses: actions/github-script@v7
+        env:
+          ALL_CHANGED_FILES: ${{ steps.changed-files.outputs.all_changed_files }}
+        with:
+          script: |
+            const allChangedFiles = JSON.parse(process.env.ALL_CHANGED_FILES);
+            const regex = /mozcloud(-[a-z\-]+)?\/(application|library)\//;
+
+            const paths = Array.from(new Set(
+              allChangedFiles
+                .filter(p => p.match(regex))
+                .map(p => {
+                  const parts = p.split('/');
+                  return `${parts[0]}/${parts[1]}`;
+                })
+            ));
+
+            for (const p of paths) {
+              console.log(`.. found modified chart: ${p}`);
+            }
+
+            core.setOutput('chart-paths', JSON.stringify(paths));
+            core.setOutput('has-charts', paths.length > 0 ? 'true' : 'false');
+
+      - name: Get release label
+        id: get-label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+
+            // no-release is a veto — check it before severity labels
+            if (labels.includes('no-release')) {
+              core.setOutput('release-type', 'no-release');
+              return;
+            }
+
+            // Among severity labels, highest wins if multiple are present
+            const severityLabels = ['major', 'minor', 'patch'];
+            const releaseType = severityLabels.find(l => labels.includes(l)) || '';
+            core.setOutput('release-type', releaseType);
+
+  auto-label:
+    runs-on:
+      - ubuntu-latest
+
+    needs:
+      - detect
+
+    # Apply a label when none exists. Skip on merge and on label-change events
+    # (to avoid re-triggering after we apply one).
+    if: |
+      needs.detect.outputs.release-type == '' &&
+      needs.detect.outputs.is-merge-event == 'false' &&
+      github.event.action != 'labeled' &&
+      github.event.action != 'unlabeled'
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Determine label from PR title
+        id: determine-label
+        uses: actions/github-script@v7
+        with:
+          result-encoding: string
+          script: |
+            const title = context.payload.pull_request.title;
+            // Breaking change: any conventional commit type with ! (e.g. feat!:, fix!:)
+            if (/^[a-z]+(\([^)]+\))?!:/.test(title) || /breaking change/i.test(title)) {
+              return 'major';
+            }
+            // New feature
+            if (/^feat(\([^)]+\))?:/.test(title)) {
+              return 'minor';
+            }
+            // Everything else (fix, chore, docs, refactor, etc.)
+            return 'patch';
+
+      - name: Apply label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          LABEL: ${{ steps.determine-label.outputs.result }}
+        run: gh pr edit ${{ github.event.pull_request.number }} --add-label "${LABEL}"
+
+  preview:
+    runs-on:
+      - ubuntu-latest
+
+    needs:
+      - detect
+
+    # Show a version preview comment on the PR whenever charts are affected and
+    # a release label is set. Skipped on merge (the release job handles that).
+    if: |
+      needs.detect.outputs.is-merge-event == 'false' &&
+      needs.detect.outputs.has-charts == 'true' &&
+      needs.detect.outputs.release-type != '' &&
+      needs.detect.outputs.release-type != 'no-release'
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        run: pip install uv
+
+      - name: Dry-run version bump
+        id: dry-run
+        env:
+          CHART_PATHS: ${{ needs.detect.outputs.chart-paths }}
+          RELEASE_TYPE: ${{ needs.detect.outputs.release-type }}
+        run: |
+          CHARTS=$(echo "${CHART_PATHS}" | jq -r '.[]' | tr '\n' ' ')
+          uv run --directory ./scripts chartkit version bump \
+            --release-type "${RELEASE_TYPE}" \
+            --dry-run --format markdown \
+            ${CHARTS} > bump-preview.md
+          cat bump-preview.md
+
+      - name: Post or update PR comment
+        uses: actions/github-script@v7
+        env:
+          RELEASE_TYPE: ${{ needs.detect.outputs.release-type }}
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- chart-version-preview -->';
+            const table = fs.readFileSync('bump-preview.md', 'utf8');
+            const releaseType = process.env.RELEASE_TYPE;
+
+            const body = `${marker}
+## Chart Version Preview
+
+The following charts will be bumped when this PR is merged:
+
+${table}
+Release type: **${releaseType}** (set via PR label — apply \`patch\`, \`minor\`, \`major\`, or \`no-release\` to override)`;
+
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+  release:
+    runs-on:
+      - ubuntu-latest
+
+    needs:
+      - detect
+
+    # Only run on merge when charts changed and a release label is set.
+    # no-release label skips packaging entirely.
+    if: |
+      needs.detect.outputs.is-merge-event == 'true' &&
+      needs.detect.outputs.has-charts == 'true' &&
+      needs.detect.outputs.release-type != '' &&
+      needs.detect.outputs.release-type != 'no-release'
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Bump chart versions and commit
+        id: bump
+        uses: ./.github/actions/bump-and-commit
+        with:
+          chart-paths: ${{ join(fromJson(needs.detect.outputs.chart-paths), ' ') }}
+          release-type: ${{ needs.detect.outputs.release-type }}
+
+      - name: Package and push charts
+        uses: ./.github/actions/package-and-push
+        with:
+          gcp-project-id: ${{ env.GAR_PROJECT_ID }}
+          workload-identity-provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
+          helm-registry: ${{ env.HELM_REGISTRY }}
+          bump-sha: ${{ steps.bump.outputs.sha }}

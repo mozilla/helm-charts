@@ -5,6 +5,7 @@ from typing import Optional
 import click
 from semver import Version
 from .charts import ChartGraph, ChartInfo
+from .git import git_root
 
 
 class VersionManager:
@@ -16,6 +17,7 @@ class VersionManager:
     def __init__(self, chart_graph: ChartGraph):
         self.chart_graph = chart_graph
         self.version_map = self.build_version_map()
+        self.original_versions = dict(self.version_map)
         self.updated_charts = set()
         self.dependencies_updated = {}
 
@@ -98,13 +100,27 @@ class VersionManager:
             if chart:
                 chart.save_chart_yaml()
 
-    def print_updates(self, json_output: bool = False):
+    def print_updates(self, output_format: str = "text"):
         """Print the updated charts and their new versions."""
         sorted_updates = sorted(self.updated_charts)
-        if json_output:
+
+        if output_format == "json":
+            root = git_root()
             result = {"updated": []}
             for chart_name in sorted_updates:
-                updates = {"name": chart_name, "version": self.get_version(chart_name)}
+                chart = self.chart_graph.charts.get(chart_name)
+                try:
+                    path = str(chart.path.relative_to(root)) if chart else ""
+                except ValueError:
+                    path = str(chart.path) if chart else ""
+                updates = {
+                    "name": chart_name,
+                    "previous_version": str(
+                        self.original_versions.get(chart_name, "unknown")
+                    ),
+                    "version": self.get_version(chart_name),
+                    "path": path,
+                }
                 result["updated"].append(
                     updates
                     | (
@@ -120,6 +136,16 @@ class VersionManager:
                 )
             click.echo(json.dumps(result, indent=2))
             return
+
+        if output_format == "markdown":
+            click.echo("| Chart | Current Version | New Version |")
+            click.echo("|-------|-----------------|-------------|")
+            for chart_name in sorted_updates:
+                prev = str(self.original_versions.get(chart_name, "unknown"))
+                new = self.get_version(chart_name)
+                click.echo(f"| `{chart_name}` | `{prev}` | **`{new}`** |")
+            return
+
         click.echo("Updating chart versions:")
         for chart_name in sorted_updates:
             click.echo(f"{chart_name}: {self.get_version(chart_name)}")
