@@ -1278,7 +1278,7 @@ workloads:
           type: certmap
 
         # Optionally configure the log sample rate for the load balancer, IAP
-        # details, or a custom backend timeout.
+        # details, a custom backend timeout, or a Cloud Armor security policy.
         #options:
         #  # Configures Identity-Aware Proxy for the service.
         #  #iap:
@@ -1296,9 +1296,6 @@ workloads:
         #  # configured as a float, integer, or string. The default is 10 (10%).
         #  #logSampleRate: 10
         #
-        #  # Backend service timeout period in seconds.
-        #  #timeoutSec: 30
-        #
         #  # Cloud Armor security policy to attach to the load balancer backend.
         #  # This should match the name of an existing Cloud Armor policy in GCP.
         #  #
@@ -1306,6 +1303,9 @@ workloads:
         #  # applications that already use Cloud Armor. New applications should
         #  # NOT use this — use Fastly for WAF instead.
         #  #securityPolicy: my-app-policy
+        #
+        #  # Backend service timeout period in seconds.
+        #  #timeoutSec: 30
         #
         #  # Custom config for backend health check
         #  #healthCheck:
