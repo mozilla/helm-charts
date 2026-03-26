@@ -35,13 +35,13 @@ When you open a PR, CI reads the title and applies a release label automatically
 
 ### One release type per PR
 
-The release label applies uniformly to every chart changed in the PR. When a PR touches multiple charts with changes of different severity, all of them are bumped at the highest level present. For example, if one chart receives a breaking change and another only a bug fix, both get a `major` bump. This is a known limitation of the model. If the mismatch matters, split the changes into separate PRs so each chart gets the appropriate release type.
+The release label applies uniformly to every chart changed in the PR. When a PR touches multiple charts with changes of different severity, all of them are bumped at the highest level present. For example, if one chart warrants a `major` bump and another only a bug fix, both get a `major` bump. This is a known limitation of the model. If the mismatch matters, split the changes into separate PRs so each chart gets the appropriate release type.
 
 ### Overriding the release label
 
 If the inferred label is wrong, apply the correct one manually from the PR sidebar before merging:
 
-- `major` — breaking change, incompatible with previous versions
+- `major` — significant change warranting a major version increment; often breaking, but not necessarily
 - `minor` — new functionality, backwards compatible
 - `patch` — bug fix or non-functional change
 - `no-release` — merge without bumping or publishing (e.g. docs-only changes)
