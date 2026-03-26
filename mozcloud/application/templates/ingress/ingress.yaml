@@ -111,8 +111,8 @@ ingresses:
     {{- /*
     Ingresses and related resources
     */}}
-    {{- $cloudConfig := index .Values "cloud" | default dict }}
-    {{- $provider := $cloudConfig.provider | default "gke" }}
+    {{- $cloudConfig := default dict .Values.cloud }}
+    {{- $provider := default "gke" $cloudConfig.provider }}
     {{- $cloudIngressConfig := default dict $cloudConfig.ingress }}
     {{- /* Resolve ingressClass: cloud.ingress.<default>.ingressClass → cloud.ingress.default → "" */}}
     {{- $defaultController := $cloudIngressConfig.default }}
