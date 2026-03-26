@@ -190,7 +190,13 @@ Every change to a chart should be accompanied by a test. See [CONTRIBUTING.md](C
 
 ## Documentation
 
-- [MozCloud IDP documentation](https://mozilla-hub.atlassian.net/wiki/spaces/MOZCLOUD)
+### Internal references
+
+- [MozCloud Helm Charts](https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/2060353541/MozCloud+Helm+Charts)
+- [Getting Started](https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/2059600542/How+To+Getting+Started+With+MozCloud+Charts)
+
+### External references
+
 - [Helm documentation](https://helm.sh/docs/)
 - [Helm chart best practices](https://helm.sh/docs/chart_best_practices/)
 - [JSON Schema (draft 2020-12)](https://json-schema.org/draft/2020-12/schema)
