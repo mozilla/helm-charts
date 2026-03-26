@@ -81,10 +81,10 @@ template:
         {{- $imageRepo := default (($globalImage).repository) ($containerConfig.image).repository }}
         {{- $imageTag := default (($globalImage).tag) ($containerConfig.image).tag }}
         {{- if not $imageRepo }}
-        {{- fail (printf "%sContainer image repository must be set! You can set this in either .Values.mozcloud-job.jobs.%s.containers[].image.repository or .Values.global.mozcloud.image.repository" $jobConfig.name) }}
+        {{- fail (printf "%sContainer image repository must be set! You can set this in either .Values.mozcloud.tasks.jobs.%s.containers[].image.repository or .Values.global.mozcloud.image.repository" $jobConfig.name) }}
         {{- end }}
         {{- if not $imageTag }}
-        {{- fail (printf "%sContainer image tag must be set! You can set this in either .Values.mozcloud-job.jobs.%s.containers[].image.tag or .Values.global.mozcloud.image.tag" $jobConfig.name) }}
+        {{- fail (printf "%sContainer image tag must be set! You can set this in either .Values.mozcloud.tasks.jobs.%s.containers[].image.tag or .Values.global.mozcloud.image.tag" $jobConfig.name) }}
         {{- end }}
         image: {{ $imageRepo }}:{{ $imageTag }}
         imagePullPolicy: Always
