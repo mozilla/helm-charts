@@ -1,0 +1,93 @@
+{{ template "mozcloud.readme.preamble" . }}
+
+---
+
+## Contributing
+
+This section covers standards specific to this chart. For general contribution workflows, unit testing conventions, JSON schema standards, and chart authoring standards that apply across all charts in this repository, see [CONTRIBUTING.md](../../CONTRIBUTING.md).
+
+### Template organization
+
+Template folders must mirror top-level keys in `values.yaml`. For example, a `configMaps` key in values corresponds to a `templates/configmap/` folder; `workloads` corresponds to `templates/workload/`, and so on. This 1:1 mapping makes it straightforward to locate the template responsible for any given value.
+
+**Shared templates** that serve multiple resource types (annotations, labels, pod specs, formatters) live as `_<name>.yaml` files directly in `templates/`. These are named template definitions used across multiple subfolders, not helpers in the traditional sense.
+
+**Resource-specific templates** (e.g. `deployment.yaml`, `cronjob.yaml`) live in the subfolder for their resource type.
+
+### Helper file placement
+
+Helper functions belong in a `_helpers.tpl` file located in the same folder as the templates they serve:
+
+- Helpers used only by workload templates: `templates/workload/_helpers.tpl`
+- Helpers used only by task templates: `templates/task/_helpers.tpl`
+- Helpers used chart-wide: `templates/_helpers.tpl`
+
+A helper should live in the most specific scope where it is used. Do not place a workload-specific helper in the root `_helpers.tpl` just because it seems "important". Scope it correctly.
+
+> [!NOTE]
+> An exception applies for unusually complex logic that would make a template significantly harder to read on its own. In that case, extracting the logic into a helper is encouraged even if it is only called once.
+
+### When to write a helper vs. keep logic in a template
+
+Templates are the primary site of rendering and interpolation. They should be readable at a glance.
+
+If you find yourself writing loops, conditionals, or data transformations inside a template, first ask:
+
+1. **Can the data structure be simplified** so the template doesn't need to do that work?
+2. **Should this be a helper** that returns a clean value the template can use directly?
+
+If neither applies, the logic can stay in the template. This should be the exception, not the rule.
+
+### Helper authoring standards
+
+- **Always use named parameters.** Helpers must accept a dict with named keys rather than relying on positional arguments or raw context. This makes call sites self-documenting.
+
+  ```yaml
+  {{ "{{" }}- include "mozcloud.myHelper" (dict "name" $name "context" $) {{ "}}" }}
+  ```
+
+- **Parameters must be single-purpose and non-overlapping.** Do not define both `config` and `jobConfig`, or both `workloadContainerConfig` and `jobContainerConfig`, as parameters to the same helper. Each parameter should have one clear role.
+
+- **Keep helpers concise.** A helper that spans many lines is usually doing too much. Break it into smaller, focused helpers if needed.
+
+- **Avoid accumulating too many helpers in a single file.** When a `_helpers.tpl` becomes hard to scan, consider whether the helpers can be split into more targeted shared templates (e.g. `_annotations.yaml`, `_labels.yaml`).
+
+- **Document every helper.** Each helper must have a block comment above its `define` statement that describes what it does, its parameters (name, type, required/optional), and its return value. Follow the established format used throughout this chart:
+
+  ```
+  {{ "{{" }}- /*
+  Short description of what this helper does.
+
+  Params:
+    paramName (type): (required|optional) What this parameter is for.
+
+  Returns:
+    (type) What the helper produces.
+  */ -{{ "}}" }}
+  ```
+
+### Protected default keys
+
+{{ template "protected-keys-intro" . }}
+
+| Collection       | Protected key              |
+|------------------|----------------------------|
+| `workloads`      | `mozcloud-workload`        |
+| `containers`     | `mozcloud-container`       |
+| `initContainers` | `mozcloud-init-container`  |
+| `tasks.cronJobs` | `mozcloud-cronjob`         |
+| `tasks.jobs`     | `mozcloud-job`             |
+
+Users are instructed in `values.yaml` not to name their objects after these keys. If a protected key is the only entry in a collection (no user-defined entries), it is treated as a regular object and rendered as-is.
+
+When adding a new collection type, you must:
+
+1. Define a corresponding protected key in `values.yaml`.
+2. Add a formatter helper (following the pattern in `templates/_formatter.yaml`) that applies the same strip-and-merge logic.
+3. Call the formatter from the template before iterating over the collection.
+
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the general explanation of why this pattern exists.
+
+{{ template "json-schema-validation" . }}
+
+{{ template "helm-docs.versionFooter" . }}

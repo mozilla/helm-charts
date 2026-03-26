@@ -45,3 +45,4 @@ repos:
       - id: helm-docs
         args:
           - --template-files=./_README.md.gotmpl
+          - --template-files=README.md.gotmpl

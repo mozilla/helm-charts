@@ -22,7 +22,8 @@ tests:
   - it: URLBASE is transformed when empty and explicitly listed
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-app-config")]
+      path: metadata.name
+      value: pr789-app-config
     asserts:
       - equal:
           path: data.URLBASE
@@ -31,7 +32,8 @@ tests:
   - it: ATTACHMENT_BASE is transformed when empty and explicitly listed
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-app-config")]
+      path: metadata.name
+      value: pr789-app-config
     asserts:
       - equal:
           path: data.ATTACHMENT_BASE
@@ -41,7 +43,8 @@ tests:
   - it: URL_BASE is not transformed when not in urlTransformKeys list
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-app-config")]
+      path: metadata.name
+      value: pr789-app-config
     asserts:
       - equal:
           path: data.URL_BASE
@@ -51,7 +54,8 @@ tests:
   - it: Non-empty values are not overwritten
     template: configmap/configmap.yaml
     documentSelector:
-      path: $[?(@.metadata.name == "pr789-app-config")]
+      path: metadata.name
+      value: pr789-app-config
     asserts:
       - equal:
           path: data.OTHER_VAR
