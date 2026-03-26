@@ -18,6 +18,7 @@ Configuration matches entire snapshot:
         realm: nonprod
       name: test-service
     spec:
+      ingressClassName: traefik
       rules:
         - host: test-service.dev.test-domain.com
           http:

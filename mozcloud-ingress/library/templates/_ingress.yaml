@@ -39,6 +39,9 @@ metadata:
     kubernetes.io/ingress.class: {{ $ingressClass | quote }}
   {{- end }}
 spec:
+  {{- if and (ne $provider "gke") $ingressClass }}
+    ingressClassName: {{ $ingressClass | quote }}
+  {{- end }}
   {{- if and (eq $provider "gke") (eq (len $ingress.hosts) 1) (eq (len (first $ingress.hosts).paths) 1) }}
   {{- range $host := $ingress.hosts }}
   {{- range $path := $host.paths }}
