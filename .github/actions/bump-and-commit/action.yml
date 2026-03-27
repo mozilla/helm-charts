@@ -65,9 +65,7 @@ runs:
           echo "No changes to commit"
         else
           DETAILS=$(jq -r '.updated[] | "- \(.name): \(.previous_version) -> \(.version)"' bump-result.json)
-          git commit -m "chore: bump chart versions and update docs [skip ci]
-
-${DETAILS}"
+          git commit -m "$(printf 'chore: bump chart versions and update docs [skip ci]\n\n%s' "${DETAILS}")"
           git push
         fi
         echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
