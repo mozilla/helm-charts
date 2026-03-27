@@ -44,17 +44,21 @@ jobs:
         id: normalize
         run: echo "charts=$(echo '${{ inputs.charts }}' | tr ',' ' ')" >> $GITHUB_OUTPUT
 
-      - name: Bump chart versions and commit
-        id: bump
+      - name: Bump chart versions
         uses: ./.github/actions/bump-and-commit
         with:
           chart-paths: ${{ steps.normalize.outputs.charts }}
           release-type: ${{ inputs.release-type }}
 
       - name: Package and push charts
+        id: package-push
         uses: ./.github/actions/package-and-push
         with:
           gcp-project-id: ${{ env.GAR_PROJECT_ID }}
           workload-identity-provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
           helm-registry: ${{ env.HELM_REGISTRY }}
-          bump-sha: ${{ steps.bump.outputs.sha }}
+
+      - name: Commit, push, and tag
+        uses: ./.github/actions/commit-and-tag
+        with:
+          chart-tags: ${{ steps.package-push.outputs.chart-tags }}

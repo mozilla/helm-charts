@@ -1,0 +1,41 @@
+---
+name: Commit, push, and tag
+description: >-
+  Commits and pushes version bump changes to the current branch, then creates
+  a git tag for each published chart.
+
+inputs:
+  chart-tags:
+    description: Space-separated list of chart tags to create
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Commit and push
+      shell: bash
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add -A
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          DETAILS=$(jq -r '.updated[] | "- \(.name): \(.previous_version) -> \(.version)"' bump-result.json)
+          git commit -m "$(printf 'chore: bump chart versions and update docs [skip ci]\n\n%s' "${DETAILS}")"
+          git push
+        fi
+
+    - name: Create git tags
+      shell: bash
+      env:
+        CHART_TAGS: ${{ inputs.chart-tags }}
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        SHA=$(git rev-parse HEAD)
+        for TAG in ${CHART_TAGS}; do
+          echo "Creating tag \"${TAG}\" at ${SHA}"
+          gh api repos/${{ github.repository }}/git/refs \
+            -f ref="refs/tags/${TAG}" \
+            -f sha="${SHA}"
+        done
