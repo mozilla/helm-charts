@@ -200,7 +200,7 @@ spec:
             {{- end }}
           {{- end }}
           {{- $otelContainerEnabled := and $otelEnabled (not $otelAutoInstrumentationEnabled) (has $containerName $otelContainerNames) }}
-          {{- if or $containerConfig.envVars $otelContainerEnabled }}
+          {{- if or $containerConfig.envVars $otelContainerEnabled $containerConfig.envFromFields }}
           env:
             {{- if $otelContainerEnabled }}
             - name: HOST_IP
@@ -208,6 +208,12 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.hostIP
+            {{- end }}
+            {{- range $fieldName, $fieldPath := $containerConfig.envFromFields }}
+            - name: {{ $fieldName }}
+              valueFrom:
+                fieldRef:
+                  fieldPath: {{ $fieldPath }}
             {{- end }}
             {{- range $envVarKey, $envVarValue := $containerConfig.envVars }}
             - name: {{ $envVarKey }}
