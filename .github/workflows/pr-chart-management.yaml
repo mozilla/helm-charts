@@ -126,7 +126,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           LABEL: ${{ steps.determine-label.outputs.result }}
-        run: gh pr edit ${{ github.event.pull_request.number }} --add-label "${LABEL}"
+        run: gh pr edit ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --add-label "${LABEL}"
 
   preview:
     runs-on:
