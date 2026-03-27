@@ -425,6 +425,18 @@ spec:
       {{- if $workloadConfig.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ $workloadConfig.terminationGracePeriodSeconds }}
       {{- end }}
+      {{- if $workloadConfig.affinity }}
+      affinity:
+        {{- $workloadConfig.affinity | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if $workloadConfig.nodeSelector }}
+      nodeSelector:
+        {{- $workloadConfig.nodeSelector | toYaml | nindent 8 }}
+      {{- end }}
+      {{- if $workloadConfig.tolerations }}
+      tolerations:
+        {{- $workloadConfig.tolerations | toYaml | nindent 8 }}
+      {{- end }}
       {{- if or $nginxEnabled (gt (keys $volumes | len) 0) }}
       volumes:
         {{- if $nginxEnabled }}

@@ -340,8 +340,33 @@
             "type": "boolean",
             "default": true
           },
+          "affinity": {
+            "type": "object",
+            "description": "Pod affinity rules (nodeAffinity, podAffinity, podAntiAffinity)"
+          },
           "component": {
             "type": "string"
+          },
+          "nodeSelector": {
+            "type": "object",
+            "description": "Node label selectors for pod scheduling",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "tolerations": {
+            "type": "array",
+            "description": "Pod tolerations for tainted nodes",
+            "items": {
+              "type": "object",
+              "properties": {
+                "key": { "type": "string" },
+                "operator": { "type": "string", "enum": ["Exists", "Equal"] },
+                "value": { "type": "string" },
+                "effect": { "type": "string", "enum": ["NoSchedule", "PreferNoSchedule", "NoExecute"] },
+                "tolerationSeconds": { "type": "integer" }
+              }
+            }
           },
           "type": {
             "type": "string",
@@ -1234,6 +1259,10 @@
     "job": {
       "type": "object",
       "properties": {
+        "affinity": {
+          "type": "object",
+          "description": "Pod affinity rules (nodeAffinity, podAffinity, podAntiAffinity)"
+        },
         "generateName": {
           "type": "boolean"
         },
@@ -1243,6 +1272,13 @@
         "backoffLimit": {
           "type": "integer",
           "default": 6
+        },
+        "nodeSelector": {
+          "type": "object",
+          "description": "Node label selectors for pod scheduling",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "otel": {
           "$ref": "#/$defs/otel"
@@ -1268,6 +1304,20 @@
         },
         "suspend": {
           "type": "boolean"
+        },
+        "tolerations": {
+          "type": "array",
+          "description": "Pod tolerations for tainted nodes",
+          "items": {
+            "type": "object",
+            "properties": {
+              "key": { "type": "string" },
+              "operator": { "type": "string", "enum": ["Exists", "Equal"] },
+              "value": { "type": "string" },
+              "effect": { "type": "string", "enum": ["NoSchedule", "PreferNoSchedule", "NoExecute"] },
+              "tolerationSeconds": { "type": "integer" }
+            }
+          }
         },
         "ttlSecondsAfterFinished": {
           "type": "integer",

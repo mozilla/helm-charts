@@ -182,6 +182,18 @@ template:
     {{- if $jobConfig.serviceAccount }}
     serviceAccountName: {{ printf "%s%s" $prefix $jobConfig.serviceAccount }}
     {{- end }}
+    {{- if $jobConfig.affinity }}
+    affinity:
+      {{- $jobConfig.affinity | toYaml | nindent 6 }}
+    {{- end }}
+    {{- if $jobConfig.nodeSelector }}
+    nodeSelector:
+      {{- $jobConfig.nodeSelector | toYaml | nindent 6 }}
+    {{- end }}
+    {{- if $jobConfig.tolerations }}
+    tolerations:
+      {{- $jobConfig.tolerations | toYaml | nindent 6 }}
+    {{- end }}
     {{- if gt (keys $volumes | len) 0 }}
     volumes:
       {{- range $volumeName, $volumeConfig := $volumes }}
