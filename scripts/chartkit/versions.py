@@ -100,7 +100,7 @@ class VersionManager:
             if chart:
                 chart.save_chart_yaml()
 
-    def print_updates(self, output_format: str = "text"):
+    def print_updates(self, output_format: str = "text", release_type: str = ""):
         """Print the updated charts and their new versions."""
         sorted_updates = sorted(self.updated_charts)
 
@@ -138,12 +138,13 @@ class VersionManager:
             return
 
         if output_format == "markdown":
-            click.echo("| Chart | Current Version | New Version |")
-            click.echo("|-------|-----------------|-------------|")
+            click.echo("| Chart | Current Version | New Version | Release Type |")
+            click.echo("|-------|-----------------|-------------|--------------|")
             for chart_name in sorted_updates:
                 prev = str(self.original_versions.get(chart_name, "unknown"))
                 new = self.get_version(chart_name)
-                click.echo(f"| `{chart_name}` | `{prev}` | **`{new}`** |")
+                rt = f"`{release_type}`" if release_type else ""
+                click.echo(f"| `{chart_name}` | `{prev}` | **`{new}`** | {rt} |")
             return
 
         click.echo("Updating chart versions:")
