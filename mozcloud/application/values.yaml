@@ -119,7 +119,16 @@ configMaps: {}
 # latest secret version.
 #
 # Any secrets you define here will be created IN ADDITION to that secret.
-externalSecrets: {}
+#
+# To disable the default external secret, set:
+#
+# externalSecrets:
+#   default:
+#     enabled: false
+#
+externalSecrets:
+  default:
+    enabled: true
 
 # Persistent volumes to create. These can be mounted as volumes in containerized
 # workloads and jobs.
@@ -231,7 +240,7 @@ tasks:
     # and cron job containers.
     #
     # All options are listed here. See
-    # .Values.tasks.jobs.mozcloud-job.containers.mozcloud-container for details
+    # .Values.mozcloud.tasks.jobs.default.containers.default for details
     # on how to configure each option.
     container:
       args: []
@@ -249,7 +258,7 @@ tasks:
     # Common cron job configurations. These can be used as defaults for all cron
     # job configurations.
     #
-    # All options are listed here. See .Values.tasks.cronJobs.mozcloud-cronJob
+    # All options are listed here. See .Values.mozcloud.tasks.cronJobs.default
     # for details on how to configure each option.
     #
     # Some options are commented out as they are omitted by default.
@@ -261,7 +270,7 @@ tasks:
     # Common job configurations. These can be used as defaults for all job
     # configurations.
     #
-    # All options are listed here. See .Values.tasks.jobs.mozcloud-job for
+    # All options are listed here. See .Values.mozcloud.tasks.jobs.default for
     # details on how to configure each option.
     #
     # Some options are commented out as they are omitted by default.
@@ -281,10 +290,9 @@ tasks:
       #ttlSecondsAfterFinished:
 
   cronJobs:
-    # This is the name of your cron job. Use a name other than
-    # "mozcloud-cronjob" as it is being used to set default values. Any cron
-    # jobs named "mozcloud-cronjob" will be omitted from configurations.
-    mozcloud-cronjob:
+    # This is the name of your cron job. Use any name other than "default",
+    # which is reserved for setting default values shared across all cron jobs.
+    default:
       # Configures the total number of jobs keep after cron jobs run.
       jobHistory:
         successful: 1
@@ -328,7 +336,7 @@ tasks:
       # This is unset/disabled by default.
       #suspend: false
 
-      # This section follows the same format as .Values.tasks.jobs.mozcloud-job,
+      # This section follows the same format as .Values.tasks.jobs.default,
       # however options are limited to the following:
       #
       #   - activeDeadlineSeconds
@@ -344,10 +352,9 @@ tasks:
       jobConfig: {}
 
   jobs:
-    # This is the name of your job. Use a name other than "mozcloud-job" as it
-    # is being used to set default values. Any jobs named "mozcloud-job" will be
-    # omitted from configurations.
-    mozcloud-job:
+    # This is the name of your job. Use any name other than "default", which is
+    # reserved for setting default values shared across all jobs.
+    default:
       # The job type can either be "preDeployment" or "postDeployment".
       #
       # preDeployment: Jobs that run before other resources in the chart are
@@ -405,9 +412,9 @@ tasks:
       #backoffLimit: 6
 
       containers:
-        # This is the name of your container. "mozcloud-container" will be
-        # ignored as it contains default settings for containers.
-        mozcloud-container:
+        # This is the name of your container. Use any name other than "default",
+        # which is reserved for setting default values shared across all containers.
+        default:
           # Arguments to pass to a container. This can be an array or a string.
           args: []
 
@@ -688,12 +695,13 @@ tasks:
       #ttlSecondsAfterFinished:
 
 workloads:
-  # The name of your workload and all related components. "mozcloud-workload"
-  # is the default if no names are specified.
+  # The name of your workload and all related components. Use any name other
+  # than "default", which is reserved for setting default values shared across
+  # all workloads.
   #
   # Each workload should be specified in this dictionary format, where the key
   # is the name of the workload and the values are the configurations.
-  mozcloud-workload:
+  default:
     # If false, all resources for this workload (Deployment, HPA, Service,
     # Gateways, HTTPRoutes, PodMonitoring) are suppressed without removing
     # the config block. Useful for staged rollouts or incident response.
@@ -778,9 +786,9 @@ workloads:
     # Use the container configurations below as a reference for all containers
     # you include here.
     containers:
-      # This is the name of your container. "mozcloud-container" will be ignored
-      # as it contains default settings for containers.
-      mozcloud-container:
+      # This is the name of your container. Use any name other than "default",
+      # which is reserved for setting default values shared across all containers.
+      default:
         # Arguments to pass to a container. This can be an array or a string.
         args: []
 
@@ -1085,9 +1093,10 @@ workloads:
     # Define host details in this section. This section can be omitted or set
     # to an empty dictionary if your workload does not handle inbound traffic.
     hosts:
-      # The name to use for the Gateway/Ingress and related resources. If this
-      # is not changed, the workload name will be used instead.
-      name:
+      # Use any name other than "default", which is reserved for setting default
+      # values shared across all hosts. If "default" is the only host entry, the
+      # workload name will be used as the resource name instead.
+      default:
         # A list of domains to use for each host.
         domains:
           - example.com
@@ -1321,9 +1330,10 @@ workloads:
     # Use the init container configurations below as a reference for all
     # init containers you include here.
     initContainers:
-      # This is the name of your init container. "mozcloud-init-container" will
-      # be ignored as it contains default settings for init containers.
-      mozcloud-init-container:
+      # This is the name of your init container. Use any name other than
+      # "default", which is reserved for setting default values shared across
+      # all init containers.
+      default:
         # Arguments to pass to an init container. This can be an array or a
         # string.
         args: []

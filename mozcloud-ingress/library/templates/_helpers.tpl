@@ -234,6 +234,8 @@ ManagedCertificate template helpers
       {{- end -}}
       {{- $name = include "mozcloud-ingress-lib.config.name" $params | replace "." "-" | trunc 63 | trimSuffix "-" -}}
       {{- $managed_cert = dict "name" $name "domains" $host.domains "createCertificate" $create_cert -}}
+      {{- $_ := set $managed_cert "ingressName" $ingress_name -}}
+      {{- $managed_certs = append $managed_certs $managed_cert -}}
     {{- else -}}
       {{- range $domain := $host.domains -}}
         {{- if $prefix -}}
@@ -242,10 +244,10 @@ ManagedCertificate template helpers
           {{- $name = $domain | replace "." "-" | trunc 63 | trimSuffix "-" -}}
         {{- end -}}
         {{- $managed_cert = dict "name" $name "domains" (list $domain) "createCertificate" $create_cert -}}
+        {{- $_ := set $managed_cert "ingressName" $ingress_name -}}
+        {{- $managed_certs = append $managed_certs $managed_cert -}}
       {{- end -}}
     {{- end -}}
-    {{- $_ := set $managed_cert "ingressName" $ingress_name -}}
-    {{- $managed_certs = append $managed_certs $managed_cert -}}
   {{- end -}}
 {{- end -}}
 {{ $managed_certs | toYaml }}
