@@ -242,8 +242,8 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Bump chart versions
-        uses: ./.github/actions/bump-and-commit
+      - name: Bump chart versions and generate Helm docs
+        uses: ./.github/actions/bump-and-generate-docs
         with:
           chart-paths: ${{ join(fromJson(needs.detect.outputs.chart-paths), ' ') }}
           release-type: ${{ needs.detect.outputs.release-type }}

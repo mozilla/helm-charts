@@ -1,5 +1,5 @@
 ---
-name: Bump chart versions
+name: Bump chart versions and generate docs
 description: >-
   Bumps the specified chart versions (with cascade) and regenerates helm-docs.
 

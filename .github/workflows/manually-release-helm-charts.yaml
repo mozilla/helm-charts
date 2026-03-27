@@ -44,8 +44,8 @@ jobs:
         id: normalize
         run: echo "charts=$(echo '${{ inputs.charts }}' | tr ',' ' ')" >> $GITHUB_OUTPUT
 
-      - name: Bump chart versions
-        uses: ./.github/actions/bump-and-commit
+      - name: Bump chart versions and generate Helm docs
+        uses: ./.github/actions/bump-and-generate-docs
         with:
           chart-paths: ${{ steps.normalize.outputs.charts }}
           release-type: ${{ inputs.release-type }}
