@@ -1,0 +1,106 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: web
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev
+      strategy:
+        type: RollingUpdate
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: web
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: web
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: web
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            realm: nonprod
+        spec:
+          containers:
+            - env:
+                - name: MY_NODE_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: spec.nodeName
+                - name: MY_POD_IP
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: status.podIP
+                - name: MY_POD_NAME
+                  valueFrom:
+                    fieldRef:
+                      fieldPath: metadata.name
+              envFrom:
+                - secretRef:
+                    name: test-chart-secrets
+              image: test-repo/test-image:1.0.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: app
+              ports:
+                - containerPort: 8000
+                  name: app
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
