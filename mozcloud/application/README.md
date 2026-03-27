@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 0.14.0](https://img.shields.io/badge/Version-0.14.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.16.0](https://img.shields.io/badge/Version-0.16.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~0.14.0
+    version: ~0.16.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -45,7 +45,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | cloud.provider | string | `"gke"` |  |
 | configMaps | object | `{}` |  |
 | enabled | bool | `true` |  |
-| externalSecrets | object | `{}` |  |
+| externalSecrets.default.enabled | bool | `true` |  |
 | persistentVolumes | object | `{}` |  |
 | preview.enabled | bool | `false` |  |
 | preview.endpointCheck.activeDeadlineSeconds | int | `900` |  |
@@ -81,94 +81,94 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.common.job.security | object | `{}` |  |
 | tasks.common.job.serviceAccount | string | `""` |  |
 | tasks.common.job.type | string | `"preDeployment"` |  |
-| tasks.cronJobs.mozcloud-cronjob.jobConfig | object | `{}` |  |
-| tasks.cronJobs.mozcloud-cronjob.jobHistory.failed | int | `1` |  |
-| tasks.cronJobs.mozcloud-cronjob.jobHistory.successful | int | `1` |  |
-| tasks.cronJobs.mozcloud-cronjob.schedule | string | `""` |  |
-| tasks.jobs.mozcloud-job.argo | object | `{}` |  |
-| tasks.jobs.mozcloud-job.containers.mozcloud-container.args | list | `[]` |  |
-| tasks.jobs.mozcloud-job.containers.mozcloud-container.command | list | `[]` |  |
-| tasks.jobs.mozcloud-job.containers.mozcloud-container.configMaps | list | `[]` |  |
-| tasks.jobs.mozcloud-job.containers.mozcloud-container.envVars | object | `{}` |  |
-| tasks.jobs.mozcloud-job.containers.mozcloud-container.externalSecrets | list | `[]` |  |
-| tasks.jobs.mozcloud-job.containers.mozcloud-container.image.repository | string | `""` |  |
-| tasks.jobs.mozcloud-job.containers.mozcloud-container.image.tag | string | `""` |  |
-| tasks.jobs.mozcloud-job.containers.mozcloud-container.resources | object | `{}` |  |
-| tasks.jobs.mozcloud-job.containers.mozcloud-container.security | object | `{}` |  |
-| tasks.jobs.mozcloud-job.containers.mozcloud-container.volumes | list | `[]` |  |
-| tasks.jobs.mozcloud-job.generateName | bool | `false` |  |
-| tasks.jobs.mozcloud-job.otel.autoInstrumentation.enabled | bool | `false` |  |
-| tasks.jobs.mozcloud-job.otel.autoInstrumentation.language | string | `""` |  |
-| tasks.jobs.mozcloud-job.otel.containers | list | `[]` |  |
-| tasks.jobs.mozcloud-job.otel.enabled | bool | `true` |  |
-| tasks.jobs.mozcloud-job.security | object | `{}` |  |
-| tasks.jobs.mozcloud-job.serviceAccount | string | `""` |  |
-| tasks.jobs.mozcloud-job.type | string | `"preDeployment"` |  |
-| workloads.mozcloud-workload.autoscaling.enabled | bool | `true` |  |
-| workloads.mozcloud-workload.autoscaling.metrics[0].threshold | int | `60` |  |
-| workloads.mozcloud-workload.autoscaling.metrics[0].type | string | `"cpu"` |  |
-| workloads.mozcloud-workload.autoscaling.replicas.max | int | `30` |  |
-| workloads.mozcloud-workload.autoscaling.replicas.min | int | `1` |  |
-| workloads.mozcloud-workload.component | string | `""` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.args | list | `[]` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.command | list | `[]` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.configMaps | list | `[]` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.envVars | object | `{}` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.externalSecrets | list | `[]` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.liveness.enabled | bool | `true` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.liveness.httpHeaders | list | `[]` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.liveness.path | string | `"/__lbheartbeat__"` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.liveness.probes.failureThreshold | int | `5` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.liveness.probes.initialDelaySeconds | int | `10` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.liveness.probes.periodSeconds | int | `6` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.liveness.probes.successThreshold | int | `1` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.liveness.probes.timeoutSeconds | int | `5` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.readiness.enabled | bool | `true` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.readiness.httpHeaders | list | `[]` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.readiness.path | string | `"/__lbheartbeat__"` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.readiness.probes.failureThreshold | int | `3` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.readiness.probes.initialDelaySeconds | int | `10` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.readiness.probes.periodSeconds | int | `6` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.readiness.probes.successThreshold | int | `1` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.healthCheck.readiness.probes.timeoutSeconds | int | `5` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.image.repository | string | `""` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.image.tag | string | `""` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.port | int | `8000` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.resources.cpu | string | `"100m"` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.resources.memory | string | `"128Mi"` |  |
-| workloads.mozcloud-workload.containers.mozcloud-container.security | object | `{}` |  |
-| workloads.mozcloud-workload.enabled | bool | `true` |  |
-| workloads.mozcloud-workload.hosts.name.addresses | list | `[]` |  |
-| workloads.mozcloud-workload.hosts.name.api | string | `"gateway"` |  |
-| workloads.mozcloud-workload.hosts.name.domains[0] | string | `"example.com"` |  |
-| workloads.mozcloud-workload.hosts.name.httpRoutes.createHttpRoutes | bool | `true` |  |
-| workloads.mozcloud-workload.hosts.name.targetPort | string | `"http"` |  |
-| workloads.mozcloud-workload.hosts.name.tls.certs | list | `[]` |  |
-| workloads.mozcloud-workload.hosts.name.tls.create | bool | `true` |  |
-| workloads.mozcloud-workload.hosts.name.tls.type | string | `"certmap"` |  |
-| workloads.mozcloud-workload.hosts.name.type | string | `"external"` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.args | list | `[]` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.command | list | `[]` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.configMaps | list | `[]` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.envVars | object | `{}` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.externalSecrets | list | `[]` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.image.repository | string | `""` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.image.tag | string | `""` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.resources.cpu | string | `"100m"` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.resources.memory | string | `"128Mi"` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.security | object | `{}` |  |
-| workloads.mozcloud-workload.initContainers.mozcloud-init-container.sidecar | bool | `false` |  |
-| workloads.mozcloud-workload.labels | object | `{}` |  |
-| workloads.mozcloud-workload.nginx.enabled | bool | `true` |  |
-| workloads.mozcloud-workload.nginx.image | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"` |  |
-| workloads.mozcloud-workload.otel.autoInstrumentation.enabled | bool | `false` |  |
-| workloads.mozcloud-workload.otel.autoInstrumentation.language | string | `""` |  |
-| workloads.mozcloud-workload.otel.containers | list | `[]` |  |
-| workloads.mozcloud-workload.otel.enabled | bool | `true` |  |
-| workloads.mozcloud-workload.security | object | `{}` |  |
-| workloads.mozcloud-workload.serviceAccount | string | `""` |  |
-| workloads.mozcloud-workload.strategy | string | `"RollingUpdate"` |  |
-| workloads.mozcloud-workload.type | string | `"deployment"` |  |
+| tasks.cronJobs.default.jobConfig | object | `{}` |  |
+| tasks.cronJobs.default.jobHistory.failed | int | `1` |  |
+| tasks.cronJobs.default.jobHistory.successful | int | `1` |  |
+| tasks.cronJobs.default.schedule | string | `""` |  |
+| tasks.jobs.default.argo | object | `{}` |  |
+| tasks.jobs.default.containers.default.args | list | `[]` |  |
+| tasks.jobs.default.containers.default.command | list | `[]` |  |
+| tasks.jobs.default.containers.default.configMaps | list | `[]` |  |
+| tasks.jobs.default.containers.default.envVars | object | `{}` |  |
+| tasks.jobs.default.containers.default.externalSecrets | list | `[]` |  |
+| tasks.jobs.default.containers.default.image.repository | string | `""` |  |
+| tasks.jobs.default.containers.default.image.tag | string | `""` |  |
+| tasks.jobs.default.containers.default.resources | object | `{}` |  |
+| tasks.jobs.default.containers.default.security | object | `{}` |  |
+| tasks.jobs.default.containers.default.volumes | list | `[]` |  |
+| tasks.jobs.default.generateName | bool | `false` |  |
+| tasks.jobs.default.otel.autoInstrumentation.enabled | bool | `false` |  |
+| tasks.jobs.default.otel.autoInstrumentation.language | string | `""` |  |
+| tasks.jobs.default.otel.containers | list | `[]` |  |
+| tasks.jobs.default.otel.enabled | bool | `true` |  |
+| tasks.jobs.default.security | object | `{}` |  |
+| tasks.jobs.default.serviceAccount | string | `""` |  |
+| tasks.jobs.default.type | string | `"preDeployment"` |  |
+| workloads.default.autoscaling.enabled | bool | `true` |  |
+| workloads.default.autoscaling.metrics[0].threshold | int | `60` |  |
+| workloads.default.autoscaling.metrics[0].type | string | `"cpu"` |  |
+| workloads.default.autoscaling.replicas.max | int | `30` |  |
+| workloads.default.autoscaling.replicas.min | int | `1` |  |
+| workloads.default.component | string | `""` |  |
+| workloads.default.containers.default.args | list | `[]` |  |
+| workloads.default.containers.default.command | list | `[]` |  |
+| workloads.default.containers.default.configMaps | list | `[]` |  |
+| workloads.default.containers.default.envVars | object | `{}` |  |
+| workloads.default.containers.default.externalSecrets | list | `[]` |  |
+| workloads.default.containers.default.healthCheck.liveness.enabled | bool | `true` |  |
+| workloads.default.containers.default.healthCheck.liveness.httpHeaders | list | `[]` |  |
+| workloads.default.containers.default.healthCheck.liveness.path | string | `"/__lbheartbeat__"` |  |
+| workloads.default.containers.default.healthCheck.liveness.probes.failureThreshold | int | `5` |  |
+| workloads.default.containers.default.healthCheck.liveness.probes.initialDelaySeconds | int | `10` |  |
+| workloads.default.containers.default.healthCheck.liveness.probes.periodSeconds | int | `6` |  |
+| workloads.default.containers.default.healthCheck.liveness.probes.successThreshold | int | `1` |  |
+| workloads.default.containers.default.healthCheck.liveness.probes.timeoutSeconds | int | `5` |  |
+| workloads.default.containers.default.healthCheck.readiness.enabled | bool | `true` |  |
+| workloads.default.containers.default.healthCheck.readiness.httpHeaders | list | `[]` |  |
+| workloads.default.containers.default.healthCheck.readiness.path | string | `"/__lbheartbeat__"` |  |
+| workloads.default.containers.default.healthCheck.readiness.probes.failureThreshold | int | `3` |  |
+| workloads.default.containers.default.healthCheck.readiness.probes.initialDelaySeconds | int | `10` |  |
+| workloads.default.containers.default.healthCheck.readiness.probes.periodSeconds | int | `6` |  |
+| workloads.default.containers.default.healthCheck.readiness.probes.successThreshold | int | `1` |  |
+| workloads.default.containers.default.healthCheck.readiness.probes.timeoutSeconds | int | `5` |  |
+| workloads.default.containers.default.image.repository | string | `""` |  |
+| workloads.default.containers.default.image.tag | string | `""` |  |
+| workloads.default.containers.default.port | int | `8000` |  |
+| workloads.default.containers.default.resources.cpu | string | `"100m"` |  |
+| workloads.default.containers.default.resources.memory | string | `"128Mi"` |  |
+| workloads.default.containers.default.security | object | `{}` |  |
+| workloads.default.enabled | bool | `true` |  |
+| workloads.default.hosts.default.addresses | list | `[]` |  |
+| workloads.default.hosts.default.api | string | `"gateway"` |  |
+| workloads.default.hosts.default.domains[0] | string | `"example.com"` |  |
+| workloads.default.hosts.default.httpRoutes.createHttpRoutes | bool | `true` |  |
+| workloads.default.hosts.default.targetPort | string | `"http"` |  |
+| workloads.default.hosts.default.tls.certs | list | `[]` |  |
+| workloads.default.hosts.default.tls.create | bool | `true` |  |
+| workloads.default.hosts.default.tls.type | string | `"certmap"` |  |
+| workloads.default.hosts.default.type | string | `"external"` |  |
+| workloads.default.initContainers.default.args | list | `[]` |  |
+| workloads.default.initContainers.default.command | list | `[]` |  |
+| workloads.default.initContainers.default.configMaps | list | `[]` |  |
+| workloads.default.initContainers.default.envVars | object | `{}` |  |
+| workloads.default.initContainers.default.externalSecrets | list | `[]` |  |
+| workloads.default.initContainers.default.image.repository | string | `""` |  |
+| workloads.default.initContainers.default.image.tag | string | `""` |  |
+| workloads.default.initContainers.default.resources.cpu | string | `"100m"` |  |
+| workloads.default.initContainers.default.resources.memory | string | `"128Mi"` |  |
+| workloads.default.initContainers.default.security | object | `{}` |  |
+| workloads.default.initContainers.default.sidecar | bool | `false` |  |
+| workloads.default.labels | object | `{}` |  |
+| workloads.default.nginx.enabled | bool | `true` |  |
+| workloads.default.nginx.image | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"` |  |
+| workloads.default.otel.autoInstrumentation.enabled | bool | `false` |  |
+| workloads.default.otel.autoInstrumentation.language | string | `""` |  |
+| workloads.default.otel.containers | list | `[]` |  |
+| workloads.default.otel.enabled | bool | `true` |  |
+| workloads.default.security | object | `{}` |  |
+| workloads.default.serviceAccount | string | `""` |  |
+| workloads.default.strategy | string | `"RollingUpdate"` |  |
+| workloads.default.type | string | `"deployment"` |  |
 
 ---
 
@@ -238,17 +238,17 @@ If neither applies, the logic can stay in the template. This should be the excep
 
 ### Protected default keys
 
-This chart uses dict-based collections with a protected key per collection type that acts as a chart-level defaults template. The key is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry.
+This chart uses dict-based collections where `default` is a reserved key that acts as a chart-level defaults template. It is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry. Avoid naming your objects `default`.
 
-| Collection       | Protected key              |
-|------------------|----------------------------|
-| `workloads`      | `mozcloud-workload`        |
-| `containers`     | `mozcloud-container`       |
-| `initContainers` | `mozcloud-init-container`  |
-| `tasks.cronJobs` | `mozcloud-cronjob`         |
-| `tasks.jobs`     | `mozcloud-job`             |
+| Collection       | Protected key |
+|------------------|---------------|
+| `workloads`      | `default`     |
+| `containers`     | `default`     |
+| `initContainers` | `default`     |
+| `tasks.cronJobs` | `default`     |
+| `tasks.jobs`     | `default`     |
 
-Users are instructed in `values.yaml` not to name their objects after these keys. If a protected key is the only entry in a collection (no user-defined entries), it is treated as a regular object and rendered as-is.
+Avoid naming your objects `default`. If `default` is the only entry in a collection (no user-defined entries), it is treated as a regular object and rendered as-is.
 
 When adding a new collection type, you must:
 

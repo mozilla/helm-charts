@@ -147,12 +147,13 @@ frontendConfig:
 
 # This is a list of dictionaries containing details about each ingress.
 ingresses:
-  # The name of your ingress and all related components. "mozcloud-ingress" is
-  # the default if no names are specified.
+  # The name of your ingress and all related components. Use any name other
+  # than "default", which is reserved for setting default values shared across
+  # all ingresses.
   #
   # Each ingress should be specified in this dictionary format, where the key is
   # the name of the ingress and the values are the configurations.
-  mozcloud-ingress:
+  default:
     hosts:
       # The host will be used to match incoming traffic and generate TLS
       # certs.

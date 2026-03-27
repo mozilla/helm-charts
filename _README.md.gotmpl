@@ -73,6 +73,7 @@ If params other than the current context, specify those in place of the `.`:
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for contribution workflows, unit testing conventions, JSON schema standards, and general chart authoring standards.
 
+{{ template "json-schema-validation" . }}
 {{ template "helm-docs.versionFooter" . }}
 {{- end -}}
 
@@ -96,7 +97,7 @@ For general contribution workflows, unit testing conventions, JSON schema standa
 {{- end -}}
 
 {{- define "protected-keys-intro" -}}
-This chart uses dict-based collections with a protected key per collection type that acts as a chart-level defaults template. The key is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry.
+This chart uses dict-based collections where `default` is a reserved key that acts as a chart-level defaults template. It is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry. Avoid naming your objects `default`.
 {{- end -}}
 
 {{- define "json-schema-validation" }}

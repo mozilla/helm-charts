@@ -1,6 +1,6 @@
 # mozcloud-ingress
 
-![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.8.0](https://img.shields.io/badge/Version-0.8.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 A Helm chart that creates ingress and supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-ingress
-    version: ~0.6.0
+    version: ~0.8.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -46,32 +46,22 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | frontendConfig.redirectToHttps.enabled | bool | `true` |  |
 | frontendConfig.redirectToHttps.responseCodeName | string | `"MOVED_PERMANENTLY_DEFAULT"` |  |
 | frontendConfig.sslPolicy | string | `"mozilla-intermediate"` |  |
-| ingresses.mozcloud-ingress.hosts[0].domains[0] | string | `"chart.example.local"` |  |
-| ingresses.mozcloud-ingress.hosts[0].domains[1] | string | `"chart2.example.local"` |  |
-| ingresses.mozcloud-ingress.hosts[0].paths[0].backend.config | object | `{}` |  |
-| ingresses.mozcloud-ingress.hosts[0].paths[0].backend.service.port | int | `8080` |  |
-| ingresses.mozcloud-ingress.hosts[0].paths[0].path | string | `"/"` |  |
-| ingresses.mozcloud-ingress.hosts[0].paths[0].pathType | string | `"Prefix"` |  |
-| ingresses.mozcloud-ingress.staticIpName | string | `"mozcloud-ingress-dev-ip-v4"` |  |
-| ingresses.mozcloud-ingress.tls.createCertificates | bool | `true` |  |
-| ingresses.mozcloud-ingress.tls.multipleHosts | bool | `true` |  |
-| ingresses.mozcloud-ingress.tls.type | string | `"ManagedCertificate"` |  |
+| ingresses.default.hosts[0].domains[0] | string | `"chart.example.local"` |  |
+| ingresses.default.hosts[0].domains[1] | string | `"chart2.example.local"` |  |
+| ingresses.default.hosts[0].paths[0].backend.config | object | `{}` |  |
+| ingresses.default.hosts[0].paths[0].backend.service.port | int | `8080` |  |
+| ingresses.default.hosts[0].paths[0].path | string | `"/"` |  |
+| ingresses.default.hosts[0].paths[0].pathType | string | `"Prefix"` |  |
+| ingresses.default.staticIpName | string | `"mozcloud-ingress-dev-ip-v4"` |  |
+| ingresses.default.tls.createCertificates | bool | `true` |  |
+| ingresses.default.tls.multipleHosts | bool | `true` |  |
+| ingresses.default.tls.type | string | `"ManagedCertificate"` |  |
 
 ---
 
 ## Contributing
 
-For general contribution workflows, unit testing conventions, JSON schema standards, and chart authoring standards that apply across all charts in this repository, see [CONTRIBUTING.md](../../CONTRIBUTING.md).
-
-### Protected default keys
-
-This chart uses dict-based collections with a protected key per collection type that acts as a chart-level defaults template. The key is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry.
-
-| Collection | Protected key |
-|---|---|
-| `ingresses` | `mozcloud-ingress` |
-
-Avoid naming your objects after this key. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for a full explanation of how the protected key pattern works.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for contribution workflows, unit testing conventions, JSON schema standards, and general chart authoring standards.
 
 ### JSON schema validation
 

@@ -70,15 +70,15 @@ If neither applies, the logic can stay in the template. This should be the excep
 
 {{ template "protected-keys-intro" . }}
 
-| Collection       | Protected key              |
-|------------------|----------------------------|
-| `workloads`      | `mozcloud-workload`        |
-| `containers`     | `mozcloud-container`       |
-| `initContainers` | `mozcloud-init-container`  |
-| `tasks.cronJobs` | `mozcloud-cronjob`         |
-| `tasks.jobs`     | `mozcloud-job`             |
+| Collection       | Protected key |
+|------------------|---------------|
+| `workloads`      | `default`     |
+| `containers`     | `default`     |
+| `initContainers` | `default`     |
+| `tasks.cronJobs` | `default`     |
+| `tasks.jobs`     | `default`     |
 
-Users are instructed in `values.yaml` not to name their objects after these keys. If a protected key is the only entry in a collection (no user-defined entries), it is treated as a regular object and rendered as-is.
+Avoid naming your objects `default`. If `default` is the only entry in a collection (no user-defined entries), it is treated as a regular object and rendered as-is.
 
 When adding a new collection type, you must:
 

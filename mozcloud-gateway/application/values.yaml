@@ -57,12 +57,13 @@ backendPolicy:
 
 # Defines the backend services to create, backend policies, and healthchecks.
 backends:
-  # The name of your backend and all related components. "mozcloud-gateway" is
-  # the default if no names are specified.
+  # The name of your backend and all related components. Use any name other
+  # than "default", which is reserved for setting default values shared across
+  # all backends.
   #
-  # Each gateway should be specified in this dictionary format, where the key
-  # is the name of the gateway and the values are the configurations.
-  mozcloud-gateway:
+  # Each backend should be specified in this dictionary format, where the key
+  # is the name of the backend and the values are the configurations.
+  default:
     # Definitions for the Kubernetes service.
     service:
       # If disabled, a new Kubernetes will not be created.
@@ -139,12 +140,12 @@ gateway:
   enabled: true
 
   gateways:
-    # The name of your gateway. "mozcloud-gateway" is the default if no names
-    # are specified.
+    # The name of your gateway. Use any name other than "default", which is
+    # reserved for setting default values shared across all gateways.
     #
     # Each gateway should be specified in this dictionary format, where the key
     # is the name of the gateway and the values are the configurations.
-    mozcloud-gateway:
+    default:
       # Type can be "internal" or "external". The library chart will
       # automatically assign the preferred className if not defined here.
       # Overridden by "className", if defined.
@@ -231,15 +232,15 @@ httpRoute:
   enabled: true
 
   httpRoutes:
-    # The name of your HTTPRoute. "mozcloud-gateway" is the default if no names
-    # are specified.
+    # The name of your HTTPRoute. Use any name other than "default", which is
+    # reserved for setting default values shared across all HTTPRoutes.
     #
     # Each HTTPRoute should be specified in this dictionary format, where the
-    # key is the name of the gateway and the values are the configurations.
-    mozcloud-gateway:
+    # key is the name of the HTTPRoute and the values are the configurations.
+    default:
       # Define parent Gateway resource the HTTPRoute should attach to.
       gatewayRefs:
-        - name: mozcloud-gateway
+        - name: default
 
           # Optional: Set this field if referring to a Gateway in a different namespace
           # (e.g., a shared infrastructure Gateway). Leave unset for same-namespace Gateways.
@@ -263,7 +264,7 @@ httpRoute:
           # A list of the backend services to receive traffic.
         - backendRefs:
               # The name of the backend service
-            - name: mozcloud-gateway
+            - name: default
               port: 8080
 
               # The amount of inbound traffic you want send to this backend

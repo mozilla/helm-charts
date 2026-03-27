@@ -1,6 +1,6 @@
 # mozcloud-gateway
 
-![Version: 0.5.0](https://img.shields.io/badge/Version-0.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.6.0](https://img.shields.io/badge/Version-0.6.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 A Helm chart that creates gateways and supporting Gateway API resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-gateway
-    version: ~0.5.0
+    version: ~0.6.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -42,47 +42,35 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 |-----|------|---------|-------------|
 | backendPolicy.logging.enabled | bool | `true` |  |
 | backendPolicy.logging.sampleRate | int | `100000` |  |
-| backends.mozcloud-gateway.healthCheck.path | string | `"/__lbheartbeat__"` |  |
-| backends.mozcloud-gateway.healthCheck.protocol | string | `"HTTP"` |  |
-| backends.mozcloud-gateway.service.port | int | `8080` |  |
-| backends.mozcloud-gateway.service.targetPort | string | `"http"` |  |
+| backends.default.healthCheck.path | string | `"/__lbheartbeat__"` |  |
+| backends.default.healthCheck.protocol | string | `"HTTP"` |  |
+| backends.default.service.port | int | `8080` |  |
+| backends.default.service.targetPort | string | `"http"` |  |
 | enabled | bool | `true` |  |
 | gateway.enabled | bool | `true` |  |
-| gateway.gateways.mozcloud-gateway.addresses[0] | string | `"mozcloud-gateway-dev-ip-v4"` |  |
-| gateway.gateways.mozcloud-gateway.listeners[0].name | string | `"http"` |  |
-| gateway.gateways.mozcloud-gateway.listeners[0].port | int | `80` |  |
-| gateway.gateways.mozcloud-gateway.listeners[0].protocol | string | `"HTTP"` |  |
-| gateway.gateways.mozcloud-gateway.listeners[1].name | string | `"https"` |  |
-| gateway.gateways.mozcloud-gateway.listeners[1].port | int | `443` |  |
-| gateway.gateways.mozcloud-gateway.listeners[1].protocol | string | `"HTTPS"` |  |
-| gateway.gateways.mozcloud-gateway.tls.certs[0] | string | `"mozcloud-gateway-certmap"` |  |
-| gateway.gateways.mozcloud-gateway.tls.type | string | `"certmap"` |  |
-| gateway.gateways.mozcloud-gateway.type | string | `"external"` |  |
+| gateway.gateways.default.addresses[0] | string | `"mozcloud-gateway-dev-ip-v4"` |  |
+| gateway.gateways.default.listeners[0].name | string | `"http"` |  |
+| gateway.gateways.default.listeners[0].port | int | `80` |  |
+| gateway.gateways.default.listeners[0].protocol | string | `"HTTP"` |  |
+| gateway.gateways.default.listeners[1].name | string | `"https"` |  |
+| gateway.gateways.default.listeners[1].port | int | `443` |  |
+| gateway.gateways.default.listeners[1].protocol | string | `"HTTPS"` |  |
+| gateway.gateways.default.tls.certs[0] | string | `"mozcloud-gateway-certmap"` |  |
+| gateway.gateways.default.tls.type | string | `"certmap"` |  |
+| gateway.gateways.default.type | string | `"external"` |  |
 | gatewayPolicy.sslPolicy | string | `"mozilla-intermediate"` |  |
 | httpRoute.enabled | bool | `true` |  |
-| httpRoute.httpRoutes.mozcloud-gateway.gatewayRefs[0].name | string | `"mozcloud-gateway"` |  |
-| httpRoute.httpRoutes.mozcloud-gateway.gatewayRefs[0].section | string | `"https"` |  |
-| httpRoute.httpRoutes.mozcloud-gateway.rules[0].backendRefs[0].name | string | `"mozcloud-gateway"` |  |
-| httpRoute.httpRoutes.mozcloud-gateway.rules[0].backendRefs[0].port | int | `8080` |  |
+| httpRoute.httpRoutes.default.gatewayRefs[0].name | string | `"default"` |  |
+| httpRoute.httpRoutes.default.gatewayRefs[0].section | string | `"https"` |  |
+| httpRoute.httpRoutes.default.rules[0].backendRefs[0].name | string | `"default"` |  |
+| httpRoute.httpRoutes.default.rules[0].backendRefs[0].port | int | `8080` |  |
 | trafficDistributionPolicy | list | `[]` |  |
 
 ---
 
 ## Contributing
 
-For general contribution workflows, unit testing conventions, JSON schema standards, and chart authoring standards that apply across all charts in this repository, see [CONTRIBUTING.md](../../CONTRIBUTING.md).
-
-### Protected default keys
-
-This chart uses dict-based collections with a protected key per collection type that acts as a chart-level defaults template. The key is stripped from the rendered output and its values are deep-merged as a base under each user-defined entry.
-
-| Collection | Protected key |
-|---|---|
-| `gateway.gateways` | `mozcloud-gateway` |
-| `httpRoute.httpRoutes` | `mozcloud-gateway` |
-| `backends` | `mozcloud-gateway` |
-
-Avoid naming your objects after these keys. See [CONTRIBUTING.md](../../CONTRIBUTING.md) for a full explanation of how the protected key pattern works.
+See [CONTRIBUTING.md](../../CONTRIBUTING.md) for contribution workflows, unit testing conventions, JSON schema standards, and general chart authoring standards.
 
 ### JSON schema validation
 
