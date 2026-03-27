@@ -8,3 +8,5 @@ __pycache__/
 *.egg-info/
 .vscode/settings.json
 .debug/mozcloud-workload/templates/workload.yaml
+gha-creds*.json
+bump-result.json
