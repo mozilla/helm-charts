@@ -1,0 +1,23 @@
+cloud:
+  provider: on-prem
+  ingress:
+    default: traefik
+
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      test-service:
+        type: external
+        domains:
+          - test-service.dev.test-domain.com
+        api: gateway
+        tls:
+          type: secret
+          certs:
+            - test-service-tls
