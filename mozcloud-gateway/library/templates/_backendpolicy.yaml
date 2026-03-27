@@ -34,6 +34,9 @@ spec:
     {{- if $config.timeoutSec }}
     timeoutSec: {{ $config.timeoutSec }}
     {{- end }}
+    {{- if $config.securityPolicy }}
+    securityPolicy: {{ $config.securityPolicy }}
+    {{- end }}
   targetRef:
   {{- if $backend_policy.config.targetRef  }}
     {{- $backend_policy.config.targetRef | toYaml | nindent 4 }}
