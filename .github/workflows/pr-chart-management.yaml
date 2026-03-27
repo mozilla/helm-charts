@@ -182,13 +182,15 @@ jobs:
             const table = fs.readFileSync('bump-preview.md', 'utf8');
             const releaseType = process.env.RELEASE_TYPE;
 
-            const body = `${marker}
-## Chart Version Preview
-
-The following charts will be bumped when this PR is merged:
-
-${table}
-Release type: **${releaseType}** (set via PR label — apply \`patch\`, \`minor\`, \`major\`, or \`no-release\` to override)`;
+            const body = [
+              marker,
+              '## Chart Version Preview',
+              '',
+              'The following charts will be bumped when this PR is merged:',
+              '',
+              table.trimEnd(),
+              `Release type: **${releaseType}** (set via PR label - apply \`patch\`, \`minor\`, \`major\`, or \`no-release\` to override)`,
+            ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
