@@ -1,8 +1,7 @@
 ---
-name: Bump chart versions and commit
+name: Bump chart versions and generate docs
 description: >-
-  Bumps the specified chart versions (with cascade), regenerates helm-docs,
-  and commits the result to the current branch.
+  Bumps the specified chart versions (with cascade) and regenerates helm-docs.
 
 inputs:
   chart-paths:
@@ -11,11 +10,6 @@ inputs:
   release-type:
     description: Semver part to increment (major, minor, patch)
     required: true
-
-outputs:
-  sha:
-    description: SHA of the resulting commit (or HEAD if nothing changed)
-    value: ${{ steps.commit.outputs.sha }}
 
 runs:
   using: composite
@@ -39,7 +33,6 @@ runs:
         sudo mv helm-docs /usr/local/bin/
 
     - name: Bump chart versions
-      id: bump
       shell: bash
       env:
         CHART_PATHS: ${{ inputs.chart-paths }}
@@ -53,21 +46,3 @@ runs:
     - name: Update helm docs
       shell: bash
       run: helm-docs --template-files=./_README.md.gotmpl --template-files=README.md.gotmpl
-
-    - name: Commit and push
-      id: commit
-      shell: bash
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git add -A
-        if git diff --cached --quiet; then
-          echo "No changes to commit"
-        else
-          DETAILS=$(jq -r '.updated[] | "- \(.name): \(.previous_version) -> \(.version)"' bump-result.json)
-          git commit -m "chore: bump chart versions and update docs [skip ci]
-
-${DETAILS}"
-          git push
-        fi
-        echo "sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT

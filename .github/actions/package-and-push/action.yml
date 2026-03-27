@@ -1,8 +1,7 @@
 ---
 name: Package and push charts to GAR
 description: >-
-  Packages all charts listed in bump-result.json, pushes them to GAR,
-  and creates a git tag for each.
+  Packages all charts listed in bump-result.json and pushes them to GAR.
 
 inputs:
   gcp-project-id:
@@ -14,9 +13,6 @@ inputs:
   helm-registry:
     description: OCI registry URL to push charts to
     required: true
-  bump-sha:
-    description: Git SHA to point the chart tags at
-    required: true
 
 outputs:
   chart-tags:
@@ -27,7 +23,7 @@ runs:
   using: composite
   steps:
     - name: Set up Helm
-      uses: azure/setup-helm@v4
+      uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f
 
     - name: GCP auth
       id: gcp-auth
@@ -76,17 +72,3 @@ runs:
         done <<< $(ls -rt *.tgz)
 
         echo "chart-tags=${CHART_TAGS}" >> $GITHUB_OUTPUT
-
-    - name: Create git tags
-      shell: bash
-      env:
-        CHART_TAGS: ${{ steps.package-and-push.outputs.chart-tags }}
-        BUMP_SHA: ${{ inputs.bump-sha }}
-        GH_TOKEN: ${{ github.token }}
-      run: |
-        for TAG in ${CHART_TAGS}; do
-          echo "Creating tag \"${TAG}\" at ${BUMP_SHA}"
-          gh api repos/${{ github.repository }}/git/refs \
-            -f ref="refs/tags/${TAG}" \
-            -f sha="${BUMP_SHA}"
-        done

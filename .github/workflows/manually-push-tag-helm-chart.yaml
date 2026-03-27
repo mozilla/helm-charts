@@ -1,5 +1,5 @@
 ---
-name: manually push and tag helm charts
+name: Manually push and tag Helm charts
 on:
   workflow_dispatch:
     inputs:

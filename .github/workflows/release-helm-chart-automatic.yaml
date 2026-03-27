@@ -1,5 +1,5 @@
 ---
-name: PR Chart Management
+name: Release Helm chart (automatic)
 
 on:
   pull_request:
@@ -173,14 +173,11 @@ jobs:
 
       - name: Post or update PR comment
         uses: actions/github-script@v7
-        env:
-          RELEASE_TYPE: ${{ needs.detect.outputs.release-type }}
         with:
           script: |
             const fs = require('fs');
             const marker = '<!-- chart-version-preview -->';
             const table = fs.readFileSync('bump-preview.md', 'utf8');
-            const releaseType = process.env.RELEASE_TYPE;
 
             const body = [
               marker,
@@ -189,7 +186,8 @@ jobs:
               'The following charts will be bumped when this PR is merged:',
               '',
               table.trimEnd(),
-              `Release type: **${releaseType}** (set via PR label - apply \`patch\`, \`minor\`, \`major\`, or \`no-release\` to override)`,
+              '',
+              'Apply \`patch\`, \`minor\`, \`major\`, or \`no-release\` label to override the release type.',
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
@@ -242,17 +240,21 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Bump chart versions and commit
-        id: bump
-        uses: ./.github/actions/bump-and-commit
+      - name: Bump chart versions and generate Helm docs
+        uses: ./.github/actions/bump-and-generate-docs
         with:
           chart-paths: ${{ join(fromJson(needs.detect.outputs.chart-paths), ' ') }}
           release-type: ${{ needs.detect.outputs.release-type }}
 
       - name: Package and push charts
+        id: package-push
         uses: ./.github/actions/package-and-push
         with:
           gcp-project-id: ${{ env.GAR_PROJECT_ID }}
           workload-identity-provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
           helm-registry: ${{ env.HELM_REGISTRY }}
-          bump-sha: ${{ steps.bump.outputs.sha }}
+
+      - name: Commit, push, and tag
+        uses: ./.github/actions/commit-and-tag
+        with:
+          chart-tags: ${{ steps.package-push.outputs.chart-tags }}

@@ -286,13 +286,13 @@ def bump(
             continue
         vm.cascade_bump(target_chart, release_type)
 
-    vm.print_updates(output_format=output_format)
+    vm.print_updates(output_format=output_format, release_type=release_type)
 
     if not dry_run:
         vm.save_versions()
-        click.echo("Chart versions updated.")
+        click.echo("Chart versions updated.", err=True)
     else:
-        click.echo("Dry run; no changes made.")
+        click.echo("Dry run; no changes made.", err=True)
 
 
 @version.command()
