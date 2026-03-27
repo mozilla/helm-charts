@@ -74,7 +74,7 @@ jobs:
           script: |
             const labels = context.payload.pull_request.labels.map(l => l.name);
 
-            // no-release is a veto — check it before severity labels
+            // no-release is a veto; check it before severity labels
             if (labels.includes('no-release')) {
               core.setOutput('release-type', 'no-release');
               return;

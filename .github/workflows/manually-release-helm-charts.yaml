@@ -11,7 +11,7 @@ on:
         required: true
         type: string
       release-type:
-        description: Semver part to increment — cascades to dependent charts
+        description: Semver part to increment, cascades to dependent charts
         required: true
         type: choice
         default: patch
@@ -40,11 +40,15 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Normalize chart paths
+        id: normalize
+        run: echo "charts=$(echo '${{ inputs.charts }}' | tr ',' ' ')" >> $GITHUB_OUTPUT
+
       - name: Bump chart versions and commit
         id: bump
         uses: ./.github/actions/bump-and-commit
         with:
-          chart-paths: ${{ replace(inputs.charts, ',', ' ') }}
+          chart-paths: ${{ steps.normalize.outputs.charts }}
           release-type: ${{ inputs.release-type }}
 
       - name: Package and push charts
