@@ -1,5 +1,5 @@
 ---
-name: manually release helm charts
+name: Release Helm chart (manual)
 
 on:
   workflow_dispatch:

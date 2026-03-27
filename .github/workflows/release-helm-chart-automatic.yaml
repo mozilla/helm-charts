@@ -1,5 +1,5 @@
 ---
-name: PR Chart Management
+name: Release Helm chart (automatic)
 
 on:
   pull_request:
