@@ -85,6 +85,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.cronJobs.default.jobHistory.failed | int | `1` |  |
 | tasks.cronJobs.default.jobHistory.successful | int | `1` |  |
 | tasks.cronJobs.default.schedule | string | `""` |  |
+| tasks.jobs.default.affinity | object | `{}` |  |
 | tasks.jobs.default.argo | object | `{}` |  |
 | tasks.jobs.default.containers.default.args | list | `[]` |  |
 | tasks.jobs.default.containers.default.command | list | `[]` |  |
@@ -97,13 +98,16 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.containers.default.security | object | `{}` |  |
 | tasks.jobs.default.containers.default.volumes | list | `[]` |  |
 | tasks.jobs.default.generateName | bool | `false` |  |
+| tasks.jobs.default.nodeSelector | object | `{}` |  |
 | tasks.jobs.default.otel.autoInstrumentation.enabled | bool | `false` |  |
 | tasks.jobs.default.otel.autoInstrumentation.language | string | `""` |  |
 | tasks.jobs.default.otel.containers | list | `[]` |  |
 | tasks.jobs.default.otel.enabled | bool | `true` |  |
 | tasks.jobs.default.security | object | `{}` |  |
 | tasks.jobs.default.serviceAccount | string | `""` |  |
+| tasks.jobs.default.tolerations | list | `[]` |  |
 | tasks.jobs.default.type | string | `"preDeployment"` |  |
+| workloads.default.affinity | object | `{}` |  |
 | workloads.default.autoscaling.enabled | bool | `true` |  |
 | workloads.default.autoscaling.metrics[0].threshold | int | `60` |  |
 | workloads.default.autoscaling.metrics[0].type | string | `"cpu"` |  |
@@ -161,6 +165,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.labels | object | `{}` |  |
 | workloads.default.nginx.enabled | bool | `true` |  |
 | workloads.default.nginx.image | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"` |  |
+| workloads.default.nodeSelector | object | `{}` |  |
 | workloads.default.otel.autoInstrumentation.enabled | bool | `false` |  |
 | workloads.default.otel.autoInstrumentation.language | string | `""` |  |
 | workloads.default.otel.containers | list | `[]` |  |
@@ -168,6 +173,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.security | object | `{}` |  |
 | workloads.default.serviceAccount | string | `""` |  |
 | workloads.default.strategy | string | `"RollingUpdate"` |  |
+| workloads.default.tolerations | list | `[]` |  |
 | workloads.default.type | string | `"deployment"` |  |
 
 ---
