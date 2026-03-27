@@ -466,6 +466,17 @@ tasks:
           #     KEY2: VALUE2
           envVars: {}
 
+          # Environment variables sourced from pod/container fields via the
+          # Kubernetes downward API (valueFrom.fieldRef). Keys are the env var
+          # names and values are the field paths.
+          #
+          # Format:
+          #
+          #   envFromFields:
+          #     MY_NODE_NAME: spec.nodeName
+          #     MY_POD_IP: status.podIP
+          envFromFields: {}
+
           # A list of external secret names and versions to mount in containers.
           # External secrets can be defined using the externalSecrets key above.
           #

@@ -1084,6 +1084,12 @@
             "type": "string"
           }
         },
+        "envFromFields": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "externalSecrets": {
           "type": "array",
           "items": {
