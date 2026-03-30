@@ -47,12 +47,6 @@ jobs:
         run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version=v1.0.3 --verify=false
         shell: bash
 
-      - name: Cache chart dependencies
-        uses: actions/cache@v4
-        with:
-          path: "**/application/charts"
-          key: chart-deps-${{ hashFiles('**/Chart.lock') }}
-
       - name: Update dependencies
         run: make update-dependencies
         shell: bash
