@@ -41,7 +41,7 @@ Example:
 */ -}}
 {{- define "pod.container.resources" -}}
 {{- $requests := .requests -}}
-{{- $limits := default (dict) .limits -}}
+{{- $limits := default dict .limits -}}
 {{- $resources := dict "requests" .requests "limits" $limits -}}
 {{- /* Validate CPU requests and limits */ -}}
 {{- $requestSuffix := "" -}}
@@ -159,7 +159,7 @@ Returns:
 {{- define "pod.container.securityContext" -}}
 allowPrivilegeEscalation: false
 capabilities:
-  {{- if gt (len (default (list) .addCapabilities)) 0 }}
+  {{- if gt (len (default list .addCapabilities)) 0 }}
   add:
     {{- range $capability := .addCapabilities }}
     - {{ $capability }}

@@ -1133,12 +1133,6 @@
             "type": "string"
           }
         },
-        "externalSecrets": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
         "image": {
           "type": "object",
           "additionalProperties": false,
@@ -1167,6 +1161,12 @@
               "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$",
               "default": "128Mi"
             }
+          }
+        },
+        "secrets": {
+          "type": "array",
+          "items": {
+            "type": "string"
           }
         },
         "security": {
