@@ -1,6 +1,6 @@
 # mozcloud-service-lib
 
-![Version: 0.2.22](https://img.shields.io/badge/Version-0.2.22-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
+![Version: 1.0.0](https://img.shields.io/badge/Version-1.0.0-informational?style=flat-square) ![Type: library](https://img.shields.io/badge/Type-library-informational?style=flat-square)
 
 A library chart for Kubernetes services
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-service-lib
-    version: ~0.2.22
+    version: ~1.0.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -42,7 +42,7 @@ If params other than the current context, specify those in place of the `.`:
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.16 |
+| file://../../mozcloud-labels/library | mozcloud-labels-lib | 1.0.0 |
 
 ---
 
