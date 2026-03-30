@@ -325,6 +325,11 @@ tests:
             apiVersion: apps/v1
             kind: Deployment
             name: test-service
+  - it: PodMonitoring is not rendered when telegraf is disabled by default
+    template: gke/podmonitoring.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
   - it: Schema rejects emptyDir with medium Memory but no sizeLimit
     template: workload/deployment.yaml
     set:

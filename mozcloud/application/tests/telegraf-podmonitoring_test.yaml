@@ -45,9 +45,3 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
-  - it: PodMonitoring is not rendered when telegraf key is absent
-    set:
-      telegraf: null
-    asserts:
-      - hasDocuments:
-          count: 0
