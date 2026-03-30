@@ -1133,12 +1133,6 @@
             "type": "string"
           }
         },
-        "secrets": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
         "image": {
           "type": "object",
           "additionalProperties": false,
