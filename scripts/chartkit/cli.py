@@ -232,10 +232,10 @@ def list_versions(graph: ChartGraph, charts: list[str]):
 
 @version.command()
 @click.option(
-    "--part",
+    "--release-type",
     type=click.Choice(["major", "minor", "patch"]),
     default="patch",
-    help="Part of the version to bump.",
+    help="Semver part to increment (major, minor, or patch). Cascades to dependent charts.",
 )
 @click.option(
     "--dry-run",
@@ -244,10 +244,11 @@ def list_versions(graph: ChartGraph, charts: list[str]):
     help="Show what would be changed, but do not write changes.",
 )
 @click.option(
-    "--json",
-    is_flag=True,
-    default=False,
-    help="Output results as JSON.",
+    "--format",
+    "output_format",
+    type=click.Choice(["text", "json", "markdown"]),
+    default="text",
+    help="Output format for version bump results (text, json, or markdown).",
 )
 @click.option(
     "--staged",
@@ -260,31 +261,38 @@ def list_versions(graph: ChartGraph, charts: list[str]):
 def bump(
     graph: ChartGraph,
     charts: List[str],
-    part: str,
+    release_type: str,
     dry_run: bool = False,
-    json: bool = False,
+    output_format: str = "text",
     staged: bool = False,
 ):
     """Bumps the version of a chart and cascades to dependents. Deprecated charts are ignored."""
 
     charts = get_chart_arguments(graph, charts, staged)
+    if not charts:
+        click.echo(
+            "No charts to bump. Specify chart names, file paths, or use --staged.",
+            err=True,
+        )
+        raise SystemExit(1)
+
     vm = VersionManager(graph)
-    # Sort by depth (deepest first) to ensure dependents are processed after dependencies
+    # Sort by depth (shallowest first) to ensure dependencies are processed before dependents
     sorted_charts = graph.sort_by_depth(charts)
     for chart_name in sorted_charts:
         target_chart = graph.get_chart(chart_name)
         if not target_chart:
             click.echo(f"Chart '{chart_name}' not found.", err=True)
             continue
-        vm.cascade_bump(target_chart, part)
+        vm.cascade_bump(target_chart, release_type)
 
-    vm.print_updates(json_output=json)
+    vm.print_updates(output_format=output_format, release_type=release_type)
 
     if not dry_run:
         vm.save_versions()
-        click.echo("Chart versions updated.")
+        click.echo("Chart versions updated.", err=True)
     else:
-        click.echo("Dry run; no changes made.")
+        click.echo("Dry run; no changes made.", err=True)
 
 
 @version.command()

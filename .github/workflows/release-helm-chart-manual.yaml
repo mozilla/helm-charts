@@ -1,0 +1,64 @@
+---
+name: Release Helm chart (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      charts:
+        description: >-
+          Chart paths to release, comma-separated
+          (e.g. mozcloud/application,mozcloud-ingress/library)
+        required: true
+        type: string
+      release-type:
+        description: Semver part to increment, cascades to dependent charts
+        required: true
+        type: choice
+        default: patch
+        options:
+          - patch
+          - minor
+          - major
+
+env:
+  GAR_PROJECT_ID: moz-fx-platform-artifacts
+  HELM_REGISTRY: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
+
+jobs:
+  release:
+    runs-on:
+      - ubuntu-latest
+
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.ref }}
+          fetch-depth: 0
+
+      - name: Normalize chart paths
+        id: normalize
+        run: echo "charts=$(echo '${{ inputs.charts }}' | tr ',' ' ')" >> $GITHUB_OUTPUT
+
+      - name: Bump chart versions and generate Helm docs
+        uses: ./.github/actions/bump-and-generate-docs
+        with:
+          chart-paths: ${{ steps.normalize.outputs.charts }}
+          release-type: ${{ inputs.release-type }}
+
+      - name: Package and push charts
+        id: package-push
+        uses: ./.github/actions/package-and-push
+        with:
+          gcp-project-id: ${{ env.GAR_PROJECT_ID }}
+          workload-identity-provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
+          helm-registry: ${{ env.HELM_REGISTRY }}
+
+      - name: Commit, push, and tag
+        uses: ./.github/actions/commit-and-tag
+        with:
+          chart-tags: ${{ steps.package-push.outputs.chart-tags }}

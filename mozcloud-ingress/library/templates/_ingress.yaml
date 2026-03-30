@@ -1,6 +1,7 @@
 {{- define "mozcloud-ingress-lib.ingress" -}}
 {{- $name_override := default "" .nameOverride }}
 {{- $provider := default "gke" .provider }}
+{{- $ingressClass := default "" .ingressClass }}
 {{- $backend_defaults := include "mozcloud-ingress-lib.defaults.backendConfig" . | fromYaml }}
 {{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml }}
 {{- $managed_certificates := include "mozcloud-ingress-lib.config.managedCertificates" . | fromYamlArray }}
@@ -33,14 +34,15 @@ metadata:
     ingress.gcp.kubernetes.io/pre-shared-cert: {{ index $ingresses "preSharedCerts" $ingress.name }}
     {{- end }}
     networking.gke.io/v1beta1.FrontendConfig: {{ $ingress.name }}
+  {{- else if $ingressClass }}
+  annotations:
+    kubernetes.io/ingress.class: {{ $ingressClass | quote }}
   {{- end }}
 spec:
-  {{- if and
-    (eq $provider "gke")
-    (eq (len $ingress.hosts) 1)
-    (eq (len (first $ingress.hosts).paths) 1)
-    (eq (len (first $ingress.hosts).domains) 1)
-  }}
+  {{- if and (ne $provider "gke") $ingressClass }}
+    ingressClassName: {{ $ingressClass | quote }}
+  {{- end }}
+  {{- if and (eq $provider "gke") (eq (len $ingress.hosts) 1) (eq (len (first $ingress.hosts).paths) 1) }}
   {{- range $host := $ingress.hosts }}
   {{- range $path := $host.paths }}
   {{- $backend := mergeOverwrite $backend_defaults (default (dict) $path.backend.config) }}

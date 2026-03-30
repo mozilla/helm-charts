@@ -1,0 +1,74 @@
+---
+name: Package and push charts to GAR
+description: >-
+  Packages all charts listed in bump-result.json and pushes them to GAR.
+
+inputs:
+  gcp-project-id:
+    description: GCP project ID hosting the artifact registry
+    required: true
+  workload-identity-provider:
+    description: GCP workload identity provider for authentication
+    required: true
+  helm-registry:
+    description: OCI registry URL to push charts to
+    required: true
+
+outputs:
+  chart-tags:
+    description: Space-separated list of chart tags created
+    value: ${{ steps.package-and-push.outputs.chart-tags }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Helm
+      uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f
+
+    - name: GCP auth
+      id: gcp-auth
+      uses: google-github-actions/auth@v2
+      with:
+        token_format: access_token
+        service_account: artifact-writer@${{ inputs.gcp-project-id }}.iam.gserviceaccount.com
+        workload_identity_provider: ${{ inputs.workload-identity-provider }}
+
+    - name: Docker login
+      uses: docker/login-action@v3
+      with:
+        registry: us-west1-docker.pkg.dev
+        username: oauth2accesstoken
+        password: ${{ steps.gcp-auth.outputs.access_token }}
+
+    - name: Update dependencies
+      shell: bash
+      run: make update-dependencies
+
+    - name: Package and push charts
+      id: package-and-push
+      shell: bash
+      env:
+        HELM_REGISTRY: ${{ inputs.helm-registry }}
+      run: |
+        CHART_PATHS=$(jq -r '.updated[].path' bump-result.json)
+        CHART_TAGS=""
+
+        for CHART_PATH in ${CHART_PATHS}; do
+          helm package "${CHART_PATH}"
+        done
+
+        while read PACKAGE; do
+          CHART_TAG="${PACKAGE%.tgz}"
+          CHART_VERSION="${CHART_TAG##*-}"
+          CHART_NAME="${CHART_TAG%-*}"
+
+          if ! helm show chart "${HELM_REGISTRY}/${CHART_NAME}" --version "${CHART_VERSION}" 2>/dev/null; then
+            helm push "${PACKAGE}" "${HELM_REGISTRY}"
+            CHART_TAGS="${CHART_TAGS} ${CHART_TAG}"
+          else
+            echo -e "\033[1;31m[ERROR]\033[0m chart \"${CHART_NAME}\" version ${CHART_VERSION} already present in registry, won't push again." >&2
+            exit 1
+          fi
+        done <<< $(ls -rt *.tgz)
+
+        echo "chart-tags=${CHART_TAGS}" >> $GITHUB_OUTPUT

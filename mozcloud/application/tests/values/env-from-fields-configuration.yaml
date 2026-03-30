@@ -1,0 +1,13 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        envFromFields:
+          MY_NODE_NAME: spec.nodeName
+          MY_POD_IP: status.podIP
+          MY_POD_NAME: metadata.name

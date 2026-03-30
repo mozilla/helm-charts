@@ -32,10 +32,13 @@ Hosts that reference a sharedGateway are excluded since their Gateway resource
 is managed externally.
 
 Params:
-  globals (dict):   (required) Global MozCloud values from
-                    .Values.global.mozcloud.
-  workloads (dict): (required) The formatted workloads dict as returned by
-                    mozcloud.formatter.workloads.
+  globals (dict):       (required) Global MozCloud values from
+                        .Values.global.mozcloud.
+  workloads (dict):     (required) The formatted workloads dict as returned by
+                        mozcloud.formatter.workloads.
+  ingressConfig (dict): (optional) The cloud.ingress dict. Used on non-GKE providers
+                        to resolve a default gatewayClass when hosts do not set one
+                        explicitly.
 
 Returns:
   (string) YAML-encoded dict with a top-level "gateways" key containing
@@ -45,6 +48,7 @@ Returns:
 {{- $globals := .globals -}}
 {{- $workloads := .workloads }}
 {{- $provider := default "gke" .provider }}
+{{- $ingressConfig := default dict .ingressConfig }}
 {{- /* Collect all unique gateway configurations */}}
 {{- $gatewayConfigs := dict }}
 {{- range $workloadName, $workloadConfig := $workloads }}
@@ -59,7 +63,18 @@ Returns:
           {{- $className = "gke-l7-global-external-managed-mc" }}
         {{- end }}
       {{- else }}
-        {{- $className = required "hosts[].gatewayClass must be set when cloud.provider is not \"gke\"" ($hostConfig).gatewayClass }}
+        {{- /* Resolve gateway class: per-host override → cloud.ingress.<default>.gatewayClass → cloud.ingress.default → error */}}
+        {{- if ($hostConfig).gatewayClass }}
+          {{- $className = $hostConfig.gatewayClass }}
+        {{- else }}
+          {{- $defaultController := $ingressConfig.default }}
+          {{- $controllerConfig := dict }}
+          {{- if $defaultController }}
+            {{- $controllerConfig = default dict (index $ingressConfig $defaultController) }}
+          {{- end }}
+          {{- $defaultClass := default $defaultController $controllerConfig.gatewayClass }}
+          {{- $className = required "hosts[].gatewayClass must be set, or cloud.ingress.default must be configured, when cloud.provider is not \"gke\"" $defaultClass }}
+        {{- end }}
       {{- end }}
       {{- $addresses := list }}
       {{- if eq $provider "gke" }}
@@ -161,8 +176,10 @@ Only include Gateway and related resources if we have Gateway hosts defined
   Gateways and Gateway policies - Skip if preview mode is using shared gateway
   */}}
   {{- if not (include "mozcloud.preview.usePreviewHttpRoute" .) }}
-    {{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" }}
-    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads "provider" $provider) }}
+    {{- $cloudConfig := default dict .Values.cloud }}
+    {{- $provider := default "gke" $cloudConfig.provider }}
+    {{- $ingressConfig := default dict $cloudConfig.ingress }}
+    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads "provider" $provider "ingressConfig" $ingressConfig) }}
     {{- $gateways := include "mozcloud.gateway.gateways" $params | fromYaml }}
     {{- range $gatewayName, $gatewayConfig := $gateways.gateways }}
       {{- $_ := set $labelParams "component_code" $gatewayConfig.component }}

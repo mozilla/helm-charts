@@ -34,7 +34,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../library | mozcloud-ingress-lib | 0.7.0 |
+| file://../library | mozcloud-ingress-lib | 0.8.0 |
 
 ## Values
 

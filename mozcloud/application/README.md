@@ -35,7 +35,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | Repository | Name | Version |
 |------------|------|---------|
 | file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 0.6.0 |
-| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.7.0 |
+| file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 0.8.0 |
 | file://../../mozcloud-labels/library | mozcloud-labels-lib | 0.3.16 |
 
 ## Values
@@ -89,6 +89,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.containers.default.args | list | `[]` |  |
 | tasks.jobs.default.containers.default.command | list | `[]` |  |
 | tasks.jobs.default.containers.default.configMaps | list | `[]` |  |
+| tasks.jobs.default.containers.default.envFromFields | object | `{}` |  |
 | tasks.jobs.default.containers.default.envVars | object | `{}` |  |
 | tasks.jobs.default.containers.default.externalSecrets | list | `[]` |  |
 | tasks.jobs.default.containers.default.image.repository | string | `""` |  |

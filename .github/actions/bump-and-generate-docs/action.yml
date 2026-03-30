@@ -1,0 +1,48 @@
+---
+name: Bump chart versions and generate docs
+description: >-
+  Bumps the specified chart versions (with cascade) and regenerates helm-docs.
+
+inputs:
+  chart-paths:
+    description: Space-separated chart paths to bump (e.g. mozcloud/application mozcloud-ingress/library)
+    required: true
+  release-type:
+    description: Semver part to increment (major, minor, patch)
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Install uv
+      shell: bash
+      run: pip install uv
+
+    - name: Install helm-docs
+      shell: bash
+      run: |
+        HELM_DOCS_VERSION=1.14.2
+        curl -sSL \
+          "https://github.com/norwoodj/helm-docs/releases/download/v${HELM_DOCS_VERSION}/helm-docs_${HELM_DOCS_VERSION}_Linux_x86_64.tar.gz" \
+          | tar -xz helm-docs
+        sudo mv helm-docs /usr/local/bin/
+
+    - name: Bump chart versions
+      shell: bash
+      env:
+        CHART_PATHS: ${{ inputs.chart-paths }}
+        RELEASE_TYPE: ${{ inputs.release-type }}
+      run: |
+        uv run --directory ./scripts chartkit version bump \
+          --release-type "${RELEASE_TYPE}" \
+          --format json \
+          ${CHART_PATHS} | tee bump-result.json
+
+    - name: Update helm docs
+      shell: bash
+      run: helm-docs --template-files=./_README.md.gotmpl --template-files=README.md.gotmpl
