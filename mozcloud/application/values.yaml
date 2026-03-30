@@ -750,6 +750,12 @@ tasks:
       # failing before Kubernetes cleans it up.
       #ttlSecondsAfterFinished:
 
+# Telegraf PodMonitoring configuration - only for tenants that have not yet
+# migrated to the OTEL Collector. When enabled, a PodMonitoring resource is
+# created to scrape Telegraf metrics.
+telegraf:
+  enabled: false
+
 workloads:
   # The name of your workload and all related components. Use any name other
   # than "default", which is reserved for setting default values shared across

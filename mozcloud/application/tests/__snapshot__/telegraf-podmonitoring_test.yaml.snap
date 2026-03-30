@@ -1,0 +1,26 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: monitoring.googleapis.com/v1
+    kind: PodMonitoring
+    metadata:
+      labels:
+        app.kubernetes.io/component: podmonitoring
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: podmonitoring
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mozcloud-test-telegraf
+    spec:
+      endpoints:
+        - interval: 30s
+          path: /metrics
+          port: 8080
+          scheme: http
+      selector:
+        matchLabels:
+          app.kubernetes.io/name: telegraf

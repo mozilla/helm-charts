@@ -325,23 +325,6 @@ tests:
             apiVersion: apps/v1
             kind: Deployment
             name: test-service
-  - it: Tenant PodMonitoring resource is configured correctly
-    template: gke/podmonitoring.yaml
-    documentSelector:
-      path: $[?(@.kind == "PodMonitoring")].metadata.name
-      value: mozcloud-test-telegraf
-    asserts:
-      - contains:
-          path: spec.endpoints
-          content:
-            interval: 30s
-            path: /metrics
-            port: 8080
-            scheme: http
-      - isSubset:
-          path: spec.selector.matchLabels
-          content:
-            app.kubernetes.io/name: telegraf
   - it: Schema rejects emptyDir with medium Memory but no sizeLimit
     template: workload/deployment.yaml
     set:

@@ -10,7 +10,11 @@
 
 {{- if $workloads }}
 {{- /* Default PodMonitoring template for all tenants */}}
-{{- if and .Values.enabled (not (include "mozcloud.preview.enabled" .)) (eq $provider "gke") }}
+{{- if and .Values.enabled
+  (not (include "mozcloud.preview.enabled" .))
+  (eq $provider "gke")
+  (dig "enabled" false (default dict .Values.telegraf))
+}}
 ---
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
