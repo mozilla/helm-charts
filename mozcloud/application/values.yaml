@@ -249,6 +249,14 @@ persistentVolumes: {}
 #       # GCP project ID. If not specified, the value automatically set in
 #       # .Values.global.mozcloud.project_id will be used.
 #       #projectId: ''
+#
+#     # A list of image pull secret names to attach to this service account.
+#     # Any pod using this service account will automatically have access to
+#     # these secrets for pulling container images.
+#     #
+#     #   imagePullSecrets:
+#     #     - my-registry-secret
+#     #     - another-registry-secret
 serviceAccounts:
   default:
     enabled: true
