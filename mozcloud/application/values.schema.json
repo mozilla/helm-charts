@@ -343,6 +343,17 @@
         }
       }
     },
+    "telegraf": {
+      "type": "object",
+      "description": "Telegraf PodMonitoring configuration for tenants that have not yet migrated to the OTEL Collector.",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
     "workloads": {
       "type": "object",
       "description": "Declarative workloads keyed by workload name",

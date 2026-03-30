@@ -100,9 +100,18 @@ In addition to the template and helper rules above, ensure the following are upd
 - **`common.values.yaml.example`** — add representative examples showing the key configuration options a user would need. It does not need to cover every variant, but should illustrate the most common usage (e.g., if a resource type supports subtypes like Deployment, StatefulSet, or Rollout, show the type field with an example).
 - **`templates/_annotations.yaml` sync-wave defaults** — if the new resource type uses `mozcloud.annotations.argo`, add it to the `mozcloud.annotations.argo.syncWaveDefaults` lookup table with an appropriate sync-wave value, and add it to the accepted types listed in the helper's JSDoc comment. Current defaults for reference: `configMap: -11`, `externalSecret: -11`, `serviceAccount: -11`, `jobPreDeployment: -1`, `jobPostDeployment: 1` (deployments intentionally have no sync-wave).
 
+## When testing changes to library charts
+Before running unit tests after modifying a library chart, always run `make update-dependencies` first. Application charts cache library chart `.tgz` files under their `charts/` directory — without a dependency refresh, tests will run against the old cached version and changes will not be picked up.
+
 ## When testing changes to Helm templates or helpers
+- Every change — including template modifications, helper changes, and values/schema updates — must be covered by a unit test, even if no new test file is needed.
 - Additional templates should include their own set of `helm unittest` tests.
   - In addition to generic `helm unittest` significant changes should have their own snapshot test.
 - If no changes are made to existing templates ensure `helm unittest` passes without updates.
 - Do not update existing tests unless we are reflecting a change to a template related to the test.
 - Ensure `make unit-tests` results in all tests passing before finishing a change.
+
+### Unit test structure
+Every test suite must open with these two cases, in this order, before any feature-specific assertions:
+1. `Ensure no failures occur` — asserts `notFailedTemplate: {}`
+2. `Configuration matches entire snapshot` — asserts `matchSnapshot: {}`
