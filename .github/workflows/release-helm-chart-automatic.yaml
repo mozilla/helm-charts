@@ -26,6 +26,7 @@ jobs:
       chart-paths: ${{ steps.get-charts.outputs.chart-paths }}
       has-charts: ${{ steps.get-charts.outputs.has-charts }}
       release-type: ${{ steps.get-label.outputs.release-type }}
+      has-label: ${{ steps.get-label.outputs.has-label }}
       is-merge-event: >-
         ${{ github.event_name == 'pull_request'
           && github.event.action == 'closed'
@@ -77,13 +78,31 @@ jobs:
             // no-release is a veto; check it before severity labels
             if (labels.includes('no-release')) {
               core.setOutput('release-type', 'no-release');
+              core.setOutput('has-label', 'true');
               return;
             }
 
             // Among severity labels, highest wins if multiple are present
             const severityLabels = ['major', 'minor', 'patch'];
-            const releaseType = severityLabels.find(l => labels.includes(l)) || '';
-            core.setOutput('release-type', releaseType);
+            const existingLabel = severityLabels.find(l => labels.includes(l));
+            if (existingLabel) {
+              core.setOutput('release-type', existingLabel);
+              core.setOutput('has-label', 'true');
+              return;
+            }
+
+            // No label set yet — infer from PR title so preview can run immediately
+            const title = context.payload.pull_request.title;
+            let inferred;
+            if (/^[a-z]+(\([^)]+\))?!:/.test(title) || /breaking change/i.test(title)) {
+              inferred = 'major';
+            } else if (/^feat(\([^)]+\))?:/.test(title)) {
+              inferred = 'minor';
+            } else {
+              inferred = 'patch';
+            }
+            core.setOutput('release-type', inferred);
+            core.setOutput('has-label', 'false');
 
   auto-label:
     runs-on:
@@ -95,7 +114,7 @@ jobs:
     # Apply a label when none exists. Skip on merge and on label-change events
     # (to avoid re-triggering after we apply one).
     if: |
-      needs.detect.outputs.release-type == '' &&
+      needs.detect.outputs.has-label == 'false' &&
       needs.detect.outputs.is-merge-event == 'false' &&
       github.event.action != 'labeled' &&
       github.event.action != 'unlabeled'
@@ -104,28 +123,10 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Determine label from PR title
-        id: determine-label
-        uses: actions/github-script@v7
-        with:
-          result-encoding: string
-          script: |
-            const title = context.payload.pull_request.title;
-            // Breaking change: any conventional commit type with ! (e.g. feat!:, fix!:)
-            if (/^[a-z]+(\([^)]+\))?!:/.test(title) || /breaking change/i.test(title)) {
-              return 'major';
-            }
-            // New feature
-            if (/^feat(\([^)]+\))?:/.test(title)) {
-              return 'minor';
-            }
-            // Everything else (fix, chore, docs, refactor, etc.)
-            return 'patch';
-
       - name: Apply label
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LABEL: ${{ steps.determine-label.outputs.result }}
+          LABEL: ${{ needs.detect.outputs.release-type }}
         run: gh pr edit ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --add-label "${LABEL}"
 
   preview:
@@ -140,7 +141,6 @@ jobs:
     if: |
       needs.detect.outputs.is-merge-event == 'false' &&
       needs.detect.outputs.has-charts == 'true' &&
-      needs.detect.outputs.release-type != '' &&
       needs.detect.outputs.release-type != 'no-release'
 
     permissions:

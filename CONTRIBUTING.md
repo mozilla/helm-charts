@@ -21,7 +21,7 @@ The typical loop for any change:
 
 ## Release process
 
-Chart versions are bumped and charts are published automatically when a PR is merged. You do not need to bump versions manually.
+Chart versions are bumped and charts are published automatically when a PR is merged. You do not need to bump versions manually. If you manually increment a version in `Chart.yaml`, CI will bump it again on merge, advancing the version further than intended.
 
 ### How the release type is determined
 
