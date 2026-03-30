@@ -60,9 +60,9 @@ jobs:
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             affected=$(uv run --directory ./scripts chartkit affected --base origin/${{ github.base_ref }})
             if [ -n "$affected" ]; then
-              make unit-tests-affected PARALLEL=8
+              uv run --directory ./scripts chartkit unittest $affected
             fi
           else
-            make unit-tests PARALLEL=8
+            make unit-tests
           fi
         shell: bash
