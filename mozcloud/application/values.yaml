@@ -1203,11 +1203,13 @@ workloads:
         domains:
           - example.com
 
-        # A list of the named addresses to use on the Gateway. These should
-        # match the named addresses created for the tenant in GCP.
+        # Named IP addresses to use on the Gateway. If omitted, the
+        # default tenant address is used automatically. Only set this if
+        # you need to use additional or alternative addresses.
         #
-        # If you are using the "ingress" API type, only the first address in
-        # the list will be used.
+        # Named addresses must already exist in GCP for this tenant.
+        #
+        # If "api" is set to "ingress", only the first address is used.
         addresses: []
 
         # Configure the API to use when building network resources. The default
