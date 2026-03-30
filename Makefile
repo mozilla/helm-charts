@@ -19,6 +19,13 @@ else
 	UPDATE_SNAPSHOTS_ARG =
 endif
 
+PARALLEL ?=
+ifneq ($(PARALLEL),)
+	PARALLEL_ARG = --parallel $(PARALLEL)
+else
+	PARALLEL_ARG =
+endif
+
 %:
 	@:
 
@@ -67,12 +74,12 @@ unit-tests: ## Run unit tests for all charts (set UPDATE_SNAPSHOTS=1 to update s
 		$(MAKE) update-dependencies; \
 	fi
 	@echo "$(UNIT_TEST_MESSAGE)"
-	@$(CHART_KIT) unittest $(UPDATE_SNAPSHOTS_ARG)
+	@$(CHART_KIT) unittest $(PARALLEL_ARG) $(UPDATE_SNAPSHOTS_ARG)
 
 unit-tests-affected: ## Run unit tests for staged charts and their dependents
 	@affected=$$($(CHART_KIT) affected); \
 	if [ -n "$$affected" ]; then \
-		$(CHART_KIT) unittest $(UPDATE_SNAPSHOTS_ARG) $$affected; \
+		$(CHART_KIT) unittest $(PARALLEL_ARG) $(UPDATE_SNAPSHOTS_ARG) $$affected; \
 	fi
 
 kubeconform: ## Validate snapshot resources against Kubernetes and GKE CRD schemas
