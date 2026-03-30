@@ -1,0 +1,26 @@
+---
+backends:
+  test-service:
+    service:
+      port: 8080
+backendPolicy:
+  securityPolicy: my-app-cloud-armor-policy
+gateway:
+  gateways:
+    test-gateway:
+      addresses:
+        - mozcloud-test-dev-ip-v4
+      tls:
+        certs:
+          - mozcloud-test-nonprod-dev
+        type: certmap
+httpRoute:
+  httpRoutes:
+    test-httproute:
+      gatewayRefs:
+        - name: test-gateway
+          section: https
+      rules:
+        - backendRefs:
+            - name: test-service
+              port: 8080

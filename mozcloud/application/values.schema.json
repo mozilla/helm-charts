@@ -872,6 +872,10 @@
                       ],
                       "default": 10
                     },
+                    "securityPolicy": {
+                      "type": "string",
+                      "description": "Cloud Armor security policy name to attach to the load balancer backend. For migration of existing applications only — new applications should use Fastly for WAF instead."
+                    },
                     "timeoutSec": {
                       "type": "integer",
                       "minimum": 0,

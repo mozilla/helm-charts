@@ -93,6 +93,9 @@ backends:
       {{- if ($hostConfig.options).timeoutSec }}
       timeoutSec: {{ $hostConfig.options.timeoutSec | int }}
       {{- end }}
+      {{- if ($hostConfig.options).securityPolicy }}
+      securityPolicy: {{ $hostConfig.options.securityPolicy }}
+      {{- end }}
     healthCheck:
       {{- if (($hostConfig.options).healthCheck).host }}
       host: {{ $hostConfig.options.healthCheck.host }}

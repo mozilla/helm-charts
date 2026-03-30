@@ -103,6 +103,9 @@ BackendConfig template helpers
   {{- range $host := $ingress.hosts -}}
     {{- range $path := $host.paths -}}
       {{- $backend := mergeOverwrite $defaults (default (dict) $path.backend.config) -}}
+      {{- if kindIs "string" $backend.securityPolicy -}}
+        {{- $_ := set $backend "securityPolicy" (dict "name" $backend.securityPolicy) -}}
+      {{- end -}}
       {{/* If a backend name is not specified, use the service name for the backend */}}
       {{- $params := mergeOverwrite $context (dict "backendConfig" $backend "ingressConfig" $ingress "backendService" $path.backend.service) -}}
       {{- if $name_override -}}

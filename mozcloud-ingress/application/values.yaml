@@ -100,8 +100,12 @@ backendConfig:
     # Ranges from 0.0 (0%) to 1.0 (100%).
     sampleRate: 0.1
 
-  # Security policy to use with the GCLB. This should match the name of a rule
-  # in CloudArmor. Defaults to: {{ $.Values.app_code }}-policy
+  # Cloud Armor security policy to attach to the load balancer backend. This
+  # should match the name of an existing Cloud Armor policy in GCP.
+  #
+  # NOTE: This option exists only to support migration of existing applications
+  # that already use Cloud Armor. New applications should NOT use this — use
+  # Fastly for WAF instead.
   #securityPolicy:
 
   # Optionally configures generated cookie affinity.
