@@ -186,6 +186,13 @@
               "description": "Whether to create the default service account. Defaults to true.",
               "type": "boolean",
               "default": true
+            },
+            "imagePullSecrets": {
+              "type": "array",
+              "description": "List of image pull secret names to attach to the service account.",
+              "items": {
+                "type": "string"
+              }
             }
           }
         }
@@ -210,6 +217,13 @@
             "type": "object",
             "description": "Additional annotations to apply to the ServiceAccount.",
             "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "imagePullSecrets": {
+            "type": "array",
+            "description": "List of image pull secret names to attach to the service account.",
+            "items": {
               "type": "string"
             }
           }
