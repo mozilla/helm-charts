@@ -716,10 +716,24 @@ tasks:
       #   runAsRoot: false
       security: {}
 
+      # Optionally configure pod affinity rules. Accepts the standard
+      # Kubernetes affinity structure. See workloads.default.affinity for
+      # full documentation and examples.
+      affinity: {}
+
+      # Optionally restrict pods to specific nodes using label selectors.
+      # See workloads.default.nodeSelector for full documentation.
+      nodeSelector: {}
+
       # Optionally use a custom service account for the container. The value
       # should match a service account created above in the `serviceAccounts`
       # section.
       serviceAccount: ''
+
+      # Optionally configure tolerations to allow pods to be scheduled on
+      # tainted nodes. See workloads.default.tolerations for full
+      # documentation and examples.
+      tolerations: []
 
       # When Kubernetes creates Job resources, the Job controller will
       # immediately begin executing the job by creating pods. If "suspend" is
@@ -745,6 +759,44 @@ workloads:
     # Gateways, HTTPRoutes, PodMonitoring) are suppressed without removing
     # the config block. Useful for staged rollouts or incident response.
     enabled: true
+
+    # Optionally configure pod affinity rules to control co-location or
+    # anti-affinity of pods. Accepts the standard Kubernetes affinity
+    # structure (nodeAffinity, podAffinity, podAntiAffinity).
+    #
+    # Example:
+    #
+    #   affinity:
+    #     nodeAffinity:
+    #       requiredDuringSchedulingIgnoredDuringExecution:
+    #         nodeSelectorTerms:
+    #           - matchExpressions:
+    #               - key: cloud.google.com/gke-nodepool
+    #                 operator: In
+    #                 values:
+    #                   - my-node-pool
+    affinity: {}
+
+    # Optionally restrict pods to specific nodes using label selectors.
+    #
+    # Example:
+    #
+    #   nodeSelector:
+    #     cloud.google.com/gke-nodepool: my-node-pool
+    nodeSelector: {}
+
+    # Optionally configure tolerations to allow pods to be scheduled on
+    # nodes with matching taints. This is commonly used alongside
+    # nodeSelector to target dedicated node pools.
+    #
+    # Example:
+    #
+    #   tolerations:
+    #     - key: dedicated
+    #       operator: Equal
+    #       value: my-node-pool
+    #       effect: NoSchedule
+    tolerations: []
 
     # The specific unit within an application that performs a distinct function,
     # typically aligned to a microservice or deployable artifact.
