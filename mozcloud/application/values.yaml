@@ -35,6 +35,13 @@ cloud:
   provider: gke
   # ingress:
   #   default: traefik
+  #
+  # Default cert-manager configuration for all hosts using tls.type: certManager.
+  # Per-host tls.issuer and tls.issuerKind override these values.
+  #
+  #   certManager:
+  #     issuer: letsencrypt-prod
+  #     issuerKind: ClusterIssuer   # ClusterIssuer (default) or Issuer
 
 # Preview mode configuration - when enabled, all resources will be prefixed with "pr{PR}-"
 # and configured for preview environments using a shared preview gateway.
@@ -1380,15 +1387,26 @@ workloads:
           # using Ingress. This option is ignored for Gateway API resources.
           create: true
 
-          # Can be "certmap", "ManagedCertificate", or "pre-shared". What you
-          # depends on the type of API used.
+          # Can be "certmap", "ManagedCertificate", "pre-shared", or
+          # "certManager". What you use depends on the type of API used.
           #
           # Options (based on API):
           #   Gateway: certmap
-          #   Ingress: ManagedCertificate (preferred), pre-shared
+          #   Ingress (GKE): ManagedCertificate (preferred), pre-shared
+          #   Ingress (non-GKE): certManager (e.g. Let's Encrypt via cert-manager)
           #
           # As the default API is "gateway", the default TLS type is "certmap".
           type: certmap
+
+          # Required when type is "certManager". The name of the cert-manager
+          # ClusterIssuer or Issuer to use (e.g. "letsencrypt-prod").
+          # Overrides cloud.certManager.issuer for this host.
+          #issuer: ''
+
+          # Required when type is "certManager". "ClusterIssuer" (default) or
+          # "Issuer" for namespace-scoped issuers.
+          # Overrides cloud.certManager.issuerKind for this host.
+          #issuerKind: ClusterIssuer
 
         # Optionally configure the log sample rate for the load balancer, IAP
         # details, a custom backend timeout, or a Cloud Armor security policy.

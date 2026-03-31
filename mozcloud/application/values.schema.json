@@ -871,9 +871,19 @@
                         "certmap",
                         "ManagedCertificate",
                         "pre-shared",
-                        "secret"
+                        "secret",
+                        "certManager"
                       ],
                       "default": "certmap"
+                    },
+                    "issuer": {
+                      "type": "string",
+                      "description": "cert-manager ClusterIssuer or Issuer name. Overrides cloud.certManager.issuer for this host."
+                    },
+                    "issuerKind": {
+                      "type": "string",
+                      "description": "\"ClusterIssuer\" (default) or \"Issuer\". Overrides cloud.certManager.issuerKind for this host.",
+                      "enum": ["ClusterIssuer", "Issuer"]
                     }
                   }
                 },
@@ -1091,6 +1101,23 @@
               }
             },
             "additionalProperties": false
+          }
+        },
+        "certManager": {
+          "type": "object",
+          "description": "Default cert-manager configuration for all hosts using tls.type: certManager.",
+          "additionalProperties": false,
+          "properties": {
+            "issuer": {
+              "type": "string",
+              "description": "Name of the cert-manager ClusterIssuer or Issuer (e.g. \"letsencrypt-prod\")."
+            },
+            "issuerKind": {
+              "type": "string",
+              "description": "\"ClusterIssuer\" (default) or \"Issuer\" for namespace-scoped issuers.",
+              "enum": ["ClusterIssuer", "Issuer"],
+              "default": "ClusterIssuer"
+            }
           }
         }
       }
