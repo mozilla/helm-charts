@@ -26,6 +26,7 @@ Returns:
            ingress configurations keyed by host name.
 */ -}}
 {{- define "mozcloud.config.ingresses" -}}
+{{- $context := . }}
 {{- $globals := .globals }}
 {{- $workloads := .workloads }}
 ingresses:
@@ -78,7 +79,7 @@ ingresses:
           preSharedCerts: {{ join "," (uniq $hostConfig.tls.certs | sortAlpha) | quote }}
           {{- end }}
           {{- if eq $type "certManager" }}
-          {{- $cloudCertManager := default dict $.cloudCertManager }}
+          {{- $cloudCertManager := default dict $context.cloudCertManager }}
           {{- $certManagerIssuer := default $cloudCertManager.issuer $hostConfig.tls.issuer }}
           {{- $certManagerIssuerKind := default (default "ClusterIssuer" $cloudCertManager.issuerKind) $hostConfig.tls.issuerKind }}
           certManager:
