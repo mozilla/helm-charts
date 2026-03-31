@@ -77,6 +77,15 @@ ingresses:
           {{- if eq $type "pre-shared" }}
           preSharedCerts: {{ join "," (uniq $hostConfig.tls.certs | sortAlpha) | quote }}
           {{- end }}
+          {{- if eq $type "certManager" }}
+          {{- $cloudCertManager := default dict $.cloudCertManager }}
+          {{- $certManagerIssuer := default $cloudCertManager.issuer $hostConfig.tls.issuer }}
+          {{- $certManagerIssuerKind := default (default "ClusterIssuer" $cloudCertManager.issuerKind) $hostConfig.tls.issuerKind }}
+          certManager:
+            issuer: {{ required "tls.issuer or cloud.certManager.issuer is required when tls.type is certManager" $certManagerIssuer | quote }}
+            issuerKind: {{ $certManagerIssuerKind | quote }}
+            secretName: {{ required "tls.certs must have at least one entry when tls.type is certManager" (first (default (list) $hostConfig.tls.certs)) | quote }}
+          {{- end }}
     {{- if $hostConfig.addresses }}
     staticIpName: {{ $hostConfig.addresses | first }}
     {{- else }}
@@ -121,7 +130,8 @@ ingresses:
       {{- $controllerConfig = default dict (index $cloudIngressConfig $defaultController) }}
     {{- end }}
     {{- $ingressClass := default $defaultController $controllerConfig.ingressClass }}
-    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads "provider" $provider "ingressClass" $ingressClass) }}
+    {{- $cloudCertManager := default dict $cloudConfig.certManager }}
+    {{- $params := mergeOverwrite $context (dict "globals" .Values.global.mozcloud "workloads" $workloads "provider" $provider "ingressClass" $ingressClass "cloudCertManager" $cloudCertManager) }}
     {{- $ingresses := (include "mozcloud.config.ingresses" $params | fromYaml).ingresses }}
     {{- range $ingressName, $ingressConfig := $ingresses }}
       {{- $_ := set $labelParams "component_code" $ingressConfig.component }}

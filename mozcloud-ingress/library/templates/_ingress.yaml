@@ -6,6 +6,7 @@
 {{- $ingresses := include "mozcloud-ingress-lib.config.ingresses" . | fromYaml }}
 {{- $managed_certificates := include "mozcloud-ingress-lib.config.managedCertificates" . | fromYamlArray }}
 {{- range $ingress := $ingresses.ingresses }}
+{{- $certManagerConfig := default dict (default dict (first $ingress.hosts).tls).certManager }}
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -34,13 +35,29 @@ metadata:
     ingress.gcp.kubernetes.io/pre-shared-cert: {{ index $ingresses "preSharedCerts" $ingress.name }}
     {{- end }}
     networking.gke.io/v1beta1.FrontendConfig: {{ $ingress.name }}
-  {{- else if $ingressClass }}
+  {{- else if or $ingressClass $certManagerConfig }}
   annotations:
+    {{- if $ingressClass }}
     kubernetes.io/ingress.class: {{ $ingressClass | quote }}
+    {{- end }}
+    {{- if $certManagerConfig }}
+    {{- $issuerAnnotation := ternary "cert-manager.io/issuer" "cert-manager.io/cluster-issuer" (eq $certManagerConfig.issuerKind "Issuer") }}
+    {{ $issuerAnnotation }}: {{ $certManagerConfig.issuer | quote }}
+    {{- end }}
   {{- end }}
 spec:
   {{- if and (ne $provider "gke") $ingressClass }}
     ingressClassName: {{ $ingressClass | quote }}
+  {{- end }}
+  {{- if $certManagerConfig }}
+    tls:
+      - hosts:
+          {{- range $host := $ingress.hosts }}
+          {{- range $domain := $host.domains }}
+          - {{ $domain | quote }}
+          {{- end }}
+          {{- end }}
+        secretName: {{ $certManagerConfig.secretName | quote }}
   {{- end }}
   {{- if and
     (eq $provider "gke")
