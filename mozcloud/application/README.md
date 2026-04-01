@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 1.2.0](https://img.shields.io/badge/Version-1.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~1.1.0
+    version: ~1.2.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -66,6 +66,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.common.container.configMaps | list | `[]` |  |
 | tasks.common.container.envVars | object | `{}` |  |
 | tasks.common.container.image | object | `{}` |  |
+| tasks.common.container.imagePullPolicy | string | `"Always"` |  |
 | tasks.common.container.resources.cpu | string | `"100m"` |  |
 | tasks.common.container.resources.memory | string | `"128Mi"` |  |
 | tasks.common.container.secrets | list | `[]` |  |
@@ -94,6 +95,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.containers.default.envVars | object | `{}` |  |
 | tasks.jobs.default.containers.default.image.repository | string | `""` |  |
 | tasks.jobs.default.containers.default.image.tag | string | `""` |  |
+| tasks.jobs.default.containers.default.imagePullPolicy | string | `"Always"` |  |
 | tasks.jobs.default.containers.default.resources | object | `{}` |  |
 | tasks.jobs.default.containers.default.secrets | list | `[]` |  |
 | tasks.jobs.default.containers.default.security | object | `{}` |  |
@@ -138,6 +140,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.healthCheck.readiness.probes.timeoutSeconds | int | `5` |  |
 | workloads.default.containers.default.image.repository | string | `""` |  |
 | workloads.default.containers.default.image.tag | string | `""` |  |
+| workloads.default.containers.default.imagePullPolicy | string | `"Always"` |  |
 | workloads.default.containers.default.port | int | `8000` |  |
 | workloads.default.containers.default.resources.cpu | string | `"100m"` |  |
 | workloads.default.containers.default.resources.memory | string | `"128Mi"` |  |
@@ -159,6 +162,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.initContainers.default.envVars | object | `{}` |  |
 | workloads.default.initContainers.default.image.repository | string | `""` |  |
 | workloads.default.initContainers.default.image.tag | string | `""` |  |
+| workloads.default.initContainers.default.imagePullPolicy | string | `"Always"` |  |
 | workloads.default.initContainers.default.resources.cpu | string | `"100m"` |  |
 | workloads.default.initContainers.default.resources.memory | string | `"128Mi"` |  |
 | workloads.default.initContainers.default.secrets | list | `[]` |  |

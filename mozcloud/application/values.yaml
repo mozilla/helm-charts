@@ -288,6 +288,7 @@ tasks:
       envVars: {}
       secrets: []
       image: {}
+      imagePullPolicy: Always
       resources:
         cpu: 100m
         memory: 128Mi
@@ -543,6 +544,17 @@ tasks:
           image:
             repository: ''
             tag: ''
+
+          # The pull policy for the container image. Accepted values:
+          #
+          #   Always:        Always pull the image (default).
+          #   IfNotPresent:  Pull only if the image is not already present locally.
+          #                  Recommended for immutable tags (e.g. full SHA digests).
+          #   Never:         Never pull the image. Use only in environments where
+          #                  images are pre-loaded (e.g. air-gapped).
+          #
+          # Default: Always
+          imagePullPolicy: Always
 
           # The "resources" section allows you to specify the amount of CPU and
           # memory that your container needs to run. These are equivalent to
@@ -1072,6 +1084,17 @@ workloads:
           repository: ''
           tag: ''
 
+        # The pull policy for the container image. Accepted values:
+        #
+        #   Always:        Always pull the image (default).
+        #   IfNotPresent:  Pull only if the image is not already present locally.
+        #                  Recommended for immutable tags (e.g. full SHA digests).
+        #   Never:         Never pull the image. Use only in environments where
+        #                  images are pre-loaded (e.g. air-gapped).
+        #
+        # Default: Always
+        imagePullPolicy: Always
+
         # Optionally configure a custom port for your container. The default
         # value is 8000.
         #
@@ -1539,6 +1562,17 @@ workloads:
         image:
           repository: ''
           tag: ''
+
+        # The pull policy for the container image. Accepted values:
+        #
+        #   Always:        Always pull the image (default).
+        #   IfNotPresent:  Pull only if the image is not already present locally.
+        #                  Recommended for immutable tags (e.g. full SHA digests).
+        #   Never:         Never pull the image. Use only in environments where
+        #                  images are pre-loaded (e.g. air-gapped).
+        #
+        # Default: Always
+        imagePullPolicy: Always
 
         # Optionally configure a custom port for your container. The default
         # value is none/unset.

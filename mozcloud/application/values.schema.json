@@ -1127,6 +1127,11 @@
     "container": {
       "type": "object",
       "properties": {
+        "imagePullPolicy": {
+          "type": "string",
+          "description": "Image pull policy for the container. One of Always, IfNotPresent, or Never. When not set, the chart defaults to Always.",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        },
         "args": {
           "oneOf": [
             {
