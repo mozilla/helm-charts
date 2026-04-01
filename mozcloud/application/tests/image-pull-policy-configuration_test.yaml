@@ -1,0 +1,82 @@
+---
+suite: "mozcloud: imagePullPolicy configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/image-pull-policy-configuration.yaml
+templates:
+  - workload/deployment.yaml
+  - workload/rollout.yaml
+  - task/job.yaml
+tests:
+  - it: Ensure no failures occur
+    template: workload/deployment.yaml
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: App container uses configured imagePullPolicy
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].imagePullPolicy
+          value: IfNotPresent
+
+  - it: Init container uses configured imagePullPolicy
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name=="init")].imagePullPolicy
+          value: IfNotPresent
+
+  - it: Nginx sidecar always uses imagePullPolicy Always
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="nginx")].imagePullPolicy
+          value: Always
+
+  - it: Rollout app container uses configured imagePullPolicy
+    template: workload/rollout.yaml
+    values:
+      - values/globals.yaml
+      - values/rollout-configuration.yaml
+    set:
+      workloads.test-service.containers.app.imagePullPolicy: IfNotPresent
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].imagePullPolicy
+          value: IfNotPresent
+
+  - it: Job container uses configured imagePullPolicy
+    template: task/job.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-job-configuration.yaml
+    set:
+      tasks.jobs.test-predeployment-job.containers.job.imagePullPolicy: IfNotPresent
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-predeployment-job
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent

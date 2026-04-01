@@ -87,7 +87,7 @@ template:
         {{- fail (printf "%sContainer image tag must be set! You can set this in either .Values.mozcloud.tasks.jobs.%s.containers[].image.tag or .Values.global.mozcloud.image.tag" $jobConfig.name) }}
         {{- end }}
         image: {{ $imageRepo }}:{{ $imageTag }}
-        imagePullPolicy: Always
+        imagePullPolicy: {{ default "Always" $containerConfig.imagePullPolicy }}
         {{- if $containerConfig.command }}
         command:
           {{- range $line := $containerConfig.command }}

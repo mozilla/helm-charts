@@ -1,0 +1,25 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        imagePullPolicy: IfNotPresent
+        image:
+          repository: test-repo/test-image
+          tag: abc123sha
+    initContainers:
+      init:
+        imagePullPolicy: IfNotPresent
+        image:
+          repository: test-repo/init-image
+          tag: abc123sha
+    hosts:
+      test-service:
+        domains:
+          - test-service.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        tls:
+          certs:
+            - test-service-nonprod-dev

@@ -186,7 +186,7 @@ spec:
           {{- end }}
           {{- $tag := default ($globals.image).tag ($containerConfig.image).tag }}
           image: {{ printf "%s:%s" $image $tag }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ default "Always" $containerConfig.imagePullPolicy }}
           {{- if $containerConfig.command }}
           command:
             {{- range $line := $containerConfig.command }}
@@ -349,7 +349,7 @@ spec:
           {{- end }}
           {{- $tag := default ($globals.image).tag ($containerConfig.image).tag }}
           image: {{ printf "%s:%s" $image $tag }}
-          imagePullPolicy: Always
+          imagePullPolicy: {{ default "Always" $containerConfig.imagePullPolicy }}
           {{- if $containerConfig.command }}
           command:
             {{- range $line := $containerConfig.command }}
