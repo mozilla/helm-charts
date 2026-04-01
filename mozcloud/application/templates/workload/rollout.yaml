@@ -495,15 +495,11 @@ spec:
       {{- end }}
 {{- if and $nginxEnabled (not $workloadConfig.nginx.configMap) }}
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ $workloadName }}-nginx
-  labels:
-    {{- $labels.labels | toYaml | nindent 4 }}
-data:
-  nginx.conf: |
-    {{ include "workload.nginx.conf" . | nindent 4 }}
+{{- include "mozcloud.workload.nginxConfigMap" (dict
+  "config" $workloadConfig
+  "labels" $labels
+  "name" $workloadName
+) }}
 {{- end }}
 {{- end }}
 {{- end }}
