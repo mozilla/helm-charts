@@ -72,5 +72,6 @@ Configuration matches entire snapshot:
                 runAsUser: 10001
                 seccompProfile:
                   type: RuntimeDefault
+              serviceAccountName: mozcloud-test
       schedule: 0 * * * *
       successfulJobsHistoryLimit: 1

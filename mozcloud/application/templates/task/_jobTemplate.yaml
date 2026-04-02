@@ -40,6 +40,8 @@ Returns:
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" $context | fromYaml) }}
 {{- $labelsParams := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) "labels" (default dict $jobConfig.labels) }}
 {{- $podLabels := (include "mozcloud.labels" $labelsParams | fromYaml).labels }}
+{{- $globals := $context.Values.global.mozcloud }}
+{{- $defaultServiceAccount := printf "%s%s" $prefix $globals.app_code -}}
 {{- if $jobConfig.activeDeadlineSeconds }}
 activeDeadlineSeconds: {{ $jobConfig.activeDeadlineSeconds }}
 {{- end }}
@@ -179,9 +181,7 @@ template:
       {{- $runAsNonRoot := ternary false true (dig "security" "runAsRoot" false $jobConfig) }}
       {{- $params := mergeOverwrite (omit (default dict $jobConfig.security) "runAsRoot") (dict "runAsNonRoot" $runAsNonRoot) }}
       {{- include "pod.securityContext" $params | nindent 6 }}
-    {{- if $jobConfig.serviceAccount }}
-    serviceAccountName: {{ printf "%s%s" $prefix $jobConfig.serviceAccount }}
-    {{- end }}
+    serviceAccountName: {{ printf "%s%s" $prefix (default $globals.app_code $jobConfig.serviceAccount) }}
     {{- if $jobConfig.affinity }}
     affinity:
       {{- $jobConfig.affinity | toYaml | nindent 6 }}
