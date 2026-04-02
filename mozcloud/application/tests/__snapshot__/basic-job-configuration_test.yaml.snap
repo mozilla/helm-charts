@@ -74,6 +74,7 @@ Configuration matches entire snapshot:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: mozcloud-test
   2: |
     apiVersion: batch/v1
     kind: Job
@@ -149,3 +150,4 @@ Configuration matches entire snapshot:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
+          serviceAccountName: mozcloud-test
