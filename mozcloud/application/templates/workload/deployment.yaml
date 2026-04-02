@@ -445,59 +445,19 @@ spec:
       {{- end }}
       {{- if or $nginxEnabled (gt (keys $volumes | len) 0) }}
       volumes:
-        {{- if $nginxEnabled }}
-        - name: nginx-conf
-          configMap:
-            name: {{ $nginxConfigMapName }}
-        {{- end }}
-        {{- range $volumeName, $volumeConfig := $volumes }}
-        {{- /* Skip nginx configmap volume since it's already added as nginx-conf above */}}
-        {{- $skip := false }}
-        {{- if and $nginxEnabled $nginxConfigMapName (eq $volumeConfig.type "configMap") }}
-          {{- if eq $volumeName $nginxConfigMapName }}
-            {{- $skip = true }}
-          {{- end }}
-        {{- end }}
-        {{- if not $skip }}
-        - name: {{ $volumeName }}
-          {{- if eq $volumeConfig.type "persistentVolume" }}
-          persistentVolumeClaim:
-            claimName: {{ $volumeName }}
-          {{- else if eq $volumeConfig.type "emptyDir" }}
-          {{- if or $volumeConfig.medium $volumeConfig.sizeLimit }}
-          emptyDir:
-            {{- if $volumeConfig.medium }}
-            medium: {{ $volumeConfig.medium }}
-            {{- end }}
-            {{- if $volumeConfig.sizeLimit }}
-            sizeLimit: {{ $volumeConfig.sizeLimit }}
-            {{- end }}
-          {{- else }}
-          emptyDir: {}
-          {{- end }}
-          {{- else }}
-          {{- if eq $volumeConfig.type "configMap" }}
-          configMap:
-            name: {{ $volumeName }}
-          {{- else if eq $volumeConfig.type "secret" }}
-          secret:
-            secretName: {{ $volumeName }}
-          {{- end }}
-          {{- end }}
-        {{- end }}
-        {{- end }}
+        {{- include "mozcloud.workload.volumes" (dict
+          "volumes" $volumes
+          "nginxEnabled" $nginxEnabled
+          "nginxConfigMapName" $nginxConfigMapName
+        ) | nindent 8 }}
       {{- end }}
 {{- if and $nginxEnabled (not $workloadConfig.nginx.configMap) }}
 ---
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ $workloadName }}-nginx
-  labels:
-    {{- $labels.labels | toYaml | nindent 4 }}
-data:
-  nginx.conf: |
-    {{- include "workload.nginx.conf" . | nindent 4 }}
+{{- include "mozcloud.workload.nginxConfigMap" (dict
+  "config" $workloadConfig
+  "labels" $labels
+  "name" $workloadName
+) }}
 {{- end }}
 {{- end }}
 {{- end }}
