@@ -449,7 +449,7 @@ Configuration matches entire snapshot:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
-          serviceAccountName: app-service-account
+          serviceAccountName: pr789-app-service-account
   13: |
     apiVersion: apps/v1
     kind: Deployment

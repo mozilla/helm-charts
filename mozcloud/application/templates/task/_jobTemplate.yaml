@@ -181,7 +181,7 @@ template:
       {{- $runAsNonRoot := ternary false true (dig "security" "runAsRoot" false $jobConfig) }}
       {{- $params := mergeOverwrite (omit (default dict $jobConfig.security) "runAsRoot") (dict "runAsNonRoot" $runAsNonRoot) }}
       {{- include "pod.securityContext" $params | nindent 6 }}
-    serviceAccountName: {{ default $defaultServiceAccount $jobConfig.serviceAccount }}
+    serviceAccountName: {{ printf "%s%s" $prefix (default $globals.app_code $jobConfig.serviceAccount) }}
     {{- if $jobConfig.affinity }}
     affinity:
       {{- $jobConfig.affinity | toYaml | nindent 6 }}

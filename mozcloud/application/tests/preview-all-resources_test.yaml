@@ -106,14 +106,13 @@ tests:
           path: spec.template.spec.containers[?(@.name=="processor")].envFrom[1].secretRef.name
           value: pr789-app-external-secret
 
-  # Custom serviceAccount names are used as-is (no preview prefix), matching
-  # deployment behavior where $prefix is only applied to the default account.
-  - it: Job custom serviceAccountName is used without prefix
+  # Test that serviceAccount reference is prefixed in job spec
+  - it: Job serviceAccountName should reference prefixed ServiceAccount
     template: task/job.yaml
     asserts:
       - equal:
           path: spec.template.spec.serviceAccountName
-          value: app-service-account
+          value: pr789-app-service-account
 
   # Test Deployment (workload) is prefixed
   - it: Deployment is prefixed with PR number

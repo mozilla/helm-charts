@@ -427,7 +427,7 @@ spec:
         {{- end }}
         {{- $_ := set $workloadConfig.security "runAsNonRoot" $runAsNonRoot }}
         {{- include "pod.securityContext" (omit $workloadConfig.security "runAsRoot") | nindent 8 }}
-      serviceAccountName: {{ default $defaultServiceAccount $workloadConfig.serviceAccount }}
+      serviceAccountName: {{ printf "%s%s" $prefix (default $globals.app_code $workloadConfig.serviceAccount) }}
       {{- if $workloadConfig.terminationGracePeriodSeconds }}
       terminationGracePeriodSeconds: {{ $workloadConfig.terminationGracePeriodSeconds }}
       {{- end }}
