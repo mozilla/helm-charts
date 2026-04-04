@@ -1,0 +1,28 @@
+---
+global:
+  config:
+    endpoint: null
+    multi_val:
+      - 1
+      - 2
+
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+
+configMaps:
+  test-tpl-configmap:
+    tplEnabled: true
+    data:
+      RESOLVED_VALUE: "{{ .Values.global.mozcloud.app_code }}"
+      NULL_VALUE: "{{ .Values.nonexistent }}"
+      STATIC_KEY: "no-template-here"
+      MIXED_VALUE: "prefix-{{ .Values.global.mozcloud.env_code }}-suffix"
+      NIL_EXCLUDED: "{{ default nil .Values.global.mozcloud.nonexistent }}"
+      NULL_EXCLUDED: "{{ .Values.global.config.endpoint }}"
+      MULTI_VAL: '{{ .Values.global.config.multi_val | join "," }}'
