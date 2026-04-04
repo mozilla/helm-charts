@@ -1,0 +1,58 @@
+---
+suite: "mozcloud: ConfigMap tpl rendering"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/configmap-tpl.yaml
+templates:
+  - configmap/configmap.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Resolves template expressions to their values
+    asserts:
+      - equal:
+          path: data.RESOLVED_VALUE
+          value: "mozcloud-test"
+  - it: Omits keys where the template expression resolves to null
+    asserts:
+      - notExists:
+          path: data.NULL_VALUE
+  - it: Preserves static values without template expressions
+    asserts:
+      - equal:
+          path: data.STATIC_KEY
+          value: "no-template-here"
+  - it: Resolves template expressions embedded in a larger string
+    asserts:
+      - equal:
+          path: data.MIXED_VALUE
+          value: "prefix-dev-suffix"
+  - it: Omits keys where the value is explicitly null
+    asserts:
+      - notExists:
+          path: data.NULL_EXCLUDED
+  - it: Omits keys where default returns nil
+    asserts:
+      - notExists:
+          path: data.NIL_EXCLUDED
+  - it: Resolves piped template expressions
+    asserts:
+      - equal:
+          path: data.MULTI_VAL
+          value: "1,2"
+  - it: Fails when a blocked function is used
+    set:
+      configMaps:
+        test-tpl-configmap:
+          tplEnabled: true
+          data:
+            BAD_KEY: '{{ lookup "v1" "Secret" "default" "mysecret" }}'
+    asserts:
+      - failedTemplate:
+          errorPattern: "uses a blocked function"
