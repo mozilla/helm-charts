@@ -1,0 +1,22 @@
+mozcloud:
+  workloads:
+    example-app:
+      component: example-app-web
+      containers:
+        app:
+          image:
+            repository: us-west1-docker.pkg.dev/moz-fx-example-app-prod/example-app-prod/example-app
+            tag: latest
+          envVars:
+            PORT: "8000"
+          resources:
+            cpu: 100m
+            memory: 128Mi
+      autoscaling:
+        metrics:
+          - type: cpu
+            threshold: 80
+      hosts:
+        example-app:
+          domains:
+            - dev.example-app.nonprod.webservices.mozgcp.net
