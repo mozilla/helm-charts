@@ -39,6 +39,9 @@ tests:
       - equal:
           path: data.MULTI_VAL
           value: "1,2"
+  - it: Snapshot of full rendered ConfigMap
+    asserts:
+      - matchSnapshot: {}
   - it: Fails when a blocked function is used
     set:
       configMaps:
