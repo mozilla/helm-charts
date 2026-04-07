@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 1.2.1](https://img.shields.io/badge/Version-1.2.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 1.3.0](https://img.shields.io/badge/Version-1.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~1.2.1
+    version: ~1.3.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -176,6 +176,9 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.otel.autoInstrumentation.language | string | `""` |  |
 | workloads.default.otel.containers | list | `[]` |  |
 | workloads.default.otel.enabled | bool | `true` |  |
+| workloads.default.podDisruptionBudget.enabled | bool | `true` |  |
+| workloads.default.podDisruptionBudget.maxUnavailable | string | `""` |  |
+| workloads.default.podDisruptionBudget.minAvailable | string | `""` |  |
 | workloads.default.security | object | `{}` |  |
 | workloads.default.serviceAccount | string | `""` |  |
 | workloads.default.strategy | string | `"RollingUpdate"` |  |

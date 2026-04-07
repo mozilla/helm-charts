@@ -1,0 +1,60 @@
+---
+suite: "mozcloud: PodDisruptionBudget configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/pdb-configuration.yaml
+templates:
+  - workload/pdb.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Only one PDB is rendered across all three workloads
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: PDB is created with correct kind and name
+    documentSelector:
+      path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: apiVersion
+          value: policy/v1
+      - equal:
+          path: kind
+          value: PodDisruptionBudget
+  - it: PDB sets minAvailable and maxUnavailable correctly
+    documentSelector:
+      path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.minAvailable
+          value: 1
+      - equal:
+          path: spec.maxUnavailable
+          value: 30%
+  - it: PDB selector matches workload labels
+    documentSelector:
+      path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
+      value: test-service
+    asserts:
+      - isNotNullOrEmpty:
+          path: spec.selector.matchLabels
+  - it: No PDB is rendered for workload with empty-pdb or disabled-pdb
+    asserts:
+      - notContains:
+          path: "[*].metadata.name"
+          content: test-service-empty-pdb
+      - notContains:
+          path: "[*].metadata.name"
+          content: test-service-disabled-pdb

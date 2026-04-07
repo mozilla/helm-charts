@@ -1020,6 +1020,24 @@
           "otel": {
             "$ref": "#/$defs/otel"
           },
+          "podDisruptionBudget": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "enabled": {
+                "type": "boolean",
+                "default": true
+              },
+              "minAvailable": {
+                "type": ["string", "integer"],
+                "description": "Minimum number or percentage of pods that must remain available during a disruption."
+              },
+              "maxUnavailable": {
+                "type": ["string", "integer"],
+                "description": "Maximum number or percentage of pods that can be unavailable during a disruption."
+              }
+            }
+          },
           "security": {
             "$ref": "#/$defs/podSecurity"
           },

@@ -1,0 +1,34 @@
+---
+workloads:
+  test-service:
+    component: web
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: 1
+      maxUnavailable: 30%
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+  test-service-empty-pdb:
+    component: web
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: ''
+      maxUnavailable: ''
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+  test-service-disabled-pdb:
+    component: web
+    podDisruptionBudget:
+      enabled: false
+      minAvailable: 1
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
