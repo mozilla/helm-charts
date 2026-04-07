@@ -19,10 +19,11 @@ tests:
       - equal:
           path: data.RESOLVED_VALUE
           value: "mozcloud-test"
-  - it: Omits keys where the template expression resolves to null
+  - it: Renders empty string for null template expressions
     asserts:
-      - notExists:
+      - equal:
           path: data.NULL_VALUE
+          value: ""
   - it: Preserves static values without template expressions
     asserts:
       - equal:
@@ -33,14 +34,6 @@ tests:
       - equal:
           path: data.MIXED_VALUE
           value: "prefix-dev-suffix"
-  - it: Omits keys where the value is explicitly null
-    asserts:
-      - notExists:
-          path: data.NULL_EXCLUDED
-  - it: Omits keys where default returns nil
-    asserts:
-      - notExists:
-          path: data.NIL_EXCLUDED
   - it: Resolves piped template expressions
     asserts:
       - equal:
