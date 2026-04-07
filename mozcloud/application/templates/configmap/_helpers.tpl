@@ -94,12 +94,7 @@ Example:
         {{- fail (printf "configMap tplEnabled: expression %q in key %q uses a blocked function" $match $key) }}
       {{- end }}
     {{- end }}
-    {{- $newVal := tpl $value $ctx }}
-    {{- if and (ne $newVal "") (ne $newVal "<nil>") (ne $newVal "<no value>") }}
-      {{- $_ := set $output $key $newVal }}
-    {{- else }}
-      {{- $_ := unset $output $key }}
-    {{- end }}
+    {{- $_ := set $output $key (tpl $value $ctx) }}
   {{- end }}
 {{- end }}
 {{ $output | toYaml }}

@@ -1,7 +1,6 @@
 ---
 global:
   config:
-    endpoint: null
     multi_val:
       - 1
       - 2
@@ -23,6 +22,4 @@ configMaps:
       NULL_VALUE: "{{ .Values.nonexistent }}"
       STATIC_KEY: "no-template-here"
       MIXED_VALUE: "prefix-{{ .Values.global.mozcloud.env_code }}-suffix"
-      NIL_EXCLUDED: "{{ default nil .Values.global.mozcloud.nonexistent }}"
-      NULL_EXCLUDED: "{{ .Values.global.config.endpoint }}"
       MULTI_VAL: '{{ .Values.global.config.multi_val | join "," }}'
