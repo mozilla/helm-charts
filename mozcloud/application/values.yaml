@@ -1803,6 +1803,24 @@ workloads:
         #   python
         language: ''
 
+    # Optional PodDisruptionBudget configuration for this workload.
+    # When enabled, a PodDisruptionBudget resource will be created to limit
+    # voluntary disruptions (e.g. node maintenance, cluster upgrades, or
+    # manual pod evictions). At least one of minAvailable or maxUnavailable
+    # must be set for the resource to be created.
+    #
+    # minAvailable:   Minimum number (or percentage, e.g. "50%") of pods that
+    #                 must remain available during a disruption.
+    # maxUnavailable: Maximum number (or percentage, e.g. "1") of pods that
+    #                 can be unavailable during a disruption.
+    #
+    # Note: minAvailable and maxUnavailable are mutually exclusive — only one
+    # should be set at a time.
+    podDisruptionBudget:
+      enabled: true
+      minAvailable: ''
+      maxUnavailable: ''
+
     # Optionally override some securityContext settings for the pod.
     # section should not be configured unless the user knows what they are
     # doing. Most tenants will not need to configure any of this.

@@ -176,6 +176,9 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.otel.autoInstrumentation.language | string | `""` |  |
 | workloads.default.otel.containers | list | `[]` |  |
 | workloads.default.otel.enabled | bool | `true` |  |
+| workloads.default.podDisruptionBudget.enabled | bool | `true` |  |
+| workloads.default.podDisruptionBudget.maxUnavailable | string | `""` |  |
+| workloads.default.podDisruptionBudget.minAvailable | string | `""` |  |
 | workloads.default.security | object | `{}` |  |
 | workloads.default.serviceAccount | string | `""` |  |
 | workloads.default.strategy | string | `"RollingUpdate"` |  |
