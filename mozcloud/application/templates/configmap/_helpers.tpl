@@ -69,7 +69,7 @@ Example:
     {{- if $config.tplEnabled }}
       {{- $params := dict "data" $config.data "context" $context }}
       {{- $transformedData := include "mozcloud.configMap.formatter.renderTpl" $params | fromYaml -}}
-      {{- $config = mergeOverwrite $config (dict "data" $transformedData) -}}
+      {{- $_ := set $config "data" $transformedData -}}
     {{- $_ := set $output $name $config}}
     {{- end -}}
   {{- end -}}
@@ -77,24 +77,24 @@ Example:
 {{- end -}}
 
 {{- /*
-  Ranges over a dictionary and looks for an embedded template in the value string
-  If found it checks for compliance and if that passes calls the `tpl` function rendering
-  the embedded template.
+  Ranges over a dictionary and renders template expressions in values using `tpl`.
+  Blocks dangerous functions (lookup, env) via a blocklist. If a rendered value
+  is empty, the key is omitted from the output.
 */ -}}
 {{- define "mozcloud.configMap.formatter.renderTpl" }}
 {{- $ctx := .context }}
 {{- $output := deepCopy .data }}
-{{- $simpleRegexp := `{{-?\s*[^}]+}}`}}
-{{- $filterRegexp := `{{-?\s*(?:default\s+"[^"]*"\s+)?\.Values(?:\.[a-zA-Z_]\w*)*\s*-?}}` }}
+{{- $tplRegexp := `{{-?\s*[^}]+}}` }}
+{{- $blockRegexp := `\b(lookup|env|expandenv|getHostByName)\b` }}
 {{- range $key, $value := .data }}
-  {{- $hasTpl := false }}
-  {{- /* Checks all template matches to see if they match the expected form */ -}}
-  {{- range $_, $match := regexFindAll $simpleRegexp (toString $value) -1 }}
-    {{- $hasTpl =  regexMatch $filterRegexp $match }}
-  {{- end }}
-  {{- if $hasTpl }}
-    {{- $newVal := tpl $value $ctx }}
-    {{- $_ := set $output $key $newVal }}
+  {{- $matches := regexFindAll $tplRegexp (toString $value) -1 }}
+  {{- if $matches }}
+    {{- range $_, $match := $matches }}
+      {{- if regexMatch $blockRegexp $match }}
+        {{- fail (printf "configMap tplEnabled: expression %q in key %q uses a blocked function" $match $key) }}
+      {{- end }}
+    {{- end }}
+    {{- $_ := set $output $key (tpl $value $ctx) }}
   {{- end }}
 {{- end }}
 {{ $output | toYaml }}
