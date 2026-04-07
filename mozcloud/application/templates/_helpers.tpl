@@ -95,6 +95,48 @@ Returns:
   Never returns — always fails with the JSON-serialized value as the error
   message.
 */ -}}
+{{- /*
+Resolves and renders a fully qualified container image string (repository:tag).
+
+Resolution order for both repository and tag:
+  1. Container-level image config (per-workload override).
+  2. Global image config (.Values.global.mozcloud.image).
+  3. Fail with a descriptive error if neither is set.
+
+If globalImage.registry is set, it is prepended to the resolved repository
+as "registry/repository" — unless the repository already starts with the
+registry value (to avoid double-prefixing).
+
+Params:
+  containerImage (dict): The container-level image config (image.repository, image.tag).
+  globalImage    (dict): The global image config (.Values.global.mozcloud.image).
+  workloadName   (string): Name of the workload (for error messages).
+  containerName  (string): Name of the container (for error messages).
+
+Returns:
+  (string) A fully qualified image reference, e.g. "registry/repo:tag".
+*/ -}}
+{{- define "mozcloud.image" -}}
+{{- $containerImage := default dict .containerImage }}
+{{- $globalImage := default dict .globalImage }}
+{{- $workloadName := .workloadName }}
+{{- $containerName := .containerName }}
+{{- $repo := default ($globalImage.repository) ($containerImage.repository) }}
+{{- if not $repo }}
+  {{- fail (printf "Container image repository must be set for workload %q container %q. Set .Values.mozcloud.workloads.%s.containers.%s.image.repository or .Values.global.mozcloud.image.repository." $workloadName $containerName $workloadName $containerName) }}
+{{- end }}
+{{- $tag := default ($globalImage.tag) ($containerImage.tag) }}
+{{- if not $tag }}
+  {{- fail (printf "Container image tag must be set for workload %q container %q. Set .Values.mozcloud.workloads.%s.containers.%s.image.tag or .Values.global.mozcloud.image.tag." $workloadName $containerName $workloadName $containerName) }}
+{{- end }}
+{{- $registry := default ($globalImage.registry) ($containerImage.registry) | default "" }}
+{{- if and $registry (not (hasPrefix $registry $repo)) }}
+  {{- $repo = printf "%s/%s" $registry $repo }}
+{{- end }}
+{{- printf "%s:%s" $repo $tag }}
+{{- end }}
+
+
 {{- define "mozcloud.debug" -}}
 {{- . | mustToPrettyJson | printf "\nThe JSON output of the dumped var is: \n%s" | fail }}
 {{- end -}}

@@ -168,24 +168,8 @@ spec:
         {{- range $containerName, $containerConfig := $containers }}
         {{- $portName := include "mozcloud.portName" $containerName }}
         - name: {{ $containerName }}
-          {{- /*
-          We first look for an image and tag in the container config YAML. If
-          those are not defined, we default to image.repository and image.tag
-          in .Values.global.mozcloud. These can be configured in tenant files.
-
-          If neither is defined, we want to throw errors.
-          */}}
-          {{- if and (not ($containerConfig.image).repository) (not ($globals.image).repository) }}
-            {{- $failMessage := printf "A fully qualified image path must be configured in either \".Values.mozcloud.workloads.%s.containers.%s.image.repository\" or \".Values.global.mozcloud.image.repository\"." $workloadName $containerName }}
-            {{- fail $failMessage }}
-          {{- end }}
-          {{- $image := default ($globals.image).repository ($containerConfig.image).repository }}
-          {{- if and (not ($containerConfig.image).tag) (not ($globals.image).tag) }}
-            {{- $failMessage := printf "An image tag must be configured in either \".Values.mozcloud.workloads.%s.containers.%s.image.tag\" or \".Values.global.mozcloud.image.tag\".      " $workloadName $containerName }}
-            {{- fail $failMessage }}
-          {{- end }}
-          {{- $tag := default ($globals.image).tag ($containerConfig.image).tag }}
-          image: {{ printf "%s:%s" $image $tag }}
+          {{- $imageParams := dict "containerImage" $containerConfig.image "globalImage" $globals.image "workloadName" $workloadName "containerName" $containerName }}
+          image: {{ include "mozcloud.image" $imageParams }}
           imagePullPolicy: {{ $containerConfig.imagePullPolicy }}
           {{- if $containerConfig.command }}
           command:

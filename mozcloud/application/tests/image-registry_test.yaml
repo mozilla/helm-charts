@@ -1,0 +1,59 @@
+---
+suite: "mozcloud: Image registry prefix"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/image-registry.yaml
+templates:
+  - workload/deployment.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Prepends global registry to short repository paths
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "app")].image
+          value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-images/myapp:1.0.0"
+  - it: Does not double-prefix when repository already contains the registry
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "sidecar")].image
+          value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/other-images/sidecar:2.0.0"
+  - it: Works without registry set (backwards compatible)
+    set:
+      global:
+        mozcloud:
+          app_code: mozcloud-test
+          artifact_id: abcd1234
+          chart: test-chart
+          env_code: dev
+          project_id: moz-fx-mozcloud-test-nonprod
+          realm: nonprod
+          image:
+            registry: ""
+      workloads:
+        test-service:
+          component: web
+          containers:
+            app:
+              image:
+                repository: us-docker.pkg.dev/my-project/my-image
+                tag: "3.0.0"
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "app")].image
+          value: "us-docker.pkg.dev/my-project/my-image:3.0.0"

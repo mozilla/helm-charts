@@ -80,15 +80,8 @@ template:
         {{- $containerConfig = mergeOverwrite (deepCopy (default dict $common.container)) $containerConfig }}
       - name: {{ $containerName }}
         {{- $globalImage := default dict $context.Values.global.mozcloud.image }}
-        {{- $imageRepo := default (($globalImage).repository) ($containerConfig.image).repository }}
-        {{- $imageTag := default (($globalImage).tag) ($containerConfig.image).tag }}
-        {{- if not $imageRepo }}
-        {{- fail (printf "%sContainer image repository must be set! You can set this in either .Values.mozcloud.tasks.jobs.%s.containers[].image.repository or .Values.global.mozcloud.image.repository" $jobConfig.name) }}
-        {{- end }}
-        {{- if not $imageTag }}
-        {{- fail (printf "%sContainer image tag must be set! You can set this in either .Values.mozcloud.tasks.jobs.%s.containers[].image.tag or .Values.global.mozcloud.image.tag" $jobConfig.name) }}
-        {{- end }}
-        image: {{ $imageRepo }}:{{ $imageTag }}
+        {{- $imageParams := dict "containerImage" $containerConfig.image "globalImage" $globalImage "workloadName" $jobConfig.name "containerName" $containerName }}
+        image: {{ include "mozcloud.image" $imageParams }}
         imagePullPolicy: {{ $containerConfig.imagePullPolicy }}
         {{- if $containerConfig.command }}
         command:

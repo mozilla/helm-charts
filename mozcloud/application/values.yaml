@@ -1080,6 +1080,11 @@ workloads:
         #
         # See the tenant definition document for details:
         # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/588742735/Tenant+Definition
+        #
+        # If global.mozcloud.image.registry is set, it is prepended to
+        # repository as "registry/repository" (unless repository already
+        # starts with the registry value). This lets you set the registry
+        # once globally and use short repository paths per-container.
         image:
           repository: ''
           tag: ''
@@ -1559,6 +1564,11 @@ workloads:
         #
         # See the tenant definition document for details:
         # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/588742735/Tenant+Definition
+        #
+        # If global.mozcloud.image.registry is set, it is prepended to
+        # repository as "registry/repository" (unless repository already
+        # starts with the registry value). This lets you set the registry
+        # once globally and use short repository paths per-container.
         image:
           repository: ''
           tag: ''
