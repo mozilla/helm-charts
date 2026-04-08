@@ -33,6 +33,14 @@ tests:
       - equal:
           path: spec.template.spec.containers[?(@.name == "sidecar")].image
           value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/other-images/sidecar:2.0.0"
+  - it: Does not double-prefix when repository already contains a different registry
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service-2
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name == "app")].image
+          value: "us-west1-docker.pkg.dev/moz-fx-fx-testing/fx-testing-prod/api-image:1.0.1"
   - it: Works without registry set (backwards compatible)
     set:
       global:

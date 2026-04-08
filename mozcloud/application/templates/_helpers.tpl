@@ -104,8 +104,9 @@ Resolution order for both repository and tag:
   3. Fail with a descriptive error if neither is set.
 
 If globalImage.registry is set, it is prepended to the resolved repository
-as "registry/repository" — unless the repository already starts with the
-registry value (to avoid double-prefixing).
+as "registry/repository" — unless the repository already contains a registry
+hostname (detected by a "." in the first path segment, following Docker's
+convention).
 
 Params:
   containerImage (dict): The container-level image config (image.repository, image.tag).
@@ -130,7 +131,8 @@ Returns:
   {{- fail (printf "Container image tag must be set for workload %q container %q. Set .Values.mozcloud.workloads.%s.containers.%s.image.tag or .Values.global.mozcloud.image.tag." $workloadName $containerName $workloadName $containerName) }}
 {{- end }}
 {{- $registry := default ($globalImage.registry) ($containerImage.registry) | default "" }}
-{{- if and $registry (not (hasPrefix $registry $repo)) }}
+{{- $repoHasRegistry := regexMatch `^[^/]*\.[^/]+/` $repo }}
+{{- if and $registry (not $repoHasRegistry) }}
   {{- $repo = printf "%s/%s" $registry $repo }}
 {{- end }}
 {{- printf "%s:%s" $repo $tag }}
