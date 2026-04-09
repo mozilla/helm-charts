@@ -40,6 +40,8 @@ Configuration matches entire snapshot:
       logging:
         enable: true
         sampleRate: 0.1
+      securityPolicy:
+        name: my-app-cloud-armor-policy
       timeoutSec: 600
   3: |
     apiVersion: networking.gke.io/v1

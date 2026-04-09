@@ -58,6 +58,9 @@ ingresses:
                 {{- if ($hostConfig.options).timeoutSec }}
                 timeoutSec: {{ $hostConfig.options.timeoutSec }}
                 {{- end }}
+                {{- if ($hostConfig.options).securityPolicy }}
+                securityPolicy: {{ $hostConfig.options.securityPolicy }}
+                {{- end }}
               service:
                 name: {{ $workloadName }}
                 port: 8080
