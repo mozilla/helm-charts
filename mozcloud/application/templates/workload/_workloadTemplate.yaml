@@ -162,153 +162,31 @@ template:
       {{- /*
       App containers
       */}}
-      {{- range $containerName, $containerConfig := $containers }}
-      {{- $portName := include "mozcloud.portName" $containerName }}
-      - name: {{ $containerName }}
-        {{- $imageParams := dict "containerImage" $containerConfig.image "globalImage" $globals.image "workloadName" $name "containerName" $containerName }}
-        image: {{ include "mozcloud.image" $imageParams }}
-        imagePullPolicy: {{ $containerConfig.imagePullPolicy }}
-        {{- if $containerConfig.command }}
-        command:
-          {{- range $line := $containerConfig.command }}
-          - {{ $line | quote }}
-          {{- end }}
-        {{- end }}
-        {{- if $containerConfig.args }}
-        args:
-          {{- range $line := $containerConfig.args }}
-          - {{ $line | quote }}
-          {{- end }}
-        {{- end }}
-        {{- $otelContainerEnabled := and $otelEnabled (not $otelAutoInstrumentationEnabled) (has $containerName $otelContainerNames) }}
-        {{- if or $containerConfig.envVars $otelContainerEnabled $containerConfig.envFromFields }}
-        env:
-          {{- if $otelContainerEnabled }}
-          - name: HOST_IP
-            valueFrom:
-              fieldRef:
-                apiVersion: v1
-                fieldPath: status.hostIP
-          {{- end }}
-          {{- range $fieldName, $fieldPath := $containerConfig.envFromFields }}
-          - name: {{ $fieldName }}
-            valueFrom:
-              fieldRef:
-                fieldPath: {{ $fieldPath }}
-          {{- end }}
-          {{- range $envVarKey, $envVarValue := $containerConfig.envVars }}
-          - name: {{ $envVarKey }}
-            value: {{ $envVarValue | quote }}
-          {{- end }}
-        {{- end }}
-        {{- if or $containerConfig.configMaps $defaultSecretEnabled $containerConfig.secrets }}
-        envFrom:
-          {{- if $containerConfig.configMaps }}
-          {{- range $configMap := $containerConfig.configMaps }}
-          - configMapRef:
-              name: {{ printf "%s%s" $prefix $configMap }}
-          {{- end }}
-          {{- end }}
-          {{- if $defaultSecretEnabled }}
-          - secretRef:
-              name: {{ $defaultSecretName }}
-          {{- end }}
-          {{- if $containerConfig.secrets }}
-          {{- range $secret := $containerConfig.secrets }}
-          - secretRef:
-              name: {{ printf "%s%s" $prefix $secret }}
-          {{- end }}
-          {{- end }}
-        {{- end }}
-        {{- if or
-            $config.hosts
-            (($containerConfig.healthCheck).readiness).enabled
-            (($containerConfig.healthCheck).liveness).enabled
-        }}
-        ports:
-          - name: {{ $portName }}
-            containerPort: {{ $containerConfig.port }}
-        {{- end }}
-        {{- if (dig "healthCheck" "liveness" "enabled" true $containerConfig) }}
-        livenessProbe:
-          httpGet:
-            {{- if (($containerConfig.healthCheck).liveness).httpHeaders }}
-            httpHeaders:
-              {{- range $header := $containerConfig.healthCheck.liveness.httpHeaders }}
-              - name: {{ $header.name }}
-                value: {{ $header.value }}
-              {{- end }}
-            {{- else if (($containerConfig.healthCheck).readiness).httpHeaders }}
-            httpHeaders:
-              {{- range $header := $containerConfig.healthCheck.readiness.httpHeaders }}
-              - name: {{ $header.name }}
-                value: {{ $header.value }}
-              {{- end }}
-            {{- end }}
-            path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.liveness.path }}
-            port: {{ $portName }}
-          {{- /* If liveness probe settings are defined, use those */}}
-          {{- if (($containerConfig.healthCheck).liveness).probes }}
-          {{- range $k, $v := $containerConfig.healthCheck.liveness.probes }}
-          {{ $k }}: {{ $v }}
-          {{- end }}
-          {{- /* Otherwise, use readiness probe settings, if defined */}}
-          {{- else if (($containerConfig.healthCheck).readiness).probes }}
-          {{- range $k, $v := $containerConfig.healthCheck.readiness.probes }}
-          {{ $k }}: {{ $v }}
-          {{- end }}
-          {{- end }}
-        {{- end }}
-        {{- if (dig "healthCheck" "readiness" "enabled" true $containerConfig) }}
-        readinessProbe:
-          httpGet:
-            {{- if (($containerConfig.healthCheck).readiness).httpHeaders }}
-            httpHeaders:
-              {{- range $header := $containerConfig.healthCheck.readiness.httpHeaders }}
-              - name: {{ $header.name }}
-                value: {{ $header.value }}
-              {{- end }}
-            {{- end }}
-            path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.readiness.path }}
-            port: {{ $portName }}
-          {{- if (($containerConfig.healthCheck).readiness).probes }}
-          {{- range $k, $v := $containerConfig.healthCheck.readiness.probes }}
-          {{ $k }}: {{ $v }}
-          {{- end }}
-          {{- end }}
-        {{- end }}
-        resources:
-          {{- $resourceParams := dict "requests" (dict "cpu" $containerConfig.resources.cpu "memory" $containerConfig.resources.memory) }}
-          {{- include "pod.container.resources" $resourceParams | nindent 12 }}
-        securityContext:
-          {{- include "pod.container.securityContext" (default dict $containerConfig.security) | nindent 12 }}
-        {{- if $containerConfig.volumes }}
-        volumeMounts:
-          {{- range $volume := $containerConfig.volumes }}
-          - name: {{ $volume.name }}
-            mountPath: {{ $volume.path }}
-            {{- if $volume.key }}
-            subPath: {{ $volume.key }}
-            {{- end }}
-            {{- if eq $volume.type "secret" }}
-            readOnly: true
-            {{- else if $volume.readOnly }}
-            readOnly: {{ $volume.readOnly }}
-            {{- end }}
-          {{- end }}
-        {{- end }}
-      {{- end -}}
-
-    {{- if $initContainers }}
-    initContainers:
-      {{- include "mozcloud.workload.initContainers" (dict
+      {{- include "mozcloud.workload.containers" (dict
         "config" $config
-        "initContainers" $initContainers
+        "containers" $containers
         "globals" $globals
         "name" $name
         "prefix" $prefix
         "defaultSecretName" $defaultSecretName
         "defaultSecretEnabled" $defaultSecretEnabled
+        "type" "container"
+        "otelEnabled" $otelEnabled
+        "otelContainerNames" $otelContainerNames
+        "otelAutoInstrumentationEnabled" $otelAutoInstrumentationEnabled
+      ) | nindent 6 }}
+
+    {{- if $initContainers }}
+    initContainers:
+      {{- include "mozcloud.workload.containers" (dict
+        "config" $config
+        "containers" $initContainers
+        "globals" $globals
+        "name" $name
+        "prefix" $prefix
+        "defaultSecretName" $defaultSecretName
+        "defaultSecretEnabled" $defaultSecretEnabled
+        "type" "initContainer"
       ) | nindent 8 }}
     {{- end }}
     securityContext:
