@@ -1,0 +1,223 @@
+{{- /*
+Shared workload template used by deployment.yaml and rollout.yaml to render
+the common workload spec body. Changes here affect all workload types
+rendered by this chart.
+
+Each workload type file handles its own iteration, metadata, and type-specific
+spec fields (selector, strategy), then calls this helper for container
+formatting, volumes, nginx sidecar, init containers, and the pod template.
+
+Params:
+  config (dict):  (required) The workload configuration for this workload.
+  context (dict): (required) The Helm root context.
+  name (string):  (required) The workload name.
+
+Returns:
+  (string) YAML for the workload spec body, from `template:` through
+           `volumes:`.
+*/ -}}
+{{- define "mozcloud.workload.workloadTemplate" -}}
+{{- $config := .config -}}
+{{- $context := .context -}}
+{{- $name := .name -}}
+{{- $chartMetadata := dict "Chart" $context.Chart "Release" $context.Release }}
+{{- $globals := $context.Values.global.mozcloud -}}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" $context | fromYaml) }}
+{{- $prefix := include "mozcloud.preview.prefix" $context }}
+{{- $defaultSecretName := printf "%s%s-secrets" $prefix $globals.chart }}
+{{- $defaultSecretEnabled := dig "default" "enabled" true (default dict $context.Values.externalSecrets) }}
+{{- /* The NGINX sidecar will be created unless explicitly disabled or no hosts are defined */}}
+{{- $nginxEnabled := true }}
+{{- if or
+  (not (dig "nginx" "enabled" "true" $config))
+  (not $config.hosts)
+}}
+  {{- $nginxEnabled = false }}
+{{- end }}
+{{- $volumes := dict }}
+{{- /* Format containers, removing default container and merging user-defined values with defaults */}}
+{{- $formatterParams := dict "containers" $config.containers "type" "containers" }}
+{{- $containers := include "mozcloud.formatter.containers" $formatterParams | fromYaml }}
+{{- /* Pre-populate volumes from all containers for annotation checksum calculation */}}
+{{- range $containerName, $containerConfig := $containers }}
+  {{- range $volume := $containerConfig.volumes }}
+    {{- if not (hasKey $volumes $volume.name) }}
+      {{- $_ := set $volumes $volume.name $volume }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- /* Format init containers */}}
+{{- $formatterParams = dict "containers" (default dict $config.initContainers) "type" "init-containers" }}
+{{- $initContainers := include "mozcloud.formatter.containers" $formatterParams | fromYaml }}
+{{- range $containerName, $containerConfig := $initContainers }}
+  {{- range $volume := $containerConfig.volumes }}
+    {{- if not (hasKey $volumes $volume.name) }}
+      {{- $_ := set $volumes $volume.name $volume }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- /* Add nginx configmap volume if nginx is enabled */}}
+{{- $nginxConfigMapName := default (printf "%s-nginx" $name) $config.nginx.configMap }}
+{{- if $nginxEnabled }}
+  {{- $nginxVolume := dict "type" "configMap" }}
+  {{- $_ := set $volumes $nginxConfigMapName $nginxVolume }}
+{{- end }}
+{{- /* Compute labels for the pod template */}}
+{{- $component := dict "component_code" $config.component }}
+{{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+{{- $labels := include "mozcloud.labels" $params | fromYaml }}
+template:
+  metadata:
+    {{- /* Annotations, including OTEL if applicable */}}
+    {{- $otelEnabled := dig "otel" "enabled" true $config }}
+    {{- $otelContainerNames := default list ($config.otel).containers }}
+    {{- $otelAutoInstrumentationEnabled := and $otelContainerNames (dig "otel" "autoInstrumentation" "enabled" false $config) (($config.otel).autoInstrumentation).language }}
+    {{- $params = dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) "otel" ($config.otel) "type" "deployment" }}
+    {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
+    {{- /* Add checksum annotation for configmaps to trigger rolling updates when configmap changes */}}
+    {{- $configMapChecksums := dict }}
+    {{- if gt (keys $volumes | len) 0 }}
+      {{- range $volumeName, $volumeConfig := $volumes }}
+        {{- if eq $volumeConfig.type "configMap" }}
+          {{- $configMapData := index (default dict $context.Values.configMaps) $volumeName }}
+          {{- if $configMapData }}
+            {{- $checksumKey := printf "checksum/configmap-%s" $volumeName }}
+            {{- $_ := set $configMapChecksums $checksumKey ($configMapData | toYaml | sha256sum) }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- $annotations = mergeOverwrite (default dict $annotations) (default dict $configMapChecksums) }}
+    {{- if $annotations }}
+    annotations:
+      {{- $annotations | toYaml | nindent 8 }}
+    {{- end }}
+    labels:
+      {{- $labels.labels | toYaml | nindent 8 }}
+  spec:
+    containers:
+      {{- /*
+      NGINX container
+      */}}
+      {{- if $nginxEnabled }}
+      - name: nginx
+        securityContext:
+          runAsUser: 101
+          runAsGroup: 101
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+        image: {{ $config.nginx.image }}
+        imagePullPolicy: Always
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/bash", "-c", "/bin/sleep 25 && /usr/sbin/nginx -s quit"]
+        ports:
+          - name: http
+            containerPort: 8080
+            protocol: TCP
+        resources:
+          {{- $cpu := default "50m" ($config.nginx.resources).cpu }}
+          {{- $memory := default "128Mi" ($config.nginx.resources).memory }}
+          {{- $resources := dict "requests" (dict "cpu" $cpu "memory" $memory) }}
+          {{- include "pod.container.resources" $resources | nindent 12 }}
+        readinessProbe:
+          {{- /* Use first container in workload for NGINX readiness and liveness probe default values */}}
+          {{- $container := dict }}
+          {{- if ge (len $containers) 1 }}
+            {{- $key := first (keys $containers) }}
+            {{- $container = index $containers $key }}
+          {{- end }}
+          httpGet:
+            {{- if (($container.healthCheck).readiness).httpHeaders }}
+            httpHeaders:
+              {{- $container.healthCheck.readiness.httpHeaders | toYaml | nindent 16 }}
+            {{- end }}
+            path: {{ default "/__lbheartbeat__" (($container.healthCheck).readiness).path }}
+            port: http
+          {{- $probeSettings := default dict (($container.healthCheck).readiness).probes }}
+          initialDelaySeconds: {{ default 10 ($probeSettings.initialDelaySeconds) }}
+          periodSeconds: {{ default 6 ($probeSettings.periodSeconds) }}
+          timeoutSeconds: {{ default 5 ($probeSettings.timeoutSeconds) }}
+          successThreshold: {{ default 1 ($probeSettings.successThreshold) }}
+          failureThreshold: {{ default 5 ($probeSettings.failureThreshold) }}
+        livenessProbe:
+          httpGet:
+            path: /__nginxheartbeat__
+            port: http
+          {{- $probeSettings = default dict (($container.healthCheck).liveness).probes }}
+          initialDelaySeconds: {{ default 5 ($probeSettings.initialDelaySeconds) }}
+          periodSeconds: {{ default 6 ($probeSettings.periodSeconds) }}
+          timeoutSeconds: {{ default 2 ($probeSettings.timeoutSeconds) }}
+          successThreshold: {{ default 1 ($probeSettings.successThreshold) }}
+          failureThreshold: {{ default 5 ($probeSettings.failureThreshold) }}
+        volumeMounts:
+          - name: nginx-conf
+            mountPath: /etc/nginx/nginx.conf
+            subPath: nginx.conf
+            readOnly: true
+      {{- end -}}
+
+      {{- /*
+      App containers
+      */}}
+      {{- include "mozcloud.workload.containers" (dict
+        "config" $config
+        "containers" $containers
+        "globals" $globals
+        "name" $name
+        "prefix" $prefix
+        "defaultSecretName" $defaultSecretName
+        "defaultSecretEnabled" $defaultSecretEnabled
+        "type" "container"
+        "otelEnabled" $otelEnabled
+        "otelContainerNames" $otelContainerNames
+        "otelAutoInstrumentationEnabled" $otelAutoInstrumentationEnabled
+      ) | nindent 6 }}
+
+    {{- if $initContainers }}
+    initContainers:
+      {{- include "mozcloud.workload.containers" (dict
+        "config" $config
+        "containers" $initContainers
+        "globals" $globals
+        "name" $name
+        "prefix" $prefix
+        "defaultSecretName" $defaultSecretName
+        "defaultSecretEnabled" $defaultSecretEnabled
+        "type" "initContainer"
+      ) | nindent 8 }}
+    {{- end }}
+    securityContext:
+      {{- $runAsNonRoot := true }}
+      {{- if ($config.security).runAsRoot }}
+        {{- $runAsNonRoot = false }}
+      {{- end }}
+      {{- $_ := set $config.security "runAsNonRoot" $runAsNonRoot }}
+      {{- include "pod.securityContext" (omit $config.security "runAsRoot") | nindent 8 }}
+    serviceAccountName: {{ printf "%s%s" $prefix (default $globals.app_code $config.serviceAccount) }}
+    {{- if $config.terminationGracePeriodSeconds }}
+    terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
+    {{- end }}
+    {{- if $config.affinity }}
+    affinity:
+      {{- $config.affinity | toYaml | nindent 8 }}
+    {{- end }}
+    {{- if $config.nodeSelector }}
+    nodeSelector:
+      {{- $config.nodeSelector | toYaml | nindent 8 }}
+    {{- end }}
+    {{- if $config.tolerations }}
+    tolerations:
+      {{- $config.tolerations | toYaml | nindent 8 }}
+    {{- end }}
+    {{- if or $nginxEnabled (gt (keys $volumes | len) 0) }}
+    volumes:
+      {{- include "mozcloud.workload.volumes" (dict
+        "volumes" $volumes
+        "nginxEnabled" $nginxEnabled
+        "nginxConfigMapName" $nginxConfigMapName
+      ) | nindent 8 }}
+    {{- end }}
+{{- end -}}

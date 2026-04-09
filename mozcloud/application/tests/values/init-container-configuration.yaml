@@ -1,0 +1,19 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers:
+      default:
+        image:
+          repository: test-repo/app
+          tag: 1.0.0
+    initContainers:
+      init-container-1:
+        image:
+          repository: test-repo/init
+          tag: 1.0.0
+        envVars:
+          INIT_KEY: init-value
+        security:
+          user: 1000
+          group: 1000
