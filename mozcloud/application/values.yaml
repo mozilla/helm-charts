@@ -1913,4 +1913,3 @@ workloads:
 #   - Add support for StatefulSet resources
 #   - Add support for BlueGreen rollout strategy
 #   - Add support for AnalysisTemplate resources
-
