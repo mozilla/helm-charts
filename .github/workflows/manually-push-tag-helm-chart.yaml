@@ -17,22 +17,29 @@ on:
           - library
           - both
 
+permissions: {}
+
 env:
   GAR_PROJECT_ID: moz-fx-platform-artifacts
 
 jobs:
   detect:
+    permissions:
+      contents: read
+
     runs-on:
       - ubuntu-latest
 
     steps:
       - name: Checkout Commit
         id: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5
+        with:
+          persist-credentials: false
 
       - id: get-charts
         name: Get charts
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b #v7
         env:
           CHARTS: ${{ inputs.charts }}
           TYPE: ${{ inputs.type }}
@@ -72,7 +79,9 @@ jobs:
     steps:
       - name: Checkout Commit
         id: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5
+        with:
+          persist-credentials: false
 
       - name: Update dependencies
         run: |-
@@ -80,14 +89,14 @@ jobs:
           make update-dependencies
 
       - id: gcp-auth
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed #v2
         with:
           token_format: access_token
           service_account: artifact-writer@${{ env.GAR_PROJECT_ID }}.iam.gserviceaccount.com
           workload_identity_provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
 
       - id: docker-login
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 #v3
         with:
           registry: us-west1-docker.pkg.dev
           username: oauth2accesstoken
@@ -134,7 +143,7 @@ jobs:
           fi
 
       - name: create tag
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b #v7
         env:
           CHART_TAG: ${{ steps.package_and_push.outputs.CHART_TAG }}
 
