@@ -27,7 +27,9 @@ workloads:
     component: web
     nginx:
       enabled: true
-      image: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"
+      image:
+        repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged
+        tag: "1.29"
       configMap: nginx-config
     containers:
       app:

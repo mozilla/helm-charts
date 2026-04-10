@@ -170,7 +170,8 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.initContainers.default.sidecar | bool | `false` |  |
 | workloads.default.labels | object | `{}` |  |
 | workloads.default.nginx.enabled | bool | `true` |  |
-| workloads.default.nginx.image | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"` |  |
+| workloads.default.nginx.image.repository | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged"` |  |
+| workloads.default.nginx.image.tag | string | `"1.29"` |  |
 | workloads.default.nodeSelector | object | `{}` |  |
 | workloads.default.otel.autoInstrumentation.enabled | bool | `false` |  |
 | workloads.default.otel.autoInstrumentation.language | string | `""` |  |

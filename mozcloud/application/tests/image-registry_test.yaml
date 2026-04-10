@@ -41,7 +41,7 @@ tests:
       - equal:
           path: spec.template.spec.containers[?(@.name == "app")].image
           value: "us-west1-docker.pkg.dev/moz-fx-fx-testing/fx-testing-prod/api-image:1.0.1"
-  - it: Parses nginx string image and does not prepend registry when it contains a domain
+  - it: Does not prepend registry to nginx when its repository already contains a domain
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service-nginx
@@ -49,12 +49,14 @@ tests:
       - equal:
           path: spec.template.spec.containers[?(@.name == "nginx")].image
           value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"
-  - it: Prepends registry to nginx when using a short string image
+  - it: Prepends registry to nginx when using a short repository path
     set:
       workloads:
         test-service-nginx:
           nginx:
-            image: "nginxinc/nginx-unprivileged:1.29"
+            image:
+              repository: nginxinc/nginx-unprivileged
+              tag: "1.29"
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service-nginx

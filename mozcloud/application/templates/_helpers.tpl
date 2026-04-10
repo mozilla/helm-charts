@@ -109,8 +109,7 @@ hostname (detected by a "." in the first path segment, following Docker's
 convention).
 
 Params:
-  containerImage (dict|string): The container-level image config. Either an object
-                 with repository/tag keys, or a string like "repo:tag".
+  containerImage (dict): The container-level image config (image.repository, image.tag).
   globalImage    (dict): The global image config (.Values.global.mozcloud.image).
   workloadName   (string): Name of the workload (for error messages).
   containerName  (string): Name of the container (for error messages).
@@ -119,17 +118,10 @@ Returns:
   (string) A fully qualified image reference, e.g. "registry/repo:tag".
 */ -}}
 {{- define "mozcloud.image" -}}
+{{- $containerImage := default dict .containerImage }}
 {{- $globalImage := default dict .globalImage }}
 {{- $workloadName := .workloadName }}
 {{- $containerName := .containerName }}
-{{- /* Normalize containerImage: if string, split on ":" into repo/tag dict */ -}}
-{{- $containerImage := dict }}
-{{- if eq (kindOf .containerImage) "string" }}
-  {{- $parts := splitn ":" 2 .containerImage }}
-  {{- $containerImage = dict "repository" $parts._0 "tag" (default "" $parts._1) }}
-{{- else }}
-  {{- $containerImage = default dict .containerImage }}
-{{- end }}
 {{- $repo := default ($globalImage.repository) ($containerImage.repository) }}
 {{- if not $repo }}
   {{- fail (printf "Container image repository must be set for workload %q container %q. Set .Values.mozcloud.workloads.%s.containers.%s.image.repository or .Values.global.mozcloud.image.repository." $workloadName $containerName $workloadName $containerName) }}
