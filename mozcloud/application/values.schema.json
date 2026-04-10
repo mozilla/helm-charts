@@ -1000,7 +1000,13 @@
                 "default": true
               },
               "image": {
-                "type": "string"
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "registry": { "type": "string" },
+                  "repository": { "type": "string" },
+                  "tag": { "type": "string" }
+                }
               },
               "configMap": {
                 "type": "string"

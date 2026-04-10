@@ -23,3 +23,32 @@ workloads:
         image:
           repository: us-west1-docker.pkg.dev/moz-fx-fx-testing/fx-testing-prod/api-image
           tag: "1.0.1"
+  test-service-nginx:
+    component: web
+    nginx:
+      enabled: true
+      image:
+        repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged
+        tag: "1.29"
+      configMap: nginx-config
+    containers:
+      app:
+        image:
+          repository: platform-images/webapp
+          tag: "1.0.0"
+    hosts:
+      test-service-nginx:
+        domains:
+          - test-nginx.dev.example.com
+        addresses:
+          - test-ip
+        tls:
+          certs:
+            - test-cert
+
+configMaps:
+  nginx-config:
+    data:
+      nginx.conf: |
+        events { worker_connections 1024; }
+        http { server { listen 8080; location / { proxy_pass http://localhost:8000; } } }

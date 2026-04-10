@@ -224,3 +224,151 @@ Configuration matches entire snapshot:
             seccompProfile:
               type: RuntimeDefault
           serviceAccountName: mozcloud-test
+  3: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service-nginx
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: web
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev
+      strategy:
+        type: RollingUpdate
+      template:
+        metadata:
+          annotations:
+            checksum/configmap-nginx-config: c34d2b5ef0564bb36211561d58bb1eec27c44003f9989085eacad45320ab0485
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: web
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: web
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: web
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            realm: nonprod
+        spec:
+          containers:
+            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
+              imagePullPolicy: Always
+              lifecycle:
+                preStop:
+                  exec:
+                    command:
+                      - /bin/bash
+                      - -c
+                      - /bin/sleep 25 && /usr/sbin/nginx -s quit
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__nginxheartbeat__
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: nginx
+              ports:
+                - containerPort: 8080
+                  name: http
+                  protocol: TCP
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: http
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 101
+                runAsUser: 101
+              volumeMounts:
+                - mountPath: /etc/nginx/nginx.conf
+                  name: nginx-conf
+                  readOnly: true
+                  subPath: nginx.conf
+            - envFrom:
+                - secretRef:
+                    name: test-chart-secrets
+              image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-images/webapp:1.0.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: app
+              ports:
+                - containerPort: 8000
+                  name: app
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+          volumes:
+            - configMap:
+                name: nginx-config
+              name: nginx-conf
