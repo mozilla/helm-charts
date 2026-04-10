@@ -248,6 +248,13 @@ ManagedCertificate template helpers
         {{- $managed_certs = append $managed_certs $managed_cert -}}
       {{- end -}}
     {{- end -}}
+    {{- if $tls.existingCerts -}}
+      {{- range $existingCert := $tls.existingCerts -}}
+        {{- $managed_cert = dict "name" $existingCert "domains" (list) "createCertificate" false "referenceOnly" true -}}
+        {{- $_ := set $managed_cert "ingressName" $ingress_name -}}
+        {{- $managed_certs = append $managed_certs $managed_cert -}}
+      {{- end -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
 {{ $managed_certs | toYaml }}

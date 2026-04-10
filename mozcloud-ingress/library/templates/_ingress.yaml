@@ -23,7 +23,7 @@ metadata:
     {{- if gt (len $managed_certificates) 0 }}
     {{- $certs := list }}
     {{- range $managed_certificate := $managed_certificates }}
-    {{- if and (eq $managed_certificate.ingressName $ingress.name) $managed_certificate.createCertificate }}
+    {{- if and (eq $managed_certificate.ingressName $ingress.name) (or $managed_certificate.createCertificate $managed_certificate.referenceOnly) }}
     {{- $certs = append $certs $managed_certificate.name }}
     {{- end }}
     {{- end }}
