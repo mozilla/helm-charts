@@ -18,4 +18,5 @@ workloads:
           type: ManagedCertificate
           create: false
           certs:
-            - existing-cert
+            - cert-a
+            - cert-b

@@ -17,5 +17,3 @@ workloads:
         tls:
           type: ManagedCertificate
           create: false
-          certs:
-            - existing-cert

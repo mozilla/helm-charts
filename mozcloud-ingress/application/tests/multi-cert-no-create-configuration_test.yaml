@@ -1,5 +1,5 @@
 ---
-suite: "mozcloud-ingress: Disable managed certificate configuration"
+suite: "mozcloud-ingress: Multiple pre-existing managed certificate names configuration"
 release:
   name: mozcloud-test
   namespace: mozcloud-test-dev
@@ -7,7 +7,7 @@ chart:
   version: 1.0.0
 values:
   - values/globals.yaml
-  - values/disable-managed-cert-configuration.yaml
+  - values/multi-cert-no-create-configuration.yaml
 templates:
   - managedcertificate.yaml
   - ingress.yaml
@@ -15,15 +15,12 @@ tests:
   - it: Ensure no failures occur
     asserts:
       - notFailedTemplate: {}
-  - it: Configuration matches entire snapshot
-    asserts:
-      - matchSnapshot: {}
   - it: No ManagedCertificate resources are created
     template: managedcertificate.yaml
     asserts:
       - hasDocuments:
           count: 0
-  - it: Ingress annotation references the pre-existing cert name
+  - it: Ingress annotation references all pre-existing cert names
     template: ingress.yaml
     documentSelector:
       path: $[?(@.kind == "Ingress")].metadata.name
@@ -31,4 +28,4 @@ tests:
     asserts:
       - equal:
           path: metadata.annotations["networking.gke.io/managed-certificates"]
-          value: existing-cert
+          value: cert-a,cert-b

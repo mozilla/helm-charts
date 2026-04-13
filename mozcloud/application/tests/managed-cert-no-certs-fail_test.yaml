@@ -1,0 +1,21 @@
+---
+suite: "mozcloud: ManagedCertificate without certs fails"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/managed-cert-no-certs-fail.yaml
+templates:
+  - gateway/gateway.yaml
+  - gke/frontendconfig.yaml
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Fails when create is false and no certs are provided
+    template: ingress/ingress.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "tls.certs must be provided when tls.type is ManagedCertificate and tls.create is false"

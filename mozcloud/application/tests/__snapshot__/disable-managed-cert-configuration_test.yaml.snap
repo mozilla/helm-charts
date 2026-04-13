@@ -47,6 +47,7 @@ Configuration matches entire snapshot:
       annotations:
         kubernetes.io/ingress.class: gce
         kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
+        networking.gke.io/managed-certificates: existing-cert
         networking.gke.io/v1beta1.FrontendConfig: test-service
       labels:
         app.kubernetes.io/component: web

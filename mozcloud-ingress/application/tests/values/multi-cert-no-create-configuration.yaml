@@ -9,7 +9,8 @@ ingresses:
           type: ManagedCertificate
           createCertificates: false
           certNames:
-            - existing-cert
+            - cert-a
+            - cert-b
         paths:
           - path: /
             backend:

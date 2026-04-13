@@ -8,8 +8,6 @@ ingresses:
         tls:
           type: ManagedCertificate
           createCertificates: false
-          certNames:
-            - existing-cert
         paths:
           - path: /
             backend:
