@@ -1768,7 +1768,9 @@ workloads:
     #       memory: 128Mi
     nginx:
       enabled: true
-      image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
+      image:
+        repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged
+        tag: "1.29"
 
     # Configure auto instrumentation for the OTEL Collector.
     #
@@ -1911,4 +1913,3 @@ workloads:
 #   - Add support for StatefulSet resources
 #   - Add support for BlueGreen rollout strategy
 #   - Add support for AnalysisTemplate resources
-

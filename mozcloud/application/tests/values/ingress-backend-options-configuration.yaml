@@ -20,3 +20,4 @@ workloads:
         options:
           timeoutSec: 600
           logSampleRate: 10
+          securityPolicy: my-app-cloud-armor-policy

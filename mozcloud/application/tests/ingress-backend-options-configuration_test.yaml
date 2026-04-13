@@ -52,3 +52,13 @@ tests:
             logging:
               enable: true
               sampleRate: 0.1
+  - it: securityPolicy is rendered as an object in BackendConfig spec
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "BackendConfig")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.securityPolicy
+          value:
+            name: my-app-cloud-armor-policy

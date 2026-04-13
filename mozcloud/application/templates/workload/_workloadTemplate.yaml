@@ -107,7 +107,8 @@ template:
           allowPrivilegeEscalation: false
           capabilities:
             drop: ["ALL"]
-        image: {{ $config.nginx.image }}
+        {{- $nginxImageParams := dict "containerImage" $config.nginx.image "globalImage" $globals.image "workloadName" $name "containerName" "nginx" }}
+        image: {{ include "mozcloud.image" $nginxImageParams }}
         imagePullPolicy: Always
         lifecycle:
           preStop:

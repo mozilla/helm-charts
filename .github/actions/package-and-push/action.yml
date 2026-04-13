@@ -27,14 +27,14 @@ runs:
 
     - name: GCP auth
       id: gcp-auth
-      uses: google-github-actions/auth@v2
+      uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed #v2
       with:
         token_format: access_token
         service_account: artifact-writer@${{ inputs.gcp-project-id }}.iam.gserviceaccount.com
         workload_identity_provider: ${{ inputs.workload-identity-provider }}
 
     - name: Docker login
-      uses: docker/login-action@v3
+      uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 #v3
       with:
         registry: us-west1-docker.pkg.dev
         username: oauth2accesstoken

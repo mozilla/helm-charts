@@ -18,20 +18,21 @@ jobs:
     steps:
       - name: Checkout Commit
         id: checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5
         with:
+          persist-credentials: false
           fetch-depth: 0
 
       - name: Setup Helm
         uses: azure/setup-helm@29960d0f5f19214b88e1d9ba750a9914ab0f1a2f #v4.0.0
 
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@3542bca2639a428e1796aaa6a2ffef0c0f575566 #v3
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v6
+        uses: astral-sh/setup-uv@d0d8abe699bfb85fec6de9f7adb5ae17292296ff #v6 # zizmor: ignore[cache-poisoning]
         with:
-          enable-cache: true
+          enable-cache: ${{ github.event_name != 'pull_request' }}
 
       - name: Install helm-docs
         env:
@@ -56,9 +57,12 @@ jobs:
         shell: bash
 
       - name: Run unit tests
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ "${{ github.event_name }}" == "pull_request" ]; then
-            affected=$(uv run --directory ./scripts chartkit affected --base origin/${{ github.base_ref }})
+          if [ "${EVENT_NAME}" == "pull_request" ]; then
+            affected=$(uv run --directory ./scripts chartkit affected --base "origin/${BASE_REF}")
             if [ -n "$affected" ]; then
               uv run --directory ./scripts chartkit unittest $affected
             fi

@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 1.4.0](https://img.shields.io/badge/Version-1.4.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 1.5.0](https://img.shields.io/badge/Version-1.5.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~1.4.0
+    version: ~1.5.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -170,7 +170,8 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.initContainers.default.sidecar | bool | `false` |  |
 | workloads.default.labels | object | `{}` |  |
 | workloads.default.nginx.enabled | bool | `true` |  |
-| workloads.default.nginx.image | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"` |  |
+| workloads.default.nginx.image.repository | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged"` |  |
+| workloads.default.nginx.image.tag | string | `"1.29"` |  |
 | workloads.default.nodeSelector | object | `{}` |  |
 | workloads.default.otel.autoInstrumentation.enabled | bool | `false` |  |
 | workloads.default.otel.autoInstrumentation.language | string | `""` |  |
