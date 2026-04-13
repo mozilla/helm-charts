@@ -126,7 +126,10 @@ Configuration matches entire snapshot:
                 seccompProfile:
                   type: RuntimeDefault
           initContainers:
-            - envFrom:
+            - env:
+                - name: INIT_KEY
+                  value: init-value
+              envFrom:
                 - secretRef:
                     name: test-chart-secrets
               image: test-repo/image3:3.0.0
@@ -145,6 +148,8 @@ Configuration matches entire snapshot:
                 capabilities:
                   drop:
                     - ALL
+                runAsGroup: 1000
+                runAsUser: 1000
                 seccompProfile:
                   type: RuntimeDefault
             - envFrom:
