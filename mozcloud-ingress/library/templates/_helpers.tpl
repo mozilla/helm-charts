@@ -224,9 +224,12 @@ ManagedCertificate template helpers
     {{- $prefix := default "mcrt" $tls.prefix -}}
     {{- $suffixes := list -}}
     {{- $host_tls := default (dict) $host.tls -}}
+    {{- if and (eq $tls.type "ManagedCertificate") (not $tls.createCertificates) (not $host_tls.certNames) -}}
+      {{- fail "tls.certNames must be provided when tls.type is ManagedCertificate and tls.createCertificates is false" -}}
+    {{- end -}}
     {{- if $host_tls.certNames -}}
       {{- range $certName := $host_tls.certNames -}}
-        {{- $managed_cert = dict "name" $certName "domains" $host.domains "createCertificate" $create_cert -}}
+        {{- $managed_cert = dict "name" $certName "domains" $host.domains "createCertificate" $create_cert "userProvided" true -}}
         {{- $_ := set $managed_cert "ingressName" $ingress_name -}}
         {{- $managed_certs = append $managed_certs $managed_cert -}}
       {{- end -}}
