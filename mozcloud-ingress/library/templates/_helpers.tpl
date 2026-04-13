@@ -223,7 +223,14 @@ ManagedCertificate template helpers
     {{- $name := "" -}}
     {{- $prefix := default "mcrt" $tls.prefix -}}
     {{- $suffixes := list -}}
-    {{- if $tls.multipleHosts -}}
+    {{- $host_tls := default (dict) $host.tls -}}
+    {{- if $host_tls.certNames -}}
+      {{- range $certName := $host_tls.certNames -}}
+        {{- $managed_cert = dict "name" $certName "domains" $host.domains "createCertificate" $create_cert -}}
+        {{- $_ := set $managed_cert "ingressName" $ingress_name -}}
+        {{- $managed_certs = append $managed_certs $managed_cert -}}
+      {{- end -}}
+    {{- else if $tls.multipleHosts -}}
       {{- if gt (len $ingresses.ingresses) 1 -}}
         {{- $suffixes = append $suffixes ($iindex | toString) -}}
       {{- end -}}

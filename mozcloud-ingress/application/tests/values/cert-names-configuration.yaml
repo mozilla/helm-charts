@@ -1,0 +1,17 @@
+---
+ingresses:
+  test-ingress:
+    staticIpName: mozcloud-test-dev-ip-v4
+    hosts:
+      - domains:
+          - test-service.dev.test-domain.com
+        tls:
+          type: ManagedCertificate
+          certNames:
+            - cert-a
+            - cert-b
+        paths:
+          - path: /
+            backend:
+              service:
+                port: 8080
