@@ -25,6 +25,11 @@ workloads:
           repository: test-repo/image3
           tag: 3.0.0
         sidecar: true
+        envVars:
+          INIT_KEY: init-value
+        security:
+          user: 1000
+          group: 1000
       init-container-2:
         image:
           repository: test-repo/image4
