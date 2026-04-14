@@ -1,0 +1,24 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/app
+          tag: 1.0.0
+      disabled-container:
+        enabled: false
+        image:
+          repository: test-repo/disabled
+          tag: 1.0.0
+    initContainers:
+      init-enabled:
+        image:
+          repository: test-repo/init-enabled
+          tag: 1.0.0
+      init-disabled:
+        enabled: false
+        image:
+          repository: test-repo/init-disabled
+          tag: 1.0.0

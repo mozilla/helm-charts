@@ -1155,6 +1155,11 @@
     "container": {
       "type": "object",
       "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Whether this container is enabled. Set to false to disable a container without removing its configuration.",
+          "default": true
+        },
         "imagePullPolicy": {
           "type": "string",
           "description": "Image pull policy for the container. One of Always, IfNotPresent, or Never. When not set, the chart defaults to Always.",
