@@ -55,6 +55,10 @@ and its values are deep-merged as a base under each named container. If only
 the protected key is present (no user-defined containers), it is passed through
 as-is so that the single default container still renders.
 
+After merging, containers with enabled set to false are filtered out. This
+allows defining a container in defaults but disabling it per-environment
+without removing the configuration. Defaults to true when not set.
+
 See the formatter background notes in _formatter.yaml for the full rationale.
 
 Params:
@@ -109,7 +113,14 @@ Example:
     {{- $_ := set $containers $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
 {{- end -}}
-{{ $containers | toYaml }}
+{{- /* Filter out disabled containers */ -}}
+{{- $filtered := dict -}}
+{{- range $name, $config := $containers -}}
+  {{- if dig "enabled" true $config -}}
+    {{- $_ := set $filtered $name $config -}}
+  {{- end -}}
+{{- end -}}
+{{ $filtered | toYaml }}
 {{- end -}}
 
 

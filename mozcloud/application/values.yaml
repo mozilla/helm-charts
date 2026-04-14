@@ -908,6 +908,10 @@ workloads:
       # This is the name of your container. Use any name other than "default",
       # which is reserved for setting default values shared across all containers.
       default:
+        # Whether this container is enabled. Set to false to disable a
+        # container without removing its configuration. Defaults to true.
+        # enabled: true
+
         # Arguments to pass to a container. This can be an array or a string.
         args: []
 
@@ -1492,6 +1496,10 @@ workloads:
       # "default", which is reserved for setting default values shared across
       # all init containers.
       default:
+        # Whether this init container is enabled. Set to false to disable an
+        # init container without removing its configuration. Defaults to true.
+        # enabled: true
+
         # Arguments to pass to an init container. This can be an array or a
         # string.
         args: []
