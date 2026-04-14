@@ -97,6 +97,13 @@ ingresses:
             issuerKind: {{ $certManagerIssuerKind | quote }}
             secretName: {{ required "tls.certs must have at least one entry when tls.type is certManager" (first (default (list) $hostConfig.tls.certs)) | quote }}
           {{- end }}
+          {{- if eq $type "secret" }}
+          {{- $secretName := first (default (list) $hostConfig.tls.certs) }}
+          {{- if $secretName }}
+          secret:
+            secretName: {{ $secretName | quote }}
+          {{- end }}
+          {{- end }}
     {{- if $hostConfig.addresses }}
     staticIpName: {{ $hostConfig.addresses | first }}
     {{- else }}

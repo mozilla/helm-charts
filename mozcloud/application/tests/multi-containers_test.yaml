@@ -76,3 +76,21 @@ tests:
       - equal:
           path: spec.template.spec.initContainers[?(@.name=="init-container-1")].restartPolicy
           value: "Always"
+  - it: Init container env vars are rendered
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[?(@.name=="init-container-1")].env
+          content:
+            name: INIT_KEY
+            value: init-value
+  - it: Init container security context is rendered
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[?(@.name=="init-container-1")].securityContext.runAsUser
+          value: 1000
