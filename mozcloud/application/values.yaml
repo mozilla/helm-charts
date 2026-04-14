@@ -1394,25 +1394,24 @@ workloads:
         #
         # This section is not required if host type is "internal".
         tls:
-          # A list of the certmap, pre-shared cert, or ManagedCertificate names
-          # to use on the Gateway or Ingress. Only the first entry is used if
-          # "type" is "certmap".
+          # A list of cert identifiers to use on the Gateway or Ingress. The
+          # meaning depends on the TLS type:
+          #
+          #   certmap: The first entry is the cert map name.
+          #   pre-shared: All entries are pre-shared certificate names.
+          #   ManagedCertificate: Names to use for the created
+          #     ManagedCertificate resources, overriding the default
+          #     auto-generated names (which use the "mcrt-" prefix).
+          #   certManager: The first entry is used as the TLS secret name.
           #
           # Certificate maps and pre-shared certificates are created
           # outside of Kubernetes either by tenant Terraform modules (certmaps)
           # or manually (pre-shared).
-          #
-          # ManagedCertificate certificates will be automatically created by
-          # this chart if "create" is set to "true".
           certs: []
 
-          # If enabled, certificates will be created.
-          #
-          # This is only applicable when the TLS type is "ManagedCertificate"
-          # and the type of API is "ingress".
-          #
-          # The default behavior is to create ManagedCertificate resources when
-          # using Ingress. This option is ignored for Gateway API resources.
+          # Controls whether ManagedCertificate resources are created by this
+          # chart. Only applicable when "type" is "ManagedCertificate" and
+          # "api" is "ingress".
           create: true
 
           # Can be "certmap", "ManagedCertificate", "pre-shared",

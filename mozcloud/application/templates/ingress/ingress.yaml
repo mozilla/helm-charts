@@ -72,11 +72,19 @@ ingresses:
             {{- $type = "ManagedCertificate" }}
           {{- end }}
           type: {{ $type }}
-          {{- if and (hasKey $hostConfig.tls "create") ($hostConfig.tls.create) }}
-          createCertificates: true
-          {{- if eq $type "ManagedCertificate" }}
-          multipleHosts: false
+          {{- if hasKey $hostConfig.tls "create" }}
+          createCertificates: {{ $hostConfig.tls.create }}
           {{- end }}
+          {{- if and (eq $type "ManagedCertificate") (hasKey $hostConfig.tls "create") (not $hostConfig.tls.create) (not $hostConfig.tls.certs) }}
+            {{- fail "tls.certs must be provided when tls.type is ManagedCertificate and tls.create is false" }}
+          {{- end }}
+          {{- if and (eq $type "ManagedCertificate") ($hostConfig.tls.certs) }}
+          certNames:
+            {{- range $cert := $hostConfig.tls.certs }}
+            - {{ $cert | quote }}
+            {{- end }}
+          {{- else if and (hasKey $hostConfig.tls "create") ($hostConfig.tls.create) (eq $type "ManagedCertificate") }}
+          multipleHosts: false
           {{- end }}
           {{- if eq $type "pre-shared" }}
           preSharedCerts: {{ join "," (uniq $hostConfig.tls.certs | sortAlpha) | quote }}

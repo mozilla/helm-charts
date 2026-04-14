@@ -1,0 +1,19 @@
+---
+suite: "mozcloud-ingress: ManagedCertificate without certNames fails"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/managed-cert-no-certs-fail.yaml
+templates:
+  - managedcertificate.yaml
+  - ingress.yaml
+tests:
+  - it: Fails when createCertificates is false and no certNames are provided
+    template: managedcertificate.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "tls.certNames must be provided when tls.type is ManagedCertificate and tls.createCertificates is false"

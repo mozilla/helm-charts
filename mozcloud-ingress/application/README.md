@@ -1,6 +1,6 @@
 # mozcloud-ingress
 
-![Version: 1.1.0](https://img.shields.io/badge/Version-1.1.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 1.1.1](https://img.shields.io/badge/Version-1.1.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 A Helm chart that creates ingress and supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-ingress
-    version: ~1.1.0
+    version: ~1.1.1
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -34,7 +34,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../library | mozcloud-ingress-lib | 1.1.0 |
+| file://../library | mozcloud-ingress-lib | 1.1.1 |
 
 ## Values
 
