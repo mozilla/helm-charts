@@ -1415,13 +1415,22 @@ workloads:
           # using Ingress. This option is ignored for Gateway API resources.
           create: true
 
-          # Can be "certmap", "ManagedCertificate", "pre-shared", or
-          # "certManager". What you use depends on the type of API used.
+          # Can be "certmap", "ManagedCertificate", "pre-shared",
+          # "certManager", or "secret". What you use depends on the type of
+          # API used.
           #
           # Options (based on API):
           #   Gateway: certmap
           #   Ingress (GKE): ManagedCertificate (preferred), pre-shared
           #   Ingress (non-GKE): certManager (e.g. Let's Encrypt via cert-manager)
+          #                      secret (pre-existing Kubernetes TLS secret)
+          #
+          # Use "secret" to reference a TLS secret that already exists in the
+          # namespace (e.g. a wildcard cert provisioned externally). This
+          # renders spec.tls with the given secretName but does not add any
+          # cert-manager annotations. The first entry in "certs" is used as
+          # the secretName. If "certs" is omitted, spec.tls is not rendered
+          # and the ingress controller's default certificate is used instead.
           #
           # As the default API is "gateway", the default TLS type is "certmap".
           type: certmap
