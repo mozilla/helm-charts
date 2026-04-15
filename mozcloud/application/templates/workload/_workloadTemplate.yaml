@@ -90,10 +90,10 @@ template:
     {{- $annotations = mergeOverwrite (default dict $annotations) (default dict $configMapChecksums) }}
     {{- if $annotations }}
     annotations:
-      {{- $annotations | toYaml | nindent 8 }}
+      {{- $annotations | toYaml | nindent 6 }}
     {{- end }}
     labels:
-      {{- $labels.labels | toYaml | nindent 8 }}
+      {{- $labels.labels | toYaml | nindent 6 }}
   spec:
     containers:
       {{- /*
@@ -122,7 +122,7 @@ template:
           {{- $cpu := default "50m" ($config.nginx.resources).cpu }}
           {{- $memory := default "128Mi" ($config.nginx.resources).memory }}
           {{- $resources := dict "requests" (dict "cpu" $cpu "memory" $memory) }}
-          {{- include "pod.container.resources" $resources | nindent 12 }}
+          {{- include "pod.container.resources" $resources | nindent 10 }}
         readinessProbe:
           {{- /* Use first container in workload for NGINX readiness and liveness probe default values */}}
           {{- $container := dict }}
@@ -133,7 +133,7 @@ template:
           httpGet:
             {{- if (($container.healthCheck).readiness).httpHeaders }}
             httpHeaders:
-              {{- $container.healthCheck.readiness.httpHeaders | toYaml | nindent 16 }}
+              {{- $container.healthCheck.readiness.httpHeaders | toYaml | nindent 14 }}
             {{- end }}
             path: {{ default "/__lbheartbeat__" (($container.healthCheck).readiness).path }}
             port: http
@@ -188,7 +188,7 @@ template:
         "defaultSecretName" $defaultSecretName
         "defaultSecretEnabled" $defaultSecretEnabled
         "type" "initContainer"
-      ) | nindent 8 }}
+      ) | nindent 6 }}
     {{- end }}
     securityContext:
       {{- $runAsNonRoot := true }}
@@ -196,22 +196,22 @@ template:
         {{- $runAsNonRoot = false }}
       {{- end }}
       {{- $_ := set $config.security "runAsNonRoot" $runAsNonRoot }}
-      {{- include "pod.securityContext" (omit $config.security "runAsRoot") | nindent 8 }}
+      {{- include "pod.securityContext" (omit $config.security "runAsRoot") | nindent 6 }}
     serviceAccountName: {{ printf "%s%s" $prefix (default $globals.app_code $config.serviceAccount) }}
     {{- if $config.terminationGracePeriodSeconds }}
     terminationGracePeriodSeconds: {{ $config.terminationGracePeriodSeconds }}
     {{- end }}
     {{- if $config.affinity }}
     affinity:
-      {{- $config.affinity | toYaml | nindent 8 }}
+      {{- $config.affinity | toYaml | nindent 6 }}
     {{- end }}
     {{- if $config.nodeSelector }}
     nodeSelector:
-      {{- $config.nodeSelector | toYaml | nindent 8 }}
+      {{- $config.nodeSelector | toYaml | nindent 6 }}
     {{- end }}
     {{- if $config.tolerations }}
     tolerations:
-      {{- $config.tolerations | toYaml | nindent 8 }}
+      {{- $config.tolerations | toYaml | nindent 6 }}
     {{- end }}
     {{- if or $nginxEnabled (gt (keys $volumes | len) 0) }}
     volumes:
@@ -219,6 +219,6 @@ template:
         "volumes" $volumes
         "nginxEnabled" $nginxEnabled
         "nginxConfigMapName" $nginxConfigMapName
-      ) | nindent 8 }}
+      ) | nindent 6 }}
     {{- end }}
 {{- end -}}
