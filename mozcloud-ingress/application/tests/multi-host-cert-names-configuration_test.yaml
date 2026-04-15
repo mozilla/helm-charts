@@ -1,0 +1,56 @@
+---
+suite: "mozcloud-ingress: Multiple hosts with certNames"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/multi-host-cert-names-configuration.yaml
+templates:
+  - managedcertificate.yaml
+  - ingress.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: ManagedCertificate cert-alpha-1 is created with the alpha domain
+    template: managedcertificate.yaml
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: cert-alpha-1
+    asserts:
+      - contains:
+          path: spec.domains
+          content: "alpha.dev.test-domain.com"
+  - it: ManagedCertificate cert-alpha-2 is created with the alpha domain
+    template: managedcertificate.yaml
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: cert-alpha-2
+    asserts:
+      - contains:
+          path: spec.domains
+          content: "alpha.dev.test-domain.com"
+  - it: ManagedCertificate cert-beta is created with the beta domain
+    template: managedcertificate.yaml
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: cert-beta
+    asserts:
+      - contains:
+          path: spec.domains
+          content: "beta.dev.test-domain.com"
+  - it: Ingress annotation references all cert names from both hosts
+    template: ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "Ingress")].metadata.name
+      value: test-ingress
+    asserts:
+      - equal:
+          path: metadata.annotations["networking.gke.io/managed-certificates"]
+          value: cert-alpha-1,cert-alpha-2,cert-beta
