@@ -1,0 +1,67 @@
+---
+suite: "mozcloud: Multiple hosts with custom managed cert names"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/multi-host-custom-certs-configuration.yaml
+templates:
+  - gateway/gateway.yaml
+  - gke/frontendconfig.yaml
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: ManagedCertificate cert-alpha-1 is created for host-alpha
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: cert-alpha-1
+    asserts:
+      - contains:
+          path: spec.domains
+          content: "alpha.dev.test-domain.com"
+  - it: ManagedCertificate cert-alpha-2 is created for host-alpha
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: cert-alpha-2
+    asserts:
+      - contains:
+          path: spec.domains
+          content: "alpha.dev.test-domain.com"
+  - it: ManagedCertificate cert-beta is created for host-beta
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: cert-beta
+    asserts:
+      - contains:
+          path: spec.domains
+          content: "beta.dev.test-domain.com"
+  - it: host-alpha ingress references only its own certs
+    template: ingress/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "Ingress")].metadata.name
+      value: host-alpha
+    asserts:
+      - equal:
+          path: metadata.annotations["networking.gke.io/managed-certificates"]
+          value: cert-alpha-1,cert-alpha-2
+  - it: host-beta ingress references only its own cert
+    template: ingress/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "Ingress")].metadata.name
+      value: host-beta
+    asserts:
+      - equal:
+          path: metadata.annotations["networking.gke.io/managed-certificates"]
+          value: cert-beta
