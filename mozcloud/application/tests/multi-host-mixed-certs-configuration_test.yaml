@@ -1,0 +1,67 @@
+---
+suite: "mozcloud: Multiple hosts with mixed custom and default certs"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/multi-host-mixed-certs-configuration.yaml
+templates:
+  - gateway/gateway.yaml
+  - gke/frontendconfig.yaml
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: ManagedCertificate is created for the legacy custom cert
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: my-legacy-cert
+    asserts:
+      - contains:
+          path: spec.domains
+          content: "custom.dev.test-domain.com"
+  - it: ManagedCertificate is created for the new default-style cert
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: mcrt-custom-dev-test-domain-com
+    asserts:
+      - contains:
+          path: spec.domains
+          content: "custom.dev.test-domain.com"
+  - it: ManagedCertificate is created with default naming for host-default
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "ManagedCertificate")].metadata.name
+      value: mcrt-default-dev-test-domain-com
+    asserts:
+      - contains:
+          path: spec.domains
+          content: "default.dev.test-domain.com"
+  - it: host-custom ingress references both legacy and new certs
+    template: ingress/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "Ingress")].metadata.name
+      value: host-custom
+    asserts:
+      - equal:
+          path: metadata.annotations["networking.gke.io/managed-certificates"]
+          value: mcrt-custom-dev-test-domain-com,my-legacy-cert
+  - it: host-default ingress references only the default cert
+    template: ingress/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "Ingress")].metadata.name
+      value: host-default
+    asserts:
+      - equal:
+          path: metadata.annotations["networking.gke.io/managed-certificates"]
+          value: mcrt-default-dev-test-domain-com
