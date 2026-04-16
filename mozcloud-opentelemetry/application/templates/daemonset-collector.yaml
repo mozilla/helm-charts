@@ -78,14 +78,6 @@ spec:
         spike_limit_percentage: 20
 
     exporters:
-      debug:
-        verbosity: detailed
-
-      otlp:
-        endpoint: {{ printf "%s:%s" .Values.collectors.gateway.endpoints.otlp.endpoint .Values.collectors.gateway.endpoints.otlp.port | quote }}
-        tls:
-          insecure: true
-
       loadbalancing/metrics-otlp:
         routing_key: streamID
         timeout: 10s
@@ -124,12 +116,9 @@ spec:
       health_check:
         endpoint: ${env:POD_IP}:13133
 
-      googleclientauth: {}
-
     service:
       extensions:
       - health_check
-      - googleclientauth
       pipelines:
         metrics:
           receivers:
@@ -137,8 +126,8 @@ spec:
           - statsd
           processors:
           - metricstarttime
-          - k8sattributes
           - memory_limiter
+          - k8sattributes
           - resourcedetection
           exporters:
           - loadbalancing/metrics-otlp
@@ -146,9 +135,9 @@ spec:
           receivers:
           - otlp
           processors:
-          - k8sattributes
-          - memory_limiter
           - filter
+          - memory_limiter
+          - k8sattributes
           - resourcedetection
           exporters:
           - loadbalancing/traces-otlp
