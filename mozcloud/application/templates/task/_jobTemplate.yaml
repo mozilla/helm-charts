@@ -45,17 +45,17 @@ Returns:
 {{- if $jobConfig.activeDeadlineSeconds }}
 activeDeadlineSeconds: {{ $jobConfig.activeDeadlineSeconds }}
 {{- end }}
-{{- if $jobConfig.backoffLimit }}
-backoffLimit: {{ $jobConfig.backoffLimit }}
+{{- if kindIs "float64" $jobConfig.backoffLimit }}
+backoffLimit: {{ int $jobConfig.backoffLimit }}
 {{- end }}
-{{- if $jobConfig.parallelism }}
-parallelism: {{ $jobConfig.parallelism }}
+{{- if kindIs "float64" $jobConfig.parallelism }}
+parallelism: {{ int $jobConfig.parallelism }}
 {{- end }}
 {{- if $jobConfig.suspend }}
 suspend: {{ $jobConfig.suspend }}
 {{- end }}
-{{- if $jobConfig.ttlSecondsAfterFinished }}
-ttlSecondsAfterFinished: {{ $jobConfig.ttlSecondsAfterFinished }}
+{{- if kindIs "float64" $jobConfig.ttlSecondsAfterFinished }}
+ttlSecondsAfterFinished: {{ int $jobConfig.ttlSecondsAfterFinished }}
 {{- end }}
 template:
   {{- /* Annotations, including OTEL if applicable */}}

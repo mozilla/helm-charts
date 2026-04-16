@@ -1,0 +1,32 @@
+---
+suite: "mozcloud: Job zero-value fields"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/job-zero-values.yaml
+templates:
+  - task/job.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: backoffLimit 0 is rendered
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-zero-backoff-job
+    asserts:
+      - equal:
+          path: spec.backoffLimit
+          value: 0
+  - it: ttlSecondsAfterFinished 0 is rendered
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-zero-backoff-job
+    asserts:
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 0
