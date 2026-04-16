@@ -30,6 +30,7 @@ jobs:
     outputs:
       chart-paths: ${{ steps.get-charts.outputs.chart-paths }}
       has-charts: ${{ steps.get-charts.outputs.has-charts }}
+      has-label: ${{ steps.get-label.outputs.has-label }}
       release-type: ${{ steps.get-label.outputs.release-type }}
       is-merge-event: >-
         ${{ github.event_name == 'pull_request'
@@ -84,13 +85,31 @@ jobs:
             // no-release is a veto; check it before severity labels
             if (labels.includes('no-release')) {
               core.setOutput('release-type', 'no-release');
+              core.setOutput('has-label', 'true');
               return;
             }
 
             // Among severity labels, highest wins if multiple are present
             const severityLabels = ['major', 'minor', 'patch'];
-            const releaseType = severityLabels.find(l => labels.includes(l)) || '';
-            core.setOutput('release-type', releaseType);
+            const existingLabel = severityLabels.find(l => labels.includes(l));
+            if (existingLabel) {
+              core.setOutput('release-type', existingLabel);
+              core.setOutput('has-label', 'true');
+              return;
+            }
+
+            // No label set yet — infer from PR title so preview can run immediately
+            const title = context.payload.pull_request.title;
+            let inferred;
+            if (/^[a-z]+(\([^)]+\))?!:/.test(title) || /breaking change/i.test(title)) {
+              inferred = 'major';
+            } else if (/^feat(\([^)]+\))?:/.test(title)) {
+              inferred = 'minor';
+            } else {
+              inferred = 'patch';
+            }
+            core.setOutput('release-type', inferred);
+            core.setOutput('has-label', 'false');
 
   auto-label:
     runs-on:
@@ -102,7 +121,7 @@ jobs:
     # Apply a label when none exists. Skip on merge and on label-change events
     # (to avoid re-triggering after we apply one).
     if: |
-      needs.detect.outputs.release-type == '' &&
+      needs.detect.outputs.has-label == 'false' &&
       needs.detect.outputs.is-merge-event == 'false' &&
       github.event.action != 'labeled' &&
       github.event.action != 'unlabeled'
@@ -111,28 +130,17 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Determine label from PR title
-        id: determine-label
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b #v7
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
         with:
-          result-encoding: string
-          script: |
-            const title = context.payload.pull_request.title;
-            // Breaking change: any conventional commit type with ! (e.g. feat!:, fix!:)
-            if (/^[a-z]+(\([^)]+\))?!:/.test(title) || /breaking change/i.test(title)) {
-              return 'major';
-            }
-            // New feature
-            if (/^feat(\([^)]+\))?:/.test(title)) {
-              return 'minor';
-            }
-            // Everything else (fix, chore, docs, refactor, etc.)
-            return 'patch';
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Apply label
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          LABEL: ${{ steps.determine-label.outputs.result }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          LABEL: ${{ needs.detect.outputs.release-type }}
         run: gh pr edit ${{ github.event.pull_request.number }} --repo ${{ github.repository }} --add-label "${LABEL}"
 
   preview:
@@ -147,17 +155,23 @@ jobs:
     if: |
       needs.detect.outputs.is-merge-event == 'false' &&
       needs.detect.outputs.has-charts == 'true' &&
-      needs.detect.outputs.release-type != '' &&
       needs.detect.outputs.release-type != 'no-release'
 
     permissions:
       pull-requests: write
 
     steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5
         with:
-          persist-credentials: false
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 #v5
@@ -183,6 +197,7 @@ jobs:
       - name: Post or update PR comment
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b #v7
         with:
+          github-token: ${{ steps.app-token.outputs.token }}
           script: |
             const fs = require('fs');
             const marker = '<!-- chart-version-preview -->';
@@ -243,12 +258,19 @@ jobs:
       id-token: write
 
     steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
       - name: Checkout
         uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5
         with:
-          persist-credentials: true # zizmor: ignore[artipacked] -- needed for git push in commit-and-tag
-          ref: main
           fetch-depth: 0
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Bump chart versions and generate Helm docs
         uses: ./.github/actions/bump-and-generate-docs
@@ -264,7 +286,10 @@ jobs:
           workload-identity-provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
           helm-registry: ${{ env.HELM_REGISTRY }}
 
-      - name: Commit, push, and tag
-        uses: ./.github/actions/commit-and-tag
+      - name: Commit, push, and create GitHub release
+        uses: ./.github/actions/commit-and-create-gh-release
         with:
+          app-id: ${{ secrets.APP_ID }}
           chart-tags: ${{ steps.package-push.outputs.chart-tags }}
+          github-token: ${{ steps.app-token.outputs.token }}
+          release-notes: ${{ github.event.pull_request.body }}
