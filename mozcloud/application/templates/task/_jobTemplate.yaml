@@ -131,15 +131,14 @@ template:
 
         This function can be found in templates/_pod.yaml
         */}}
-        {{- $params = dict "requests" (dict "cpu" $containerConfig.resources.cpu "memory" $containerConfig.resources.memory) }}
-        {{- $resources := include "pod.container.resources" $params | fromYaml }}
         resources:
-          requests:
-            cpu: {{ $resources.requests.cpu | quote }}
-            memory: {{ $resources.requests.memory | quote }}
-          limits:
-            cpu: {{ $resources.limits.cpu | quote }}
-            memory: {{ $resources.limits.memory | quote }}
+          {{- $resourceParams := dict "requests" (dict 
+           "cpu" $containerConfig.resources.cpu
+           "memory" $containerConfig.resources.memory 
+           "ephemeral-storage" (index $containerConfig.resources "ephemeral-storage"))
+          -}}
+          {{- include "pod.container.resources" $resourceParams | nindent 10 }}
+
         {{- /*
         The container security context helper function can be found in templates/_pod.yaml
         */}}

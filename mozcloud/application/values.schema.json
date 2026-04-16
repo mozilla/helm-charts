@@ -1234,6 +1234,11 @@
               "description": "K, Ki, M, Mi, G, or Gi (recommend binary units)",
               "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$",
               "default": "128Mi"
+            },
+            "ephemeral-storage": {
+              "type": "string",
+              "description": "Ephemeral storage request using K, Ki, M, Mi, G, or Gi units",
+              "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
             }
           }
         },
