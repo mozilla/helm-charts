@@ -40,7 +40,10 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| collectors.daemonset.resources | object | `{}` |  |
+| collectors.daemonset.resources.limits.cpu | string | `"500m"` |  |
+| collectors.daemonset.resources.limits.memory | string | `"1Gi"` |  |
+| collectors.daemonset.resources.requests.cpu | string | `"250m"` |  |
+| collectors.daemonset.resources.requests.memory | string | `"512Mi"` |  |
 | collectors.daemonset.securityContext.allowPrivilegeEscalation | bool | `false` |  |
 | collectors.daemonset.securityContext.capabilities.drop[0] | string | `"ALL"` |  |
 | collectors.daemonset.securityContext.privileged | bool | `false` |  |
