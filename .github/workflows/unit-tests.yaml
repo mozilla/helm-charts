@@ -64,9 +64,9 @@ jobs:
           if [ "${EVENT_NAME}" == "pull_request" ]; then
             affected=$(uv run --directory ./scripts chartkit affected --base "origin/${BASE_REF}")
             if [ -n "$affected" ]; then
-              uv run --directory ./scripts chartkit unittest --parallel 16 $affected
+              uv run --directory ./scripts chartkit unittest $affected
             fi
           else
-            make unit-tests PARALLEL=16
+            make unit-tests
           fi
         shell: bash
