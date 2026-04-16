@@ -1,5 +1,5 @@
 {{- /*
-Shared workload template used by deployment.yaml and rollout.yaml to render
+Shared workload template used by deployment.yaml, rollout.yaml, and statefulset.yaml to render
 the common workload spec body. Changes here affect all workload types
 rendered by this chart.
 
