@@ -303,6 +303,7 @@ tasks:
     #
     # Some options are commented out as they are omitted by default.
     cronJob:
+      #concurrencyPolicy:
       jobHistory: {}
       schedule: ''
       #suspend:
@@ -333,6 +334,14 @@ tasks:
     # This is the name of your cron job. Use any name other than "default",
     # which is reserved for setting default values shared across all cron jobs.
     default:
+      # Controls how Kubernetes handles overlapping executions of the same cron
+      # job. Valid values are:
+      #
+      #   Allow:   (default) allows concurrent runs
+      #   Forbid:  skips the new run if a previous run is still active
+      #   Replace: cancels the running job and replaces it with a new one
+      concurrencyPolicy: Allow
+
       # Configures the total number of jobs keep after cron jobs run.
       jobHistory:
         successful: 1
