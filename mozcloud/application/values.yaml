@@ -841,9 +841,13 @@ workloads:
     #
     #   deployment: Creates a standard Kubernetes Deployment (default).
     #
-    #   rollout:    Creates an Argo Rollout resource instead of a standard
-    #               Deployment. Use this when you need progressive delivery
-    #               (e.g. canary).
+    #   rollout:     Creates an Argo Rollout resource instead of a standard
+    #                Deployment. Use this when you need progressive delivery
+    #                (e.g. canary).
+    #
+    #   statefulset: Creates a Kubernetes StatefulSet with a headless Service.
+    #                Use this when you need stable network identities, stable
+    #                persistent storage, or ordered pod management.
     #
     type: deployment
 
@@ -1913,7 +1917,55 @@ workloads:
     #           pause accepts either a duration string (e.g. "30s", "5m") or an
     #           empty value ({}) to pause indefinitely until manually promoted.
     #
+    # For type: statefulset, accepted values are:
+    #
+    #   RollingUpdate: Pods are replaced one at a time in reverse ordinal order
+    #                  (default).
+    #
+    #   OnDelete:      Pods are only replaced when manually deleted.
+    #
     strategy: RollingUpdate
+
+    # The partition ordinal for StatefulSet RollingUpdate strategy. Only used
+    # when type is statefulset and strategy is RollingUpdate. When set, only
+    # pods with an ordinal >= partition are updated; pods with a lower ordinal
+    # are kept at their current version. Useful for staged/canary rollouts.
+    #
+    #partition: 0
+
+    # The pod management policy for StatefulSets. Only used when type is
+    # statefulset.
+    #
+    #   Parallel:     All pods are launched or terminated simultaneously (default).
+    #
+    #   OrderedReady: Pods are created in order (0, 1, 2, ...) and each must be
+    #                 Ready before the next is started.
+    #
+    #podManagementPolicy: Parallel
+
+    # Override the name of the headless Service created for a StatefulSet.
+    # Defaults to "<workload-name>-headless".
+    #
+    #serviceName: my-custom-headless-svc
+
+    # Volume claim templates for StatefulSets. Each entry creates a dedicated
+    # PersistentVolumeClaim per pod, managed by the StatefulSet controller.
+    # These are NOT the same as the persistentVolumes top-level key, which
+    # creates standalone PVCs.
+    #
+    # Example:
+    #
+    #   volumeClaimTemplates:
+    #     - metadata:
+    #         name: data
+    #       spec:
+    #         accessModes: ["ReadWriteOnce"]
+    #         storageClassName: standard-rwo
+    #         resources:
+    #           requests:
+    #             storage: 10Gi
+    #
+    #volumeClaimTemplates: []
 
     # The number of seconds a pod should be retained after transitioning to the
     # Terminating state. This is useful if one or more containers needs to
@@ -1926,6 +1978,5 @@ workloads:
 #
 # To do list:
 #   - Add support for additional PodMonitoring definitions
-#   - Add support for StatefulSet resources
 #   - Add support for BlueGreen rollout strategy
 #   - Add support for AnalysisTemplate resources
