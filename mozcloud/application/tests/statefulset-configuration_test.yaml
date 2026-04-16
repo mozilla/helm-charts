@@ -1,0 +1,180 @@
+---
+suite: "mozcloud: StatefulSet configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/statefulset-configuration.yaml
+templates:
+  - workload/statefulset.yaml
+  - workload/hpa.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Renders a StatefulSet instead of a Deployment
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: apiVersion
+          value: apps/v1
+      - equal:
+          path: kind
+          value: StatefulSet
+  - it: StatefulSet has correct serviceName
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.serviceName
+          value: test-service-headless
+  - it: StatefulSet has correct updateStrategy
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: RollingUpdate
+  - it: StatefulSet has correct podManagementPolicy
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.podManagementPolicy
+          value: Parallel
+  - it: StatefulSet has volumeClaimTemplates
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.volumeClaimTemplates[0].metadata.name
+          value: data
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.storageClassName
+          value: standard-rwo
+      - contains:
+          path: spec.volumeClaimTemplates[0].spec.accessModes
+          content: ReadWriteOnce
+      - equal:
+          path: spec.volumeClaimTemplates[0].spec.resources.requests.storage
+          value: 10Gi
+  - it: Headless Service is created with clusterIP None
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: test-service-headless
+    asserts:
+      - equal:
+          path: spec.clusterIP
+          value: None
+      - equal:
+          path: spec.type
+          value: ClusterIP
+  - it: HPA targets the StatefulSet
+    template: workload/hpa.yaml
+    documentSelector:
+      path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.apiVersion
+          value: apps/v1
+      - equal:
+          path: spec.scaleTargetRef.kind
+          value: StatefulSet
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: test-service
+  - it: Custom serviceName overrides both StatefulSet and headless Service
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.serviceName: my-custom-svc
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.serviceName
+          value: my-custom-svc
+  - it: Headless Service name matches custom serviceName
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.serviceName: my-custom-svc
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: my-custom-svc
+    asserts:
+      - equal:
+          path: spec.clusterIP
+          value: None
+  - it: OnDelete strategy renders correctly
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.strategy: OnDelete
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: OnDelete
+  - it: RollingUpdate partition renders when set
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.partition: 3
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: RollingUpdate
+      - equal:
+          path: spec.updateStrategy.rollingUpdate.partition
+          value: 3
+  - it: Partition is ignored with OnDelete strategy
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.strategy: OnDelete
+      workloads.test-service.partition: 3
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.updateStrategy.type
+          value: OnDelete
+      - isNull:
+          path: spec.updateStrategy.rollingUpdate
+  - it: Schema requires statefulset strategy to be RollingUpdate or OnDelete
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.strategy: Recreate
+    asserts:
+      - failedTemplate:
+          errorPattern: "value must be one of 'RollingUpdate', 'OnDelete'"
+  - it: Schema requires statefulset strategy to be a string, not an object
+    template: workload/statefulset.yaml
+    values:
+      - values/globals.yaml
+      - values/statefulset-canary-strategy.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "got object, want string"
