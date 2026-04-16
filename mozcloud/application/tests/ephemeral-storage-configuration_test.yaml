@@ -1,0 +1,35 @@
+---
+suite: "mozcloud: Ephemeral storage configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/ephemeral-storage-configuration.yaml
+templates:
+  - workload/deployment.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+  - it: Container resources include ephemeral-storage request
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].resources.requests.ephemeral-storage
+          value: "1Gi"
+  - it: Container resources include ephemeral-storage limit equal to request
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].resources.limits.ephemeral-storage
+          value: "1Gi"
