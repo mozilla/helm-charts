@@ -52,13 +52,7 @@
               "type": "string"
             }
           },
-          "required": [
-            "app_code",
-            "chart",
-            "env_code",
-            "project_id",
-            "realm"
-          ]
+          "additionalProperties": true
         }
       }
     },
@@ -1490,6 +1484,35 @@
           "description": "Controls when volume ownership is changed to match fsGroup. 'Always' (default) changes ownership on every mount; 'OnRootMismatch' only changes ownership when the top-level directory does not match fsGroup (faster for large volumes).",
           "type": "string",
           "enum": ["Always", "OnRootMismatch"]
+        }
+      }
+    }
+  },
+  "if": {
+    "not": {
+      "properties": {
+        "enabled": {
+          "const": false
+        }
+      },
+      "required": [
+        "enabled"
+      ]
+    }
+  },
+  "then": {
+    "properties": {
+      "global": {
+        "properties": {
+          "mozcloud": {
+            "required": [
+              "app_code",
+              "chart",
+              "env_code",
+              "project_id",
+              "realm"
+            ]
+          }
         }
       }
     }

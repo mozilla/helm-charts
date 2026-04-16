@@ -167,8 +167,11 @@ Returns:
     {{- end }}
     {{- if $containerConfig.secrets }}
     {{- range $secret := $containerConfig.secrets }}
+    {{- $qualifiedName := printf "%s%s" $prefix $secret }}
+    {{- if not (and $defaultSecretEnabled (eq $qualifiedName $defaultSecretName)) }}
     - secretRef:
-        name: {{ printf "%s%s" $prefix $secret }}
+        name: {{ $qualifiedName }}
+    {{- end }}
     {{- end }}
     {{- end }}
   {{- end }}

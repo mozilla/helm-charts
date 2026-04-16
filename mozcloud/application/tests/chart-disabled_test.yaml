@@ -1,0 +1,38 @@
+---
+suite: "mozcloud: Chart disabled skips global.mozcloud validation"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/chart-disabled.yaml
+templates:
+  - workload/deployment.yaml
+  - externalsecret/externalsecret.yaml
+  - serviceaccount/serviceaccount.yaml
+  - task/job.yaml
+tests:
+  - it: Schema validation passes without global.mozcloud required fields
+    asserts:
+      - notFailedTemplate: {}
+  - it: No deployments are rendered
+    template: workload/deployment.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: No external secrets are rendered
+    template: externalsecret/externalsecret.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: No service accounts are rendered
+    template: serviceaccount/serviceaccount.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: No jobs are rendered
+    template: task/job.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
