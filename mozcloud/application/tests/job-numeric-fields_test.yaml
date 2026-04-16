@@ -1,5 +1,5 @@
 ---
-suite: "mozcloud: Job zero-value fields"
+suite: "mozcloud: Job numeric fields"
 release:
   name: mozcloud-test
   namespace: mozcloud-test-dev
@@ -7,7 +7,7 @@ chart:
   version: 1.0.0
 values:
   - values/globals.yaml
-  - values/job-zero-values.yaml
+  - values/job-numeric-fields.yaml
 templates:
   - task/job.yaml
 tests:
@@ -30,3 +30,17 @@ tests:
       - equal:
           path: spec.ttlSecondsAfterFinished
           value: 0
+  - it: parallelism is rendered as integer
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-zero-backoff-job
+    asserts:
+      - equal:
+          path: spec.parallelism
+          value: 3
+  - it: Configuration matches entire snapshot
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-zero-backoff-job
+    asserts:
+      - matchSnapshot: {}

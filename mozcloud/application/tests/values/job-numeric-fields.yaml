@@ -5,6 +5,7 @@ tasks:
       type: preDeployment
       backoffLimit: 0
       ttlSecondsAfterFinished: 0
+      parallelism: 3
       containers:
         job:
           image:
