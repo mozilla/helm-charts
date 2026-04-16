@@ -46,16 +46,16 @@ Returns:
 activeDeadlineSeconds: {{ $jobConfig.activeDeadlineSeconds }}
 {{- end }}
 {{- if hasKey $jobConfig "backoffLimit" }}
-backoffLimit: {{ int $jobConfig.backoffLimit }}
+backoffLimit: {{ $jobConfig.backoffLimit }}
 {{- end }}
 {{- if hasKey $jobConfig "parallelism" }}
-parallelism: {{ int $jobConfig.parallelism }}
+parallelism: {{ $jobConfig.parallelism }}
 {{- end }}
 {{- if $jobConfig.suspend }}
 suspend: {{ $jobConfig.suspend }}
 {{- end }}
 {{- if hasKey $jobConfig "ttlSecondsAfterFinished" }}
-ttlSecondsAfterFinished: {{ int $jobConfig.ttlSecondsAfterFinished }}
+ttlSecondsAfterFinished: {{ $jobConfig.ttlSecondsAfterFinished }}
 {{- end }}
 template:
   {{- /* Annotations, including OTEL if applicable */}}

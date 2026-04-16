@@ -44,3 +44,9 @@ tests:
       value: test-zero-backoff-job
     asserts:
       - matchSnapshot: {}
+  - it: Schema rejects non-integer backoffLimit
+    set:
+      tasks.jobs.test-zero-backoff-job.backoffLimit: 0.5
+    asserts:
+      - failedTemplate:
+          errorPattern: "backoffLimit.*got number, want integer"
