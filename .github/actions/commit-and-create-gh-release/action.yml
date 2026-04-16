@@ -25,10 +25,11 @@ runs:
     - name: Commit and push
       shell: bash
       env:
+        APP_ID: ${{ inputs.app-id }}
         GH_TOKEN: ${{ inputs.github-token }}
       run: |
         git config user.name "mozcloud-release-bot[bot]"
-        git config user.email "${{ inputs.app-id }}+mozcloud-release-bot[bot]@users.noreply.github.com"
+        git config user.email "${APP_ID}+mozcloud-release-bot[bot]@users.noreply.github.com"
         git add "**/Chart.yaml" "**/README.md"
         if git diff --cached --quiet; then
           echo "No changes to commit"
