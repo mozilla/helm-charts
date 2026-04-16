@@ -82,6 +82,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.common.job.security | object | `{}` |  |
 | tasks.common.job.serviceAccount | string | `""` |  |
 | tasks.common.job.type | string | `"preDeployment"` |  |
+| tasks.cronJobs.default.concurrencyPolicy | string | `"Allow"` |  |
 | tasks.cronJobs.default.jobConfig | object | `{}` |  |
 | tasks.cronJobs.default.jobHistory.failed | int | `1` |  |
 | tasks.cronJobs.default.jobHistory.successful | int | `1` |  |

@@ -16,6 +16,7 @@ Configuration matches entire snapshot:
         realm: nonprod
       name: test-cronjob
     spec:
+      concurrencyPolicy: Allow
       failedJobsHistoryLimit: 1
       jobTemplate:
         spec:

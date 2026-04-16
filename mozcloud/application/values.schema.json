@@ -1336,6 +1336,10 @@
     "cronJob": {
       "type": "object",
       "properties": {
+        "concurrencyPolicy": {
+          "type": "string",
+          "enum": ["Allow", "Forbid", "Replace"]
+        },
         "jobHistory": {
           "type": "object",
           "additionalProperties": false,

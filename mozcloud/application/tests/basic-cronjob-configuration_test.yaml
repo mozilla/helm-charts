@@ -32,6 +32,9 @@ tests:
           path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
       - notExists:
           path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+      - equal:
+          path: spec.concurrencyPolicy
+          value: Allow
       - matchRegex:
           path: spec.schedule
           pattern: ^(0 \* \* \* \*|@hourly)$
