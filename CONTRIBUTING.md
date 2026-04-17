@@ -100,11 +100,9 @@ templates:
   - workload/deployment.yaml         # Limit rendering to only the templates under test
   - workload/hpa.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
   - it: Deployment has correct replica settings
     template: workload/deployment.yaml
@@ -120,8 +118,8 @@ tests:
 Conventions to follow:
 
 - **Pin `chart.version` to `1.0.0`.** The labels library embeds the chart version in resource labels, so leaving it unpinned causes every snapshot to change on every chart bump, adding noise to PR diffs that is unrelated to the change being reviewed.
-- **Always include `notFailedTemplate` as the first test in every suite.** This catches render errors before any other assertions run.
-- **Always include `matchSnapshot`.** See [Snapshots](#snapshots) below.
+- **Always include `notFailedTemplate` and `matchSnapshot` in the first `it:` block.** `notFailedTemplate` catches render errors; `matchSnapshot` is the primary regression safety net (see [Snapshots](#snapshots) below). Keep them in the same `it:` so the chart is only rendered once for both.
+- **Prefer fewer `it:` blocks with more assertions.** helm-unittest re-renders the full chart for every `it:` block, which is the dominant cost of the suite. Group assertions under a single `it:` when they share a semantic theme, and use per-assert `template` and `documentSelector` when you need to target different documents within the same group. Split into a new `it:` only when the test requires a different `set` / `values` override, or when splitting genuinely clarifies intent.
 - **Scope your `templates` list to only the templates relevant to the scenario.** Rendering every template in every suite adds noise and slows tests down.
 
 ### Values organization

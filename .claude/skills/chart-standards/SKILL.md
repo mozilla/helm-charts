@@ -112,6 +112,6 @@ Before running unit tests after modifying a library chart, always run `make upda
 - Ensure `make unit-tests` results in all tests passing before finishing a change.
 
 ### Unit test structure
-Every test suite must open with these two cases, in this order, before any feature-specific assertions:
-1. `Ensure no failures occur` — asserts `notFailedTemplate: {}`
-2. `Configuration matches entire snapshot` — asserts `matchSnapshot: {}`
+Every test suite must open with a single `Configuration matches entire snapshot` case whose `asserts` contains both `notFailedTemplate: {}` and `matchSnapshot: {}`, in that order, before any feature-specific assertions.
+
+helm-unittest re-renders the full chart for every `it:` block, so keep the total number of `it:` blocks in a suite small. Group feature-specific assertions under a single `it:` when they share a theme, and use per-assert `template` and `documentSelector` to target different documents within a group. Only split into a new `it:` when the test needs a different `set` / `values` override, or when splitting genuinely clarifies intent.
