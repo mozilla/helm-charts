@@ -393,7 +393,7 @@
           },
           "type": {
             "type": "string",
-            "enum": ["deployment", "rollout"],
+            "enum": ["deployment", "rollout", "statefulset"],
             "default": "deployment"
           },
           "autoscaling": {
@@ -1054,7 +1054,8 @@
                 "type": "string",
                 "enum": [
                   "Recreate",
-                  "RollingUpdate"
+                  "RollingUpdate",
+                  "OnDelete"
                 ]
               },
               {
@@ -1083,11 +1084,145 @@
             "type": "integer",
             "minimum": 1,
             "default": 30
+          },
+          "partition": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Partition ordinal for StatefulSet RollingUpdate strategy. Pods with ordinal >= partition are updated."
+          },
+          "podManagementPolicy": {
+            "type": "string",
+            "enum": ["OrderedReady", "Parallel"],
+            "default": "Parallel",
+            "description": "Pod management policy for StatefulSet workloads."
+          },
+          "serviceName": {
+            "type": "string",
+            "description": "Override the headless service name for a StatefulSet. Defaults to <workload-name>-headless."
+          },
+          "volumeClaimTemplates": {
+            "type": "array",
+            "description": "Volume claim templates for StatefulSet workloads. Each entry creates a PVC per pod.",
+            "items": {
+              "type": "object",
+              "required": ["metadata", "spec"],
+              "additionalProperties": false,
+              "properties": {
+                "metadata": {
+                  "type": "object",
+                  "required": ["name"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": { "type": "string" }
+                  }
+                },
+                "spec": {
+                  "type": "object",
+                  "properties": {
+                    "accessModes": {
+                      "type": "array",
+                      "items": { "type": "string" }
+                    },
+                    "storageClassName": { "type": "string" },
+                    "resources": {
+                      "type": "object",
+                      "properties": {
+                        "requests": {
+                          "type": "object",
+                          "properties": {
+                            "storage": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "required": [
           "component",
           "containers"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": { "type": { "const": "statefulset" } },
+              "required": ["type"]
+            },
+            "then": {
+              "properties": {
+                "strategy": {
+                  "type": "string",
+                  "enum": ["RollingUpdate", "OnDelete"]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": { "type": { "const": "deployment" } }
+            },
+            "then": {
+              "properties": {
+                "strategy": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "enum": ["Recreate", "RollingUpdate"]
+                    },
+                    {
+                      "type": "object",
+                      "required": ["canary"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "canary": {
+                          "type": "object",
+                          "required": ["steps"],
+                          "properties": {
+                            "steps": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": { "type": "object" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": { "type": { "const": "rollout" } },
+              "required": ["type"]
+            },
+            "then": {
+              "properties": {
+                "strategy": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": { "type": { "const": "statefulset" } },
+              "required": ["type"]
+            },
+            "then": {},
+            "else": {
+              "properties": {
+                "partition": false,
+                "podManagementPolicy": false,
+                "serviceName": false,
+                "volumeClaimTemplates": false
+              }
+            }
+          }
         ]
       }
     },

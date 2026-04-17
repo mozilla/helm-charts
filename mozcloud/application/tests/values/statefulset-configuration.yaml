@@ -1,0 +1,21 @@
+---
+workloads:
+  test-service:
+    component: db
+    type: statefulset
+    strategy: RollingUpdate
+    podManagementPolicy: Parallel
+    volumeClaimTemplates:
+      - metadata:
+          name: data
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          storageClassName: standard-rwo
+          resources:
+            requests:
+              storage: 10Gi
+    containers:
+      app:
+        image:
+          repository: test-repo/test-db
+          tag: "1.0.0"

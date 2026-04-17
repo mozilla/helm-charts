@@ -1,0 +1,85 @@
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $context := deepCopy . }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- /* Format workloads, removing default container and merging user-defined values with defaults */}}
+{{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- $formatterParams := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+
+{{- range $workloadName, $workloadConfig := $workloads }}
+{{- if eq (default "deployment" $workloadConfig.type) "statefulset" }}
+{{- /* Format containers for headless Service port enumeration */}}
+{{- $containerFormatterParams := dict "containers" $workloadConfig.containers "type" "containers" }}
+{{- $containers := include "mozcloud.formatter.containers" $containerFormatterParams | fromYaml }}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ $workloadName }}
+  labels:
+    {{- $component := dict "component_code" $workloadConfig.component }}
+    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+    {{- $labels := include "mozcloud.labels" $params | fromYaml }}
+    {{- $labels.labels | toYaml | nindent 4 }}
+  {{- $params = dict "annotations" (default dict $workloadConfig.annotations) "context" $context "type" "deployment" }}
+  {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- $labels.selectorLabels | toYaml | nindent 6 }}
+  serviceName: {{ default (printf "%s-headless" $workloadName) $workloadConfig.serviceName }}
+  podManagementPolicy: {{ default "Parallel" $workloadConfig.podManagementPolicy }}
+  updateStrategy:
+    type: {{ default "RollingUpdate" $workloadConfig.strategy }}
+    {{- if and (eq (default "RollingUpdate" $workloadConfig.strategy) "RollingUpdate") $workloadConfig.partition }}
+    rollingUpdate:
+      partition: {{ $workloadConfig.partition }}
+    {{- end }}
+  {{- if $workloadConfig.volumeClaimTemplates }}
+  volumeClaimTemplates:
+    {{- range $vct := $workloadConfig.volumeClaimTemplates }}
+    - metadata:
+        name: {{ $vct.metadata.name }}
+      spec:
+        {{- $vct.spec | toYaml | nindent 8 }}
+    {{- end }}
+  {{- end }}
+  {{- /*
+  The template below can be found in templates/workload/_workloadTemplate.yaml
+  */}}
+  {{- $params = dict "config" $workloadConfig "context" $context "name" $workloadName }}
+  {{- include "mozcloud.workload.workloadTemplate" $params | nindent 2 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ default (printf "%s-headless" $workloadName) $workloadConfig.serviceName }}
+  labels:
+    {{- $labels.labels | toYaml | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  selector:
+    {{- $labels.selectorLabels | toYaml | nindent 4 }}
+  ports:
+    {{- range $containerName, $containerConfig := $containers }}
+    {{- if $containerConfig.port }}
+    - name: {{ include "mozcloud.portName" $containerName }}
+      port: {{ $containerConfig.port }}
+      targetPort: {{ $containerConfig.port }}
+    {{- end }}
+    {{- end }}
+{{- $nginxEnabled := and (dig "nginx" "enabled" "true" $workloadConfig) $workloadConfig.hosts }}
+{{- if and $nginxEnabled (not $workloadConfig.nginx.configMap) }}
+---
+{{- include "mozcloud.workload.nginxConfigMap" (dict
+  "labels" $labels
+  "name" $workloadName
+) }}
+{{- end }}
+{{- end }}
+{{- end }}
