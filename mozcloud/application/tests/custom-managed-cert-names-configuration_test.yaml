@@ -14,27 +14,26 @@ templates:
   - gke/ingress.yaml
   - ingress/ingress.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: ManagedCertificate resource uses the user-specified name
-    template: gke/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "ManagedCertificate")].metadata.name
-      value: my-custom-cert
+
+  - it: ManagedCertificate uses the user-specified name and Ingress references it
     asserts:
+      # ManagedCertificate resource uses the user-specified name
       - contains:
           path: spec.domains
           content: "test-service.dev.test-domain.com"
-  - it: Ingress annotation references the user-specified cert name
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "ManagedCertificate")].metadata.name
+          value: my-custom-cert
+      # Ingress annotation references the user-specified cert name
       - equal:
           path: metadata.annotations["networking.gke.io/managed-certificates"]
           value: my-custom-cert
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-service

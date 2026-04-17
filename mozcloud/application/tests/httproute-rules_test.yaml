@@ -14,17 +14,14 @@ values:
 templates:
   - gateway/httproute.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Header-only HTTPRoute is configured with correct rules
-    documentSelector:
-      path: $[?(@.kind == "HTTPRoute")].metadata.name
-      value: header-only
+
+  - it: Header-only, path-only, and headers-and-path HTTPRoutes render correct rules
     asserts:
+      # Header-only HTTPRoute is configured with correct rules
       - contains:
           path: spec.rules[0].backendRefs
           content:
@@ -33,17 +30,19 @@ tests:
             name: test-service
             port: 8080
             weight: 1
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: header-only
       - contains:
           path: spec.rules[0].matches
           content:
             headers:
               - name: foo
                 value: bar
-  - it: Path-only HTTPRoute is configured with correct rules
-    documentSelector:
-      path: $[?(@.kind == "HTTPRoute")].metadata.name
-      value: path-only
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: header-only
+      # Path-only HTTPRoute is configured with correct rules
       - contains:
           path: spec.rules[0].backendRefs
           content:
@@ -52,17 +51,19 @@ tests:
             name: test-service
             port: 8080
             weight: 1
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: path-only
       - contains:
           path: spec.rules[0].matches
           content:
             path:
               type: PathPrefix
               value: /foo
-  - it: Headers and path HTTPRoute is configured with correct rules
-    documentSelector:
-      path: $[?(@.kind == "HTTPRoute")].metadata.name
-      value: headers-and-path
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: path-only
+      # Headers and path HTTPRoute is configured with correct rules
       - contains:
           path: spec.rules[0].backendRefs
           content:
@@ -71,6 +72,9 @@ tests:
             name: test-service
             port: 8080
             weight: 1
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: headers-and-path
       - contains:
           path: spec.rules[0].matches
           content:
@@ -82,3 +86,6 @@ tests:
             path:
               type: PathPrefix
               value: /foo
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: headers-and-path

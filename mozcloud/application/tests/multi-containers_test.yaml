@@ -14,83 +14,51 @@ values:
 templates:
   - workload/deployment.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Container count is correct
+
+  - it: Deployment has the expected containers and init containers with correct images and sidecar config
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
     asserts:
+      # Container count is correct
       - lengthEqual:
           path: spec.template.spec.containers
           count: 2
-  - it: Init container count is correct
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Init container count is correct
       - lengthEqual:
           path: spec.template.spec.initContainers
           count: 2
-  - it: First container has correct image
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # First container has correct image
       - equal:
           path: spec.template.spec.containers[?(@.name=="container-1")].image
           value: "test-repo/image1:1.0.0"
-  - it: Second container has correct image
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Second container has correct image
       - equal:
           path: spec.template.spec.containers[?(@.name=="container-2")].image
           value: "test-repo/image2:2.0.0"
-  - it: First init container has correct image
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # First init container has correct image
       - equal:
           path: spec.template.spec.initContainers[?(@.name=="init-container-1")].image
           value: "test-repo/image3:3.0.0"
-  - it: Second container has correct image
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Second init container has correct image
       - equal:
           path: spec.template.spec.initContainers[?(@.name=="init-container-2")].image
           value: "test-repo/image4:4.0.0"
-  - it: Init container with sidecar mode enabled correctly identified
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Init container with sidecar mode enabled correctly identified
       - equal:
           path: spec.template.spec.initContainers[?(@.name=="init-container-1")].restartPolicy
           value: "Always"
-  - it: Init container env vars are rendered
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Init container env vars are rendered
       - contains:
           path: spec.template.spec.initContainers[?(@.name=="init-container-1")].env
           content:
             name: INIT_KEY
             value: init-value
-  - it: Init container security context is rendered
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Init container security context is rendered
       - equal:
           path: spec.template.spec.initContainers[?(@.name=="init-container-1")].securityContext.runAsUser
           value: 1000

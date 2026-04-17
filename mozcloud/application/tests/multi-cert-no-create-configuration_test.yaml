@@ -17,19 +17,20 @@ tests:
   - it: Ensure no failures occur
     asserts:
       - notFailedTemplate: {}
-  - it: No ManagedCertificate resources are created
-    template: gke/ingress.yaml
+
+  - it: No ManagedCertificate resources are created and Ingress references all pre-existing cert names
     asserts:
+      # No ManagedCertificate resources are created
       - notContains:
           path: $[*].kind
           content: ManagedCertificate
           any: true
-  - it: Ingress annotation references all pre-existing cert names
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
+        template: gke/ingress.yaml
+      # Ingress annotation references all pre-existing cert names
       - equal:
           path: metadata.annotations["networking.gke.io/managed-certificates"]
           value: cert-a,cert-b
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-service

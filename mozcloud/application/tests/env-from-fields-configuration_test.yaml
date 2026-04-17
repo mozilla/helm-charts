@@ -11,18 +11,17 @@ values:
 templates:
   - workload/deployment.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
-  - it: Deployment contains envFromFields as fieldRef env vars
+
+  - it: Deployment renders without failures and contains envFromFields as fieldRef env vars
     template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
     asserts:
+      - notFailedTemplate: {}
       - contains:
           path: spec.template.spec.containers[0].env
           content:
@@ -44,4 +43,3 @@ tests:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
-

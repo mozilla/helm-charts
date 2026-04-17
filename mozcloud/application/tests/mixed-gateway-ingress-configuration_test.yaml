@@ -18,39 +18,30 @@ templates:
   - gke/ingress.yaml
   - ingress/ingress.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
-
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
 
-  # Gateway template tests - should only create resources for gateway-service
-  - it: Gateway template creates resources for gateway workload
-    template: gateway/gateway.yaml
+  - it: Gateway resources are only created for the gateway workload
     asserts:
+      # Gateway template tests - should only create resources for gateway-service
       - hasDocuments:
           count: 1
-
-  - it: Gateway is configured for gateway-service
-    template: gateway/gateway.yaml
-    documentSelector:
-      path: $[?(@.kind == "Gateway")].metadata.name
-      value: mozcloud-test
-    asserts:
+        template: gateway/gateway.yaml
       - isNotNullOrEmpty:
           path: spec.addresses
-
-  - it: Gateway Service is created for gateway-service
-    template: gateway/backend.yaml
-    documentSelector:
-      path: $[?(@.kind == "Service")].metadata.name
-      value: gateway-service
-    asserts:
+        template: gateway/gateway.yaml
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test
       - equal:
           path: spec.type
           value: ClusterIP
+        template: gateway/backend.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: gateway-service
       - contains:
           path: spec.ports
           count: 1
@@ -59,13 +50,10 @@ tests:
             port: 8080
             protocol: TCP
             targetPort: http
-
-  - it: Gateway HTTPRoute references gateway-service
-    template: gateway/httproute.yaml
-    documentSelector:
-      path: $[?(@.kind == "HTTPRoute")].metadata.name
-      value: gateway-service
-    asserts:
+        template: gateway/backend.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: gateway-service
       - contains:
           path: spec.rules[0].backendRefs
           content:
@@ -74,26 +62,20 @@ tests:
             name: gateway-service
             port: 8080
             weight: 1
+        template: gateway/httproute.yaml
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: gateway-service
 
-  # Ingress template tests - should only create resources for ingress-service
-  - it: Frontend template creates resources for ingress workload
-    template: gke/frontendconfig.yaml
+  - it: Ingress resources are only created for the ingress workload
     asserts:
+      # Ingress template tests - should only create resources for ingress-service
       - hasDocuments:
           count: 1
-
-  - it: Ingress template creates resources for ingress workload
-    template: ingress/ingress.yaml
-    asserts:
+        template: gke/frontendconfig.yaml
       - hasDocuments:
           count: 2
-
-  - it: Ingress is configured for ingress-service
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: ingress-service
-    asserts:
+        template: ingress/ingress.yaml
       - isSubset:
           path: spec
           content:
@@ -102,16 +84,17 @@ tests:
                 name: ingress-service
                 port:
                   number: 8080
-
-  - it: Ingress Service is created for ingress-service
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Service")].metadata.name
-      value: ingress-service
-    asserts:
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: ingress-service
       - equal:
           path: spec.type
           value: ClusterIP
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: ingress-service
       - contains:
           path: spec.ports
           count: 1
@@ -120,30 +103,28 @@ tests:
             port: 8080
             protocol: TCP
             targetPort: http
-
-  - it: Ingress ManagedCertificate is created
-    template: gke/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "ManagedCertificate")].metadata.name
-      value: mcrt-ingress-service-dev-test-domain-com
-    asserts:
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: ingress-service
       - contains:
           path: spec.domains
           content: "ingress-service.dev.test-domain.com"
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "ManagedCertificate")].metadata.name
+          value: mcrt-ingress-service-dev-test-domain-com
 
-  # Cross-validation tests - ensure no resource leakage between templates
-  - it: Gateway backend template does NOT create resources for ingress-service
-    template: gateway/backend.yaml
+  - it: No resource leakage between gateway and ingress templates
     asserts:
+      # Cross-validation tests - ensure no resource leakage between templates
       - notContains:
           path: $[*].metadata.name
           content: ingress-service
           any: true
-
-  - it: Ingress template does NOT create resources for gateway-service
-    template: ingress/ingress.yaml
-    asserts:
+        template: gateway/backend.yaml
       - notContains:
           path: $[*].metadata.name
           content: gateway-service
           any: true
+        template: ingress/ingress.yaml

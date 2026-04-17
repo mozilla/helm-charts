@@ -16,23 +16,22 @@ tests:
   - it: Schema validation passes without global.mozcloud required fields
     asserts:
       - notFailedTemplate: {}
-  - it: No deployments are rendered
-    template: workload/deployment.yaml
+
+  - it: No Deployments, ExternalSecrets, ServiceAccounts, or Jobs are rendered when chart is disabled
     asserts:
+      # No deployments are rendered
       - hasDocuments:
           count: 0
-  - it: No external secrets are rendered
-    template: externalsecret/externalsecret.yaml
-    asserts:
+        template: workload/deployment.yaml
+      # No external secrets are rendered
       - hasDocuments:
           count: 0
-  - it: No service accounts are rendered
-    template: serviceaccount/serviceaccount.yaml
-    asserts:
+        template: externalsecret/externalsecret.yaml
+      # No service accounts are rendered
       - hasDocuments:
           count: 0
-  - it: No jobs are rendered
-    template: task/job.yaml
-    asserts:
+        template: serviceaccount/serviceaccount.yaml
+      # No jobs are rendered
       - hasDocuments:
           count: 0
+        template: task/job.yaml

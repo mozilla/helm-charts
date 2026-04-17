@@ -18,53 +18,43 @@ tests:
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
-  # Test that explicitly listed keys are transformed
-  - it: URLBASE is transformed when empty and explicitly listed
+
+  - it: Preview ConfigMap is prefixed and transforms or preserves data keys correctly
     template: configmap/configmap.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-app-config
     asserts:
+      # Test that ConfigMap is prefixed in preview mode
+      # ConfigMap name is prefixed with PR number
+      - equal:
+          path: metadata.name
+          value: pr789-app-config
+      # Test that explicitly listed keys are transformed
+      # URLBASE is transformed when empty and explicitly listed
       - equal:
           path: data.URLBASE
           value: "https://pr789-test.preview.mozilla.cloud"
-
-  - it: ATTACHMENT_BASE is transformed when empty and explicitly listed
-    template: configmap/configmap.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-app-config
-    asserts:
+        documentSelector:
+          path: metadata.name
+          value: pr789-app-config
+      # ATTACHMENT_BASE is transformed when empty and explicitly listed
       - equal:
           path: data.ATTACHMENT_BASE
           value: "https://pr789-test.preview.mozilla.cloud"
-
-  # Test that non-listed keys are NOT transformed
-  - it: URL_BASE is not transformed when not in urlTransformKeys list
-    template: configmap/configmap.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-app-config
-    asserts:
+        documentSelector:
+          path: metadata.name
+          value: pr789-app-config
+      # Test that non-listed keys are NOT transformed
+      # URL_BASE is not transformed when not in urlTransformKeys list
       - equal:
           path: data.URL_BASE
           value: ""
-
-  # Test that non-empty values are preserved
-  - it: Non-empty values are not overwritten
-    template: configmap/configmap.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-app-config
-    asserts:
+        documentSelector:
+          path: metadata.name
+          value: pr789-app-config
+      # Test that non-empty values are preserved
+      # Non-empty values are not overwritten
       - equal:
           path: data.OTHER_VAR
           value: "keep-this"
-
-  # Test that ConfigMap is prefixed in preview mode
-  - it: ConfigMap name is prefixed with PR number
-    template: configmap/configmap.yaml
-    asserts:
-      - equal:
+        documentSelector:
           path: metadata.name
           value: pr789-app-config

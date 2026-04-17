@@ -21,32 +21,21 @@ tests:
     asserts:
       - notFailedTemplate: {}
 
-  - it: App container uses configured imagePullPolicy
+  - it: Deployment app, init, and nginx sidecar containers use their configured imagePullPolicy
     template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
     asserts:
+      # App container uses configured imagePullPolicy
       - equal:
           path: spec.template.spec.containers[?(@.name=="app")].imagePullPolicy
           value: IfNotPresent
-
-  - it: Init container uses configured imagePullPolicy
-    template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Init container uses configured imagePullPolicy
       - equal:
           path: spec.template.spec.initContainers[?(@.name=="init")].imagePullPolicy
           value: IfNotPresent
-
-  - it: Nginx sidecar always uses imagePullPolicy Always
-    template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Nginx sidecar always uses imagePullPolicy Always
       - equal:
           path: spec.template.spec.containers[?(@.name=="nginx")].imagePullPolicy
           value: Always

@@ -14,36 +14,34 @@ templates:
   - gke/ingress.yaml
   - ingress/ingress.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: A ManagedCertificate is created for the first user-specified name
-    template: gke/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "ManagedCertificate")].metadata.name
-      value: cert-a
+
+  - it: ManagedCertificates are created per user-specified name and Ingress references all of them
     asserts:
+      # A ManagedCertificate is created for the first user-specified name
       - contains:
           path: spec.domains
           content: "test-service.dev.test-domain.com"
-  - it: A ManagedCertificate is created for the second user-specified name
-    template: gke/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "ManagedCertificate")].metadata.name
-      value: cert-b
-    asserts:
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "ManagedCertificate")].metadata.name
+          value: cert-a
+      # A ManagedCertificate is created for the second user-specified name
       - contains:
           path: spec.domains
           content: "test-service.dev.test-domain.com"
-  - it: Ingress annotation references all cert names
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "ManagedCertificate")].metadata.name
+          value: cert-b
+      # Ingress annotation references all cert names
       - equal:
           path: metadata.annotations["networking.gke.io/managed-certificates"]
           value: cert-a,cert-b
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-service

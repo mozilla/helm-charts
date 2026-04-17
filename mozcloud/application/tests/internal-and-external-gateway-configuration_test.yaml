@@ -13,41 +13,51 @@ templates:
   - gateway/httproute.yaml
   - gke/gateway.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Creates two gateways (internal and external)
+
+  - it: Internal and external Gateways are configured correctly
     template: gateway/gateway.yaml
     asserts:
+      # Creates two gateways (internal and external)
       - hasDocuments:
           count: 2
-  - it: External gateway is configured correctly
-    template: gateway/gateway.yaml
-    documentSelector:
-      path: $[?(@.kind == "Gateway")].metadata.name
-      value: mozcloud-test-external
-    asserts:
+      # External gateway is configured correctly
       - equal:
           path: metadata.name
+          value: mozcloud-test-external
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
           value: mozcloud-test-external
       - equal:
           path: metadata.annotations["networking.gke.io/certmap"]
           value: test-service-nonprod-dev
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-external
       - equal:
           path: spec.gatewayClassName
           value: gke-l7-global-external-managed
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-external
       - contains:
           path: spec.addresses
           count: 1
           content:
             type: NamedAddress
             value: mozcloud-dev-external-ip-v4
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-external
       - lengthEqual:
           path: spec.listeners
           count: 2
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-external
       - contains:
           path: spec.listeners
           count: 1
@@ -58,6 +68,9 @@ tests:
             name: http
             port: 80
             protocol: HTTP
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-external
       - contains:
           path: spec.listeners
           count: 1
@@ -68,27 +81,37 @@ tests:
             name: https
             port: 443
             protocol: HTTPS
-  - it: Internal gateway is configured correctly
-    template: gateway/gateway.yaml
-    documentSelector:
-      path: $[?(@.kind == "Gateway")].metadata.name
-      value: mozcloud-test-internal
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-external
+      # Internal gateway is configured correctly
       - equal:
           path: metadata.name
+          value: mozcloud-test-internal
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
           value: mozcloud-test-internal
       - equal:
           path: spec.gatewayClassName
           value: gke-l7-global-external-managed
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-internal
       - contains:
           path: spec.addresses
           count: 1
           content:
             type: NamedAddress
             value: mozcloud-dev-internal-ip-v4
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-internal
       - lengthEqual:
           path: spec.listeners
           count: 1
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-internal
       - contains:
           path: spec.listeners
           count: 1
@@ -99,23 +122,32 @@ tests:
             name: http
             port: 80
             protocol: HTTP
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-internal
       - notExists:
           path: metadata.annotations["networking.gke.io/certmap"]
-  - it: External gateway policy is configured correctly
+        documentSelector:
+          path: $[?(@.kind == "Gateway")].metadata.name
+          value: mozcloud-test-internal
+
+  - it: Only external GCPGatewayPolicy is rendered (internal has no HTTPS listener)
     template: gke/gateway.yaml
-    documentSelector:
-      path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
-      value: mozcloud-test-external
     asserts:
+      # External gateway policy is configured correctly
       - equal:
           path: spec.default.sslPolicy
           value: mozilla-intermediate
+        documentSelector:
+          path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
+          value: mozcloud-test-external
       - equal:
           path: spec.targetRef.name
           value: mozcloud-test-external
-  - it: Only external gateway policy exists (internal has no HTTPS listener)
-    template: gke/gateway.yaml
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "GCPGatewayPolicy")].metadata.name
+          value: mozcloud-test-external
+      # Only external gateway policy exists (internal has no HTTPS listener)
       - documentIndex: 0
         equal:
           path: kind
@@ -124,16 +156,18 @@ tests:
         equal:
           path: metadata.name
           value: mozcloud-test-external
-  - it: External HTTPRoute references external gateway
+
+  - it: HTTPRoutes reference their respective internal and external gateways
     template: gateway/httproute.yaml
-    documentSelector:
-      path: $[?(@.kind == "HTTPRoute")].metadata.name
-      value: external-host
     asserts:
+      # External HTTPRoute references external gateway
       - contains:
           path: spec.hostnames
           count: 1
           content: external.test-domain.com
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: external-host
       - contains:
           path: spec.parentRefs
           count: 1
@@ -142,12 +176,10 @@ tests:
             kind: Gateway
             name: mozcloud-test-external
             sectionName: https
-  - it: External HTTPRoute has HTTP redirect
-    template: gateway/httproute.yaml
-    documentSelector:
-      path: $[?(@.kind == "HTTPRoute")].metadata.name
-      value: external-host-http-redirect
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: external-host
+      # External HTTPRoute has HTTP redirect
       - contains:
           path: spec.parentRefs
           count: 1
@@ -156,16 +188,17 @@ tests:
             kind: Gateway
             name: mozcloud-test-external
             sectionName: http
-  - it: Internal HTTPRoute references internal gateway
-    template: gateway/httproute.yaml
-    documentSelector:
-      path: $[?(@.kind == "HTTPRoute")].metadata.name
-      value: internal-host
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: external-host-http-redirect
+      # Internal HTTPRoute references internal gateway
       - contains:
           path: spec.hostnames
           count: 1
           content: internal.test-domain.local
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: internal-host
       - contains:
           path: spec.parentRefs
           count: 1
@@ -174,6 +207,12 @@ tests:
             kind: Gateway
             name: mozcloud-test-internal
             sectionName: http
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: internal-host
       - lengthEqual:
           path: spec.parentRefs
           count: 1
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: internal-host

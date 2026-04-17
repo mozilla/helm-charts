@@ -12,95 +12,55 @@ templates:
   - ingress/frontendconfig.yaml
   - ingress/ingress.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
-
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
 
-  # GKE CRDs must not be emitted
-  - it: No FrontendConfig is rendered
-    template: ingress/frontendconfig.yaml
+  - it: GKE-specific resources are not rendered
     asserts:
+      # GKE CRDs must not be emitted
       - hasDocuments:
           count: 0
-
-  - it: No BackendConfig is rendered
-    template: ingress/ingress.yaml
-    asserts:
+        template: ingress/frontendconfig.yaml
       - notContains:
           path: $[*].kind
           content: BackendConfig
         documentIndex: 0
-
-  - it: No ManagedCertificate is rendered
-    template: ingress/ingress.yaml
-    asserts:
+        template: ingress/ingress.yaml
       - notContains:
           path: $[*].kind
           content: ManagedCertificate
         documentIndex: 0
-
-  - it: Only Ingress and Service are rendered
-    template: ingress/ingress.yaml
-    asserts:
+        template: ingress/ingress.yaml
       - hasDocuments:
           count: 2
+        template: ingress/ingress.yaml
 
-  # Ingress has no GKE-specific annotations
-  - it: Ingress has no GCE ingress class annotation
+  - it: Ingress omits GKE-specific annotations
     template: ingress/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "Ingress")].metadata.name
       value: test-service
     asserts:
+      # Ingress has no GKE-specific annotations
       - isNull:
           path: metadata.annotations["kubernetes.io/ingress.class"]
-
-  - it: Ingress has no static IP annotation
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
       - isNull:
           path: metadata.annotations["kubernetes.io/ingress.global-static-ip-name"]
-
-  - it: Ingress has no managed-certificates annotation
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
       - isNull:
           path: metadata.annotations["networking.gke.io/managed-certificates"]
-
-  - it: Ingress has no FrontendConfig annotation
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
       - isNull:
           path: metadata.annotations["networking.gke.io/v1beta1.FrontendConfig"]
 
-  # Service has no GKE-specific annotations
-  - it: Service has no GKE NEG annotation
+  - it: Service omits GKE-specific annotations
     template: ingress/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "Service")].metadata.name
       value: test-service
     asserts:
+      # Service has no GKE-specific annotations
       - isNull:
           path: metadata.annotations["cloud.google.com/neg"]
-
-  - it: Service has no GKE backend-config annotation
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Service")].metadata.name
-      value: test-service
-    asserts:
       - isNull:
           path: metadata.annotations["cloud.google.com/backend-config"]

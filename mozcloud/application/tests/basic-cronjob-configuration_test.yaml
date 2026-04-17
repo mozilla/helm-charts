@@ -14,59 +14,100 @@ values:
 templates:
   - task/cronjob.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
-  - it: Cron job is configured correctly
+
+  - it: CronJob renders without failures and is configured correctly
     template: task/cronjob.yaml
-    documentSelector:
-      path: $[?(@.kind == "CronJob")].metadata.name
-      value: test-cronjob
     asserts:
+      - notFailedTemplate: {}
       - notExists:
           path: metadata.annotations["argocd.argoproj.io/hook"]
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - notExists:
           path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - notExists:
           path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - equal:
           path: spec.concurrencyPolicy
           value: Allow
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - matchRegex:
           path: spec.schedule
           pattern: ^(0 \* \* \* \*|@hourly)$
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - equal:
           path: spec.successfulJobsHistoryLimit
           value: 1
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - equal:
           path: spec.failedJobsHistoryLimit
           value: 1
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - equal:
           path: spec.jobTemplate.spec.backoffLimit
           value: 6
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - equal:
           path: spec.jobTemplate.spec.parallelism
           value: 1
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - lengthEqual:
           path: spec.jobTemplate.spec.template.spec.containers
           count: 1
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].image
           value: test-repo/test-image:latest
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].command
           value: ["sh", "-c"]
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].args
           value: ["echo", "foo", "bar"]
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - equal:
           path: spec.jobTemplate.spec.template.spec.containers[0].name
           value: job
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - exists:
           path: spec.jobTemplate.spec.template.spec.containers[0].resources
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - isSubset:
           path: spec.jobTemplate.spec.template.spec.containers[0].resources
           content:
@@ -76,8 +117,14 @@ tests:
             requests:
               cpu: 100m
               memory: 128Mi
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - exists:
           path: spec.jobTemplate.spec.template.spec.containers[0].securityContext
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - isSubset:
           path: spec.jobTemplate.spec.template.spec.containers[0].securityContext
           content:
@@ -87,11 +134,20 @@ tests:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - equal:
           path: spec.jobTemplate.spec.template.spec.restartPolicy
           value: Never
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - exists:
           path: spec.jobTemplate.spec.template.spec.securityContext
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       - isSubset:
           path: spec.jobTemplate.spec.template.spec.securityContext
           content:
@@ -100,3 +156,6 @@ tests:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob

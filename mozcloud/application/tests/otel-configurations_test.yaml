@@ -14,17 +14,14 @@ values:
 templates:
   - workload/deployment.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: OTEL settings absent if disabled
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: otel-disabled
+
+  - it: OTEL annotations and env vars are conditional on otel and auto-instrumentation settings
     asserts:
+      # OTEL settings absent if disabled
       - isNotSubset:
           path: spec.template.metadata.annotations
           content:
@@ -34,6 +31,9 @@ tests:
             resource.opentelemetry.io/component_code: web
             resource.opentelemetry.io/env_code: dev
             resource.opentelemetry.io/realm: nonprod
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: otel-disabled
       - isNotSubset:
           path: spec.template.spec.containers[?(@.name=="app")].env
           content:
@@ -42,11 +42,10 @@ tests:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.hostIP
-  - it: OTEL settings configured correctly when auto instrumentation is disabled
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: otel-auto-instrumentation-disabled
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: otel-disabled
+      # OTEL settings configured correctly when auto instrumentation is disabled
       - isSubset:
           path: spec.template.metadata.annotations
           content:
@@ -54,11 +53,17 @@ tests:
             resource.opentelemetry.io/component_code: web
             resource.opentelemetry.io/env_code: dev
             resource.opentelemetry.io/realm: nonprod
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: otel-auto-instrumentation-disabled
       - isNotSubset:
           path: spec.template.metadata.annotations
           content:
             instrumentation.opentelemetry.io/inject-python: "mozcloud-opentelemetry/mozcloud-opentelemetry-instrumentation"
             instrumentation.opentelemetry.io/python-container-names: app
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: otel-auto-instrumentation-disabled
       - contains:
           path: spec.template.spec.containers[?(@.name=="app")].env
           content:
@@ -67,6 +72,9 @@ tests:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.hostIP
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: otel-auto-instrumentation-disabled
       - notContains:
           path: spec.template.spec.containers[?(@.name=="sidecar")].env
           content:
@@ -75,11 +83,10 @@ tests:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.hostIP
-  - it: OTEL settings configured correctly when auto instrumentation is enabled
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: otel-auto-instrumentation-enabled
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: otel-auto-instrumentation-disabled
+      # OTEL settings configured correctly when auto instrumentation is enabled
       - isSubset:
           path: spec.template.metadata.annotations
           content:
@@ -89,6 +96,9 @@ tests:
             resource.opentelemetry.io/component_code: web
             resource.opentelemetry.io/env_code: dev
             resource.opentelemetry.io/realm: nonprod
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: otel-auto-instrumentation-enabled
       - notContains:
           path: spec.template.spec.containers[?(@.name=="app")].env
           content:
@@ -97,6 +107,9 @@ tests:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.hostIP
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: otel-auto-instrumentation-enabled
       - notContains:
           path: spec.template.spec.containers[?(@.name=="sidecar")].env
           content:
@@ -105,3 +118,6 @@ tests:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.hostIP
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: otel-auto-instrumentation-enabled
