@@ -10,3 +10,5 @@ __pycache__/
 .debug/mozcloud-workload/templates/workload.yaml
 gha-creds*.json
 bump-result.json
+.claude
+**/.claude
