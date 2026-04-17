@@ -12,32 +12,31 @@ values:
   - values/globals.yaml
   - values/basic-configuration.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Backend is configured correctly
-    template: backendconfig.yaml
-    documentSelector:
-      path: $[?(@.kind == "BackendConfig")].metadata.name
-      value: test-ingress
+
+  - it: BackendConfig, FrontendConfig, Ingress, ManagedCertificate, and Service are configured correctly
     asserts:
+      # Backend is configured correctly
       - isSubset:
           path: spec
           content:
             logging:
               enable: true
               sampleRate: 0.1
+        template: backendconfig.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: test-ingress
       - notExists:
           path: spec.securityPolicy
-  - it: Frontend is configured correctly
-    template: frontendconfig.yaml
-    documentSelector:
-      path: $[?(@.kind == "FrontendConfig")].metadata.name
-      value: test-ingress
-    asserts:
+        template: backendconfig.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: test-ingress
+      # Frontend is configured correctly
       - isSubset:
           path: spec
           content:
@@ -45,12 +44,11 @@ tests:
               enabled: true
               responseCodeName: MOVED_PERMANENTLY_DEFAULT
             sslPolicy: mozilla-intermediate
-  - it: Ingress is configured correctly
-    template: ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-ingress
-    asserts:
+        template: frontendconfig.yaml
+        documentSelector:
+          path: $[?(@.kind == "FrontendConfig")].metadata.name
+          value: test-ingress
+      # Ingress is configured correctly
       - isSubset:
           path: metadata.annotations
           content:
@@ -58,6 +56,10 @@ tests:
             kubernetes.io/ingress.global-static-ip-name: mozcloud-test-dev-ip-v4
             networking.gke.io/managed-certificates: mcrt-test-ingress-0
             networking.gke.io/v1beta1.FrontendConfig: test-ingress
+        template: ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-ingress
       - isSubset:
           path: spec
           content:
@@ -66,24 +68,26 @@ tests:
                 name: test-ingress
                 port:
                   number: 8080
-  - it: Managed certificate is configured correctly
-    template: managedcertificate.yaml
-    documentSelector:
-      path: $[?(@.kind == "ManagedCertificate")].metadata.name
-      value: mcrt-test-ingress-0
-    asserts:
+        template: ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-ingress
+      # Managed certificate is configured correctly
       - lengthEqual:
           path: spec.domains
           count: 1
+        template: managedcertificate.yaml
+        documentSelector:
+          path: $[?(@.kind == "ManagedCertificate")].metadata.name
+          value: mcrt-test-ingress-0
       - contains:
           path: spec.domains
           content: "test-service.dev.test-domain.com"
-  - it: Service is configured correctly
-    template: service.yaml
-    documentSelector:
-      path: $[?(@.kind == "Service")].metadata.name
-      value: test-ingress
-    asserts:
+        template: managedcertificate.yaml
+        documentSelector:
+          path: $[?(@.kind == "ManagedCertificate")].metadata.name
+          value: mcrt-test-ingress-0
+      # Service is configured correctly
       - contains:
           path: spec.ports
           count: 1
@@ -92,10 +96,26 @@ tests:
             port: 8080
             protocol: TCP
             targetPort: http
+        template: service.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: test-ingress
       - exists:
           path: spec.selector
+        template: service.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: test-ingress
       - isNotNullOrEmpty:
           path: spec.selector
+        template: service.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: test-ingress
       - equal:
           path: spec.type
           value: ClusterIP
+        template: service.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: test-ingress

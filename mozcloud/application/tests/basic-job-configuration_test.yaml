@@ -20,50 +20,80 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Pre-deployment job is configured correctly
+
+  - it: Pre- and post-deployment Jobs are configured correctly
     template: task/job.yaml
-    documentSelector:
-      path: $[?(@.kind == "Job")].metadata.name
-      value: test-predeployment-job
     asserts:
+      # Pre-deployment job is configured correctly
       - equal:
           path: metadata.annotations["argocd.argoproj.io/hook"]
           value: Sync
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - equal:
           path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
           value: BeforeHookCreation,HookSucceeded
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - equal:
           path: metadata.annotations["argocd.argoproj.io/sync-wave"]
           value: "-1"
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - equal:
           path: spec.backoffLimit
           value: 6
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - equal:
           path: spec.parallelism
           value: 1
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - lengthEqual:
           path: spec.template.spec.containers
           count: 1
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - equal:
           path: spec.template.spec.containers[0].image
           value: test-repo/test-predeployment-job-image:2.0.0
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - equal:
           path: spec.template.spec.containers[0].command
           value: ["sh", "-c"]
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - equal:
           path: spec.template.spec.containers[0].args
           value: ["echo", "running", "before", "deployment"]
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - equal:
           path: spec.template.spec.containers[0].name
           value: job
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - exists:
           path: spec.template.spec.containers[0].resources
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - isSubset:
           path: spec.template.spec.containers[0].resources
           content:
@@ -73,8 +103,14 @@ tests:
             requests:
               cpu: 100m
               memory: 128Mi
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - exists:
           path: spec.template.spec.containers[0].securityContext
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - isSubset:
           path: spec.template.spec.containers[0].securityContext
           content:
@@ -84,11 +120,20 @@ tests:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - equal:
           path: spec.template.spec.restartPolicy
           value: Never
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - exists:
           path: spec.template.spec.securityContext
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
       - isSubset:
           path: spec.template.spec.securityContext
           content:
@@ -97,44 +142,75 @@ tests:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
-  - it: Post-deployment job is configured correctly
-    template: task/job.yaml
-    documentSelector:
-      path: $[?(@.kind == "Job")].metadata.name
-      value: test-postdeployment-job
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      # Post-deployment job is configured correctly
       - equal:
           path: metadata.annotations["argocd.argoproj.io/hook"]
           value: Sync
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - equal:
           path: metadata.annotations["argocd.argoproj.io/hook-delete-policy"]
           value: BeforeHookCreation,HookSucceeded
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - equal:
           path: metadata.annotations["argocd.argoproj.io/sync-wave"]
           value: "1"
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - equal:
           path: spec.backoffLimit
           value: 6
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - equal:
           path: spec.parallelism
           value: 1
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - lengthEqual:
           path: spec.template.spec.containers
           count: 1
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - equal:
           path: spec.template.spec.containers[0].image
           value: test-repo/test-postdeployment-job-image:3.0.0
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - equal:
           path: spec.template.spec.containers[0].command
           value: ["sh", "-c"]
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - equal:
           path: spec.template.spec.containers[0].args
           value: ["echo", "running", "after", "deployment"]
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - equal:
           path: spec.template.spec.containers[0].name
           value: job
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - exists:
           path: spec.template.spec.containers[0].resources
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - isSubset:
           path: spec.template.spec.containers[0].resources
           content:
@@ -144,8 +220,14 @@ tests:
             requests:
               cpu: 100m
               memory: 128Mi
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - exists:
           path: spec.template.spec.containers[0].securityContext
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - isSubset:
           path: spec.template.spec.containers[0].securityContext
           content:
@@ -155,11 +237,20 @@ tests:
                 - ALL
             seccompProfile:
               type: RuntimeDefault
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - equal:
           path: spec.template.spec.restartPolicy
           value: Never
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - exists:
           path: spec.template.spec.securityContext
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
       - isSubset:
           path: spec.template.spec.securityContext
           content:
@@ -168,3 +259,6 @@ tests:
             runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job

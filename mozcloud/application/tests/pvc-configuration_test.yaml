@@ -15,76 +15,114 @@ templates:
   - pvc/pvc.yaml
   - workload/deployment.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: ReadWriteOnce PVC is configured correctly
-    template: pvc/pvc.yaml
-    documentSelector:
-      path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
-      value: pvc-rwo
+
+  - it: PVCs and Deployment volume mounts are configured correctly
     asserts:
+      # ReadWriteOnce PVC is configured correctly
       - equal:
           path: metadata.annotations["argocd.argoproj.io/sync-wave"]
           value: "-11"
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwo
       - equal:
           path: metadata.labels.component_code
           value: pvc
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwo
       - equal:
           path: spec.accessModes
           value: ["ReadWriteOnce"]
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwo
       - equal:
           path: spec.resources.requests.storage
           value: 10Gi
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwo
       - equal:
           path: spec.storageClassName
           value: standard
-  - it: ReadWriteMany PVC is configured correctly
-    template: pvc/pvc.yaml
-    documentSelector:
-      path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
-      value: pvc-rwm
-    asserts:
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwo
+      # ReadWriteMany PVC is configured correctly
       - equal:
           path: metadata.labels.component_code
           value: pvc
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwm
       - equal:
           path: spec.accessModes
           value: ["ReadWriteOnce", "ReadWriteMany"]
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwm
       - equal:
           path: spec.resources.requests.storage
           value: 50Gi
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwm
       - equal:
           path: spec.storageClassName
           value: mozilla-enterprise-rwx
-  - it: Container is configured to use PVCs as volumes
-    template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwm
+      # Container is configured to use PVCs as volumes
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
             mountPath: /data/pvc-rwo
             name: pvc-rwo
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
       - contains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
             mountPath: /data/pvc-rwm
             name: pvc-rwm
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
       - contains:
           path: spec.template.spec.volumes
           content:
             name: pvc-rwo
             persistentVolumeClaim:
               claimName: pvc-rwo
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
       - contains:
           path: spec.template.spec.volumes
           content:
             name: pvc-rwm
             persistentVolumeClaim:
               claimName: pvc-rwm
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service

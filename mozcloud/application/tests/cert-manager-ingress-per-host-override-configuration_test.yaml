@@ -11,20 +11,22 @@ values:
 templates:
   - ingress/ingress.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
-  - it: Ingress uses per-host issuer annotation (namespace-scoped Issuer)
+
+  - it: Ingress renders without failures and uses per-host issuer annotation (namespace-scoped Issuer)
     template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
     asserts:
+      - notFailedTemplate: {}
       - equal:
           path: metadata.annotations["cert-manager.io/issuer"]
           value: letsencrypt-staging
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-service
       - isNull:
           path: metadata.annotations["cert-manager.io/cluster-issuer"]
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-service

@@ -14,18 +14,18 @@ values:
 templates:
   - workload/deployment.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Deployment pod security context set correctly
+
+  - it: Deployment pod and container security contexts are set correctly
     template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
     asserts:
+      # Deployment pod security context set correctly
       - isSubset:
           path: spec.template.spec.securityContext
           content:
@@ -36,12 +36,7 @@ tests:
             fsGroupChangePolicy: OnRootMismatch
             seccompProfile:
               type: RuntimeDefault
-  - it: Deployment container security context set correctly
-    template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Deployment container security context set correctly
       - isSubset:
           path: spec.template.spec.containers[0].securityContext
           content:

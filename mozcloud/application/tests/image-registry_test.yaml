@@ -11,44 +11,42 @@ values:
 templates:
   - workload/deployment.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Prepends global registry to short repository paths
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
+
+  - it: Registry prefix handling for default workload images
     asserts:
+      # Prepends global registry to short repository paths
       - equal:
           path: spec.template.spec.containers[?(@.name == "app")].image
           value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-images/myapp:1.0.0"
-  - it: Does not double-prefix when repository already contains the registry
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Does not double-prefix when repository already contains the registry
       - equal:
           path: spec.template.spec.containers[?(@.name == "sidecar")].image
           value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/other-images/sidecar:2.0.0"
-  - it: Does not double-prefix when repository already contains a different registry
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service-2
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Does not double-prefix when repository already contains a different registry
       - equal:
           path: spec.template.spec.containers[?(@.name == "app")].image
           value: "us-west1-docker.pkg.dev/moz-fx-fx-testing/fx-testing-prod/api-image:1.0.1"
-  - it: Does not prepend registry to nginx when its repository already contains a domain
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service-nginx
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-2
+      # Does not prepend registry to nginx when its repository already contains a domain
       - equal:
           path: spec.template.spec.containers[?(@.name == "nginx")].image
           value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-nginx
+
   - it: Prepends registry to nginx when using a short repository path
     set:
       workloads:

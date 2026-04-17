@@ -14,34 +14,33 @@ tests:
   - it: Ensure no failures occur
     asserts:
       - notFailedTemplate: {}
-  - it: Resolves template expressions to their values
-    asserts:
-      - equal:
-          path: data.RESOLVED_VALUE
-          value: "mozcloud-test"
-  - it: Renders empty string for null template expressions
-    asserts:
-      - equal:
-          path: data.NULL_VALUE
-          value: ""
-  - it: Preserves static values without template expressions
-    asserts:
-      - equal:
-          path: data.STATIC_KEY
-          value: "no-template-here"
-  - it: Resolves template expressions embedded in a larger string
-    asserts:
-      - equal:
-          path: data.MIXED_VALUE
-          value: "prefix-dev-suffix"
-  - it: Resolves piped template expressions
-    asserts:
-      - equal:
-          path: data.MULTI_VAL
-          value: "1,2"
   - it: Snapshot of full rendered ConfigMap
     asserts:
       - matchSnapshot: {}
+
+  - it: Template expressions resolve correctly across static, null, mixed, and piped values
+    asserts:
+      # Resolves template expressions to their values
+      - equal:
+          path: data.RESOLVED_VALUE
+          value: "mozcloud-test"
+      # Renders empty string for null template expressions
+      - equal:
+          path: data.NULL_VALUE
+          value: ""
+      # Preserves static values without template expressions
+      - equal:
+          path: data.STATIC_KEY
+          value: "no-template-here"
+      # Resolves template expressions embedded in a larger string
+      - equal:
+          path: data.MIXED_VALUE
+          value: "prefix-dev-suffix"
+      # Resolves piped template expressions
+      - equal:
+          path: data.MULTI_VAL
+          value: "1,2"
+
   - it: Fails when a blocked function is used
     set:
       configMaps:
