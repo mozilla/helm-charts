@@ -425,22 +425,25 @@ tasks:
       # already set.
       generateName: false
 
-      # Optionally define a Sync Wave value for ArgoCD.
+      # Optionally customize ArgoCD sync annotations for this job.
       #
-      # Sync waves are used to define an order in which resources are
-      # applied within a sync phase. Sync waves are configured using
-      # integers in ascending order, where resources with lower-value sync
-      # waves are applied first and resources with higher-value sync waves
-      # are applied last.
+      # hook: The ArgoCD hook type. Defaults to "Sync". Set to "PreSync"
+      #   for jobs that must complete before any other resources are applied
+      #   (e.g. database migrations).
+      #   Accepted values: PreSync, Sync, PostSync, SyncFail, Skip
       #
-      # This chart allows you to assign Sync Wave values for pre-deployment
-      # jobs ranging from -10 (run first) to -1 (run last).
+      # hookDeletePolicy: Controls when ArgoCD deletes the hook resource.
+      #   Defaults to "BeforeHookCreation,HookSucceeded".
       #
-      # If no values are specified, a default of -1 will be applied.
+      # syncWave: Sync waves define the order in which resources are applied
+      #   within a sync phase, using integers in ascending order. Defaults
+      #   to -1 for preDeployment jobs and 1 for postDeployment jobs.
       #
       # Format:
       #
       #   argo:
+      #     hook: PreSync
+      #     hookDeletePolicy: HookSucceeded
       #     syncWave: -1
       argo: {}
 

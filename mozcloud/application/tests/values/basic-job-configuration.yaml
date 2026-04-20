@@ -19,3 +19,16 @@ tasks:
             tag: 3.0.0
           command: ["sh", "-c"]
           args: ["echo", "running", "after", "deployment"]
+    test-presync-job:
+      type: preDeployment
+      argo:
+        hook: PreSync
+        hookDeletePolicy: HookSucceeded
+        syncWave: -1
+      containers:
+        migrate:
+          image:
+            repository: test-repo/db-migrate
+            tag: "1.0.0"
+          command: ["sh", "-c"]
+          args: ["echo", "migrating"]

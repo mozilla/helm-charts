@@ -319,6 +319,19 @@
                   "argo": {
                     "type": "object",
                     "properties": {
+                      "hook": {
+                        "type": "string",
+                        "enum": [
+                          "PreSync",
+                          "Sync",
+                          "PostSync",
+                          "SyncFail",
+                          "Skip"
+                        ]
+                      },
+                      "hookDeletePolicy": {
+                        "type": "string"
+                      },
                       "syncWave": {
                         "type": "integer"
                       }

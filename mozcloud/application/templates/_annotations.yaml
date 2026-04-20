@@ -41,13 +41,19 @@ resources, adds a sync-wave annotation using either the user-supplied value
 or a type-specific default from mozcloud.annotations.argo.syncWaveDefaults.
 
 Params:
-  syncWave (string): (optional) Override for the ArgoCD sync-wave value.
-                     When omitted, a default is looked up by resource type.
-  type (string):     (required) The resource type. Used to determine sync-wave
-                     defaults and hook annotations. Accepted values:
-                     "configMap", "deployment", "externalSecret", "hpa",
-                     "jobPostDeployment", "jobPreDeployment", "pvc",
-                     "serviceAccount".
+  hook (string):             (optional) Override for the ArgoCD hook type.
+                             When omitted, defaults to "Sync". Accepted values:
+                             "PreSync", "Sync", "PostSync", "SyncFail", "Skip".
+  hookDeletePolicy (string): (optional) Override for the ArgoCD hook-delete-policy.
+                             When omitted, defaults to
+                             "BeforeHookCreation,HookSucceeded".
+  syncWave (string):         (optional) Override for the ArgoCD sync-wave value.
+                             When omitted, a default is looked up by resource type.
+  type (string):             (required) The resource type. Used to determine
+                             sync-wave defaults and hook annotations. Accepted
+                             values: "configMap", "deployment", "externalSecret",
+                             "hpa", "jobPostDeployment", "jobPreDeployment",
+                             "pvc", "serviceAccount".
 
 Returns:
   (string) YAML-encoded key-value pairs of ArgoCD annotations.
@@ -56,8 +62,8 @@ Returns:
 {{- $type := .type -}}
 {{- $syncWaveDefault := index (include "mozcloud.annotations.argo.syncWaveDefaults" . | fromYaml) $type -}}
 {{- if has $type (list "jobPostDeployment" "jobPreDeployment") }}
-argocd.argoproj.io/hook: Sync
-argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+argocd.argoproj.io/hook: {{ default "Sync" .hook }}
+argocd.argoproj.io/hook-delete-policy: {{ default "BeforeHookCreation,HookSucceeded" .hookDeletePolicy }}
 {{- end }}
 {{- /* Deployments do not have sync wave values */}}
 {{- if ne $type "deployment" }}
