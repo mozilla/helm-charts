@@ -17,67 +17,39 @@ tests:
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
-  # Test that explicitly listed keys are transformed
-  - it: URLBASE is transformed when empty and explicitly listed
+
+  - it: ConfigMap keys transform (or preserve) correctly based on urlTransformKeys
     template: configmap/configmap.yaml
     documentSelector:
       path: $[?(@.kind == "ConfigMap")].metadata.name
       value: app-config
     asserts:
+      # Test that explicitly listed keys are transformed
+      # URLBASE is transformed when empty and explicitly listed
       - equal:
           path: data.URLBASE
           value: "https://test.preview.mozilla.cloud"
-
-  - it: ATTACHMENT_BASE is transformed when empty and explicitly listed
-    template: configmap/configmap.yaml
-    documentSelector:
-      path: $[?(@.kind == "ConfigMap")].metadata.name
-      value: app-config
-    asserts:
+      # ATTACHMENT_BASE is transformed when empty and explicitly listed
       - equal:
           path: data.ATTACHMENT_BASE
           value: "https://test.preview.mozilla.cloud/attachments"
-
-  # Test that non-listed keys are NOT transformed
-  - it: URL_BASE is not transformed when not in urlTransformKeys list
-    template: configmap/configmap.yaml
-    documentSelector:
-      path: $[?(@.kind == "ConfigMap")].metadata.name
-      value: app-config
-    asserts:
+      # Test that non-listed keys are NOT transformed
+      # URL_BASE is not transformed when not in urlTransformKeys list
       - equal:
           path: data.URL_BASE
           value: ""
-
-  # Test that non-empty values are preserved
-  - it: Non-empty values are not overwritten
-    template: configmap/configmap.yaml
-    documentSelector:
-      path: $[?(@.kind == "ConfigMap")].metadata.name
-      value: app-config
-    asserts:
+      # Test that non-empty values are preserved
+      # Non-empty values are not overwritten
       - equal:
           path: data.OTHER_VAR
           value: "keep-this"
-
-  # Test that values defined in the same file can be referenced
-  - it: HOSTNAME evaluates to yaml value defined in same file
-    template: configmap/configmap.yaml
-    documentSelector:
-      path: $[?(@.kind == "ConfigMap")].metadata.name
-      value: app-config
-    asserts:
+      # Test that values defined in the same file can be referenced
+      # HOSTNAME evaluates to yaml value defined in same file
       - equal:
           path: data.HOSTNAME
           value: "mozilla.cloud"
-
-  # Test that default values can be set
-  - it: DEFAULT is set to 'default'
-    template: configmap/configmap.yaml
-    documentSelector:
-      path: $[?(@.kind == "ConfigMap")].metadata.name
-      value: app-config
-    asserts:
+      # Test that default values can be set
+      # DEFAULT is set to 'default'
       - equal:
           path: data.DEFAULT
           value: "default"

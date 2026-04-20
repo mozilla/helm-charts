@@ -12,64 +12,82 @@ templates:
   - workload/rollout.yaml
   - workload/hpa.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Renders a Rollout instead of a Deployment
-    template: workload/rollout.yaml
-    documentSelector:
-      path: $[?(@.kind == "Rollout")].metadata.name
-      value: test-service
+
+  - it: Renders a Rollout with canary strategy and HPA targeting the Rollout
     asserts:
+      # Renders a Rollout instead of a Deployment
       - equal:
           path: apiVersion
           value: argoproj.io/v1alpha1
+        template: workload/rollout.yaml
+        documentSelector:
+          path: $[?(@.kind == "Rollout")].metadata.name
+          value: test-service
       - equal:
           path: kind
           value: Rollout
-  - it: Rollout has canary strategy with correct steps
-    template: workload/rollout.yaml
-    documentSelector:
-      path: $[?(@.kind == "Rollout")].metadata.name
-      value: test-service
-    asserts:
+        template: workload/rollout.yaml
+        documentSelector:
+          path: $[?(@.kind == "Rollout")].metadata.name
+          value: test-service
+      # Rollout has canary strategy with correct steps
       - isNotEmpty:
           path: spec.strategy.canary.steps
+        template: workload/rollout.yaml
+        documentSelector:
+          path: $[?(@.kind == "Rollout")].metadata.name
+          value: test-service
       - contains:
           path: spec.strategy.canary.steps
           content:
             setWeight: 20
+        template: workload/rollout.yaml
+        documentSelector:
+          path: $[?(@.kind == "Rollout")].metadata.name
+          value: test-service
       - contains:
           path: spec.strategy.canary.steps
           content:
             pause:
               duration: 30s
-  - it: Rollout does not have a Deployment-style strategy type
-    template: workload/rollout.yaml
-    documentSelector:
-      path: $[?(@.kind == "Rollout")].metadata.name
-      value: test-service
-    asserts:
+        template: workload/rollout.yaml
+        documentSelector:
+          path: $[?(@.kind == "Rollout")].metadata.name
+          value: test-service
+      # Rollout does not have a Deployment-style strategy type
       - notExists:
           path: spec.strategy.type
-  - it: HPA targets the Rollout instead of a Deployment
-    template: workload/hpa.yaml
-    documentSelector:
-      path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
-      value: test-service
-    asserts:
+        template: workload/rollout.yaml
+        documentSelector:
+          path: $[?(@.kind == "Rollout")].metadata.name
+          value: test-service
+      # HPA targets the Rollout instead of a Deployment
       - equal:
           path: spec.scaleTargetRef.apiVersion
           value: argoproj.io/v1alpha1
+        template: workload/hpa.yaml
+        documentSelector:
+          path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
+          value: test-service
       - equal:
           path: spec.scaleTargetRef.kind
           value: Rollout
+        template: workload/hpa.yaml
+        documentSelector:
+          path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
+          value: test-service
       - equal:
           path: spec.scaleTargetRef.name
           value: test-service
+        template: workload/hpa.yaml
+        documentSelector:
+          path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
+          value: test-service
+
   - it: Schema rejects canary as a plain string strategy
     template: workload/rollout.yaml
     set:

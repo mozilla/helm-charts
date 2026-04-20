@@ -11,49 +11,37 @@ values:
 templates:
   - workload/deployment.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Only enabled containers are rendered
+
+  - it: Only enabled containers and init containers are rendered
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
     asserts:
+      # Only enabled containers are rendered
       - lengthEqual:
           path: spec.template.spec.containers
           count: 1
       - equal:
           path: spec.template.spec.containers[0].name
           value: app
-  - it: Only enabled init containers are rendered
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Only enabled init containers are rendered
       - lengthEqual:
           path: spec.template.spec.initContainers
           count: 1
       - equal:
           path: spec.template.spec.initContainers[0].name
           value: init-enabled
-  - it: Disabled containers are excluded from output
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Disabled containers are excluded from output
       - notContains:
           path: spec.template.spec.containers
           content:
             name: disabled-container
           any: true
-  - it: Disabled init containers are excluded from output
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
-    asserts:
+      # Disabled init containers are excluded from output
       - notContains:
           path: spec.template.spec.initContainers
           content:

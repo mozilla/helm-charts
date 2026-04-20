@@ -15,24 +15,23 @@ values:
 templates:
   - gateway/backend.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Resource count matches expectations
+
+  - it: Additional region renders Service and ServiceExport correctly
     asserts:
+      # Resource count matches expectations
       - hasDocuments:
           count: 2
-  - it: Service is configured correctly
-    documentSelector:
-      path: $[?(@.kind == "Service")].metadata.name
-      value: mozcloud-test-europe-west1
-    asserts:
+      # Service is configured correctly
       - lengthEqual:
           path: spec.ports
           count: 1
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: mozcloud-test-europe-west1
       - contains:
           path: spec.ports
           count: 1
@@ -41,16 +40,21 @@ tests:
             port: 8080
             protocol: TCP
             targetPort: http
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: mozcloud-test-europe-west1
       - equal:
           path: spec.selector
           value:
             app.kubernetes.io/component: web
             app.kubernetes.io/name: mozcloud-test
             env_code: dev
-  - it: ServiceExport exists
-    documentSelector:
-      path: $[?(@.kind == "ServiceExport")].metadata.name
-      value: mozcloud-test-europe-west1
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: mozcloud-test-europe-west1
+      # ServiceExport exists
       - isAPIVersion:
           of: net.gke.io/v1
+        documentSelector:
+          path: $[?(@.kind == "ServiceExport")].metadata.name
+          value: mozcloud-test-europe-west1

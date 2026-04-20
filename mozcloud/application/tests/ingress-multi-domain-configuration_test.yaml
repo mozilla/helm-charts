@@ -12,55 +12,56 @@ templates:
   - gke/ingress.yaml
   - ingress/ingress.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Ingress uses rules instead of defaultBackend for multiple domains
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
+
+  - it: Ingress uses rules per domain and a shared BackendConfig across all domains
     asserts:
+      # Ingress uses rules instead of defaultBackend for multiple domains
       - exists:
           path: spec.rules
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-service
       - notExists:
           path: spec.defaultBackend
-  - it: Ingress has one rule per domain
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-service
+      # Ingress has one rule per domain
       - lengthEqual:
           path: spec.rules
           count: 2
-  - it: First domain has its own ingress rule
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-service
+      # First domain has its own ingress rule
       - equal:
           path: spec.rules[0].host
           value: test-service.dev.test-domain.com
-  - it: Second domain has its own ingress rule
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-service
+      # Second domain has its own ingress rule
       - equal:
           path: spec.rules[1].host
           value: www.test-service.dev.test-domain.com
-  - it: A single BackendConfig is shared across all domains
-    template: gke/ingress.yaml
-    asserts:
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-service
+      # A single BackendConfig is shared across all domains
       - hasDocuments:
           count: 3
+        template: gke/ingress.yaml
       - equal:
           path: kind
           value: BackendConfig
         documentIndex: 0
+        template: gke/ingress.yaml

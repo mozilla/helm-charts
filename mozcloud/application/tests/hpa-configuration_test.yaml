@@ -11,25 +11,21 @@ values:
 templates:
   - workload/hpa.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: HPA has sync-wave annotation set to 1
+
+  - it: HPA has sync-wave annotation and targets the correct Deployment
     documentSelector:
       path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
       value: test-service
     asserts:
+      # HPA has sync-wave annotation set to 1
       - equal:
           path: metadata.annotations["argocd.argoproj.io/sync-wave"]
           value: "1"
-  - it: HPA targets the correct deployment
-    documentSelector:
-      path: $[?(@.kind == "HorizontalPodAutoscaler")].metadata.name
-      value: test-service
-    asserts:
+      # HPA targets the correct deployment
       - equal:
           path: spec.scaleTargetRef.kind
           value: Deployment

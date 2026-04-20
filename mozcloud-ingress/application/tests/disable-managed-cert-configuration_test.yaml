@@ -12,23 +12,22 @@ templates:
   - managedcertificate.yaml
   - ingress.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: No ManagedCertificate resources are created
-    template: managedcertificate.yaml
+
+  - it: No ManagedCertificate is created and Ingress references the pre-existing cert name
     asserts:
+      # No ManagedCertificate resources are created
       - hasDocuments:
           count: 0
-  - it: Ingress annotation references the pre-existing cert name
-    template: ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-ingress
-    asserts:
+        template: managedcertificate.yaml
+      # Ingress annotation references the pre-existing cert name
       - equal:
           path: metadata.annotations["networking.gke.io/managed-certificates"]
           value: existing-cert
+        template: ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: test-ingress

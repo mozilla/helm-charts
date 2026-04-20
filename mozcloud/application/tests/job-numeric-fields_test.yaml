@@ -14,36 +14,31 @@ tests:
   - it: Ensure no failures occur
     asserts:
       - notFailedTemplate: {}
-  - it: backoffLimit 0 is rendered
-    documentSelector:
-      path: $[?(@.kind == "Job")].metadata.name
-      value: test-zero-backoff-job
-    asserts:
-      - equal:
-          path: spec.backoffLimit
-          value: 0
-  - it: ttlSecondsAfterFinished 0 is rendered
-    documentSelector:
-      path: $[?(@.kind == "Job")].metadata.name
-      value: test-zero-backoff-job
-    asserts:
-      - equal:
-          path: spec.ttlSecondsAfterFinished
-          value: 0
-  - it: parallelism is rendered as integer
-    documentSelector:
-      path: $[?(@.kind == "Job")].metadata.name
-      value: test-zero-backoff-job
-    asserts:
-      - equal:
-          path: spec.parallelism
-          value: 3
   - it: Configuration matches entire snapshot
     documentSelector:
       path: $[?(@.kind == "Job")].metadata.name
       value: test-zero-backoff-job
     asserts:
       - matchSnapshot: {}
+
+  - it: Job numeric fields (backoffLimit, ttlSecondsAfterFinished, parallelism) render correctly
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-zero-backoff-job
+    asserts:
+      # backoffLimit 0 is rendered
+      - equal:
+          path: spec.backoffLimit
+          value: 0
+      # ttlSecondsAfterFinished 0 is rendered
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 0
+      # parallelism is rendered as integer
+      - equal:
+          path: spec.parallelism
+          value: 3
+
   - it: Schema rejects non-integer backoffLimit
     set:
       tasks.jobs.test-zero-backoff-job.backoffLimit: 0.5

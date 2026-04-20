@@ -27,195 +27,133 @@ tests:
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
-  # Test ConfigMap is prefixed
-  - it: Top-level ConfigMap is prefixed with PR number
-    template: configmap/configmap.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-app-config
+
+  - it: Top-level and default resources are prefixed with PR number
     asserts:
+      # Test ConfigMap is prefixed
       - equal:
           path: metadata.name
           value: pr789-app-config
-
-  # Test ServiceAccount is prefixed
-  - it: Top-level ServiceAccount is prefixed with PR number
-    template: serviceaccount/serviceaccount.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-app-service-account
-    asserts:
+        template: configmap/configmap.yaml
+        documentSelector:
+          path: metadata.name
+          value: pr789-app-config
+      # Test ServiceAccount is prefixed
       - equal:
           path: metadata.name
           value: pr789-app-service-account
-
-  # Test default ServiceAccount is prefixed
-  - it: Default ServiceAccount is prefixed with PR number
-    template: serviceaccount/serviceaccount.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-mozcloud-test
-    asserts:
+        template: serviceaccount/serviceaccount.yaml
+        documentSelector:
+          path: metadata.name
+          value: pr789-app-service-account
+      # Test default ServiceAccount is prefixed
       - equal:
           path: metadata.name
           value: pr789-mozcloud-test
-
-  # Test ExternalSecret is prefixed
-  - it: Top-level ExternalSecret is prefixed with PR number
-    template: externalsecret/externalsecret.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-app-external-secret
-    asserts:
+        template: serviceaccount/serviceaccount.yaml
+        documentSelector:
+          path: metadata.name
+          value: pr789-mozcloud-test
+      # Test ExternalSecret is prefixed
       - equal:
           path: metadata.name
           value: pr789-app-external-secret
-
-  # Test default ExternalSecret is prefixed
-  - it: Default ExternalSecret is prefixed with PR number
-    template: externalsecret/externalsecret.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-test-chart-secrets
-    asserts:
+        template: externalsecret/externalsecret.yaml
+        documentSelector:
+          path: metadata.name
+          value: pr789-app-external-secret
+      # Test default ExternalSecret is prefixed
       - equal:
           path: metadata.name
           value: pr789-test-chart-secrets
+        template: externalsecret/externalsecret.yaml
+        documentSelector:
+          path: metadata.name
+          value: pr789-test-chart-secrets
 
-  # Test Job is prefixed
-  - it: Job is prefixed with PR number
+  - it: Job is prefixed and its references resolve to prefixed resources
     template: task/job.yaml
     asserts:
+      # Test Job is prefixed
       - equal:
           path: metadata.name
           value: pr789-background-processor
-
-  # Test that configMapRef is prefixed in job containers
-  - it: Job container configMapRef should reference prefixed ConfigMap
-    template: task/job.yaml
-    asserts:
+      # Test that configMapRef is prefixed in job containers
       - equal:
           path: spec.template.spec.containers[?(@.name=="processor")].envFrom[0].configMapRef.name
           value: pr789-app-config
-
-  # Test that externalSecret secretRef is prefixed in job containers
-  - it: Job container secretRef should reference prefixed ExternalSecret
-    template: task/job.yaml
-    asserts:
+      # Test that externalSecret secretRef is prefixed in job containers
       - equal:
           path: spec.template.spec.containers[?(@.name=="processor")].envFrom[1].secretRef.name
           value: pr789-app-external-secret
-
-  # Test that serviceAccount reference is prefixed in job spec
-  - it: Job serviceAccountName should reference prefixed ServiceAccount
-    template: task/job.yaml
-    asserts:
+      # Test that serviceAccount reference is prefixed in job spec
       - equal:
           path: spec.template.spec.serviceAccountName
           value: pr789-app-service-account
 
-  # Test Deployment (workload) is prefixed
-  - it: Deployment is prefixed with PR number
+  - it: Deployment is prefixed and its references resolve to prefixed resources
     template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: pr789-api-service
     asserts:
+      # Test Deployment (workload) is prefixed
       - equal:
           path: metadata.name
           value: pr789-api-service
-
-  # Test Service is prefixed
-  - it: Service is prefixed with PR number
-    template: gateway/backend.yaml
-    documentSelector:
-      path: $[?(@.kind == "Service")].metadata.name
-      value: pr789-api-service
-    asserts:
-      - equal:
-          path: metadata.name
-          value: pr789-api-service
-
-  # Test HTTPRoute is created with correct preview hostname
-  - it: HTTPRoute has correct preview hostname
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-api-host
-    asserts:
-      - contains:
-          path: spec.hostnames
-          content: "pr789-test.preview.mozilla.cloud"
-
-  # Test HTTPRoute routes to prefixed service
-  - it: HTTPRoute routes to prefixed service
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr789-api-host
-    asserts:
-      - equal:
-          path: spec.rules[0].backendRefs[0].name
-          value: pr789-api-service
-
-  # Test endpoint check job is created and prefixed
-  - it: Endpoint check job is prefixed with PR number
-    template: preview/endpointCheck.yaml
-    asserts:
-      - isKind:
-          of: Job
-      - equal:
-          path: metadata.name
-          value: pr789-mozcloud-test-endpoint-check
-
-  # Test endpoint check validates preview hostname
-  - it: Endpoint check validates preview hostname
-    template: preview/endpointCheck.yaml
-    asserts:
-      - matchRegex:
-          path: spec.template.spec.containers[0].args[2]
-          pattern: "pr789-test.preview.mozilla.cloud"
-
-  # Test that default secret reference is prefixed in workload containers
-  - it: Workload container secretRef should reference prefixed secret
-    template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: pr789-api-service
-    asserts:
+      # Test that default secret reference is prefixed in workload containers
       - equal:
           path: spec.template.spec.containers[?(@.name=="app")].envFrom[1].secretRef.name
           value: pr789-test-chart-secrets
-
-  # Test that configMapRef is prefixed in workload containers
-  - it: Workload container configMapRef should reference prefixed ConfigMap
-    template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: pr789-api-service
-    asserts:
+      # Test that configMapRef is prefixed in workload containers
       - equal:
           path: spec.template.spec.containers[?(@.name=="app")].envFrom[0].configMapRef.name
           value: pr789-app-config
-
-  # Test that user-defined externalSecret secretRef is prefixed in workload containers
-  - it: Workload container user-defined secretRef should reference prefixed ExternalSecret
-    template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: pr789-api-service
-    asserts:
+      # Test that user-defined externalSecret secretRef is prefixed in workload containers
       - equal:
           path: spec.template.spec.containers[?(@.name=="app")].envFrom[2].secretRef.name
           value: pr789-app-external-secret
-
-  # Test that serviceAccount reference is prefixed in workload spec
-  - it: Workload serviceAccountName should reference prefixed ServiceAccount
-    template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: pr789-api-service
-    asserts:
+      # Test that serviceAccount reference is prefixed in workload spec
       - equal:
           path: spec.template.spec.serviceAccountName
           value: pr789-mozcloud-test
+
+  - it: Service, HTTPRoute, and endpoint check target prefixed preview resources
+    asserts:
+      # Test Service is prefixed
+      - equal:
+          path: metadata.name
+          value: pr789-api-service
+        template: gateway/backend.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: pr789-api-service
+      # Test HTTPRoute is created with correct preview hostname
+      - contains:
+          path: spec.hostnames
+          content: "pr789-test.preview.mozilla.cloud"
+        template: preview/httpRoute.yaml
+        documentSelector:
+          path: metadata.name
+          value: pr789-api-host
+      # Test HTTPRoute routes to prefixed service
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: pr789-api-service
+        template: preview/httpRoute.yaml
+        documentSelector:
+          path: metadata.name
+          value: pr789-api-host
+      # Test endpoint check job is created and prefixed
+      - isKind:
+          of: Job
+        template: preview/endpointCheck.yaml
+      - equal:
+          path: metadata.name
+          value: pr789-mozcloud-test-endpoint-check
+        template: preview/endpointCheck.yaml
+      # Test endpoint check validates preview hostname
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[2]
+          pattern: "pr789-test.preview.mozilla.cloud"
+        template: preview/endpointCheck.yaml

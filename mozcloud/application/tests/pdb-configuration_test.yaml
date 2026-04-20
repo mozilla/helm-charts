@@ -11,47 +11,49 @@ values:
 templates:
   - workload/pdb.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Only one PDB is rendered across all three workloads
+
+  - it: Single PDB is rendered with correct kind, name, budgets, selector, and no PDB for disabled workloads
     asserts:
+      # Only one PDB is rendered across all three workloads
       - hasDocuments:
           count: 1
-  - it: PDB is created with correct kind and name
-    documentSelector:
-      path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
-      value: test-service
-    asserts:
+      # PDB is created with correct kind and name
       - equal:
           path: apiVersion
           value: policy/v1
+        documentSelector:
+          path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
+          value: test-service
       - equal:
           path: kind
           value: PodDisruptionBudget
-  - it: PDB sets minAvailable and maxUnavailable correctly
-    documentSelector:
-      path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
-      value: test-service
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
+          value: test-service
+      # PDB sets minAvailable and maxUnavailable correctly
       - equal:
           path: spec.minAvailable
           value: 1
+        documentSelector:
+          path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
+          value: test-service
       - equal:
           path: spec.maxUnavailable
           value: 30%
-  - it: PDB selector matches workload labels
-    documentSelector:
-      path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
-      value: test-service
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
+          value: test-service
+      # PDB selector matches workload labels
       - isNotNullOrEmpty:
           path: spec.selector.matchLabels
-  - it: No PDB is rendered for workload with empty-pdb or disabled-pdb
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "PodDisruptionBudget")].metadata.name
+          value: test-service
+      # No PDB is rendered for workload with empty-pdb or disabled-pdb
       - notContains:
           path: "[*].metadata.name"
           content: test-service-empty-pdb
