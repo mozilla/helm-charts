@@ -57,11 +57,27 @@ jobs:
         with:
           script: |
             const allChangedFiles = JSON.parse(process.env.ALL_CHANGED_FILES);
-            const regex = /mozcloud(-[a-z\-]+)?\/(application|library)\//;
+            const chartDirRegex = /mozcloud(-[a-z\-]+)?\/(application|library)\//;
+
+            // Mirror the filtering logic from scripts/chartkit/files.py — only files that
+            // affect a chart's rendered output should trigger a version bump.
+            const isChartRelevant = (p) => {
+              const parts = p.split('/');
+              const filename = parts[parts.length - 1];
+              return (
+                filename === 'Chart.yaml' ||
+                filename === 'values.yaml' ||
+                filename === 'values.schema.json' ||
+                filename.endsWith('.tpl') ||
+                parts.includes('templates') ||
+                parts.includes('tests')
+              );
+            };
 
             const paths = Array.from(new Set(
               allChangedFiles
-                .filter(p => p.match(regex))
+                .filter(p => p.match(chartDirRegex))
+                .filter(isChartRelevant)
                 .map(p => {
                   const parts = p.split('/');
                   return `${parts[0]}/${parts[1]}`;
