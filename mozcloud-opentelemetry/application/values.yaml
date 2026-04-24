@@ -68,11 +68,11 @@ collectors:
       targetMemoryUtilization: 60
     resources:
       limits:
-        cpu: 400m
-        memory: 2Gi
+        cpu: "1"
+        memory: 3Gi
       requests:
-        cpu: 300m
-        memory: 1536Mi      
+        cpu: 500m
+        memory: 2Gi
 
 serviceAccount:
   create: true
