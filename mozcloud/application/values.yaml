@@ -334,6 +334,13 @@ tasks:
     # This is the name of your cron job. Use any name other than "default",
     # which is reserved for setting default values shared across all cron jobs.
     default:
+      # If false, this cron job will not be rendered. Useful for disabling a
+      # cron job in region-specific or environment-specific values overrides
+      # without removing the configuration block.
+      #
+      # Default: true
+      #enabled: false
+
       # Controls how Kubernetes handles overlapping executions of the same cron
       # job. Valid values are:
       #
@@ -404,6 +411,13 @@ tasks:
     # This is the name of your job. Use any name other than "default", which is
     # reserved for setting default values shared across all jobs.
     default:
+      # If false, this job will not be rendered. Useful for disabling a job in
+      # region-specific or environment-specific values overrides without
+      # removing the configuration block.
+      #
+      # Default: true
+      #enabled: false
+
       # The job type can either be "preDeployment" or "postDeployment".
       #
       # preDeployment: Jobs that run before other resources in the chart are
