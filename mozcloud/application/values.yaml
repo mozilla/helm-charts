@@ -425,6 +425,20 @@ tasks:
       # already set.
       generateName: false
 
+      # Resource overrides for the GCS FUSE CSI sidecar (rendered as
+      # "gke-gcsfuse/cpu-limit", "gke-gcsfuse/memory-limit",
+      # "gke-gcsfuse/cpu-request", and "gke-gcsfuse/memory-request" pod
+      # annotations). Only relevant when this job mounts at least one
+      # gcsFuseCsi volume. Any field omitted falls back to GKE defaults. For
+      # cronJobs, set this on .jobConfig.gcsFuse.
+      #
+      # Example:
+      #
+      #   gcsFuse:
+      #     cpuLimit: 250m
+      #     memoryLimit: 256Mi
+      #gcsFuse: {}
+
       # Optionally define a Sync Wave value for ArgoCD.
       #
       # Sync waves are used to define an order in which resources are
@@ -626,7 +640,8 @@ tasks:
           security: {}
 
           # Optionally mount volumes to the container. The supported volume types
-          # are "configMap" (default), "secret" and "persistentVolume".
+          # are "configMap" (default), "secret", "persistentVolume", and
+          # "gcsFuseCsi".
           #
           # Volumes should use names that match either config map, external
           # secret, or persistent volume claim names created as part of and
@@ -653,6 +668,30 @@ tasks:
           # "persistentVolume" volumes allow you to mount a persistent volume
           # claim created in the .Values.persistentVolumes section.
           #
+          # "gcsFuseCsi" volumes mount a Google Cloud Storage bucket as an
+          # ephemeral inline CSI volume using the GKE GCS FUSE CSI driver.
+          # The pod-level annotation `gke-gcsfuse/volumes: "true"` is added
+          # automatically. The workload's KSA must be granted access to the
+          # bucket (e.g. roles/storage.objectViewer) out-of-band. Options:
+          #
+          #   "bucketName": (required) Name of the GCS bucket to mount.
+          #
+          #   "mountOptions": Comma-separated mount options passed to the
+          #                   gcsfuse driver (e.g. "implicit-dirs,uid=1001").
+          #
+          #   "readOnly": Whether the bucket should be mounted read-only.
+          #
+          #   "skipCSIBucketAccessCheck": Skip the CSI driver's bucket access
+          #                               check at mount time.
+          #
+          #   "loggingSeverity": Severity for gcsfuse logs ("trace", "debug",
+          #                      "info", "warning", or "error"). Maps to
+          #                      volumeAttributes.gcsfuseLoggingSeverity.
+          #
+          # Sidecar resource limits/requests for the gcsfuse driver are
+          # configured at .Values.tasks.jobs.<name>.gcsFuse (or
+          # .Values.tasks.cronJobs.<name>.jobConfig.gcsFuse for cronJobs).
+          #
           # Example:
           #
           #   volumes:
@@ -670,6 +709,12 @@ tasks:
           #     - name: my-pvc-volume
           #       type: persistentVolume
           #       path: /path/to/mount
+          #     - name: my-gcs-bucket
+          #       type: gcsFuseCsi
+          #       path: /path/to/mount
+          #       bucketName: my-gcs-bucket
+          #       mountOptions: implicit-dirs
+          #       readOnly: true
           volumes: []
 
       # Configure auto instrumentation for the OTEL Collector.
@@ -1181,7 +1226,8 @@ workloads:
         security: {}
 
         # Optionally mount volumes to the container. The supported volume types
-        # are "configMap" (default), "secret", "persistentVolume", and "emptyDir".
+        # are "configMap" (default), "secret", "persistentVolume", "emptyDir",
+        # and "gcsFuseCsi".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -1220,6 +1266,29 @@ workloads:
         #   "sizeLimit": the maximum amount of storage that an emptyDir volume
         #                can consume (e.g. 500Mi)
         #
+        # "gcsFuseCsi" volumes mount a Google Cloud Storage bucket as an
+        # ephemeral inline CSI volume using the GKE GCS FUSE CSI driver.
+        # The pod-level annotation `gke-gcsfuse/volumes: "true"` is added
+        # automatically. The workload's KSA must be granted access to the
+        # bucket (e.g. roles/storage.objectViewer) out-of-band. Options:
+        #
+        #   "bucketName": (required) Name of the GCS bucket to mount.
+        #
+        #   "mountOptions": Comma-separated mount options passed to the
+        #                   gcsfuse driver (e.g. "implicit-dirs,uid=1001").
+        #
+        #   "readOnly": Whether the bucket should be mounted read-only.
+        #
+        #   "skipCSIBucketAccessCheck": Skip the CSI driver's bucket access
+        #                               check at mount time.
+        #
+        #   "loggingSeverity": Severity for gcsfuse logs ("trace", "debug",
+        #                      "info", "warning", or "error"). Maps to
+        #                      volumeAttributes.gcsfuseLoggingSeverity.
+        #
+        # Sidecar resource limits/requests for the gcsfuse driver are
+        # configured at .Values.workloads.<name>.gcsFuse.
+        #
         # Example:
         #
         #   volumes:
@@ -1244,6 +1313,12 @@ workloads:
         #       path: /path/to/another/dir
         #       sizeLimit: 500Mi
         #       medium: Memory
+        #     - name: my-gcs-bucket
+        #       type: gcsFuseCsi
+        #       path: /path/to/mount
+        #       bucketName: my-gcs-bucket
+        #       mountOptions: implicit-dirs
+        #       readOnly: true
         #
         #volumes: []
 
@@ -1691,7 +1766,8 @@ workloads:
         sidecar: false
 
         # Optionally mount volumes to the container. The supported volume types
-        # are "configMap" (default), "secret", "persistentVolume", and "emptyDir".
+        # are "configMap" (default), "secret", "persistentVolume", "emptyDir",
+        # and "gcsFuseCsi".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -1730,6 +1806,29 @@ workloads:
         #   "sizeLimit": the maximum amount of storage that an emptyDir volume
         #                can consume (e.g. 500Mi)
         #
+        # "gcsFuseCsi" volumes mount a Google Cloud Storage bucket as an
+        # ephemeral inline CSI volume using the GKE GCS FUSE CSI driver.
+        # The pod-level annotation `gke-gcsfuse/volumes: "true"` is added
+        # automatically. The workload's KSA must be granted access to the
+        # bucket (e.g. roles/storage.objectViewer) out-of-band. Options:
+        #
+        #   "bucketName": (required) Name of the GCS bucket to mount.
+        #
+        #   "mountOptions": Comma-separated mount options passed to the
+        #                   gcsfuse driver (e.g. "implicit-dirs,uid=1001").
+        #
+        #   "readOnly": Whether the bucket should be mounted read-only.
+        #
+        #   "skipCSIBucketAccessCheck": Skip the CSI driver's bucket access
+        #                               check at mount time.
+        #
+        #   "loggingSeverity": Severity for gcsfuse logs ("trace", "debug",
+        #                      "info", "warning", or "error"). Maps to
+        #                      volumeAttributes.gcsfuseLoggingSeverity.
+        #
+        # Sidecar resource limits/requests for the gcsfuse driver are
+        # configured at .Values.workloads.<name>.gcsFuse.
+        #
         # Example:
         #
         #   volumes:
@@ -1754,6 +1853,12 @@ workloads:
         #       path: /path/to/another/dir
         #       sizeLimit: 500Mi
         #       medium: Memory
+        #     - name: my-gcs-bucket
+        #       type: gcsFuseCsi
+        #       path: /path/to/mount
+        #       bucketName: my-gcs-bucket
+        #       mountOptions: implicit-dirs
+        #       readOnly: true
         #
         #volumes: []
 
@@ -1810,6 +1915,21 @@ workloads:
       image:
         repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged
         tag: "1.29"
+
+    # Resource overrides for the GCS FUSE CSI sidecar (rendered as
+    # "gke-gcsfuse/cpu-limit", "gke-gcsfuse/memory-limit",
+    # "gke-gcsfuse/cpu-request", and "gke-gcsfuse/memory-request" pod
+    # annotations). Only relevant when this workload mounts at least one
+    # gcsFuseCsi volume. Any field omitted falls back to GKE defaults.
+    #
+    # Example:
+    #
+    #   gcsFuse:
+    #     cpuLimit: 250m
+    #     memoryLimit: 256Mi
+    #     cpuRequest: 250m
+    #     memoryRequest: 256Mi
+    #gcsFuse: {}
 
     # Configure auto instrumentation for the OTEL Collector.
     #

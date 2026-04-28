@@ -65,6 +65,20 @@ template:
   {{- $enrichedContext := mergeOverwrite (deepCopy $context) $labelParams }}
   {{- $params := dict "context" $enrichedContext "otel" ($jobConfig.otel) "type" "job" }}
   {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
+  {{- $params = dict "containers" $jobConfig.containers "type" "containers" }}
+  {{- $containers := include "mozcloud.formatter.containers" $params | fromYaml }}
+  {{- $gcsFuseEnabled := false }}
+  {{- range $containerName, $containerConfig := $containers }}
+    {{- range $volume := $containerConfig.volumes }}
+      {{- if eq $volume.type "gcsFuseCsi" }}
+        {{- $gcsFuseEnabled = true }}
+      {{- end }}
+    {{- end }}
+  {{- end }}
+  {{- if $gcsFuseEnabled }}
+  {{- $gcsFuseAnnotations := include "mozcloud.annotations.gcsFuse" (dict "config" $jobConfig.gcsFuse) | fromYaml }}
+  {{- $annotations = mergeOverwrite (default dict $annotations) $gcsFuseAnnotations }}
+  {{- end }}
   metadata:
     labels:
       {{- $podLabels | toYaml | nindent 6 }}
@@ -74,8 +88,6 @@ template:
     {{- end }}
   spec:
     containers:
-      {{- $params = dict "containers" $jobConfig.containers "type" "containers" }}
-      {{- $containers := include "mozcloud.formatter.containers" $params | fromYaml }}
       {{- range $containerName, $containerConfig := $containers }}
         {{- $containerConfig = mergeOverwrite (deepCopy (default dict $common.container)) $containerConfig }}
       - name: {{ $containerName }}
@@ -199,6 +211,8 @@ template:
         {{- else if eq $volumeConfig.type "secret" }}
         secret:
           secretName: {{ $volumeName }}
+        {{- else if eq $volumeConfig.type "gcsFuseCsi" }}
+        {{- include "mozcloud.volumes.gcsFuseCsi" (dict "config" $volumeConfig) | nindent 8 }}
         {{- end }}
       {{- end }}
     {{- end }}

@@ -985,6 +985,9 @@
               "type": "string"
             }
           },
+          "gcsFuse": {
+            "$ref": "#/$defs/gcsFuseSidecar"
+          },
           "nginx": {
             "type": "object",
             "additionalProperties": false,
@@ -1146,6 +1149,29 @@
     }
   },
   "$defs": {
+    "gcsFuseSidecar": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Pod-level resource overrides for the GCS FUSE CSI sidecar (rendered as gke-gcsfuse/* annotations).",
+      "properties": {
+        "cpuLimit": {
+          "type": "string",
+          "pattern": "^(\\d+|\\d+m)$"
+        },
+        "memoryLimit": {
+          "type": "string",
+          "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+        },
+        "cpuRequest": {
+          "type": "string",
+          "pattern": "^(\\d+|\\d+m)$"
+        },
+        "memoryRequest": {
+          "type": "string",
+          "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+        }
+      }
+    },
     "container": {
       "type": "object",
       "properties": {
@@ -1282,7 +1308,8 @@
                   "configMap",
                   "secret",
                   "persistentVolume",
-                  "emptyDir"
+                  "emptyDir",
+                  "gcsFuseCsi"
                 ]
               },
               "path": {
@@ -1303,6 +1330,23 @@
               "sizeLimit": {
                 "type": "string",
                 "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+              },
+              "bucketName": {
+                "type": "string",
+                "description": "GCS bucket name to mount. Required for gcsFuseCsi volumes."
+              },
+              "mountOptions": {
+                "type": "string",
+                "description": "Comma-separated mount options passed to the gcsfuse CSI driver (e.g. \"implicit-dirs,uid=1001\")."
+              },
+              "skipCSIBucketAccessCheck": {
+                "type": "boolean",
+                "description": "Skip the CSI driver's bucket access check at mount time. Useful when the workload identity binding is created out-of-band."
+              },
+              "loggingSeverity": {
+                "type": "string",
+                "description": "Severity for gcsfuse logs. Maps to volumeAttributes.gcsfuseLoggingSeverity.",
+                "enum": ["trace", "debug", "info", "warning", "error"]
               }
             },
             "required": [
@@ -1326,6 +1370,33 @@
                   "required": [
                     "sizeLimit"
                   ]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "gcsFuseCsi"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "bucketName"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {"required": ["bucketName"]},
+                      {"required": ["mountOptions"]},
+                      {"required": ["skipCSIBucketAccessCheck"]},
+                      {"required": ["loggingSeverity"]}
+                    ]
+                  }
                 }
               }
             ]
@@ -1366,6 +1437,9 @@
     "job": {
       "type": "object",
       "properties": {
+        "gcsFuse": {
+          "$ref": "#/$defs/gcsFuseSidecar"
+        },
         "affinity": {
           "type": "object",
           "description": "Pod affinity rules (nodeAffinity, podAffinity, podAntiAffinity)"

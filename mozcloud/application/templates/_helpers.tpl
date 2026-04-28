@@ -142,3 +142,37 @@ Returns:
 {{- define "mozcloud.debug" -}}
 {{- . | mustToPrettyJson | printf "\nThe JSON output of the dumped var is: \n%s" | fail }}
 {{- end -}}
+
+
+{{- /*
+Renders the spec.volumes[*].csi block for a gcsFuseCsi volume backed by the
+GKE GCS FUSE CSI driver. The caller is responsible for the surrounding
+`- name: <volume-name>` line and indentation (apply with `nindent N`).
+
+Params:
+  config (dict): (required) The volume configuration. Required key:
+                 bucketName. Optional keys: readOnly, mountOptions,
+                 skipCSIBucketAccessCheck, loggingSeverity.
+
+Returns:
+  (string) YAML for the `csi:` block.
+*/ -}}
+{{- define "mozcloud.volumes.gcsFuseCsi" -}}
+{{- $config := .config -}}
+csi:
+  driver: gcsfuse.csi.storage.gke.io
+  {{- if hasKey $config "readOnly" }}
+  readOnly: {{ $config.readOnly }}
+  {{- end }}
+  volumeAttributes:
+    bucketName: {{ required "gcsFuseCsi volume requires bucketName" $config.bucketName }}
+    {{- if $config.mountOptions }}
+    mountOptions: {{ $config.mountOptions | quote }}
+    {{- end }}
+    {{- if hasKey $config "skipCSIBucketAccessCheck" }}
+    skipCSIBucketAccessCheck: {{ $config.skipCSIBucketAccessCheck | quote }}
+    {{- end }}
+    {{- if $config.loggingSeverity }}
+    gcsfuseLoggingSeverity: {{ $config.loggingSeverity | quote }}
+    {{- end }}
+{{- end -}}

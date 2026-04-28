@@ -64,6 +64,8 @@ Returns:
   {{- else }}
   emptyDir: {}
   {{- end }}
+  {{- else if eq $volumeConfig.type "gcsFuseCsi" }}
+  {{- include "mozcloud.volumes.gcsFuseCsi" (dict "config" $volumeConfig) | nindent 2 }}
   {{- else }}
   {{- if eq $volumeConfig.type "configMap" }}
   configMap:

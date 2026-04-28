@@ -76,6 +76,7 @@ template:
     {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
     {{- /* Add checksum annotation for configmaps to trigger rolling updates when configmap changes */}}
     {{- $configMapChecksums := dict }}
+    {{- $gcsFuseEnabled := false }}
     {{- if gt (keys $volumes | len) 0 }}
       {{- range $volumeName, $volumeConfig := $volumes }}
         {{- if eq $volumeConfig.type "configMap" }}
@@ -84,10 +85,16 @@ template:
             {{- $checksumKey := printf "checksum/configmap-%s" $volumeName }}
             {{- $_ := set $configMapChecksums $checksumKey ($configMapData | toYaml | sha256sum) }}
           {{- end }}
+        {{- else if eq $volumeConfig.type "gcsFuseCsi" }}
+          {{- $gcsFuseEnabled = true }}
         {{- end }}
       {{- end }}
     {{- end }}
     {{- $annotations = mergeOverwrite (default dict $annotations) (default dict $configMapChecksums) }}
+    {{- if $gcsFuseEnabled }}
+    {{- $gcsFuseAnnotations := include "mozcloud.annotations.gcsFuse" (dict "config" $config.gcsFuse) | fromYaml }}
+    {{- $annotations = mergeOverwrite (default dict $annotations) $gcsFuseAnnotations }}
+    {{- end }}
     {{- if $annotations }}
     annotations:
       {{- $annotations | toYaml | nindent 6 }}

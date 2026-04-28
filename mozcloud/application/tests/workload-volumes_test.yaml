@@ -1,5 +1,5 @@
 ---
-suite: "mozcloud: Persistent volume claim configuration"
+suite: "mozcloud: Workload volumes configuration"
 release:
   name: mozcloud-test
   namespace: mozcloud-test-dev
@@ -14,13 +14,15 @@ values:
 templates:
   - pvc/pvc.yaml
   - workload/deployment.yaml
+  - task/job.yaml
+  - task/cronjob.yaml
 tests:
   - it: Configuration matches entire snapshot
     asserts:
       - notFailedTemplate: {}
       - matchSnapshot: {}
 
-  - it: PVCs and Deployment volume mounts are configured correctly
+  - it: Volumes and gcsFuse annotations render correctly across deployments, jobs, and cronJobs
     asserts:
       # ReadWriteOnce PVC is configured correctly
       - equal:
@@ -126,3 +128,150 @@ tests:
         documentSelector:
           path: $[?(@.kind == "Deployment")].metadata.name
           value: test-service
+      # gcsFuseCsi volume renders as inline CSI volume with full options
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: gcs-bucket
+            csi:
+              driver: gcsfuse.csi.storage.gke.io
+              readOnly: true
+              volumeAttributes:
+                bucketName: my-test-bucket
+                mountOptions: implicit-dirs,uid=1001
+                skipCSIBucketAccessCheck: "true"
+                gcsfuseLoggingSeverity: warning
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # gcsFuseCsi container volumeMount is wired up
+      - contains:
+          path: spec.template.spec.containers[?(@.name=="app")].volumeMounts
+          content:
+            name: gcs-bucket
+            mountPath: /data/bucket
+            readOnly: true
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Pod gets gke-gcsfuse/volumes annotation when a gcsFuseCsi volume is mounted
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+          value: "true"
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Sidecar resource overrides become gke-gcsfuse/* annotations
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+          value: 250m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
+          value: 256Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-request"]
+          value: 100m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-request"]
+          value: 128Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Job pod also renders gcsFuseCsi volume + sidecar overrides
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: gcs-bucket
+            csi:
+              driver: gcsfuse.csi.storage.gke.io
+              volumeAttributes:
+                bucketName: my-test-bucket
+                gcsfuseLoggingSeverity: warning
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+          value: "true"
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+          value: "1"
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
+          value: 1Gi
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      # CronJob's jobTemplate pod also renders gcsFuseCsi volume + sidecar overrides
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: gcs-bucket
+            csi:
+              driver: gcsfuse.csi.storage.gke.io
+              volumeAttributes:
+                bucketName: my-test-bucket
+        template: task/cronjob.yaml
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+          value: "true"
+        template: task/cronjob.yaml
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+          value: 500m
+        template: task/cronjob.yaml
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
+          value: 512Mi
+        template: task/cronjob.yaml
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # Workloads without a gcsFuseCsi volume must not get gke-gcsfuse/* annotations
+      - notExists:
+          path: spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-no-gcs
+      - notExists:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-no-gcs
