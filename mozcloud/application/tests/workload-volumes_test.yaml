@@ -10,7 +10,7 @@ chart:
   version: 1.0.0
 values:
   - values/globals.yaml
-  - values/pvc.yaml
+  - values/workload-volumes.yaml
 templates:
   - pvc/pvc.yaml
   - workload/deployment.yaml
