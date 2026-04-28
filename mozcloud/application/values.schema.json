@@ -868,6 +868,10 @@
                     "name"
                   ]
                 },
+                "gatewayName": {
+                  "type": "string",
+                  "description": "Override the auto-generated Gateway resource name. Useful when migrating from a chart that used a different Gateway name."
+                },
                 "targetPort": {
                   "anyOf": [
                     {
