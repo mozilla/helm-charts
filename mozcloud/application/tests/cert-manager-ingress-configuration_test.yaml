@@ -11,39 +11,29 @@ values:
 templates:
   - ingress/ingress.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Ingress has cert-manager cluster-issuer annotation from cloud default
+
+  - it: Ingress uses cert-manager cluster-issuer, secret TLS, and traefik class
     template: ingress/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "Ingress")].metadata.name
       value: test-service
     asserts:
+      # Ingress has cert-manager cluster-issuer annotation from cloud default
       - equal:
           path: metadata.annotations["cert-manager.io/cluster-issuer"]
           value: letsencrypt-prod
-  - it: Ingress has spec.tls with correct secret and domain
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
+      # Ingress has spec.tls with correct secret and domain
       - contains:
           path: spec.tls
           content:
             hosts:
               - test-service.dev.test-domain.com
             secretName: test-service-tls
-  - it: Ingress uses traefik ingress class annotation
-    template: ingress/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "Ingress")].metadata.name
-      value: test-service
-    asserts:
+      # Ingress uses traefik ingress class annotation
       - equal:
           path: metadata.annotations["kubernetes.io/ingress.class"]
           value: traefik

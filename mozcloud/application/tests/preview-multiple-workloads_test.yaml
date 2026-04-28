@@ -21,216 +21,140 @@ tests:
   - it: Configuration matches entire snapshot
     asserts:
       - matchSnapshot: {}
-  # Test that all three workload deployments are created with correct prefixes
-  - it: API deployment is prefixed with PR number
+
+  - it: All workload Deployments are prefixed with PR number
     template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: pr456-api-service
     asserts:
+      # Test that all three workload deployments are created with correct prefixes
       - equal:
           path: metadata.name
           value: pr456-api-service
-
-  - it: Web deployment is prefixed with PR number
-    template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: pr456-web-service
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: pr456-api-service
       - equal:
           path: metadata.name
           value: pr456-web-service
-
-  - it: Admin deployment is prefixed with PR number
-    template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: pr456-admin-service
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: pr456-web-service
       - equal:
           path: metadata.name
           value: pr456-admin-service
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: pr456-admin-service
 
-  # Test API HTTPRoute configuration
-  - it: API HTTPRoute has correct preview hostname
+  - it: API HTTPRoute is correctly configured for its preview hostname and shared gateway
     template: preview/httpRoute.yaml
     documentSelector:
       path: metadata.name
       value: pr456-api-host
     asserts:
+      # Test API HTTPRoute configuration
       - contains:
           path: spec.hostnames
           content: "api-pr456-test.preview.mozilla.cloud"
-
-  - it: API HTTPRoute uses shared preview gateway
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-api-host
-    asserts:
       - isSubset:
           path: spec.parentRefs[0]
           content:
             name: sandbox-high-preview-gateway
             namespace: preview-shared-infrastructure
-
-  - it: API HTTPRoute routes to prefixed service
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-api-host
-    asserts:
       - equal:
           path: spec.rules[0].backendRefs[0].name
           value: pr456-api-service
-
-  - it: API HTTPRoute has correct component label
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-api-host
-    asserts:
       - equal:
           path: metadata.labels.component_code
           value: api
 
-  # Test Web HTTPRoute configuration
-  - it: Web HTTPRoute has correct preview hostname
+  - it: Web HTTPRoute is correctly configured for its preview hostname and shared gateway
     template: preview/httpRoute.yaml
     documentSelector:
       path: metadata.name
       value: pr456-web-host
     asserts:
+      # Test Web HTTPRoute configuration
       - contains:
           path: spec.hostnames
           content: "web-pr456-test.preview.mozilla.cloud"
-
-  - it: Web HTTPRoute uses shared preview gateway
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-web-host
-    asserts:
       - isSubset:
           path: spec.parentRefs[0]
           content:
             name: sandbox-high-preview-gateway
             namespace: preview-shared-infrastructure
-
-  - it: Web HTTPRoute routes to prefixed service
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-web-host
-    asserts:
       - equal:
           path: spec.rules[0].backendRefs[0].name
           value: pr456-web-service
-
-  - it: Web HTTPRoute has correct component label
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-web-host
-    asserts:
       - equal:
           path: metadata.labels.component_code
           value: web
 
-  # Test Admin HTTPRoute configuration
-  - it: Admin HTTPRoute has correct preview hostname
+  - it: Admin HTTPRoute is correctly configured for its preview hostname and shared gateway
     template: preview/httpRoute.yaml
     documentSelector:
       path: metadata.name
       value: pr456-admin-host
     asserts:
+      # Test Admin HTTPRoute configuration
       - contains:
           path: spec.hostnames
           content: "admin-pr456-test.preview.mozilla.cloud"
-
-  - it: Admin HTTPRoute uses shared preview gateway
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-admin-host
-    asserts:
       - isSubset:
           path: spec.parentRefs[0]
           content:
             name: sandbox-high-preview-gateway
             namespace: preview-shared-infrastructure
-
-  - it: Admin HTTPRoute routes to prefixed service
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-admin-host
-    asserts:
       - equal:
           path: spec.rules[0].backendRefs[0].name
           value: pr456-admin-service
-
-  - it: Admin HTTPRoute has correct component label
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-admin-host
-    asserts:
       - equal:
           path: metadata.labels.component_code
           value: admin
 
-  # Test HTTP redirect routes are also created
-  - it: API HTTP to HTTPS redirect route is created
+  - it: HTTP-to-HTTPS redirect routes are created for each workload
     template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-api-host-http-redirect
     asserts:
+      # Test HTTP redirect routes are also created
       - contains:
           path: spec.hostnames
           content: "api-pr456-test.preview.mozilla.cloud"
+        documentSelector:
+          path: metadata.name
+          value: pr456-api-host-http-redirect
       - equal:
           path: spec.rules[0].filters[0].type
           value: RequestRedirect
+        documentSelector:
+          path: metadata.name
+          value: pr456-api-host-http-redirect
       - equal:
           path: spec.rules[0].filters[0].requestRedirect.scheme
           value: https
-
-  - it: Web HTTP to HTTPS redirect route is created
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-web-host-http-redirect
-    asserts:
+        documentSelector:
+          path: metadata.name
+          value: pr456-api-host-http-redirect
       - contains:
           path: spec.hostnames
           content: "web-pr456-test.preview.mozilla.cloud"
-
-  - it: Admin HTTP to HTTPS redirect route is created
-    template: preview/httpRoute.yaml
-    documentSelector:
-      path: metadata.name
-      value: pr456-admin-host-http-redirect
-    asserts:
+        documentSelector:
+          path: metadata.name
+          value: pr456-web-host-http-redirect
       - contains:
           path: spec.hostnames
           content: "admin-pr456-test.preview.mozilla.cloud"
+        documentSelector:
+          path: metadata.name
+          value: pr456-admin-host-http-redirect
 
-  # Test endpoint check validates all hostnames
-  - it: Endpoint check job is created
+  - it: Endpoint check job validates all preview hostnames
     template: preview/endpointCheck.yaml
     asserts:
+      # Test endpoint check validates all hostnames
       - isKind:
           of: Job
       - equal:
           path: metadata.annotations["argocd.argoproj.io/hook"]
           value: PostSync
-
-  - it: Endpoint check validates all three hostnames
-    template: preview/endpointCheck.yaml
-    asserts:
       - matchRegex:
           path: spec.template.spec.containers[0].args[2]
           pattern: "admin-pr456-test.preview.mozilla.cloud"
@@ -240,10 +164,6 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].args[2]
           pattern: "web-pr456-test.preview.mozilla.cloud"
-
-  - it: Endpoint check reports correct count
-    template: preview/endpointCheck.yaml
-    asserts:
       - matchRegex:
           path: spec.template.spec.containers[0].args[2]
           pattern: "Checking 3 endpoint"

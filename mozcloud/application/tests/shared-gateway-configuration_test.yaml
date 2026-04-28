@@ -15,27 +15,33 @@ templates:
   - gke/backend.yaml
   - gke/gateway.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: Does not create a Gateway resource when using shared gateway
-    template: gateway/gateway.yaml
+
+  - it: No Gateway or GCPGatewayPolicy is created when using the shared gateway
     asserts:
+      # Does not create a Gateway resource when using shared gateway
       - isNull:
           path: $[?(@.kind == "Gateway")]
-  - it: Creates HTTPRoute that references the shared gateway
+        template: gateway/gateway.yaml
+      # Does not create GCPGatewayPolicy when using shared gateway
+      - isNull:
+          path: $[?(@.kind == "GCPGatewayPolicy")]
+        template: gke/gateway.yaml
+
+  - it: HTTPRoutes reference the shared gateway for HTTPS and HTTP redirect
     template: gateway/httproute.yaml
-    documentSelector:
-      path: $[?(@.kind == "HTTPRoute")].metadata.name
-      value: shared-gateway-host
     asserts:
+      # Creates HTTPRoute that references the shared gateway
       - contains:
           path: spec.hostnames
           count: 1
           content: shared.test-domain.com
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: shared-gateway-host
       - contains:
           path: spec.parentRefs
           count: 1
@@ -45,12 +51,10 @@ tests:
             name: sandbox-high-preview-gateway
             namespace: preview-shared-infrastructure
             sectionName: https
-  - it: Creates HTTP redirect HTTPRoute that references the shared gateway
-    template: gateway/httproute.yaml
-    documentSelector:
-      path: $[?(@.kind == "HTTPRoute")].metadata.name
-      value: shared-gateway-host-http-redirect
-    asserts:
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: shared-gateway-host
+      # Creates HTTP redirect HTTPRoute that references the shared gateway
       - contains:
           path: spec.parentRefs
           count: 1
@@ -60,35 +64,33 @@ tests:
             name: sandbox-high-preview-gateway
             namespace: preview-shared-infrastructure
             sectionName: http
-  - it: Does not create GCPGatewayPolicy when using shared gateway
-    template: gke/gateway.yaml
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: shared-gateway-host-http-redirect
+
+  - it: Backend Service, GCPBackendPolicy, and HealthCheckPolicy are created for the workload
     asserts:
-      - isNull:
-          path: $[?(@.kind == "GCPGatewayPolicy")]
-  - it: Creates backend Service for the workload
-    template: gateway/backend.yaml
-    documentSelector:
-      path: $[?(@.kind == "Service")].metadata.name
-      value: test-service
-    asserts:
+      # Creates backend Service for the workload
       - equal:
           path: spec.type
           value: ClusterIP
-  - it: Creates GCPBackendPolicy for the backend service
-    template: gke/backend.yaml
-    documentSelector:
-      path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
-      value: test-service
-    asserts:
+        template: gateway/backend.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: test-service
+      # Creates GCPBackendPolicy for the backend service
       - equal:
           path: spec.targetRef.name
           value: test-service
-  - it: Creates HealthCheckPolicy for the backend service
-    template: gke/backend.yaml
-    documentSelector:
-      path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
-      value: test-service
-    asserts:
+        template: gke/backend.yaml
+        documentSelector:
+          path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
+          value: test-service
+      # Creates HealthCheckPolicy for the backend service
       - equal:
           path: spec.targetRef.name
+          value: test-service
+        template: gke/backend.yaml
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
           value: test-service

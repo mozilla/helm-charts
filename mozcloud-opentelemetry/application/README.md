@@ -1,6 +1,6 @@
 # mozcloud-opentelemetry
 
-![Version: 0.2.27](https://img.shields.io/badge/Version-0.2.27-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.2.30](https://img.shields.io/badge/Version-0.2.30-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart for MozCloud OpenTelemetry signals collection
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-opentelemetry
-    version: ~0.2.27
+    version: ~0.2.30
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -40,7 +40,10 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| collectors.daemonset.resources | object | `{}` |  |
+| collectors.daemonset.resources.limits.cpu | string | `"500m"` |  |
+| collectors.daemonset.resources.limits.memory | string | `"1Gi"` |  |
+| collectors.daemonset.resources.requests.cpu | string | `"250m"` |  |
+| collectors.daemonset.resources.requests.memory | string | `"512Mi"` |  |
 | collectors.daemonset.securityContext.allowPrivilegeEscalation | bool | `false` |  |
 | collectors.daemonset.securityContext.capabilities.drop[0] | string | `"ALL"` |  |
 | collectors.daemonset.securityContext.privileged | bool | `false` |  |
@@ -59,10 +62,10 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | collectors.gateway.endpoints.otlp.port | string | `"4317"` |  |
 | collectors.gateway.endpoints.statsd.endpoint | string | `"mozcloud-opentelemetry-gateway-statsd"` |  |
 | collectors.gateway.endpoints.statsd.port | string | `"8125"` |  |
-| collectors.gateway.resources.limits.cpu | string | `"400m"` |  |
-| collectors.gateway.resources.limits.memory | string | `"2Gi"` |  |
-| collectors.gateway.resources.requests.cpu | string | `"300m"` |  |
-| collectors.gateway.resources.requests.memory | string | `"1536Mi"` |  |
+| collectors.gateway.resources.limits.cpu | string | `"1"` |  |
+| collectors.gateway.resources.limits.memory | string | `"3Gi"` |  |
+| collectors.gateway.resources.requests.cpu | string | `"500m"` |  |
+| collectors.gateway.resources.requests.memory | string | `"2Gi"` |  |
 | collectors.gateway.securityContext.allowPrivilegeEscalation | bool | `false` |  |
 | collectors.gateway.securityContext.capabilities.drop[0] | string | `"ALL"` |  |
 | collectors.gateway.securityContext.privileged | bool | `false` |  |

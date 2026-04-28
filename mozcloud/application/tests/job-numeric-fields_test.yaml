@@ -1,0 +1,47 @@
+---
+suite: "mozcloud: Job numeric fields"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/job-numeric-fields.yaml
+templates:
+  - task/job.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+  - it: Configuration matches entire snapshot
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-zero-backoff-job
+    asserts:
+      - matchSnapshot: {}
+
+  - it: Job numeric fields (backoffLimit, ttlSecondsAfterFinished, parallelism) render correctly
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-zero-backoff-job
+    asserts:
+      # backoffLimit 0 is rendered
+      - equal:
+          path: spec.backoffLimit
+          value: 0
+      # ttlSecondsAfterFinished 0 is rendered
+      - equal:
+          path: spec.ttlSecondsAfterFinished
+          value: 0
+      # parallelism is rendered as integer
+      - equal:
+          path: spec.parallelism
+          value: 3
+
+  - it: Schema rejects non-integer backoffLimit
+    set:
+      tasks.jobs.test-zero-backoff-job.backoffLimit: 0.5
+    asserts:
+      - failedTemplate:
+          errorPattern: "backoffLimit.*got number, want integer"

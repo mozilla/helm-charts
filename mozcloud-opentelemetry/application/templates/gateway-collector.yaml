@@ -26,7 +26,7 @@ spec:
         fieldPath: status.podIP
 
   ports:
-  - name: otlp-collecotrs
+  - name: otlp-collectors
     port: {{ .Values.collectors.gateway.endpoints.otlp.collectorMetricsPort }}
     targetPort: {{ .Values.collectors.gateway.endpoints.otlp.collectorMetricsPort }}
 
@@ -116,11 +116,7 @@ spec:
         override: false
 
     exporters:
-      debug:
-        verbosity: detailed
-
-
-      otlphttp:
+      otlp_http:
         encoding: json
         endpoint: https://telemetry.googleapis.com
         auth:
@@ -153,7 +149,7 @@ spec:
           - transform/mozcloud
           - resource/gcp_project_id
           exporters:
-          - otlphttp
+          - otlp_http
         metrics/collectors:
           receivers:
           - otlp/collectors
@@ -163,7 +159,7 @@ spec:
           - resourcedetection
           - resource/gcp_project_id
           exporters:
-          - otlphttp
+          - otlp_http
         traces:
           receivers:
           - otlp
@@ -173,7 +169,7 @@ spec:
           - resource/gcp_project_id
           - tail_sampling
           exporters:
-          - otlphttp
+          - otlp_http
       telemetry:
         logs:
           encoding: json

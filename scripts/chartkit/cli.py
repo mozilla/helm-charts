@@ -172,6 +172,7 @@ def affected(graph: ChartGraph, base: Optional[str]):
     "--parallel",
     "-p",
     default=None,
+    type=int,
     help="Number of parallel workers (default: CPU count).",
 )
 @click.option(

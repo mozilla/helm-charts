@@ -65,7 +65,7 @@ Returns:
 {{- /* Compute labels for the pod template */}}
 {{- $component := dict "component_code" $config.component }}
 {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
-{{- $labels := include "mozcloud.labels" $params | fromYaml }}
+{{- $labels := include "mozcloud.labels" $params | fromYaml -}}
 template:
   metadata:
     {{- /* Annotations, including OTEL if applicable */}}
@@ -175,7 +175,7 @@ template:
         "otelEnabled" $otelEnabled
         "otelContainerNames" $otelContainerNames
         "otelAutoInstrumentationEnabled" $otelAutoInstrumentationEnabled
-      ) | nindent 6 }}
+      ) | trim | nindent 6 }}
 
     {{- if $initContainers }}
     initContainers:
@@ -188,7 +188,7 @@ template:
         "defaultSecretName" $defaultSecretName
         "defaultSecretEnabled" $defaultSecretEnabled
         "type" "initContainer"
-      ) | nindent 6 }}
+      ) | trim | nindent 6 }}
     {{- end }}
     securityContext:
       {{- $runAsNonRoot := true }}
@@ -219,6 +219,6 @@ template:
         "volumes" $volumes
         "nginxEnabled" $nginxEnabled
         "nginxConfigMapName" $nginxConfigMapName
-      ) | nindent 6 }}
+      ) | trim | nindent 6 }}
     {{- end }}
 {{- end -}}

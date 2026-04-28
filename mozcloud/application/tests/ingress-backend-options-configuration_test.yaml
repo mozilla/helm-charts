@@ -17,47 +17,32 @@ templates:
   - gke/ingress.yaml
   - ingress/ingress.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: timeoutSec is rendered at the BackendConfig spec root level
+
+  - it: BackendConfig spec renders timeoutSec, logSampleRate, and securityPolicy correctly
     template: gke/ingress.yaml
     documentSelector:
       path: $[?(@.kind == "BackendConfig")].metadata.name
       value: test-service
     asserts:
+      # timeoutSec is rendered at the BackendConfig spec root level
       - equal:
           path: spec.timeoutSec
           value: 600
-  - it: timeoutSec is not nested under logging
-    template: gke/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "BackendConfig")].metadata.name
-      value: test-service
-    asserts:
+      # timeoutSec is not nested under logging
       - notExists:
           path: spec.logging.timeoutSec
-  - it: logSampleRate is rendered as a ratio in BackendConfig logging spec
-    template: gke/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "BackendConfig")].metadata.name
-      value: test-service
-    asserts:
+      # logSampleRate is rendered as a ratio in BackendConfig logging spec
       - isSubset:
           path: spec
           content:
             logging:
               enable: true
               sampleRate: 0.1
-  - it: securityPolicy is rendered as an object in BackendConfig spec
-    template: gke/ingress.yaml
-    documentSelector:
-      path: $[?(@.kind == "BackendConfig")].metadata.name
-      value: test-service
-    asserts:
+      # securityPolicy is rendered as an object in BackendConfig spec
       - equal:
           path: spec.securityPolicy
           value:

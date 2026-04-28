@@ -1,0 +1,15 @@
+---
+tasks:
+  jobs:
+    test-zero-backoff-job:
+      type: preDeployment
+      backoffLimit: 0
+      ttlSecondsAfterFinished: 0
+      parallelism: 3
+      containers:
+        job:
+          image:
+            repository: test-repo/test-image
+            tag: 1.0.0
+          command: ["sh", "-c"]
+          args: ["echo", "test"]

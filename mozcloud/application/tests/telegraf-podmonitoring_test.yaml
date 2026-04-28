@@ -11,34 +11,32 @@ values:
 templates:
   - gke/podmonitoring.yaml
 tests:
-  - it: Ensure no failures occur
-    asserts:
-      - notFailedTemplate: {}
   - it: Configuration matches entire snapshot
     asserts:
+      - notFailedTemplate: {}
       - matchSnapshot: {}
-  - it: PodMonitoring is rendered when telegraf.enabled is true
+
+  - it: PodMonitoring is rendered with correct name, kind, and telegraf selector when enabled
     asserts:
+      # PodMonitoring is rendered when telegraf.enabled is true
       - hasDocuments:
           count: 1
-  - it: PodMonitoring resource has correct name
-    documentIndex: 0
-    asserts:
+      # PodMonitoring resource has correct name
       - equal:
           path: metadata.name
           value: mozcloud-test-telegraf
-  - it: PodMonitoring resource has correct kind
-    documentIndex: 0
-    asserts:
+        documentIndex: 0
+      # PodMonitoring resource has correct kind
       - equal:
           path: kind
           value: PodMonitoring
-  - it: PodMonitoring scrapes telegraf selector
-    documentIndex: 0
-    asserts:
+        documentIndex: 0
+      # PodMonitoring scrapes telegraf selector
       - equal:
           path: spec.selector.matchLabels["app.kubernetes.io/name"]
           value: telegraf
+        documentIndex: 0
+
   - it: PodMonitoring is not rendered when telegraf.enabled is false
     set:
       telegraf.enabled: false

@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 1.6.4](https://img.shields.io/badge/Version-1.6.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 1.7.1](https://img.shields.io/badge/Version-1.7.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~1.6.4
+    version: ~1.7.1
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -82,6 +82,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.common.job.security | object | `{}` |  |
 | tasks.common.job.serviceAccount | string | `""` |  |
 | tasks.common.job.type | string | `"preDeployment"` |  |
+| tasks.cronJobs.default.concurrencyPolicy | string | `"Allow"` |  |
 | tasks.cronJobs.default.jobConfig | object | `{}` |  |
 | tasks.cronJobs.default.jobHistory.failed | int | `1` |  |
 | tasks.cronJobs.default.jobHistory.successful | int | `1` |  |

@@ -87,35 +87,25 @@ tests:
   - it: Ensure no failures occur
     asserts:
       - notFailedTemplate: {}
-  - it: Deployment pod template has checksum annotation for nginx configMap
+
+  - it: Nginx and container configMap checksums are present and well-formed
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-deployment
     asserts:
+      # Deployment pod template has checksum annotation for nginx configMap
       - exists:
           path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
       - matchRegex:
           path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
           pattern: ^[a-f0-9]{64}$
-  - it: Deployment pod template has checksum annotation for regular container configMap
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-deployment
-    asserts:
+      # Deployment pod template has checksum annotation for regular container configMap
       - exists:
           path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
       - matchRegex:
           path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
           pattern: ^[a-f0-9]{64}$
-  - it: Both nginx and container configMap checksums are present
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-deployment
-    asserts:
-      - exists:
-          path: spec.template.metadata.annotations["checksum/configmap-my-nginx-configmap"]
-      - exists:
-          path: spec.template.metadata.annotations["checksum/configmap-test-config-volume"]
+
   - it: Nginx configMap checksum changes when nginx config data changes
     set:
       configMaps:

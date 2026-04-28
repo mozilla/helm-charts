@@ -1,28 +1,32 @@
 {{- /*
-Validates CPU and memory resource requests and calculates resource limits,
-defaulting to 2× the request value for any limit not explicitly provided.
+Validates CPU, memory, and optional ephemeral-storage resource requests and
+calculates resource limits. CPU and memory limits default to 2× the request
+value when not explicitly provided. Ephemeral-storage limits default to the
+request value (no doubling).
 
 CPU validation: accepts integer, float (whole CPUs), or millicpu notation
 (e.g. "250m"). Decimal millicpu values are rounded up using ceil to produce a
 valid integer millicpu string (e.g. "1.5m" → "2m").
 
-Memory validation: requires a positive number with one of the following unit
-suffixes: K, Ki, M, Mi, G, Gi.
+Memory and ephemeral-storage validation: requires a positive number with one
+of the following unit suffixes: K, Ki, M, Mi, G, Gi.
 
 Params:
   requests (dict): (required) Resource requests. Must include:
-    cpu (string):    (required) CPU request (e.g. "250m", "1", "0.5").
-    memory (string): (required) Memory request (e.g. "256Mi", "1Gi").
+    cpu (string):              (required) CPU request (e.g. "250m", "1", "0.5").
+    memory (string):           (required) Memory request (e.g. "256Mi", "1Gi").
+    ephemeral-storage (string): (optional) Ephemeral storage request (e.g. "1Gi").
   limits (dict):   (optional) Resource limits. If omitted or partially unset,
                    missing values are auto-calculated as 2× the
-                   corresponding request value.
-    cpu (string):    (optional) CPU limit. Auto-calculated if absent.
-    memory (string): (optional) Memory limit. Auto-calculated if absent.
+                   corresponding request value (except ephemeral-storage
+                   which defaults to 1×).
+    cpu (string):              (optional) CPU limit. Auto-calculated if absent.
+    memory (string):           (optional) Memory limit. Auto-calculated if absent.
+    ephemeral-storage (string): (optional) Ephemeral storage limit. Defaults to request.
 
 Returns:
   (string) YAML-encoded Kubernetes resources object with "requests" and
-           "limits" sub-keys, each containing validated "cpu" and "memory"
-           values.
+           "limits" sub-keys.
 
 Example:
   Input:
@@ -96,30 +100,19 @@ CPU resources can only be integers/floats for an entire CPU or millicpu (m)
   {{- $_ := set $resources.limits "cpu" $limit -}}
 {{- end -}}
 {{- /* Validate memory requests and limits */ -}}
-{{- $requestSuffix = "" -}}
-{{- /* Only allow the following unit types: K, Ki, M, Mi, G, Gi */ -}}
-{{- $memorySuffixes := list "K" "Ki" "M" "Mi" "G" "Gi" -}}
+{{- $unitPattern := "(K|Ki|M|Mi|G|Gi)$" -}}
 {{- $request = $requests.memory | toString -}}
-{{- range $memorySuffix := $memorySuffixes -}}
-  {{- if hasSuffix $memorySuffix $request -}}
-    {{- $requestSuffix = $memorySuffix }}
-    {{- $request = trimSuffix $requestSuffix $request -}}
-  {{- end -}}
-{{- end -}}
+{{- $requestSuffix = regexFind $unitPattern $request -}}
+{{- $request = trimSuffix $requestSuffix $request -}}
 {{- if or (not $requestSuffix) (le (float64 $request) 0.0) -}}
-  {{- fail (printf "Memory requests must be positive and use one of the following unit types: %s" (join ", " $memorySuffixes)) -}}
+  {{- fail "Memory requests must be positive and use one of the following unit types: K, Ki, M, Mi, G, Gi" -}}
 {{- end -}}
 {{- if $limits.memory -}}
-  {{- $limitSuffix := "" -}}
   {{- $limit := $limits.memory | toString -}}
-  {{- range $memorySuffix := $memorySuffixes -}}
-    {{- if hasSuffix $memorySuffix $limit -}}
-      {{- $limitSuffix = $memorySuffix }}
-      {{- $limit = trimSuffix $limitSuffix $limit -}}
-    {{- end -}}
-  {{- end -}}
+  {{- $limitSuffix := regexFind $unitPattern $limit -}}
+  {{- $limit = trimSuffix $limitSuffix $limit -}}
   {{- if or (not $limitSuffix) (le (float64 $limit) 0.0) -}}
-    {{- fail (printf "Memory limits must be positive and use one of the following unit types: %s" (join ", " $memorySuffixes)) -}}
+    {{- fail "Memory limits must be positive and use one of the following unit types: K, Ki, M, Mi, G, Gi" -}}
   {{- end -}}
 {{- end -}}
 {{- /* Configure memory limits, if not set */ -}}
@@ -132,6 +125,28 @@ CPU resources can only be integers/floats for an entire CPU or millicpu (m)
     {{- $limit = printf "%.3f%s" (mulf 2 (float64 $request)) $requestSuffix -}}
   {{- end -}}
   {{- $_ := set $resources.limits "memory" $limit -}}
+{{- end -}}
+{{- /* Validate and configure ephemeral-storage requests and limits */ -}}
+{{- if not (index $requests "ephemeral-storage") -}}
+  {{- $_ := unset $resources.requests "ephemeral-storage" -}}
+{{- end -}}
+{{- if index $requests "ephemeral-storage" -}}
+  {{- $esRequest := index $requests "ephemeral-storage" | toString -}}
+  {{- $esRequestSuffix := regexFind $unitPattern $esRequest -}}
+  {{- $esRequest = trimSuffix $esRequestSuffix $esRequest -}}
+  {{- if or (not $esRequestSuffix) (le (float64 $esRequest) 0.0) -}}
+    {{- fail "Ephemeral-storage requests must be positive and use one of the following unit types: K, Ki, M, Mi, G, Gi" -}}
+  {{- end -}}
+  {{- if index $limits "ephemeral-storage" -}}
+    {{- $esLimit := index $limits "ephemeral-storage" | toString -}}
+    {{- $esLimitSuffix := regexFind $unitPattern $esLimit -}}
+    {{- $esLimit = trimSuffix $esLimitSuffix $esLimit -}}
+    {{- if or (not $esLimitSuffix) (le (float64 $esLimit) 0.0) -}}
+      {{- fail "Ephemeral-storage limits must be positive and use one of the following unit types: K, Ki, M, Mi, G, Gi" -}}
+    {{- end -}}
+  {{- else -}}
+    {{- $_ := set $resources.limits "ephemeral-storage" (index $requests "ephemeral-storage") -}}
+  {{- end -}}
 {{- end -}}
 {{- /* Return resources */ -}}
 {{- $resources | toYaml }}

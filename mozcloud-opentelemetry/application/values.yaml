@@ -24,7 +24,13 @@ collectors:
       runAsNonRoot: true
       seccompProfile:
         type: RuntimeDefault
-    resources: {}
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
 
   gateway:
     endpoints:
@@ -62,11 +68,11 @@ collectors:
       targetMemoryUtilization: 60
     resources:
       limits:
-        cpu: 400m
-        memory: 2Gi
+        cpu: "1"
+        memory: 3Gi
       requests:
-        cpu: 300m
-        memory: 1536Mi      
+        cpu: 500m
+        memory: 2Gi
 
 serviceAccount:
   create: true

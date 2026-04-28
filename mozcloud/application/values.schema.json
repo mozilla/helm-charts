@@ -52,13 +52,7 @@
               "type": "string"
             }
           },
-          "required": [
-            "app_code",
-            "chart",
-            "env_code",
-            "project_id",
-            "realm"
-          ]
+          "additionalProperties": true
         }
       }
     },
@@ -1375,6 +1369,11 @@
               "description": "K, Ki, M, Mi, G, or Gi (recommend binary units)",
               "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$",
               "default": "128Mi"
+            },
+            "ephemeral-storage": {
+              "type": "string",
+              "description": "Ephemeral storage request using K, Ki, M, Mi, G, or Gi units",
+              "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
             }
           }
         },
@@ -1472,6 +1471,10 @@
     "cronJob": {
       "type": "object",
       "properties": {
+        "concurrencyPolicy": {
+          "type": "string",
+          "enum": ["Allow", "Forbid", "Replace"]
+        },
         "jobHistory": {
           "type": "object",
           "additionalProperties": false,
@@ -1625,6 +1628,35 @@
           "description": "Controls when volume ownership is changed to match fsGroup. 'Always' (default) changes ownership on every mount; 'OnRootMismatch' only changes ownership when the top-level directory does not match fsGroup (faster for large volumes).",
           "type": "string",
           "enum": ["Always", "OnRootMismatch"]
+        }
+      }
+    }
+  },
+  "if": {
+    "not": {
+      "properties": {
+        "enabled": {
+          "const": false
+        }
+      },
+      "required": [
+        "enabled"
+      ]
+    }
+  },
+  "then": {
+    "properties": {
+      "global": {
+        "properties": {
+          "mozcloud": {
+            "required": [
+              "app_code",
+              "chart",
+              "env_code",
+              "project_id",
+              "realm"
+            ]
+          }
         }
       }
     }

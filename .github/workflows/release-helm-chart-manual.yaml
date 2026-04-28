@@ -10,6 +10,10 @@ on:
           (e.g. mozcloud/application,mozcloud-ingress/library)
         required: true
         type: string
+      release-notes:
+        description: Release notes to include in the GitHub release
+        required: false
+        type: string
       release-type:
         description: Semver part to increment, cascades to dependent charts
         required: true
@@ -34,12 +38,19 @@ jobs:
       id-token: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v2 # zizmor: ignore[unpinned-uses]
         with:
-          persist-credentials: true # zizmor: ignore[artipacked] -- needed for git push in commit-and-tag
-          ref: ${{ github.ref }}
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
+      - name: Checkout
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd #v5 # zizmor: ignore[artipacked]
+        with:
           fetch-depth: 0
+          ref: ${{ github.ref }}
+          token: ${{ steps.app-token.outputs.token }}
 
       - name: Normalize chart paths
         id: normalize
@@ -61,7 +72,10 @@ jobs:
           workload-identity-provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
           helm-registry: ${{ env.HELM_REGISTRY }}
 
-      - name: Commit, push, and tag
-        uses: ./.github/actions/commit-and-tag
+      - name: Commit, push, and create GitHub release
+        uses: ./.github/actions/commit-and-create-gh-release
         with:
+          app-id: ${{ secrets.APP_ID }}
           chart-tags: ${{ steps.package-push.outputs.chart-tags }}
+          github-token: ${{ steps.app-token.outputs.token }}
+          release-notes: ${{ inputs.release-notes }}

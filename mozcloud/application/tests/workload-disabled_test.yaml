@@ -13,18 +13,17 @@ templates:
   - workload/hpa.yaml
   - gke/podmonitoring.yaml
 tests:
-  - it: Deployment is not rendered for disabled workload
-    template: workload/deployment.yaml
+  - it: Deployment, HPA, and PodMonitoring are not rendered for disabled workload
     asserts:
+      # Deployment is not rendered for disabled workload
       - hasDocuments:
           count: 0
-  - it: HPA is not rendered for disabled workload
-    template: workload/hpa.yaml
-    asserts:
+        template: workload/deployment.yaml
+      # HPA is not rendered for disabled workload
       - hasDocuments:
           count: 0
-  - it: PodMonitoring is not rendered for disabled workload
-    template: gke/podmonitoring.yaml
-    asserts:
+        template: workload/hpa.yaml
+      # PodMonitoring is not rendered for disabled workload
       - hasDocuments:
           count: 0
+        template: gke/podmonitoring.yaml

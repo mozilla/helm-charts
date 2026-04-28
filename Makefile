@@ -19,6 +19,9 @@ else
 	UPDATE_SNAPSHOTS_ARG =
 endif
 
+PARALLEL ?=
+PARALLEL_ARG := $(if $(PARALLEL),--parallel $(PARALLEL),)
+
 %:
 	@:
 
@@ -67,7 +70,7 @@ unit-tests: ## Run unit tests for all charts (set UPDATE_SNAPSHOTS=1 to update s
 		$(MAKE) update-dependencies; \
 	fi
 	@echo "$(UNIT_TEST_MESSAGE)"
-	@$(CHART_KIT) unittest $(UPDATE_SNAPSHOTS_ARG)
+	@$(CHART_KIT) unittest $(UPDATE_SNAPSHOTS_ARG) $(PARALLEL_ARG)
 
 unit-tests-affected: ## Run unit tests for staged charts and their dependents
 	@affected=$$($(CHART_KIT) affected); \
