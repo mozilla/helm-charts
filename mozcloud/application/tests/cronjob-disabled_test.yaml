@@ -1,0 +1,27 @@
+---
+suite: "mozcloud: Disabled cron job is suppressed"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/cronjob-disabled.yaml
+templates:
+  - task/cronjob.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Disabled cron job is not rendered; enabled cron job is rendered
+    template: task/cronjob.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: test-enabled-cronjob
+        documentIndex: 0
