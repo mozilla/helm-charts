@@ -34,18 +34,27 @@ spec:
   serviceName: {{ default (printf "%s-headless" $workloadName) $workloadConfig.serviceName }}
   podManagementPolicy: {{ default "Parallel" $workloadConfig.podManagementPolicy }}
   updateStrategy:
-    type: {{ default "RollingUpdate" $workloadConfig.strategy }}
-    {{- if and (eq (default "RollingUpdate" $workloadConfig.strategy) "RollingUpdate") $workloadConfig.partition }}
+    type: {{ $workloadConfig.strategy }}
+    {{- if and (eq $workloadConfig.strategy "RollingUpdate") $workloadConfig.partition }}
     rollingUpdate:
       partition: {{ $workloadConfig.partition }}
     {{- end }}
   {{- if $workloadConfig.volumeClaimTemplates }}
   volumeClaimTemplates:
-    {{- range $vct := $workloadConfig.volumeClaimTemplates }}
+    {{- range $vctName, $vctSpec := $workloadConfig.volumeClaimTemplates }}
     - metadata:
-        name: {{ $vct.metadata.name }}
+        name: {{ $vctName }}
       spec:
-        {{- $vct.spec | toYaml | nindent 8 }}
+        {{- if $vctSpec.accessMode }}
+        accessModes:
+          - {{ $vctSpec.accessMode }}
+        {{- end }}
+        {{- if $vctSpec.storageClassName }}
+        storageClassName: {{ $vctSpec.storageClassName }}
+        {{- end }}
+        resources:
+          requests:
+            storage: {{ $vctSpec.storage }}
     {{- end }}
   {{- end }}
   {{- /*

@@ -6,14 +6,10 @@ workloads:
     strategy: RollingUpdate
     podManagementPolicy: Parallel
     volumeClaimTemplates:
-      - metadata:
-          name: data
-        spec:
-          accessModes: ["ReadWriteOnce"]
-          storageClassName: standard-rwo
-          resources:
-            requests:
-              storage: 10Gi
+      data:
+        accessMode: ReadWriteOnce
+        storageClassName: standard-rwo
+        storage: 10Gi
     containers:
       app:
         image:

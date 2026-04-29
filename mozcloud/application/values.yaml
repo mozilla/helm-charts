@@ -1976,19 +1976,17 @@ workloads:
     # These are NOT the same as the persistentVolumes top-level key, which
     # creates standalone PVCs.
     #
+    # Each key is the volume claim name; its value is the spec.
+    #
     # Example:
     #
     #   volumeClaimTemplates:
-    #     - metadata:
-    #         name: data
-    #       spec:
-    #         accessModes: ["ReadWriteOnce"]
-    #         storageClassName: standard-rwo
-    #         resources:
-    #           requests:
-    #             storage: 10Gi
+    #     state:
+    #       accessMode: ReadWriteOnce
+    #       storageClassName: standard-rwo
+    #       storage: 10Gi
     #
-    #volumeClaimTemplates: []
+    #volumeClaimTemplates: {}
 
     # The number of seconds a pod should be retained after transitioning to the
     # Terminating state. This is useful if one or more containers needs to

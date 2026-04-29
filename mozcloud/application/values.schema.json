@@ -1101,42 +1101,19 @@
             "description": "Override the headless service name for a StatefulSet. Defaults to <workload-name>-headless."
           },
           "volumeClaimTemplates": {
-            "type": "array",
-            "description": "Volume claim templates for StatefulSet workloads. Each entry creates a PVC per pod.",
-            "items": {
+            "type": "object",
+            "description": "Volume claim templates for StatefulSet workloads, keyed by claim name. Each entry creates a PVC per pod.",
+            "additionalProperties": {
               "type": "object",
-              "required": ["metadata", "spec"],
               "additionalProperties": false,
+              "required": ["storage"],
               "properties": {
-                "metadata": {
-                  "type": "object",
-                  "required": ["name"],
-                  "additionalProperties": false,
-                  "properties": {
-                    "name": { "type": "string" }
-                  }
+                "accessMode": {
+                  "type": "string",
+                  "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany", "ReadWriteOncePod"]
                 },
-                "spec": {
-                  "type": "object",
-                  "properties": {
-                    "accessModes": {
-                      "type": "array",
-                      "items": { "type": "string" }
-                    },
-                    "storageClassName": { "type": "string" },
-                    "resources": {
-                      "type": "object",
-                      "properties": {
-                        "requests": {
-                          "type": "object",
-                          "properties": {
-                            "storage": { "type": "string" }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
+                "storageClassName": { "type": "string" },
+                "storage": { "type": "string" }
               }
             }
           }
@@ -1205,21 +1182,6 @@
                 "strategy": {
                   "type": "object"
                 }
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": { "type": { "const": "statefulset" } },
-              "required": ["type"]
-            },
-            "then": {},
-            "else": {
-              "properties": {
-                "partition": false,
-                "podManagementPolicy": false,
-                "serviceName": false,
-                "volumeClaimTemplates": false
               }
             }
           }
