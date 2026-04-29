@@ -985,7 +985,7 @@
               "type": "string"
             }
           },
-          "gcsFuse": {
+          "gcsFuseSidecar": {
             "$ref": "#/$defs/gcsFuseSidecar"
           },
           "nginx": {
@@ -1437,7 +1437,7 @@
     "job": {
       "type": "object",
       "properties": {
-        "gcsFuse": {
+        "gcsFuseSidecar": {
           "$ref": "#/$defs/gcsFuseSidecar"
         },
         "affinity": {

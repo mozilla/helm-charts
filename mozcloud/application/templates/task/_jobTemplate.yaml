@@ -76,7 +76,7 @@ template:
     {{- end }}
   {{- end }}
   {{- if $gcsFuseEnabled }}
-  {{- $gcsFuseAnnotations := include "mozcloud.annotations.gcsFuse" (dict "config" $jobConfig.gcsFuse) | fromYaml }}
+  {{- $gcsFuseAnnotations := include "mozcloud.annotations.gcsFuseSidecar" (dict "config" $jobConfig.gcsFuseSidecar) | fromYaml }}
   {{- $annotations = mergeOverwrite (default dict $annotations) $gcsFuseAnnotations }}
   {{- end }}
   metadata:

@@ -92,7 +92,7 @@ template:
     {{- end }}
     {{- $annotations = mergeOverwrite (default dict $annotations) (default dict $configMapChecksums) }}
     {{- if $gcsFuseEnabled }}
-    {{- $gcsFuseAnnotations := include "mozcloud.annotations.gcsFuse" (dict "config" $config.gcsFuse) | fromYaml }}
+    {{- $gcsFuseAnnotations := include "mozcloud.annotations.gcsFuseSidecar" (dict "config" $config.gcsFuseSidecar) | fromYaml }}
     {{- $annotations = mergeOverwrite (default dict $annotations) $gcsFuseAnnotations }}
     {{- end }}
     {{- if $annotations }}

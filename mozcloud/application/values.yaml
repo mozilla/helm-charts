@@ -425,20 +425,6 @@ tasks:
       # already set.
       generateName: false
 
-      # Resource overrides for the GCS FUSE CSI sidecar (rendered as
-      # "gke-gcsfuse/cpu-limit", "gke-gcsfuse/memory-limit",
-      # "gke-gcsfuse/cpu-request", and "gke-gcsfuse/memory-request" pod
-      # annotations). Only relevant when this job mounts at least one
-      # gcsFuseCsi volume. Any field omitted falls back to GKE defaults. For
-      # cronJobs, set this on .jobConfig.gcsFuse.
-      #
-      # Example:
-      #
-      #   gcsFuse:
-      #     cpuLimit: 250m
-      #     memoryLimit: 256Mi
-      #gcsFuse: {}
-
       # Optionally define a Sync Wave value for ArgoCD.
       #
       # Sync waves are used to define an order in which resources are
@@ -689,8 +675,9 @@ tasks:
           #                      volumeAttributes.gcsfuseLoggingSeverity.
           #
           # Sidecar resource limits/requests for the gcsfuse driver are
-          # configured at .Values.tasks.jobs.<name>.gcsFuse (or
-          # .Values.tasks.cronJobs.<name>.jobConfig.gcsFuse for cronJobs).
+          # configured at .Values.tasks.jobs.<name>.gcsFuseSidecar (or
+          # .Values.tasks.cronJobs.<name>.jobConfig.gcsFuseSidecar for
+          # cronJobs).
           #
           # Example:
           #
@@ -716,6 +703,22 @@ tasks:
           #       mountOptions: implicit-dirs
           #       readOnly: true
           volumes: []
+
+      # Configures the GKE-managed gcsfuse sidecar that GKE auto-injects when
+      # this job mounts a gcsFuseCsi volume (declared in the containers
+      # section above). For cronJobs, set this on .jobConfig.gcsFuseSidecar.
+      #
+      # Sidecar resources are rendered as pod-level "gke-gcsfuse/*" annotations,
+      # not as volume fields — they're collected here because they only matter
+      # when a gcsFuseCsi volume exists. Any field omitted falls back to GKE
+      # defaults.
+      #
+      # Example:
+      #
+      #   gcsFuseSidecar:
+      #     cpuLimit: 250m
+      #     memoryLimit: 256Mi
+      #gcsFuseSidecar: {}
 
       # Configure auto instrumentation for the OTEL Collector.
       #
@@ -1287,7 +1290,7 @@ workloads:
         #                      volumeAttributes.gcsfuseLoggingSeverity.
         #
         # Sidecar resource limits/requests for the gcsfuse driver are
-        # configured at .Values.workloads.<name>.gcsFuse.
+        # configured at .Values.workloads.<name>.gcsFuseSidecar.
         #
         # Example:
         #
@@ -1321,6 +1324,24 @@ workloads:
         #       readOnly: true
         #
         #volumes: []
+
+    # Configures the GKE-managed gcsfuse sidecar that GKE auto-injects when
+    # this workload mounts a gcsFuseCsi volume (declared in the containers
+    # section above).
+    #
+    # Sidecar resources are rendered as pod-level "gke-gcsfuse/*" annotations,
+    # not as volume fields — they're collected here because they only matter
+    # when a gcsFuseCsi volume exists. Any field omitted falls back to GKE
+    # defaults.
+    #
+    # Example:
+    #
+    #   gcsFuseSidecar:
+    #     cpuLimit: 250m
+    #     memoryLimit: 256Mi
+    #     cpuRequest: 250m
+    #     memoryRequest: 256Mi
+    #gcsFuseSidecar: {}
 
     # Define host details in this section. This section can be omitted or set
     # to an empty dictionary if your workload does not handle inbound traffic.
@@ -1827,7 +1848,7 @@ workloads:
         #                      volumeAttributes.gcsfuseLoggingSeverity.
         #
         # Sidecar resource limits/requests for the gcsfuse driver are
-        # configured at .Values.workloads.<name>.gcsFuse.
+        # configured at .Values.workloads.<name>.gcsFuseSidecar.
         #
         # Example:
         #
@@ -1915,21 +1936,6 @@ workloads:
       image:
         repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged
         tag: "1.29"
-
-    # Resource overrides for the GCS FUSE CSI sidecar (rendered as
-    # "gke-gcsfuse/cpu-limit", "gke-gcsfuse/memory-limit",
-    # "gke-gcsfuse/cpu-request", and "gke-gcsfuse/memory-request" pod
-    # annotations). Only relevant when this workload mounts at least one
-    # gcsFuseCsi volume. Any field omitted falls back to GKE defaults.
-    #
-    # Example:
-    #
-    #   gcsFuse:
-    #     cpuLimit: 250m
-    #     memoryLimit: 256Mi
-    #     cpuRequest: 250m
-    #     memoryRequest: 256Mi
-    #gcsFuse: {}
 
     # Configure auto instrumentation for the OTEL Collector.
     #

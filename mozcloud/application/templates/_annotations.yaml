@@ -43,13 +43,14 @@ Callers are responsible for invoking this only when the pod actually mounts a
 gcsFuseCsi volume.
 
 Params:
-  config (dict): (optional) Per-workload/per-job gcsFuse block. Optional
-                 keys: cpuLimit, memoryLimit, cpuRequest, memoryRequest.
+  config (dict): (optional) Per-workload/per-job gcsFuseSidecar block.
+                 Optional keys: cpuLimit, memoryLimit, cpuRequest,
+                 memoryRequest.
 
 Returns:
   (string) YAML-encoded key-value pairs of annotations.
 */ -}}
-{{- define "mozcloud.annotations.gcsFuse" -}}
+{{- define "mozcloud.annotations.gcsFuseSidecar" -}}
 gke-gcsfuse/volumes: "true"
 {{- with .config }}
 {{- if .cpuLimit }}
