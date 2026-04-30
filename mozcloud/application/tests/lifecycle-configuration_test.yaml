@@ -1,0 +1,57 @@
+---
+suite: "mozcloud: Lifecycle hook configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/lifecycle-configuration.yaml
+templates:
+  - workload/deployment.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: preStop and postStart hooks render on the app container
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: app
+      - equal:
+          path: spec.template.spec.containers[0].lifecycle.preStop.exec.command
+          value: ["/bin/sh", "-c", "sleep 30"]
+      - equal:
+          path: spec.template.spec.containers[0].lifecycle.postStart.exec.command
+          value: ["/bin/sh", "-c", "echo started"]
+
+  - it: preStop hook renders on the worker container
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[1].name
+          value: worker
+      - equal:
+          path: spec.template.spec.containers[1].lifecycle.preStop.exec.command
+          value: ["/bin/sh", "-c", "sleep 10"]
+      - notExists:
+          path: spec.template.spec.containers[1].lifecycle.postStart
+
+  - it: a container without lifecycle config has no lifecycle field
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service-no-lifecycle
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].lifecycle
