@@ -167,7 +167,7 @@ tests:
       # Sidecar resource overrides become gke-gcsfuse/* annotations
       - equal:
           path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
-          value: 250m
+          value: 200m
         template: workload/deployment.yaml
         documentSelector:
           path: $[?(@.kind == "Deployment")].metadata.name
@@ -216,14 +216,14 @@ tests:
           value: test-job
       - equal:
           path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
-          value: "1"
+          value: 1000m
         template: task/job.yaml
         documentSelector:
           path: $[?(@.kind == "Job")].metadata.name
           value: test-job
       - equal:
           path: spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
-          value: 1Gi
+          value: 1024Mi
         template: task/job.yaml
         documentSelector:
           path: $[?(@.kind == "Job")].metadata.name
@@ -275,3 +275,62 @@ tests:
         documentSelector:
           path: $[?(@.kind == "Deployment")].metadata.name
           value: test-service-no-gcs
+      # Workload with a gcsFuseCsi volume but no gcsFuseSidecar block gets
+      # both cpu and memory chart defaults (limits auto-doubled from requests).
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-request"]
+          value: 500m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-defaults
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+          value: 1000m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-defaults
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-request"]
+          value: 512Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-defaults
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
+          value: 1024Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-defaults
+      # Partial override (only cpu set): cpu uses user value, memory still defaults.
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-request"]
+          value: 750m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-partial
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+          value: 1500m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-partial
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-request"]
+          value: 512Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-partial
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
+          value: 1024Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-partial

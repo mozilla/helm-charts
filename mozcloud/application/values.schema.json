@@ -1208,21 +1208,13 @@
     "gcsFuseSidecar": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Pod-level resource overrides for the GCS FUSE CSI sidecar (rendered as gke-gcsfuse/* annotations).",
+      "description": "Pod-level resource overrides for the GCS FUSE CSI sidecar (rendered as gke-gcsfuse/* annotations). cpu and memory are resource requests; limits are auto-calculated as 2x the request.",
       "properties": {
-        "cpuLimit": {
+        "cpu": {
           "type": "string",
           "pattern": "^(\\d+|\\d+m)$"
         },
-        "memoryLimit": {
-          "type": "string",
-          "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
-        },
-        "cpuRequest": {
-          "type": "string",
-          "pattern": "^(\\d+|\\d+m)$"
-        },
-        "memoryRequest": {
+        "memory": {
           "type": "string",
           "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
         }

@@ -688,10 +688,8 @@ tasks:
           #                      "info", "warning", or "error"). Maps to
           #                      volumeAttributes.gcsfuseLoggingSeverity.
           #
-          # Sidecar resource limits/requests for the gcsfuse driver are
-          # configured at .Values.tasks.jobs.<name>.gcsFuseSidecar (or
-          # .Values.tasks.cronJobs.<name>.jobConfig.gcsFuseSidecar for
-          # cronJobs).
+          # Sidecar resources: .Values.tasks.jobs.<name>.gcsFuseSidecar
+          # (or jobConfig.gcsFuseSidecar for cronJobs).
           #
           # Example:
           #
@@ -718,18 +716,16 @@ tasks:
           #       readOnly: true
           volumes: []
 
-      # Sidecar resource annotations for the GKE-injected gcsfuse sidecar.
-      # Renders as pod-level "gke-gcsfuse/*" annotations. Only takes effect
-      # when this job mounts a gcsFuseCsi volume (declared in the containers
-      # section above). For cronJobs, set this on .jobConfig.gcsFuseSidecar.
+      # Resource overrides for the GKE-injected gcsfuse sidecar. Only takes
+      # effect when this job mounts a gcsFuseCsi volume. For cronJobs, set
+      # on .jobConfig.gcsFuseSidecar.
       #
-      # When unset, the chart applies sensible defaults (see the annotations
-      # helper). To override, set any of: cpuLimit, memoryLimit, cpuRequest,
-      # memoryRequest. Your values are used as-is — the chart does not merge
-      # defaults in.
+      # `cpu` and `memory` are requests; limits are auto-doubled (same
+      # shape as container resources). Unset fields default — see the
+      # annotations helper.
       # gcsFuseSidecar:
-      #   cpuLimit: "1"
-      #   memoryLimit: "1Gi"
+      #   cpu: "500m"
+      #   memory: "512Mi"
 
 
       # Configure auto instrumentation for the OTEL Collector.
@@ -1301,8 +1297,7 @@ workloads:
         #                      "info", "warning", or "error"). Maps to
         #                      volumeAttributes.gcsfuseLoggingSeverity.
         #
-        # Sidecar resource limits/requests for the gcsfuse driver are
-        # configured at .Values.workloads.<name>.gcsFuseSidecar.
+        # Sidecar resources: .Values.workloads.<name>.gcsFuseSidecar.
         #
         # Example:
         #
@@ -1337,18 +1332,15 @@ workloads:
         #
         #volumes: []
 
-    # Sidecar resource annotations for the GKE-injected gcsfuse sidecar.
-    # Renders as pod-level "gke-gcsfuse/*" annotations. Only takes effect
-    # when this workload mounts a gcsFuseCsi volume (declared in the
-    # containers section above).
+    # Resource overrides for the GKE-injected gcsfuse sidecar. Only takes
+    # effect when this workload mounts a gcsFuseCsi volume.
     #
-    # When unset, the chart applies sensible defaults (see the annotations
-    # helper). To override, set any of: cpuLimit, memoryLimit, cpuRequest,
-    # memoryRequest. Your values are used as-is — the chart does not merge
-    # defaults in.
+    # `cpu` and `memory` are requests; limits are auto-doubled (same shape
+    # as container resources). Unset fields default — see the annotations
+    # helper.
     # gcsFuseSidecar:
-    #   cpuLimit: "1"
-    #   memoryLimit: "1Gi"
+    #   cpu: "500m"
+    #   memory: "512Mi"
 
     # Define host details in this section. This section can be omitted or set
     # to an empty dictionary if your workload does not handle inbound traffic.
@@ -1868,8 +1860,7 @@ workloads:
         #                      "info", "warning", or "error"). Maps to
         #                      volumeAttributes.gcsfuseLoggingSeverity.
         #
-        # Sidecar resource limits/requests for the gcsfuse driver are
-        # configured at .Values.workloads.<name>.gcsFuseSidecar.
+        # Sidecar resources: .Values.workloads.<name>.gcsFuseSidecar.
         #
         # Example:
         #
