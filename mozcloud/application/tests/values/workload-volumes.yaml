@@ -1,0 +1,118 @@
+persistentVolumes:
+  pvc-rwo:
+    accessModes: 
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: standard
+  pvc-rwm:
+    accessModes: 
+      - ReadWriteOnce
+      - ReadWriteMany
+    size: 50Gi
+    storageClassName: mozilla-enterprise-rwx
+tasks:
+  cronJobs:
+    test-cronjob:
+      schedule: '@hourly'
+      jobConfig:
+        gcsFuseSidecar:
+          cpu: 250m
+          memory: 256Mi
+        containers:
+          job:
+            image:
+              repository: test-repo/test-cronjob-image
+              tag: "1.0.0"
+            command: ["sh", "-c"]
+            args: ["echo", "tick"]
+            volumes:
+              - name: gcs-bucket
+                type: gcsFuseCsi
+                path: /data/bucket
+                bucketName: my-test-bucket
+  jobs:
+    test-job:
+      type: postDeployment
+      gcsFuseSidecar:
+        cpu: 500m
+        memory: 512Mi
+      containers:
+        job:
+          image:
+            repository: test-repo/test-job-image
+            tag: "1.0.0"
+          command: ["sh", "-c"]
+          args: ["echo", "hi"]
+          volumes:
+            - name: gcs-bucket
+              type: gcsFuseCsi
+              path: /data/bucket
+              bucketName: my-test-bucket
+              loggingSeverity: warning
+workloads:
+  test-service:
+    component: web
+    gcsFuseSidecar:
+      cpu: 100m
+      memory: 128Mi
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        volumes:
+          - name: pvc-rwo
+            path: /data/pvc-rwo
+            type: persistentVolume
+          - name: pvc-rwm
+            path: /data/pvc-rwm
+            type: persistentVolume
+          - name: gcs-bucket
+            type: gcsFuseCsi
+            path: /data/bucket
+            bucketName: my-test-bucket
+            mountOptions: implicit-dirs,uid=1001
+            readOnly: true
+            skipCSIBucketAccessCheck: true
+            loggingSeverity: warning
+  test-service-no-gcs:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        volumes:
+          - name: pvc-rwo
+            path: /data/pvc-rwo
+            type: persistentVolume
+  # gcsFuseCsi volume mounted but no gcsFuseSidecar block — exercises the
+  # full-default path in the annotations helper.
+  test-service-defaults:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        volumes:
+          - name: gcs-bucket
+            type: gcsFuseCsi
+            path: /data/bucket
+            bucketName: my-test-bucket
+  # gcsFuseSidecar with only cpu set — exercises the partial-default path
+  # (cpu uses user value, memory defaults).
+  test-service-partial:
+    component: web
+    gcsFuseSidecar:
+      cpu: 750m
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        volumes:
+          - name: gcs-bucket
+            type: gcsFuseCsi
+            path: /data/bucket
+            bucketName: my-test-bucket
