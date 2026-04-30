@@ -1390,6 +1390,53 @@
               }
             ]
           }
+        },
+        "lifecycle": {
+          "type": "object",
+          "description": "Container lifecycle hooks. Supports preStop and postStart handlers.",
+          "properties": {
+            "preStop": {
+              "type": "object",
+              "properties": {
+                "exec": {
+                  "type": "object",
+                  "properties": {
+                    "command": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "httpGet": {
+                  "type": "object"
+                },
+                "sleep": {
+                  "type": "object"
+                }
+              }
+            },
+            "postStart": {
+              "type": "object",
+              "properties": {
+                "exec": {
+                  "type": "object",
+                  "properties": {
+                    "command": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "httpGet": {
+                  "type": "object"
+                }
+              }
+            }
+          }
         }
       }
     },
