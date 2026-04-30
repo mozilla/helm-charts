@@ -1,0 +1,22 @@
+---
+tasks:
+  jobs:
+    test-enabled-job:
+      type: preDeployment
+      containers:
+        job:
+          image:
+            repository: test-repo/test-image
+            tag: 1.0.0
+          command: ["sh", "-c"]
+          args: ["echo", "enabled"]
+    test-disabled-job:
+      enabled: false
+      type: preDeployment
+      containers:
+        job:
+          image:
+            repository: test-repo/test-image
+            tag: 1.0.0
+          command: ["sh", "-c"]
+          args: ["echo", "disabled"]

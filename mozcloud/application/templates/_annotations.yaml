@@ -34,6 +34,33 @@ Returns:
 
 
 {{- /*
+Returns gke-gcsfuse/* pod annotations for the GKE-injected gcsfuse
+sidecar. cpu/memory are requests; limits are auto-doubled via
+pod.container.resources. Unset fields default — defaults exist to
+satisfy the cluster ResourceQuota.
+
+Callers must only invoke this when the pod mounts a gcsFuseCsi volume.
+
+Params:
+  config (dict): (optional) gcsFuseSidecar block. Optional keys: cpu,
+                 memory.
+
+Returns:
+  (string) YAML-encoded annotation key-value pairs.
+*/ -}}
+{{- define "mozcloud.annotations.gcsFuseSidecar" -}}
+{{- $config := default dict .config }}
+{{- $requests := dict "cpu" (default "500m" $config.cpu) "memory" (default "512Mi" $config.memory) }}
+{{- $resources := include "pod.container.resources" (dict "requests" $requests) | fromYaml }}
+gke-gcsfuse/volumes: "true"
+gke-gcsfuse/cpu-request: {{ $resources.requests.cpu | quote }}
+gke-gcsfuse/cpu-limit: {{ $resources.limits.cpu | quote }}
+gke-gcsfuse/memory-request: {{ $resources.requests.memory | quote }}
+gke-gcsfuse/memory-limit: {{ $resources.limits.memory | quote }}
+{{- end -}}
+
+
+{{- /*
 Generates ArgoCD-specific annotations for a resource. For pre- and
 post-deployment jobs, adds hook and hook-delete-policy annotations to
 register the job with the ArgoCD sync lifecycle. For all non-deployment

@@ -64,6 +64,8 @@ Returns:
   {{- else }}
   emptyDir: {}
   {{- end }}
+  {{- else if eq $volumeConfig.type "gcsFuseCsi" }}
+  {{- include "mozcloud.volumes.gcsFuseCsi" (dict "config" $volumeConfig) | nindent 2 }}
   {{- else }}
   {{- if eq $volumeConfig.type "configMap" }}
   configMap:
@@ -245,6 +247,10 @@ Returns:
   {{- end }}
   securityContext:
     {{- include "pod.container.securityContext" (default dict $containerConfig.security) | nindent 4 }}
+  {{- if $containerConfig.lifecycle }}
+  lifecycle:
+    {{- $containerConfig.lifecycle | toYaml | nindent 4 }}
+  {{- end }}
   {{- if $containerConfig.volumes }}
   volumeMounts:
     {{- range $volume := $containerConfig.volumes }}

@@ -292,6 +292,10 @@
                         }
                       }
                     ]
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
                   }
                 }
               }
@@ -329,6 +333,10 @@
                     "additionalProperties": {
                       "$ref": "#/$defs/container"
                     }
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true
                   }
                 },
                 "required": [
@@ -383,17 +391,40 @@
             "items": {
               "type": "object",
               "properties": {
-                "key": { "type": "string" },
-                "operator": { "type": "string", "enum": ["Exists", "Equal"] },
-                "value": { "type": "string" },
-                "effect": { "type": "string", "enum": ["NoSchedule", "PreferNoSchedule", "NoExecute"] },
-                "tolerationSeconds": { "type": "integer" }
+                "key": {
+                  "type": "string"
+                },
+                "operator": {
+                  "type": "string",
+                  "enum": [
+                    "Exists",
+                    "Equal"
+                  ]
+                },
+                "value": {
+                  "type": "string"
+                },
+                "effect": {
+                  "type": "string",
+                  "enum": [
+                    "NoSchedule",
+                    "PreferNoSchedule",
+                    "NoExecute"
+                  ]
+                },
+                "tolerationSeconds": {
+                  "type": "integer"
+                }
               }
             }
           },
           "type": {
             "type": "string",
-            "enum": ["deployment", "rollout", "statefulset"],
+            "enum": [
+              "deployment",
+              "rollout",
+              "statefulset"
+            ],
             "default": "deployment"
           },
           "autoscaling": {
@@ -838,6 +869,10 @@
                     "name"
                   ]
                 },
+                "gatewayName": {
+                  "type": "string",
+                  "description": "Override the auto-generated Gateway resource name. Useful when migrating from a chart that used a different Gateway name."
+                },
                 "targetPort": {
                   "anyOf": [
                     {
@@ -881,7 +916,10 @@
                     "issuerKind": {
                       "type": "string",
                       "description": "\"ClusterIssuer\" (default) or \"Issuer\". Overrides cloud.certManager.issuerKind for this host.",
-                      "enum": ["ClusterIssuer", "Issuer"]
+                      "enum": [
+                        "ClusterIssuer",
+                        "Issuer"
+                      ]
                     }
                   }
                 },
@@ -918,7 +956,7 @@
                     },
                     "securityPolicy": {
                       "type": "string",
-                      "description": "Cloud Armor security policy name to attach to the load balancer backend. For migration of existing applications only — new applications should use Fastly for WAF instead."
+                      "description": "Cloud Armor security policy name to attach to the load balancer backend. For migration of existing applications only \u2014 new applications should use Fastly for WAF instead."
                     },
                     "timeoutSec": {
                       "type": "integer",
@@ -985,6 +1023,9 @@
               "type": "string"
             }
           },
+          "gcsFuseSidecar": {
+            "$ref": "#/$defs/gcsFuseSidecar"
+          },
           "nginx": {
             "type": "object",
             "additionalProperties": false,
@@ -997,9 +1038,15 @@
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
-                  "registry": { "type": "string" },
-                  "repository": { "type": "string" },
-                  "tag": { "type": "string" }
+                  "registry": {
+                    "type": "string"
+                  },
+                  "repository": {
+                    "type": "string"
+                  },
+                  "tag": {
+                    "type": "string"
+                  }
                 }
               },
               "configMap": {
@@ -1033,11 +1080,17 @@
                 "default": true
               },
               "minAvailable": {
-                "type": ["string", "integer"],
+                "type": [
+                  "string",
+                  "integer"
+                ],
                 "description": "Minimum number or percentage of pods that must remain available during a disruption."
               },
               "maxUnavailable": {
-                "type": ["string", "integer"],
+                "type": [
+                  "string",
+                  "integer"
+                ],
                 "description": "Maximum number or percentage of pods that can be unavailable during a disruption."
               }
             }
@@ -1060,12 +1113,16 @@
               },
               {
                 "type": "object",
-                "required": ["canary"],
+                "required": [
+                  "canary"
+                ],
                 "additionalProperties": false,
                 "properties": {
                   "canary": {
                     "type": "object",
-                    "required": ["steps"],
+                    "required": [
+                      "steps"
+                    ],
                     "properties": {
                       "steps": {
                         "type": "array",
@@ -1234,7 +1291,10 @@
             "issuerKind": {
               "type": "string",
               "description": "\"ClusterIssuer\" (default) or \"Issuer\" for namespace-scoped issuers.",
-              "enum": ["ClusterIssuer", "Issuer"],
+              "enum": [
+                "ClusterIssuer",
+                "Issuer"
+              ],
               "default": "ClusterIssuer"
             }
           }
@@ -1243,6 +1303,21 @@
     }
   },
   "$defs": {
+    "gcsFuseSidecar": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Pod-level resource overrides for the GCS FUSE CSI sidecar (rendered as gke-gcsfuse/* annotations). cpu and memory are resource requests; limits are auto-calculated as 2x the request.",
+      "properties": {
+        "cpu": {
+          "type": "string",
+          "pattern": "^(\\d+|\\d+m)$"
+        },
+        "memory": {
+          "type": "string",
+          "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+        }
+      }
+    },
     "container": {
       "type": "object",
       "properties": {
@@ -1254,7 +1329,11 @@
         "imagePullPolicy": {
           "type": "string",
           "description": "Image pull policy for the container. One of Always, IfNotPresent, or Never. When not set, the chart defaults to Always.",
-          "enum": ["Always", "IfNotPresent", "Never"]
+          "enum": [
+            "Always",
+            "IfNotPresent",
+            "Never"
+          ]
         },
         "args": {
           "oneOf": [
@@ -1379,7 +1458,8 @@
                   "configMap",
                   "secret",
                   "persistentVolume",
-                  "emptyDir"
+                  "emptyDir",
+                  "gcsFuseCsi"
                 ]
               },
               "path": {
@@ -1400,6 +1480,23 @@
               "sizeLimit": {
                 "type": "string",
                 "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+              },
+              "bucketName": {
+                "type": "string",
+                "description": "GCS bucket name to mount. Required for gcsFuseCsi volumes."
+              },
+              "mountOptions": {
+                "type": "string",
+                "description": "Comma-separated mount options passed to the gcsfuse CSI driver (e.g. \"implicit-dirs,uid=1001\")."
+              },
+              "skipCSIBucketAccessCheck": {
+                "type": "boolean",
+                "description": "Skip the CSI driver's bucket access check at mount time. Useful when the workload identity binding is created out-of-band."
+              },
+              "loggingSeverity": {
+                "type": "string",
+                "description": "Severity for gcsfuse logs. Maps to volumeAttributes.gcsfuseLoggingSeverity.",
+                "enum": ["trace", "debug", "info", "warning", "error"]
               }
             },
             "required": [
@@ -1424,8 +1521,82 @@
                     "sizeLimit"
                   ]
                 }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "gcsFuseCsi"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "bucketName"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {"required": ["bucketName"]},
+                      {"required": ["mountOptions"]},
+                      {"required": ["skipCSIBucketAccessCheck"]},
+                      {"required": ["loggingSeverity"]}
+                    ]
+                  }
+                }
               }
             ]
+          }
+        },
+        "lifecycle": {
+          "type": "object",
+          "description": "Container lifecycle hooks. Supports preStop and postStart handlers.",
+          "properties": {
+            "preStop": {
+              "type": "object",
+              "properties": {
+                "exec": {
+                  "type": "object",
+                  "properties": {
+                    "command": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "httpGet": {
+                  "type": "object"
+                },
+                "sleep": {
+                  "type": "object"
+                }
+              }
+            },
+            "postStart": {
+              "type": "object",
+              "properties": {
+                "exec": {
+                  "type": "object",
+                  "properties": {
+                    "command": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "httpGet": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -1435,7 +1606,11 @@
       "properties": {
         "concurrencyPolicy": {
           "type": "string",
-          "enum": ["Allow", "Forbid", "Replace"]
+          "enum": [
+            "Allow",
+            "Forbid",
+            "Replace"
+          ]
         },
         "jobHistory": {
           "type": "object",
@@ -1463,6 +1638,9 @@
     "job": {
       "type": "object",
       "properties": {
+        "gcsFuseSidecar": {
+          "$ref": "#/$defs/gcsFuseSidecar"
+        },
         "affinity": {
           "type": "object",
           "description": "Pod affinity rules (nodeAffinity, podAffinity, podAntiAffinity)"
@@ -1515,11 +1693,30 @@
           "items": {
             "type": "object",
             "properties": {
-              "key": { "type": "string" },
-              "operator": { "type": "string", "enum": ["Exists", "Equal"] },
-              "value": { "type": "string" },
-              "effect": { "type": "string", "enum": ["NoSchedule", "PreferNoSchedule", "NoExecute"] },
-              "tolerationSeconds": { "type": "integer" }
+              "key": {
+                "type": "string"
+              },
+              "operator": {
+                "type": "string",
+                "enum": [
+                  "Exists",
+                  "Equal"
+                ]
+              },
+              "value": {
+                "type": "string"
+              },
+              "effect": {
+                "type": "string",
+                "enum": [
+                  "NoSchedule",
+                  "PreferNoSchedule",
+                  "NoExecute"
+                ]
+              },
+              "tolerationSeconds": {
+                "type": "integer"
+              }
             }
           }
         },
@@ -1589,7 +1786,10 @@
         "fsGroupChangePolicy": {
           "description": "Controls when volume ownership is changed to match fsGroup. 'Always' (default) changes ownership on every mount; 'OnRootMismatch' only changes ownership when the top-level directory does not match fsGroup (faster for large volumes).",
           "type": "string",
-          "enum": ["Always", "OnRootMismatch"]
+          "enum": [
+            "Always",
+            "OnRootMismatch"
+          ]
         }
       }
     }

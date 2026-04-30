@@ -88,6 +88,14 @@ Example:
   {{- end -}}
   {{- $cronJobs = $prefixedCronJobs -}}
 {{- end -}}
+{{- /* Filter out disabled cron jobs */ -}}
+{{- $filteredCronJobs := dict -}}
+{{- range $name, $config := $cronJobs -}}
+  {{- if dig "enabled" true $config -}}
+    {{- $_ := set $filteredCronJobs $name $config -}}
+  {{- end -}}
+{{- end -}}
+{{- $cronJobs = $filteredCronJobs -}}
 {{ $cronJobs | toYaml }}
 {{- end -}}
 
@@ -176,5 +184,13 @@ Example:
   {{- end -}}
   {{- $jobs = $prefixedJobs -}}
 {{- end -}}
+{{- /* Filter out disabled jobs */ -}}
+{{- $filteredJobs := dict -}}
+{{- range $name, $config := $jobs -}}
+  {{- if dig "enabled" true $config -}}
+    {{- $_ := set $filteredJobs $name $config -}}
+  {{- end -}}
+{{- end -}}
+{{- $jobs = $filteredJobs -}}
 {{ $jobs | toYaml }}
 {{- end -}}

@@ -1,0 +1,336 @@
+---
+suite: "mozcloud: Workload volumes configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/workload-volumes.yaml
+templates:
+  - pvc/pvc.yaml
+  - workload/deployment.yaml
+  - task/job.yaml
+  - task/cronjob.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Volumes and gcsFuse annotations render correctly across deployments, jobs, and cronJobs
+    asserts:
+      # ReadWriteOnce PVC is configured correctly
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-11"
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwo
+      - equal:
+          path: metadata.labels.component_code
+          value: pvc
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwo
+      - equal:
+          path: spec.accessModes
+          value: ["ReadWriteOnce"]
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwo
+      - equal:
+          path: spec.resources.requests.storage
+          value: 10Gi
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwo
+      - equal:
+          path: spec.storageClassName
+          value: standard
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwo
+      # ReadWriteMany PVC is configured correctly
+      - equal:
+          path: metadata.labels.component_code
+          value: pvc
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwm
+      - equal:
+          path: spec.accessModes
+          value: ["ReadWriteOnce", "ReadWriteMany"]
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwm
+      - equal:
+          path: spec.resources.requests.storage
+          value: 50Gi
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwm
+      - equal:
+          path: spec.storageClassName
+          value: mozilla-enterprise-rwx
+        template: pvc/pvc.yaml
+        documentSelector:
+          path: $[?(@.kind == "PersistentVolumeClaim")].metadata.name
+          value: pvc-rwm
+      # Container is configured to use PVCs as volumes
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /data/pvc-rwo
+            name: pvc-rwo
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /data/pvc-rwm
+            name: pvc-rwm
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: pvc-rwo
+            persistentVolumeClaim:
+              claimName: pvc-rwo
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: pvc-rwm
+            persistentVolumeClaim:
+              claimName: pvc-rwm
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # gcsFuseCsi volume renders as inline CSI volume with full options
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: gcs-bucket
+            csi:
+              driver: gcsfuse.csi.storage.gke.io
+              readOnly: true
+              volumeAttributes:
+                bucketName: my-test-bucket
+                mountOptions: implicit-dirs,uid=1001
+                skipCSIBucketAccessCheck: "true"
+                gcsfuseLoggingSeverity: warning
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # gcsFuseCsi container volumeMount is wired up
+      - contains:
+          path: spec.template.spec.containers[?(@.name=="app")].volumeMounts
+          content:
+            name: gcs-bucket
+            mountPath: /data/bucket
+            readOnly: true
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Pod gets gke-gcsfuse/volumes annotation when a gcsFuseCsi volume is mounted
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+          value: "true"
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Sidecar resource overrides become gke-gcsfuse/* annotations
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+          value: 200m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
+          value: 256Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-request"]
+          value: 100m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-request"]
+          value: 128Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Job pod also renders gcsFuseCsi volume + sidecar overrides
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: gcs-bucket
+            csi:
+              driver: gcsfuse.csi.storage.gke.io
+              volumeAttributes:
+                bucketName: my-test-bucket
+                gcsfuseLoggingSeverity: warning
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+          value: "true"
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+          value: 1000m
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
+          value: 1024Mi
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      # CronJob's jobTemplate pod also renders gcsFuseCsi volume + sidecar overrides
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: gcs-bucket
+            csi:
+              driver: gcsfuse.csi.storage.gke.io
+              volumeAttributes:
+                bucketName: my-test-bucket
+        template: task/cronjob.yaml
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+          value: "true"
+        template: task/cronjob.yaml
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+          value: 500m
+        template: task/cronjob.yaml
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
+          value: 512Mi
+        template: task/cronjob.yaml
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # Workloads without a gcsFuseCsi volume must not get gke-gcsfuse/* annotations
+      - notExists:
+          path: spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-no-gcs
+      - notExists:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-no-gcs
+      # Workload with a gcsFuseCsi volume but no gcsFuseSidecar block gets
+      # both cpu and memory chart defaults (limits auto-doubled from requests).
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-request"]
+          value: 500m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-defaults
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+          value: 1000m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-defaults
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-request"]
+          value: 512Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-defaults
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
+          value: 1024Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-defaults
+      # Partial override (only cpu set): cpu uses user value, memory still defaults.
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-request"]
+          value: 750m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-partial
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/cpu-limit"]
+          value: 1500m
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-partial
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-request"]
+          value: 512Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-partial
+      - equal:
+          path: spec.template.metadata.annotations["gke-gcsfuse/memory-limit"]
+          value: 1024Mi
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-partial

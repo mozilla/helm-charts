@@ -95,7 +95,8 @@ Returns:
         {{- end }}
       {{- end }}
       {{- /* Create a unique key for this gateway configuration */}}
-      {{- $configKey := printf "%s-%s-%s" $hostConfig.type $className ($addresses | join "-") }}
+      {{- $nameOverride := default "" $hostConfig.gatewayName }}
+      {{- $configKey := printf "%s-%s-%s-%s" $hostConfig.type $className ($addresses | join "-") $nameOverride }}
       {{- if not (hasKey $gatewayConfigs $configKey) }}
         {{- $gatewayConfig := dict }}
         {{- $_ := set $gatewayConfig "type" $hostConfig.type }}
@@ -111,6 +112,7 @@ Returns:
           {{- end }}
         {{- end }}
         {{- $_ = set $gatewayConfig "tlsType" $tlsType }}
+        {{- $_ = set $gatewayConfig "nameOverride" $nameOverride }}
         {{- $_ = set $gatewayConfigs $configKey $gatewayConfig }}
       {{- end }}
     {{- end }}
@@ -118,11 +120,14 @@ Returns:
 {{- end }}
 {{- /* Generate gateways from unique configurations */}}
 gateways:
-  {{- $gatewayCount := len $gatewayConfigs }}
-  {{- $hasMultipleTypes := gt $gatewayCount 1 }}
+  {{- $distinctTypes := dict }}
+  {{- range $k, $v := $gatewayConfigs }}
+    {{- $_ := set $distinctTypes $v.type "true" }}
+  {{- end }}
+  {{- $hasMultipleTypes := gt (len $distinctTypes) 1 }}
   {{- range $configKey, $gatewayConfig := $gatewayConfigs }}
   {{- $multiCluster := contains "-mc" $gatewayConfig.className }}
-  {{- $gatewayNameParams := dict "appCode" $globals.app_code "type" $gatewayConfig.type "hasMultipleTypes" $hasMultipleTypes "multiCluster" $multiCluster }}
+  {{- $gatewayNameParams := dict "appCode" $globals.app_code "type" $gatewayConfig.type "hasMultipleTypes" $hasMultipleTypes "multiCluster" $multiCluster "nameOverride" $gatewayConfig.nameOverride }}
   {{- $gatewayName := include "mozcloud.gateway.name" $gatewayNameParams }}
   {{ $gatewayName }}:
     component: gateway

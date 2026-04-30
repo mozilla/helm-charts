@@ -334,6 +334,13 @@ tasks:
     # This is the name of your cron job. Use any name other than "default",
     # which is reserved for setting default values shared across all cron jobs.
     default:
+      # If false, this cron job will not be rendered. Useful for disabling a
+      # cron job in region-specific or environment-specific values overrides
+      # without removing the configuration block.
+      #
+      # Default: true
+      #enabled: false
+
       # Controls how Kubernetes handles overlapping executions of the same cron
       # job. Valid values are:
       #
@@ -404,6 +411,13 @@ tasks:
     # This is the name of your job. Use any name other than "default", which is
     # reserved for setting default values shared across all jobs.
     default:
+      # If false, this job will not be rendered. Useful for disabling a job in
+      # region-specific or environment-specific values overrides without
+      # removing the configuration block.
+      #
+      # Default: true
+      #enabled: false
+
       # The job type can either be "preDeployment" or "postDeployment".
       #
       # preDeployment: Jobs that run before other resources in the chart are
@@ -626,7 +640,8 @@ tasks:
           security: {}
 
           # Optionally mount volumes to the container. The supported volume types
-          # are "configMap" (default), "secret" and "persistentVolume".
+          # are "configMap" (default), "secret", "persistentVolume", and
+          # "gcsFuseCsi".
           #
           # Volumes should use names that match either config map, external
           # secret, or persistent volume claim names created as part of and
@@ -653,6 +668,29 @@ tasks:
           # "persistentVolume" volumes allow you to mount a persistent volume
           # claim created in the .Values.persistentVolumes section.
           #
+          # "gcsFuseCsi" volumes mount a Google Cloud Storage bucket as an
+          # ephemeral inline CSI volume using the GKE GCS FUSE CSI driver.
+          # The pod-level annotation `gke-gcsfuse/volumes: "true"` is added
+          # automatically. The workload's KSA must be granted access to the
+          # bucket (e.g. roles/storage.objectViewer) out-of-band. Options:
+          #
+          #   "bucketName": (required) Name of the GCS bucket to mount.
+          #
+          #   "mountOptions": Comma-separated mount options passed to the
+          #                   gcsfuse driver (e.g. "implicit-dirs,uid=1001").
+          #
+          #   "readOnly": Whether the bucket should be mounted read-only.
+          #
+          #   "skipCSIBucketAccessCheck": Skip the CSI driver's bucket access
+          #                               check at mount time.
+          #
+          #   "loggingSeverity": Severity for gcsfuse logs ("trace", "debug",
+          #                      "info", "warning", or "error"). Maps to
+          #                      volumeAttributes.gcsfuseLoggingSeverity.
+          #
+          # Sidecar resources: .Values.tasks.jobs.<name>.gcsFuseSidecar
+          # (or jobConfig.gcsFuseSidecar for cronJobs).
+          #
           # Example:
           #
           #   volumes:
@@ -670,7 +708,25 @@ tasks:
           #     - name: my-pvc-volume
           #       type: persistentVolume
           #       path: /path/to/mount
+          #     - name: my-gcs-bucket
+          #       type: gcsFuseCsi
+          #       path: /path/to/mount
+          #       bucketName: my-gcs-bucket
+          #       mountOptions: implicit-dirs
+          #       readOnly: true
           volumes: []
+
+      # Resource overrides for the GKE-injected gcsfuse sidecar. Only takes
+      # effect when this job mounts a gcsFuseCsi volume. For cronJobs, set
+      # on .jobConfig.gcsFuseSidecar.
+      #
+      # `cpu` and `memory` are requests; limits are auto-doubled (same
+      # shape as container resources). Unset fields default — see the
+      # annotations helper.
+      # gcsFuseSidecar:
+      #   cpu: "500m"
+      #   memory: "512Mi"
+
 
       # Configure auto instrumentation for the OTEL Collector.
       #
@@ -1185,7 +1241,8 @@ workloads:
         security: {}
 
         # Optionally mount volumes to the container. The supported volume types
-        # are "configMap" (default), "secret", "persistentVolume", and "emptyDir".
+        # are "configMap" (default), "secret", "persistentVolume", "emptyDir",
+        # and "gcsFuseCsi".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -1224,6 +1281,28 @@ workloads:
         #   "sizeLimit": the maximum amount of storage that an emptyDir volume
         #                can consume (e.g. 500Mi)
         #
+        # "gcsFuseCsi" volumes mount a Google Cloud Storage bucket as an
+        # ephemeral inline CSI volume using the GKE GCS FUSE CSI driver.
+        # The pod-level annotation `gke-gcsfuse/volumes: "true"` is added
+        # automatically. The workload's KSA must be granted access to the
+        # bucket (e.g. roles/storage.objectViewer) out-of-band. Options:
+        #
+        #   "bucketName": (required) Name of the GCS bucket to mount.
+        #
+        #   "mountOptions": Comma-separated mount options passed to the
+        #                   gcsfuse driver (e.g. "implicit-dirs,uid=1001").
+        #
+        #   "readOnly": Whether the bucket should be mounted read-only.
+        #
+        #   "skipCSIBucketAccessCheck": Skip the CSI driver's bucket access
+        #                               check at mount time.
+        #
+        #   "loggingSeverity": Severity for gcsfuse logs ("trace", "debug",
+        #                      "info", "warning", or "error"). Maps to
+        #                      volumeAttributes.gcsfuseLoggingSeverity.
+        #
+        # Sidecar resources: .Values.workloads.<name>.gcsFuseSidecar.
+        #
         # Example:
         #
         #   volumes:
@@ -1248,8 +1327,24 @@ workloads:
         #       path: /path/to/another/dir
         #       sizeLimit: 500Mi
         #       medium: Memory
+        #     - name: my-gcs-bucket
+        #       type: gcsFuseCsi
+        #       path: /path/to/mount
+        #       bucketName: my-gcs-bucket
+        #       mountOptions: implicit-dirs
+        #       readOnly: true
         #
         #volumes: []
+
+    # Resource overrides for the GKE-injected gcsfuse sidecar. Only takes
+    # effect when this workload mounts a gcsFuseCsi volume.
+    #
+    # `cpu` and `memory` are requests; limits are auto-doubled (same shape
+    # as container resources). Unset fields default — see the annotations
+    # helper.
+    # gcsFuseSidecar:
+    #   cpu: "500m"
+    #   memory: "512Mi"
 
     # Define host details in this section. This section can be omitted or set
     # to an empty dictionary if your workload does not handle inbound traffic.
@@ -1404,6 +1499,20 @@ workloads:
         #  # Optional: The namespace where the shared gateway exists.
         #  # If not specified, assumes the gateway is in the same namespace.
         #  #namespace: shared-gateway-namespace
+
+        # Override the auto-generated Gateway resource name for this host.
+        # By default, the Gateway is named after the app_code (e.g. "myapp"),
+        # with a type suffix appended when both external and internal gateways
+        # are present (e.g. "myapp-external"). Internal gateways always include
+        # the "-internal" suffix.
+        #
+        # Use this when migrating from a chart that used a different Gateway
+        # name and you need to preserve the existing resource name to avoid
+        # a destructive rename.
+        #
+        # Only applicable when "api" is set to "gateway".
+        #
+        #gatewayName: my-custom-gateway-name
 
         # The port name or number on the pod that the ingress Service should
         # route traffic to. Only applicable when "api" is set to "ingress".
@@ -1695,7 +1804,8 @@ workloads:
         sidecar: false
 
         # Optionally mount volumes to the container. The supported volume types
-        # are "configMap" (default), "secret", "persistentVolume", and "emptyDir".
+        # are "configMap" (default), "secret", "persistentVolume", "emptyDir",
+        # and "gcsFuseCsi".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -1734,6 +1844,28 @@ workloads:
         #   "sizeLimit": the maximum amount of storage that an emptyDir volume
         #                can consume (e.g. 500Mi)
         #
+        # "gcsFuseCsi" volumes mount a Google Cloud Storage bucket as an
+        # ephemeral inline CSI volume using the GKE GCS FUSE CSI driver.
+        # The pod-level annotation `gke-gcsfuse/volumes: "true"` is added
+        # automatically. The workload's KSA must be granted access to the
+        # bucket (e.g. roles/storage.objectViewer) out-of-band. Options:
+        #
+        #   "bucketName": (required) Name of the GCS bucket to mount.
+        #
+        #   "mountOptions": Comma-separated mount options passed to the
+        #                   gcsfuse driver (e.g. "implicit-dirs,uid=1001").
+        #
+        #   "readOnly": Whether the bucket should be mounted read-only.
+        #
+        #   "skipCSIBucketAccessCheck": Skip the CSI driver's bucket access
+        #                               check at mount time.
+        #
+        #   "loggingSeverity": Severity for gcsfuse logs ("trace", "debug",
+        #                      "info", "warning", or "error"). Maps to
+        #                      volumeAttributes.gcsfuseLoggingSeverity.
+        #
+        # Sidecar resources: .Values.workloads.<name>.gcsFuseSidecar.
+        #
         # Example:
         #
         #   volumes:
@@ -1758,8 +1890,39 @@ workloads:
         #       path: /path/to/another/dir
         #       sizeLimit: 500Mi
         #       medium: Memory
+        #     - name: my-gcs-bucket
+        #       type: gcsFuseCsi
+        #       path: /path/to/mount
+        #       bucketName: my-gcs-bucket
+        #       mountOptions: implicit-dirs
+        #       readOnly: true
         #
         #volumes: []
+
+        # Optionally configure container lifecycle hooks. Used to run commands
+        # before a container stops (preStop) or immediately after it starts
+        # (postStart).
+        #
+        # The most common use case is a preStop sleep that gives in-flight
+        # requests time to complete while the pod is being removed from load
+        # balancer backends.
+        #
+        # Example — graceful shutdown with a preStop sleep:
+        #
+        #   lifecycle:
+        #     preStop:
+        #       exec:
+        #         command: ["/bin/sh", "-c", "sleep 30"]
+        #
+        # Example — postStart notification:
+        #
+        #   lifecycle:
+        #     postStart:
+        #       exec:
+        #         command: ["/bin/sh", "-c", "curl -sf http://localhost:8080/started"]
+        #
+        # For full lifecycle hook documentation, see:
+        # https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
 
     # Labels to pass down to workload resources, e.g. Deployments and Pods. In
     # some scenarios, this can be useful to apply, e.g. when you spawn multiple
