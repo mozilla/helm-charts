@@ -1,5 +1,6 @@
 ---
 workloads:
+  # Workload with explicitly configured lifecycle hooks on each container.
   test-service:
     component: web
     containers:
@@ -22,7 +23,26 @@ workloads:
           preStop:
             exec:
               command: ["/bin/sh", "-c", "sleep 10"]
+    initContainers:
+      init-regular:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 5"]
+      init-sidecar:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        sidecar: true
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 5"]
 
+  # Workload with no lifecycle configuration anywhere.
   test-service-no-lifecycle:
     component: worker
     containers:
@@ -30,3 +50,56 @@ workloads:
         image:
           repository: test-repo/test-image
           tag: 1.0.0
+
+  # Workload with nginx.lifecycle set. App containers without an explicit
+  # lifecycle should inherit it; containers with one should keep their own.
+  test-service-nginx:
+    component: web
+    hosts:
+      test-service-nginx:
+        domains:
+          - test-service-nginx.dev.test-domain.com
+        addresses:
+          - test-ip
+        tls:
+          certs:
+            - test-cert
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+      worker:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+    nginx:
+      lifecycle:
+        preStop:
+          exec:
+            command: ["/bin/sh", "-c", "sleep 30"]
+
+tasks:
+  jobs:
+    test-lifecycle-job:
+      type: preDeployment
+      containers:
+        job:
+          image:
+            repository: test-repo/test-job-image
+            tag: 1.0.0
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 15"]
+    test-no-lifecycle-job:
+      type: postDeployment
+      containers:
+        job:
+          image:
+            repository: test-repo/test-job-image
+            tag: 1.0.0

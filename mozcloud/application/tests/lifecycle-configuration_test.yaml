@@ -10,48 +10,94 @@ values:
   - values/lifecycle-configuration.yaml
 templates:
   - workload/deployment.yaml
+  - task/job.yaml
 tests:
   - it: Configuration matches entire snapshot
     asserts:
       - notFailedTemplate: {}
       - matchSnapshot: {}
 
-  - it: preStop and postStart hooks render on the app container
+  - it: Workload container lifecycle hooks render correctly
     template: workload/deployment.yaml
-    documentSelector:
-      path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].name
-          value: app
+      # app container has preStop and postStart
       - equal:
           path: spec.template.spec.containers[0].lifecycle.preStop.exec.command
           value: ["/bin/sh", "-c", "sleep 30"]
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
       - equal:
           path: spec.template.spec.containers[0].lifecycle.postStart.exec.command
           value: ["/bin/sh", "-c", "echo started"]
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # worker container has preStop but no postStart
+      - equal:
+          path: spec.template.spec.containers[1].lifecycle.preStop.exec.command
+          value: ["/bin/sh", "-c", "sleep 10"]
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - notExists:
+          path: spec.template.spec.containers[1].lifecycle.postStart
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # container without any lifecycle config has no lifecycle field
+      - notExists:
+          path: spec.template.spec.containers[0].lifecycle
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-no-lifecycle
 
-  - it: preStop hook renders on the worker container
+  - it: Init container lifecycle hooks render correctly
     template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
     asserts:
-      - equal:
-          path: spec.template.spec.containers[1].name
-          value: worker
-      - equal:
-          path: spec.template.spec.containers[1].lifecycle.preStop.exec.command
-          value: ["/bin/sh", "-c", "sleep 10"]
+      # init-regular is a standard init container; lifecycle is not valid and must not render
       - notExists:
-          path: spec.template.spec.containers[1].lifecycle.postStart
+          path: spec.template.spec.initContainers[0].lifecycle
+      # init-sidecar has restartPolicy: Always and supports lifecycle hooks
+      - equal:
+          path: spec.template.spec.initContainers[1].lifecycle.preStop.exec.command
+          value: ["/bin/sh", "-c", "sleep 5"]
 
-  - it: a container without lifecycle config has no lifecycle field
+  - it: Job container lifecycle hooks render correctly
+    template: task/job.yaml
+    asserts:
+      # job container with an explicit lifecycle renders it
+      - equal:
+          path: spec.template.spec.containers[0].lifecycle.preStop.exec.command
+          value: ["/bin/sh", "-c", "sleep 15"]
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-lifecycle-job
+      # job container without a lifecycle has no lifecycle field
+      - notExists:
+          path: spec.template.spec.containers[0].lifecycle
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-no-lifecycle-job
+
+  - it: Nginx lifecycle is propagated to app containers without an explicit lifecycle
     template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
-      value: test-service-no-lifecycle
+      value: test-service-nginx
     asserts:
-      - notExists:
-          path: spec.template.spec.containers[0].lifecycle
+      # nginx container itself gets the configured lifecycle
+      - equal:
+          path: spec.template.spec.containers[0].lifecycle.preStop.exec.command
+          value: ["/bin/sh", "-c", "sleep 30"]
+      # app container has no explicit lifecycle and inherits from nginx
+      - equal:
+          path: spec.template.spec.containers[1].lifecycle.preStop.exec.command
+          value: ["/bin/sh", "-c", "sleep 30"]
+      # worker container has its own lifecycle and is not overridden
+      - equal:
+          path: spec.template.spec.containers[2].lifecycle.preStop.exec.command
+          value: ["/bin/sh", "-c", "sleep 10"]

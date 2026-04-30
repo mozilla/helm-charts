@@ -97,6 +97,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.containers.default.image.repository | string | `""` |  |
 | tasks.jobs.default.containers.default.image.tag | string | `""` |  |
 | tasks.jobs.default.containers.default.imagePullPolicy | string | `"Always"` |  |
+| tasks.jobs.default.containers.default.lifecycle | object | `{}` |  |
 | tasks.jobs.default.containers.default.resources | object | `{}` |  |
 | tasks.jobs.default.containers.default.secrets | list | `[]` |  |
 | tasks.jobs.default.containers.default.security | object | `{}` |  |
@@ -142,6 +143,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.image.repository | string | `""` |  |
 | workloads.default.containers.default.image.tag | string | `""` |  |
 | workloads.default.containers.default.imagePullPolicy | string | `"Always"` |  |
+| workloads.default.containers.default.lifecycle | object | `{}` |  |
 | workloads.default.containers.default.port | int | `8000` |  |
 | workloads.default.containers.default.resources.cpu | string | `"100m"` |  |
 | workloads.default.containers.default.resources.memory | string | `"128Mi"` |  |
@@ -164,15 +166,18 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.initContainers.default.image.repository | string | `""` |  |
 | workloads.default.initContainers.default.image.tag | string | `""` |  |
 | workloads.default.initContainers.default.imagePullPolicy | string | `"Always"` |  |
+| workloads.default.initContainers.default.lifecycle | object | `{}` |  |
 | workloads.default.initContainers.default.resources.cpu | string | `"100m"` |  |
 | workloads.default.initContainers.default.resources.memory | string | `"128Mi"` |  |
 | workloads.default.initContainers.default.secrets | list | `[]` |  |
 | workloads.default.initContainers.default.security | object | `{}` |  |
 | workloads.default.initContainers.default.sidecar | bool | `false` |  |
+| workloads.default.initContainers.default.volumes | list | `[]` |  |
 | workloads.default.labels | object | `{}` |  |
 | workloads.default.nginx.enabled | bool | `true` |  |
 | workloads.default.nginx.image.repository | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged"` |  |
 | workloads.default.nginx.image.tag | string | `"1.29"` |  |
+| workloads.default.nginx.lifecycle | object | `{}` |  |
 | workloads.default.nodeSelector | object | `{}` |  |
 | workloads.default.otel.autoInstrumentation.enabled | bool | `false` |  |
 | workloads.default.otel.autoInstrumentation.language | string | `""` |  |

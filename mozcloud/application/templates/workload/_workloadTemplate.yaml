@@ -56,6 +56,19 @@ Returns:
     {{- end }}
   {{- end }}
 {{- end }}
+{{- /* If nginx.lifecycle is explicitly set, propagate it to any app container
+     that does not have its own lifecycle configuration. */}}
+{{- $nginxLifecycle := ($config.nginx).lifecycle }}
+{{- if $nginxLifecycle }}
+  {{- $enrichedContainers := dict }}
+  {{- range $containerName, $containerConfig := $containers }}
+    {{- if not $containerConfig.lifecycle }}
+      {{- $containerConfig = mergeOverwrite (deepCopy $containerConfig) (dict "lifecycle" $nginxLifecycle) }}
+    {{- end }}
+    {{- $_ := set $enrichedContainers $containerName $containerConfig }}
+  {{- end }}
+  {{- $containers = $enrichedContainers }}
+{{- end }}
 {{- /* Add nginx configmap volume if nginx is enabled */}}
 {{- $nginxConfigMapName := default (printf "%s-nginx" $name) $config.nginx.configMap }}
 {{- if $nginxEnabled }}
@@ -117,10 +130,10 @@ template:
         {{- $nginxImageParams := dict "containerImage" $config.nginx.image "globalImage" $globals.image "workloadName" $name "containerName" "nginx" }}
         image: {{ include "mozcloud.image" $nginxImageParams }}
         imagePullPolicy: Always
+        {{- if $nginxLifecycle }}
         lifecycle:
-          preStop:
-            exec:
-              command: ["/bin/bash", "-c", "/bin/sleep 25 && /usr/sbin/nginx -s quit"]
+          {{- $nginxLifecycle | toYaml | nindent 10 }}
+        {{- end }}
         ports:
           - name: http
             containerPort: 8080
