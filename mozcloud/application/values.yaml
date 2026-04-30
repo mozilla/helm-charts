@@ -704,21 +704,19 @@ tasks:
           #       readOnly: true
           volumes: []
 
-      # Configures the GKE-managed gcsfuse sidecar that GKE auto-injects when
-      # this job mounts a gcsFuseCsi volume (declared in the containers
+      # Sidecar resource annotations for the GKE-injected gcsfuse sidecar.
+      # Renders as pod-level "gke-gcsfuse/*" annotations. Only takes effect
+      # when this job mounts a gcsFuseCsi volume (declared in the containers
       # section above). For cronJobs, set this on .jobConfig.gcsFuseSidecar.
       #
-      # Sidecar resources are rendered as pod-level "gke-gcsfuse/*" annotations,
-      # not as volume fields — they're collected here because they only matter
-      # when a gcsFuseCsi volume exists. Any field omitted falls back to GKE
-      # defaults.
-      #
-      # Example:
-      #
-      #   gcsFuseSidecar:
-      #     cpuLimit: 250m
-      #     memoryLimit: 256Mi
-      #gcsFuseSidecar: {}
+      # When unset, the chart applies sensible defaults (see the annotations
+      # helper). To override, set any of: cpuLimit, memoryLimit, cpuRequest,
+      # memoryRequest. Your values are used as-is — the chart does not merge
+      # defaults in.
+      # gcsFuseSidecar:
+      #   cpuLimit: "1"
+      #   memoryLimit: "1Gi"
+
 
       # Configure auto instrumentation for the OTEL Collector.
       #
@@ -1325,23 +1323,18 @@ workloads:
         #
         #volumes: []
 
-    # Configures the GKE-managed gcsfuse sidecar that GKE auto-injects when
-    # this workload mounts a gcsFuseCsi volume (declared in the containers
-    # section above).
+    # Sidecar resource annotations for the GKE-injected gcsfuse sidecar.
+    # Renders as pod-level "gke-gcsfuse/*" annotations. Only takes effect
+    # when this workload mounts a gcsFuseCsi volume (declared in the
+    # containers section above).
     #
-    # Sidecar resources are rendered as pod-level "gke-gcsfuse/*" annotations,
-    # not as volume fields — they're collected here because they only matter
-    # when a gcsFuseCsi volume exists. Any field omitted falls back to GKE
-    # defaults.
-    #
-    # Example:
-    #
-    #   gcsFuseSidecar:
-    #     cpuLimit: 250m
-    #     memoryLimit: 256Mi
-    #     cpuRequest: 250m
-    #     memoryRequest: 256Mi
-    #gcsFuseSidecar: {}
+    # When unset, the chart applies sensible defaults (see the annotations
+    # helper). To override, set any of: cpuLimit, memoryLimit, cpuRequest,
+    # memoryRequest. Your values are used as-is — the chart does not merge
+    # defaults in.
+    # gcsFuseSidecar:
+    #   cpuLimit: "1"
+    #   memoryLimit: "1Gi"
 
     # Define host details in this section. This section can be omitted or set
     # to an empty dictionary if your workload does not handle inbound traffic.

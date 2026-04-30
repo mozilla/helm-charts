@@ -35,12 +35,13 @@ Returns:
 
 {{- /*
 Returns the gke-gcsfuse/* pod annotations consumed by the GKE GCS FUSE CSI
-driver. Always emits `gke-gcsfuse/volumes: "true"`. Sidecar resource
-overrides from `config` are emitted as `gke-gcsfuse/{cpu,memory}-{limit,request}`
-annotations; any field omitted falls back to the GKE driver defaults.
+driver. Always emits `gke-gcsfuse/volumes: "true"`.
 
-Callers are responsible for invoking this only when the pod actually mounts a
-gcsFuseCsi volume.
+When `config` is unset or empty, the chart applies sensible defaults so
+the auto-injected sidecar satisfies the cluster ResourceQuota.
+
+Callers are responsible for invoking this only when the pod actually mounts
+a gcsFuseCsi volume.
 
 Params:
   config (dict): (optional) Per-workload/per-job gcsFuseSidecar block.
@@ -51,20 +52,22 @@ Returns:
   (string) YAML-encoded key-value pairs of annotations.
 */ -}}
 {{- define "mozcloud.annotations.gcsFuseSidecar" -}}
+{{- $config := .config }}
+{{- if not $config }}
+{{- $config = dict "cpuLimit" "1" "memoryLimit" "1Gi" }}
+{{- end }}
 gke-gcsfuse/volumes: "true"
-{{- with .config }}
-{{- if .cpuLimit }}
-gke-gcsfuse/cpu-limit: {{ .cpuLimit | quote }}
+{{- if $config.cpuLimit }}
+gke-gcsfuse/cpu-limit: {{ $config.cpuLimit | quote }}
 {{- end }}
-{{- if .memoryLimit }}
-gke-gcsfuse/memory-limit: {{ .memoryLimit | quote }}
+{{- if $config.memoryLimit }}
+gke-gcsfuse/memory-limit: {{ $config.memoryLimit | quote }}
 {{- end }}
-{{- if .cpuRequest }}
-gke-gcsfuse/cpu-request: {{ .cpuRequest | quote }}
+{{- if $config.cpuRequest }}
+gke-gcsfuse/cpu-request: {{ $config.cpuRequest | quote }}
 {{- end }}
-{{- if .memoryRequest }}
-gke-gcsfuse/memory-request: {{ .memoryRequest | quote }}
-{{- end }}
+{{- if $config.memoryRequest }}
+gke-gcsfuse/memory-request: {{ $config.memoryRequest | quote }}
 {{- end }}
 {{- end -}}
 
