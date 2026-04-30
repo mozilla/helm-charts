@@ -334,6 +334,13 @@ tasks:
     # This is the name of your cron job. Use any name other than "default",
     # which is reserved for setting default values shared across all cron jobs.
     default:
+      # If false, this cron job will not be rendered. Useful for disabling a
+      # cron job in region-specific or environment-specific values overrides
+      # without removing the configuration block.
+      #
+      # Default: true
+      #enabled: false
+
       # Controls how Kubernetes handles overlapping executions of the same cron
       # job. Valid values are:
       #
@@ -404,6 +411,13 @@ tasks:
     # This is the name of your job. Use any name other than "default", which is
     # reserved for setting default values shared across all jobs.
     default:
+      # If false, this job will not be rendered. Useful for disabling a job in
+      # region-specific or environment-specific values overrides without
+      # removing the configuration block.
+      #
+      # Default: true
+      #enabled: false
+
       # The job type can either be "preDeployment" or "postDeployment".
       #
       # preDeployment: Jobs that run before other resources in the chart are
@@ -1401,6 +1415,20 @@ workloads:
         #  # If not specified, assumes the gateway is in the same namespace.
         #  #namespace: shared-gateway-namespace
 
+        # Override the auto-generated Gateway resource name for this host.
+        # By default, the Gateway is named after the app_code (e.g. "myapp"),
+        # with a type suffix appended when both external and internal gateways
+        # are present (e.g. "myapp-external"). Internal gateways always include
+        # the "-internal" suffix.
+        #
+        # Use this when migrating from a chart that used a different Gateway
+        # name and you need to preserve the existing resource name to avoid
+        # a destructive rename.
+        #
+        # Only applicable when "api" is set to "gateway".
+        #
+        #gatewayName: my-custom-gateway-name
+
         # The port name or number on the pod that the ingress Service should
         # route traffic to. Only applicable when "api" is set to "ingress".
         #
@@ -1756,6 +1784,31 @@ workloads:
         #       medium: Memory
         #
         #volumes: []
+
+        # Optionally configure container lifecycle hooks. Used to run commands
+        # before a container stops (preStop) or immediately after it starts
+        # (postStart).
+        #
+        # The most common use case is a preStop sleep that gives in-flight
+        # requests time to complete while the pod is being removed from load
+        # balancer backends.
+        #
+        # Example — graceful shutdown with a preStop sleep:
+        #
+        #   lifecycle:
+        #     preStop:
+        #       exec:
+        #         command: ["/bin/sh", "-c", "sleep 30"]
+        #
+        # Example — postStart notification:
+        #
+        #   lifecycle:
+        #     postStart:
+        #       exec:
+        #         command: ["/bin/sh", "-c", "curl -sf http://localhost:8080/started"]
+        #
+        # For full lifecycle hook documentation, see:
+        # https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
 
     # Labels to pass down to workload resources, e.g. Deployments and Pods. In
     # some scenarios, this can be useful to apply, e.g. when you spawn multiple

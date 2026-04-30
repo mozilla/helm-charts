@@ -1,0 +1,32 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 30"]
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "echo started"]
+      worker:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+
+  test-service-no-lifecycle:
+    component: worker
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0

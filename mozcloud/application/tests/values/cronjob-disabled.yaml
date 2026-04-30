@@ -1,0 +1,24 @@
+---
+tasks:
+  cronJobs:
+    test-enabled-cronjob:
+      schedule: '0 * * * *'
+      jobConfig:
+        containers:
+          job:
+            image:
+              repository: test-repo/test-image
+              tag: 1.0.0
+            command: ["sh", "-c"]
+            args: ["echo", "enabled"]
+    test-disabled-cronjob:
+      enabled: false
+      schedule: '0 * * * *'
+      jobConfig:
+        containers:
+          job:
+            image:
+              repository: test-repo/test-image
+              tag: 1.0.0
+            command: ["sh", "-c"]
+            args: ["echo", "disabled"]
