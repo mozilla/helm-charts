@@ -245,6 +245,10 @@ Returns:
   {{- end }}
   securityContext:
     {{- include "pod.container.securityContext" (default dict $containerConfig.security) | nindent 4 }}
+  {{- if $containerConfig.lifecycle }}
+  lifecycle:
+    {{- $containerConfig.lifecycle | toYaml | nindent 4 }}
+  {{- end }}
   {{- if $containerConfig.volumes }}
   volumeMounts:
     {{- range $volume := $containerConfig.volumes }}

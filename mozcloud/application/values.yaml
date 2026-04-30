@@ -1785,6 +1785,31 @@ workloads:
         #
         #volumes: []
 
+        # Optionally configure container lifecycle hooks. Used to run commands
+        # before a container stops (preStop) or immediately after it starts
+        # (postStart).
+        #
+        # The most common use case is a preStop sleep that gives in-flight
+        # requests time to complete while the pod is being removed from load
+        # balancer backends.
+        #
+        # Example — graceful shutdown with a preStop sleep:
+        #
+        #   lifecycle:
+        #     preStop:
+        #       exec:
+        #         command: ["/bin/sh", "-c", "sleep 30"]
+        #
+        # Example — postStart notification:
+        #
+        #   lifecycle:
+        #     postStart:
+        #       exec:
+        #         command: ["/bin/sh", "-c", "curl -sf http://localhost:8080/started"]
+        #
+        # For full lifecycle hook documentation, see:
+        # https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
+
     # Labels to pass down to workload resources, e.g. Deployments and Pods. In
     # some scenarios, this can be useful to apply, e.g. when you spawn multiple
     # workloads, but only want the main workload with default labels to match
