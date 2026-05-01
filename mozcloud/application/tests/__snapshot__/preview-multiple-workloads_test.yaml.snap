@@ -388,13 +388,6 @@ Configuration matches entire snapshot:
           containers:
             - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
               imagePullPolicy: Always
-              lifecycle:
-                preStop:
-                  exec:
-                    command:
-                      - /bin/bash
-                      - -c
-                      - /bin/sleep 25 && /usr/sbin/nginx -s quit
               livenessProbe:
                 failureThreshold: 5
                 httpGet:
@@ -645,13 +638,6 @@ Configuration matches entire snapshot:
           containers:
             - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
               imagePullPolicy: Always
-              lifecycle:
-                preStop:
-                  exec:
-                    command:
-                      - /bin/bash
-                      - -c
-                      - /bin/sleep 25 && /usr/sbin/nginx -s quit
               livenessProbe:
                 failureThreshold: 5
                 httpGet:
@@ -902,13 +888,6 @@ Configuration matches entire snapshot:
           containers:
             - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
               imagePullPolicy: Always
-              lifecycle:
-                preStop:
-                  exec:
-                    command:
-                      - /bin/bash
-                      - -c
-                      - /bin/sleep 25 && /usr/sbin/nginx -s quit
               livenessProbe:
                 failureThreshold: 5
                 httpGet:

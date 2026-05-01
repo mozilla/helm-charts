@@ -212,15 +212,8 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always
-      - isSubset:
+      - notExists:
           path: spec.template.spec.containers[0].lifecycle
-          content:
-            preStop:
-              exec:
-                command:
-                  - /bin/bash
-                  - -c
-                  - /bin/sleep 25 && /usr/sbin/nginx -s quit
       - isSubset:
           path: spec.template.spec.containers[0].readinessProbe
           content:

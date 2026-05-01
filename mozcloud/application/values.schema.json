@@ -1051,6 +1051,9 @@
               "configMap": {
                 "type": "string"
               },
+              "lifecycle": {
+                "$ref": "#/$defs/lifecycle"
+              },
               "resources": {
                 "type": "object",
                 "additionalProperties": false,
@@ -1297,6 +1300,9 @@
             }
           }
         },
+        "lifecycle": {
+          "$ref": "#/$defs/lifecycle"
+        },
         "resources": {
           "type": "object",
           "additionalProperties": false,
@@ -1453,53 +1459,6 @@
               }
             ]
           }
-        },
-        "lifecycle": {
-          "type": "object",
-          "description": "Container lifecycle hooks. Supports preStop and postStart handlers.",
-          "properties": {
-            "preStop": {
-              "type": "object",
-              "properties": {
-                "exec": {
-                  "type": "object",
-                  "properties": {
-                    "command": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                },
-                "httpGet": {
-                  "type": "object"
-                },
-                "sleep": {
-                  "type": "object"
-                }
-              }
-            },
-            "postStart": {
-              "type": "object",
-              "properties": {
-                "exec": {
-                  "type": "object",
-                  "properties": {
-                    "command": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                },
-                "httpGet": {
-                  "type": "object"
-                }
-              }
-            }
-          }
         }
       }
     },
@@ -1625,6 +1584,53 @@
         "ttlSecondsAfterFinished": {
           "type": "integer",
           "minimum": 0
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "description": "Container lifecycle hooks. Supports preStop and postStart handlers.",
+      "properties": {
+        "preStop": {
+          "type": "object",
+          "properties": {
+            "exec": {
+              "type": "object",
+              "properties": {
+                "command": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "httpGet": {
+              "type": "object"
+            },
+            "sleep": {
+              "type": "object"
+            }
+          }
+        },
+        "postStart": {
+          "type": "object",
+          "properties": {
+            "exec": {
+              "type": "object",
+              "properties": {
+                "command": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            },
+            "httpGet": {
+              "type": "object"
+            }
+          }
         }
       }
     },
