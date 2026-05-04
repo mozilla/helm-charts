@@ -1555,6 +1555,10 @@ workloads:
         #
         #gatewayName: my-custom-gateway-name
 
+        # The Kubernetes Service port exposed to the load balancer. Defaults to
+        # 8080. Set this when your service needs to listen on a different port.
+        #servicePort: 8080
+
         # The port name or number on the pod that the ingress Service should
         # route traffic to. Only applicable when "api" is set to "ingress".
         #

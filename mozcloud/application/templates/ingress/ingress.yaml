@@ -63,7 +63,7 @@ ingresses:
                 {{- end }}
               service:
                 name: {{ $workloadName }}
-                port: 8080
+                port: {{ default 8080 $hostConfig.servicePort }}
                 protocol: TCP
                 targetPort: {{ include "mozcloud.portName" (default "http" $hostConfig.targetPort) }}
         tls:
