@@ -247,7 +247,8 @@ Returns:
   {{- end }}
   securityContext:
     {{- include "pod.container.securityContext" (default dict $containerConfig.security) | nindent 4 }}
-  {{- if $containerConfig.lifecycle }}
+  {{- $isInitSidecar := and (eq $type "initContainer") (dig "sidecar" false $containerConfig) }}
+  {{- if and $containerConfig.lifecycle (or (eq $type "container") $isInitSidecar) }}
   lifecycle:
     {{- $containerConfig.lifecycle | toYaml | nindent 4 }}
   {{- end }}

@@ -579,6 +579,25 @@ tasks:
           # Default: Always
           imagePullPolicy: Always
 
+          # Optionally configure container lifecycle hooks. Used to run commands
+          # before a container stops (preStop) or immediately after it starts
+          # (postStart).
+          #
+          # The most common use case is a preStop sleep that gives in-flight
+          # work time to complete if the job pod is terminated before the job
+          # finishes.
+          #
+          # Example — graceful shutdown with a preStop sleep:
+          #
+          #   lifecycle:
+          #     preStop:
+          #       exec:
+          #         command: ["/bin/sh", "-c", "sleep 30"]
+          #
+          # For full lifecycle hook documentation, see:
+          # https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
+          lifecycle: {}
+
           # The "resources" section allows you to specify the amount of CPU and
           # memory that your container needs to run. These are equivalent to
           # requests values.
@@ -1173,6 +1192,32 @@ workloads:
         # Default: Always
         imagePullPolicy: Always
 
+        # Optionally configure container lifecycle hooks. Used to run commands
+        # before a container stops (preStop) or immediately after it starts
+        # (postStart).
+        #
+        # The most common use case is a preStop sleep that gives in-flight
+        # requests time to complete while the pod is being removed from load
+        # balancer backends.
+        #
+        # Example — graceful shutdown with a preStop sleep:
+        #
+        #   lifecycle:
+        #     preStop:
+        #       exec:
+        #         command: ["/bin/sh", "-c", "sleep 30"]
+        #
+        # Example — postStart notification:
+        #
+        #   lifecycle:
+        #     postStart:
+        #       exec:
+        #         command: ["/bin/sh", "-c", "curl -sf http://localhost:8080/started"]
+        #
+        # For full lifecycle hook documentation, see:
+        # https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
+        lifecycle: {}
+
         # Optionally configure a custom port for your container. The default
         # value is 8000.
         #
@@ -1729,6 +1774,27 @@ workloads:
         # Default: Always
         imagePullPolicy: Always
 
+        # Optionally configure container lifecycle hooks. Used to run commands
+        # before a container stops (preStop) or immediately after it starts
+        # (postStart).
+        #
+        # IMPORTANT: Kubernetes does not support lifecycle hooks on regular init
+        # containers. This field is only valid when "sidecar: true" is also set,
+        # which configures the init container as a long-running sidecar
+        # (restartPolicy: Always). Configuring lifecycle on a regular init
+        # container will cause Kubernetes to reject the pod spec.
+        #
+        # Example — graceful shutdown with a preStop sleep:
+        #
+        #   lifecycle:
+        #     preStop:
+        #       exec:
+        #         command: ["/bin/sh", "-c", "sleep 30"]
+        #
+        # For full lifecycle hook documentation, see:
+        # https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
+        lifecycle: {}
+
         # Optionally configure a custom port for your container. The default
         # value is none/unset.
         #
@@ -1897,32 +1963,7 @@ workloads:
         #       mountOptions: implicit-dirs
         #       readOnly: true
         #
-        #volumes: []
-
-        # Optionally configure container lifecycle hooks. Used to run commands
-        # before a container stops (preStop) or immediately after it starts
-        # (postStart).
-        #
-        # The most common use case is a preStop sleep that gives in-flight
-        # requests time to complete while the pod is being removed from load
-        # balancer backends.
-        #
-        # Example — graceful shutdown with a preStop sleep:
-        #
-        #   lifecycle:
-        #     preStop:
-        #       exec:
-        #         command: ["/bin/sh", "-c", "sleep 30"]
-        #
-        # Example — postStart notification:
-        #
-        #   lifecycle:
-        #     postStart:
-        #       exec:
-        #         command: ["/bin/sh", "-c", "curl -sf http://localhost:8080/started"]
-        #
-        # For full lifecycle hook documentation, see:
-        # https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
+        volumes: []
 
     # Labels to pass down to workload resources, e.g. Deployments and Pods. In
     # some scenarios, this can be useful to apply, e.g. when you spawn multiple
@@ -1977,6 +2018,22 @@ workloads:
       image:
         repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged
         tag: "1.29"
+
+      # Optionally configure a lifecycle hook for the nginx sidecar container.
+      #
+      # When set, this lifecycle configuration is also inherited by any
+      # application or init containers in the same workload that do not have
+      # their own lifecycle configuration. This ensures a consistent graceful
+      # shutdown window across all containers.
+      #
+      # Example — graceful shutdown with a preStop sleep:
+      #
+      #   lifecycle:
+      #     preStop:
+      #       exec:
+      #         command: ["/bin/sh", "-c", "sleep 30"]
+      #
+      lifecycle: {}
 
     # Configure auto instrumentation for the OTEL Collector.
     #
