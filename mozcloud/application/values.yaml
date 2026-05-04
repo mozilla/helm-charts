@@ -856,8 +856,23 @@ tasks:
 # Telegraf PodMonitoring configuration - only for tenants that have not yet
 # migrated to the OTEL Collector. When enabled, a PodMonitoring resource is
 # created to scrape Telegraf metrics.
+#
+# If you need to customize beyond the fields exposed here (e.g.
+# metricRelabeling, multiple endpoints, custom selectors), ship your own
+# PodMonitoring resource instead.
 telegraf:
   enabled: false
+
+  # The port telegraf exposes Prometheus-format metrics on. May be a port
+  # number or a named port defined on the telegraf pod.
+  port: 8080
+
+  # The HTTP path metrics are scraped from.
+  path: /metrics
+
+  # How often Cloud Managed Prometheus should scrape metrics. Accepts a
+  # duration string (e.g. "15s", "30s", "1m").
+  interval: 30s
 
 workloads:
   # The name of your workload and all related components. Use any name other

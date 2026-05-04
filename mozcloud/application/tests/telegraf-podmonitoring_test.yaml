@@ -16,7 +16,7 @@ tests:
       - notFailedTemplate: {}
       - matchSnapshot: {}
 
-  - it: PodMonitoring is rendered with correct name, kind, and telegraf selector when enabled
+  - it: PodMonitoring is rendered with correct name, kind, telegraf selector, and default endpoint when enabled
     asserts:
       # PodMonitoring is rendered when telegraf.enabled is true
       - hasDocuments:
@@ -36,6 +36,19 @@ tests:
           path: spec.selector.matchLabels["app.kubernetes.io/name"]
           value: telegraf
         documentIndex: 0
+      # Endpoint uses the documented defaults when not overridden
+      - equal:
+          path: spec.endpoints[0].port
+          value: 8080
+        documentIndex: 0
+      - equal:
+          path: spec.endpoints[0].path
+          value: /metrics
+        documentIndex: 0
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 30s
+        documentIndex: 0
 
   - it: PodMonitoring is not rendered when telegraf.enabled is false
     set:
@@ -43,3 +56,22 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: PodMonitoring honors custom port (named string), path, and interval
+    set:
+      telegraf.port: prometheus
+      telegraf.path: /__metrics__
+      telegraf.interval: 60s
+    asserts:
+      - equal:
+          path: spec.endpoints[0].port
+          value: prometheus
+        documentIndex: 0
+      - equal:
+          path: spec.endpoints[0].path
+          value: /__metrics__
+        documentIndex: 0
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 60s
+        documentIndex: 0

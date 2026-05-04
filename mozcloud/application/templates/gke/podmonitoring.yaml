@@ -10,10 +10,11 @@
 
 {{- if $workloads }}
 {{- /* Default PodMonitoring template for all tenants */}}
+{{- $telegraf := default dict .Values.telegraf }}
 {{- if and .Values.enabled
   (not (include "mozcloud.preview.enabled" .))
   (eq $provider "gke")
-  (dig "enabled" false (default dict .Values.telegraf))
+  (dig "enabled" false $telegraf)
 }}
 ---
 apiVersion: monitoring.googleapis.com/v1
@@ -26,10 +27,10 @@ metadata:
     {{- $labels.labels | toYaml | nindent 4 }}
 spec:
   endpoints:
-    - port: 8080
+    - port: {{ dig "port" 8080 $telegraf }}
       scheme: http
-      interval: 30s
-      path: /metrics
+      interval: {{ dig "interval" "30s" $telegraf | quote }}
+      path: {{ dig "path" "/metrics" $telegraf | quote }}
   selector:
     matchLabels:
       app.kubernetes.io/name: telegraf

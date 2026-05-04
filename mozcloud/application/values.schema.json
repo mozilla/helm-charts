@@ -357,6 +357,21 @@
         "enabled": {
           "type": "boolean",
           "default": false
+        },
+        "port": {
+          "description": "Port telegraf exposes Prometheus-format metrics on. May be a port number or a named port.",
+          "oneOf": [
+            { "type": "integer" },
+            { "type": "string" }
+          ]
+        },
+        "path": {
+          "type": "string",
+          "description": "HTTP path metrics are scraped from."
+        },
+        "interval": {
+          "type": "string",
+          "description": "How often Cloud Managed Prometheus should scrape metrics. Duration string (e.g. \"15s\", \"30s\", \"1m\")."
         }
       }
     },

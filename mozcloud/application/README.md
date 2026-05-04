@@ -113,6 +113,9 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.tolerations | list | `[]` |  |
 | tasks.jobs.default.type | string | `"preDeployment"` |  |
 | telegraf.enabled | bool | `false` |  |
+| telegraf.interval | string | `"30s"` |  |
+| telegraf.path | string | `"/metrics"` |  |
+| telegraf.port | int | `8080` |  |
 | workloads.default.affinity | object | `{}` |  |
 | workloads.default.autoscaling.enabled | bool | `true` |  |
 | workloads.default.autoscaling.metrics[0].threshold | int | `60` |  |
