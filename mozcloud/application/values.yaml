@@ -1220,6 +1220,18 @@ workloads:
         # This value should be an integer.
         port: 8000
 
+        # Optionally override the name used for this container's port. Defaults
+        # to the container name, normalized to RFC 6335 format (lowercase,
+        # hyphens only, max 15 characters).
+        #
+        # When nginx is disabled and the "targetPort" host setting is not
+        # explicitly set, use this value as the "targetPort" so that the Service
+        # routes traffic to the correct container port.
+        #
+        # Example:
+        #   portName: web
+        portName: ''
+
         # The "resources" section allows you to specify the amount of CPU and
         # memory that your container needs to run. These are equivalent to
         # requests values.
@@ -1559,12 +1571,12 @@ workloads:
         # 8080. Set this when your service needs to listen on a different port.
         servicePort: 8080
 
-        # The port name or number on the pod that the ingress Service should
-        # route traffic to. Only applicable when "api" is set to "ingress".
+        # The port name or number on the pod that the Service should route
+        # traffic to. Applies to both "gateway" and "ingress" API types.
         #
-        # Defaults to "http", which routes to the nginx sidecar. Set this to
-        # your container name (e.g. "my-container") or a port number when nginx
-        # is disabled and the ingress should route directly to an app container.
+        # Defaults to "http", which routes to the nginx sidecar. When nginx is
+        # disabled, set this to the app container's "portName" if configured,
+        # or the container name otherwise.
         targetPort: http
 
         # Global certificate details for external gateways. Certificates MUST be

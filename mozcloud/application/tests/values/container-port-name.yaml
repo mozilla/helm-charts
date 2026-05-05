@@ -1,0 +1,40 @@
+---
+workloads:
+  my-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        portName: web
+    hosts:
+      my-service:
+        domains:
+          - my-service.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        tls:
+          certs:
+            - my-service-nonprod-dev
+
+  custom-port-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        portName: grpc
+    nginx:
+      enabled: false
+    hosts:
+      custom-port-service:
+        domains:
+          - custom-port-service.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        targetPort: grpc
+        tls:
+          certs:
+            - custom-port-service-nonprod-dev

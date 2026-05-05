@@ -632,6 +632,10 @@
                 "port": {
                   "type": "integer",
                   "default": 8000
+                },
+                "portName": {
+                  "type": "string",
+                  "description": "Override the name used for this container's port. Defaults to the container name normalized to RFC 6335 format."
                 }
               }
             }
