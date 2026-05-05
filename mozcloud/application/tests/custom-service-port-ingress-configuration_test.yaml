@@ -1,0 +1,50 @@
+---
+suite: "mozcloud: Custom service port ingress configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/custom-service-port-ingress-configuration.yaml
+templates:
+  - gateway/gateway.yaml
+  - gke/frontendconfig.yaml
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Service port respects servicePort when set and defaults to 8080 when omitted
+    asserts:
+      - contains:
+          path: spec.ports
+          count: 1
+          content:
+            name: http
+            port: 9090
+            protocol: TCP
+            targetPort: http
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: custom-port-service
+      - contains:
+          path: spec.ports
+          count: 1
+          content:
+            name: http
+            port: 8080
+            protocol: TCP
+            targetPort: http
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: default-port-service

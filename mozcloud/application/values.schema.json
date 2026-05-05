@@ -872,6 +872,11 @@
                   "type": "string",
                   "description": "Override the auto-generated Gateway resource name. Useful when migrating from a chart that used a different Gateway name."
                 },
+                "servicePort": {
+                  "type": "integer",
+                  "description": "The Kubernetes Service port exposed to the load balancer. Defaults to 8080.",
+                  "default": 8080
+                },
                 "targetPort": {
                   "anyOf": [
                     {

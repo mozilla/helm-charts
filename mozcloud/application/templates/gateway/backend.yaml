@@ -68,7 +68,7 @@ backends:
     component: {{ $workloadConfig.component }}
     api: {{ default "gateway" $hostConfig.api }}
     service:
-      port: 8080
+      port: {{ $hostConfig.servicePort }}
       targetPort: {{ include "mozcloud.portName" (default "http" $hostConfig.targetPort) }}
     {{- if eq $provider "gke" }}
     backendPolicy:

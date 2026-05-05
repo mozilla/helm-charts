@@ -154,6 +154,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.hosts.default.api | string | `"gateway"` |  |
 | workloads.default.hosts.default.domains[0] | string | `"example.com"` |  |
 | workloads.default.hosts.default.httpRoutes.createHttpRoutes | bool | `true` |  |
+| workloads.default.hosts.default.servicePort | int | `8080` |  |
 | workloads.default.hosts.default.targetPort | string | `"http"` |  |
 | workloads.default.hosts.default.tls.certs | list | `[]` |  |
 | workloads.default.hosts.default.tls.create | bool | `true` |  |
