@@ -145,6 +145,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.imagePullPolicy | string | `"Always"` |  |
 | workloads.default.containers.default.lifecycle | object | `{}` |  |
 | workloads.default.containers.default.port | int | `8000` |  |
+| workloads.default.containers.default.portName | string | `""` |  |
 | workloads.default.containers.default.resources.cpu | string | `"100m"` |  |
 | workloads.default.containers.default.resources.memory | string | `"128Mi"` |  |
 | workloads.default.containers.default.secrets | list | `[]` |  |

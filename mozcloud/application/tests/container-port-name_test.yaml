@@ -1,0 +1,57 @@
+---
+suite: "mozcloud: Container portName configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/container-port-name.yaml
+templates:
+  - gateway/backend.yaml
+  - gateway/gateway.yaml
+  - gateway/httproute.yaml
+  - gke/backend.yaml
+  - gke/gateway.yaml
+  - workload/deployment.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: portName is used as the container port name
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].ports[0].name
+          value: web
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: my-service
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].ports[0].name
+          value: grpc
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: custom-port-service
+
+  - it: targetPort respects explicit override when portName and targetPort are both set
+    asserts:
+      - contains:
+          path: spec.ports
+          count: 1
+          content:
+            name: http
+            port: 8080
+            protocol: TCP
+            targetPort: grpc
+        template: gateway/backend.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: custom-port-service

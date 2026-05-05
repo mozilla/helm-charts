@@ -117,7 +117,7 @@ Returns:
 {{- $otelContainerNames := default list .otelContainerNames -}}
 {{- $otelAutoInstrumentationEnabled := default false .otelAutoInstrumentationEnabled -}}
 {{- range $containerName, $containerConfig := $containers }}
-{{- $portName := include "mozcloud.portName" $containerName }}
+{{- $portName := include "mozcloud.portName" (dict "name" $containerName "containerConfig" $containerConfig) }}
 - name: {{ $containerName }}
   {{- $imageParams := dict "containerImage" $containerConfig.image "globalImage" $globals.image "workloadName" $name "containerName" $containerName }}
   image: {{ include "mozcloud.image" $imageParams }}

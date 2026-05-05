@@ -69,7 +69,7 @@ backends:
     api: {{ default "gateway" $hostConfig.api }}
     service:
       port: {{ $hostConfig.servicePort }}
-      targetPort: {{ include "mozcloud.portName" (default "http" $hostConfig.targetPort) }}
+      targetPort: {{ include "mozcloud.portName" (dict "name" (default "http" $hostConfig.targetPort)) }}
     {{- if eq $provider "gke" }}
     backendPolicy:
       logging:
