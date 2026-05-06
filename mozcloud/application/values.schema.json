@@ -422,7 +422,8 @@
             "type": "string",
             "enum": [
               "deployment",
-              "rollout"
+              "rollout",
+              "statefulset"
             ],
             "default": "deployment"
           },
@@ -1118,7 +1119,8 @@
                 "type": "string",
                 "enum": [
                   "Recreate",
-                  "RollingUpdate"
+                  "RollingUpdate",
+                  "OnDelete"
                 ]
               },
               {
@@ -1151,11 +1153,114 @@
             "type": "integer",
             "minimum": 1,
             "default": 30
+          },
+          "statefulSet": {
+            "type": "object",
+            "description": "Configuration specific to StatefulSet workloads.",
+            "additionalProperties": false,
+            "properties": {
+              "partition": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Partition ordinal for StatefulSet RollingUpdate strategy. Pods with ordinal >= partition are updated."
+              },
+              "podManagementPolicy": {
+                "type": "string",
+                "enum": ["OrderedReady", "Parallel"],
+                "default": "Parallel",
+                "description": "Pod management policy for StatefulSet workloads."
+              },
+              "serviceName": {
+                "type": "string",
+                "description": "Override the headless service name for a StatefulSet. Defaults to <workload-name>-headless."
+              },
+              "volumeClaimTemplates": {
+                "type": "object",
+                "description": "Volume claim templates for StatefulSet workloads, keyed by claim name. Each entry creates a PVC per pod.",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["storage"],
+                  "properties": {
+                    "accessMode": {
+                      "type": "string",
+                      "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany", "ReadWriteOncePod"]
+                    },
+                    "storageClassName": { "type": "string" },
+                    "storage": { "type": "string" }
+                  }
+                }
+              }
+            }
           }
         },
         "required": [
           "component",
           "containers"
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": { "type": { "const": "statefulset" } },
+              "required": ["type"]
+            },
+            "then": {
+              "properties": {
+                "strategy": {
+                  "type": "string",
+                  "enum": ["RollingUpdate", "OnDelete"]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": { "type": { "const": "deployment" } }
+            },
+            "then": {
+              "properties": {
+                "strategy": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "enum": ["Recreate", "RollingUpdate"]
+                    },
+                    {
+                      "type": "object",
+                      "required": ["canary"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "canary": {
+                          "type": "object",
+                          "required": ["steps"],
+                          "properties": {
+                            "steps": {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": { "type": "object" }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": { "type": { "const": "rollout" } },
+              "required": ["type"]
+            },
+            "then": {
+              "properties": {
+                "strategy": {
+                  "type": "object"
+                }
+              }
+            }
+          }
         ]
       }
     },

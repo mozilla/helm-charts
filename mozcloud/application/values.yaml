@@ -925,9 +925,13 @@ workloads:
     #
     #   deployment: Creates a standard Kubernetes Deployment (default).
     #
-    #   rollout:    Creates an Argo Rollout resource instead of a standard
-    #               Deployment. Use this when you need progressive delivery
-    #               (e.g. canary).
+    #   rollout:     Creates an Argo Rollout resource instead of a standard
+    #                Deployment. Use this when you need progressive delivery
+    #                (e.g. canary).
+    #
+    #   statefulset: Creates a Kubernetes StatefulSet with a headless Service.
+    #                Use this when you need stable network identities, stable
+    #                persistent storage, or ordered pod management.
     #
     type: deployment
 
@@ -2172,7 +2176,45 @@ workloads:
     #           pause accepts either a duration string (e.g. "30s", "5m") or an
     #           empty value ({}) to pause indefinitely until manually promoted.
     #
+    # For type: statefulset, accepted values are:
+    #
+    #   RollingUpdate: Pods are replaced one at a time in reverse ordinal order
+    #                  (default).
+    #
+    #   OnDelete:      Pods are only replaced when manually deleted.
+    #
     strategy: RollingUpdate
+
+    # Configuration specific to StatefulSet workloads. Only used when type is
+    # statefulset.
+    #
+    statefulSet:
+      # For RollingUpdate only: pods with ordinal >= partition are updated —
+      # e.g. partition: 2 updates pod-2 onward, leaving pod-0 and pod-1 on the
+      # current version.
+      partition: 0
+
+      #   Parallel:     All pods start or stop simultaneously.
+      #
+      #   OrderedReady: Pods start in sequence (pod-0, pod-1, ...) and each must
+      #                 be Ready before the next is started.
+      #
+      podManagementPolicy: Parallel
+
+      # Override the name of the headless Service. Defaults to
+      # "<workload-name>-headless".
+      serviceName: ''
+
+      # Per-pod PVCs, keyed by claim name.
+      #
+      # Example:
+      #   volumeClaimTemplates:
+      #     state:
+      #       accessMode: ReadWriteOnce
+      #       storageClassName: standard-rwo
+      #       storage: 10Gi
+      #
+      volumeClaimTemplates: {}
 
     # The number of seconds a pod should be retained after transitioning to the
     # Terminating state. This is useful if one or more containers needs to
@@ -2185,6 +2227,5 @@ workloads:
 #
 # To do list:
 #   - Add support for additional PodMonitoring definitions
-#   - Add support for StatefulSet resources
 #   - Add support for BlueGreen rollout strategy
 #   - Add support for AnalysisTemplate resources

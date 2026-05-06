@@ -28,6 +28,9 @@ spec:
     {{- if eq (default "deployment" $workloadConfig.type) "rollout" }}
     apiVersion: argoproj.io/v1alpha1
     kind: Rollout
+    {{- else if eq (default "deployment" $workloadConfig.type) "statefulset" }}
+    apiVersion: apps/v1
+    kind: StatefulSet
     {{- else }}
     apiVersion: apps/v1
     kind: Deployment

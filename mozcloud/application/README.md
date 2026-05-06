@@ -190,6 +190,10 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.podDisruptionBudget.minAvailable | string | `""` |  |
 | workloads.default.security | object | `{}` |  |
 | workloads.default.serviceAccount | string | `""` |  |
+| workloads.default.statefulSet.partition | int | `0` |  |
+| workloads.default.statefulSet.podManagementPolicy | string | `"Parallel"` |  |
+| workloads.default.statefulSet.serviceName | string | `""` |  |
+| workloads.default.statefulSet.volumeClaimTemplates | object | `{}` |  |
 | workloads.default.strategy | string | `"RollingUpdate"` |  |
 | workloads.default.tolerations | list | `[]` |  |
 | workloads.default.type | string | `"deployment"` |  |

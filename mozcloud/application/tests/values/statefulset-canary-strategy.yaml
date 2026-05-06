@@ -1,0 +1,14 @@
+---
+workloads:
+  test-service:
+    component: db
+    type: statefulset
+    strategy:
+      canary:
+        steps:
+          - setWeight: 20
+    containers:
+      app:
+        image:
+          repository: test-repo/test-db
+          tag: "1.0.0"
