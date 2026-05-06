@@ -2169,44 +2169,36 @@ workloads:
     #
     strategy: RollingUpdate
 
-    # The partition ordinal for StatefulSet RollingUpdate strategy. Only used
-    # when type is statefulset and strategy is RollingUpdate. When set, only
-    # pods with an ordinal >= partition are updated; pods with a lower ordinal
-    # are kept at their current version. Useful for staged/canary rollouts.
-    #
-    #partition: 0
-
-    # The pod management policy for StatefulSets. Only used when type is
+    # Configuration specific to StatefulSet workloads. Only used when type is
     # statefulset.
     #
-    #   Parallel:     All pods are launched or terminated simultaneously (default).
-    #
-    #   OrderedReady: Pods are created in order (0, 1, 2, ...) and each must be
-    #                 Ready before the next is started.
-    #
-    #podManagementPolicy: Parallel
+    statefulSet:
+      #   Parallel:     All pods start or stop simultaneously.
+      #
+      #   OrderedReady: Pods start in sequence (pod-0, pod-1, ...) and each must
+      #                 be Ready before the next is started.
+      #
+      podManagementPolicy: Parallel
 
-    # Override the name of the headless Service created for a StatefulSet.
-    # Defaults to "<workload-name>-headless".
-    #
-    #serviceName: my-custom-headless-svc
+      # Override the name of the headless Service. Defaults to
+      # "<workload-name>-headless".
+      serviceName: ''
 
-    # Volume claim templates for StatefulSets. Each entry creates a dedicated
-    # PersistentVolumeClaim per pod, managed by the StatefulSet controller.
-    # These are NOT the same as the persistentVolumes top-level key, which
-    # creates standalone PVCs.
-    #
-    # Each key is the volume claim name; its value is the spec.
-    #
-    # Example:
-    #
-    #   volumeClaimTemplates:
-    #     state:
-    #       accessMode: ReadWriteOnce
-    #       storageClassName: standard-rwo
-    #       storage: 10Gi
-    #
-    #volumeClaimTemplates: {}
+      # Per-pod PVCs, keyed by claim name.
+      #
+      # Example:
+      #   volumeClaimTemplates:
+      #     state:
+      #       accessMode: ReadWriteOnce
+      #       storageClassName: standard-rwo
+      #       storage: 10Gi
+      #
+      volumeClaimTemplates: {}
+
+      # For RollingUpdate only: pods with ordinal >= partition are updated —
+      # e.g. partition: 2 updates pod-2 onward, leaving pod-0 and pod-1 on the
+      # current version.
+      partition: 0
 
     # The number of seconds a pod should be retained after transitioning to the
     # Terminating state. This is useful if one or more containers needs to

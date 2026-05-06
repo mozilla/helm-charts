@@ -1145,35 +1145,42 @@
             "minimum": 1,
             "default": 30
           },
-          "partition": {
-            "type": "integer",
-            "minimum": 0,
-            "description": "Partition ordinal for StatefulSet RollingUpdate strategy. Pods with ordinal >= partition are updated."
-          },
-          "podManagementPolicy": {
-            "type": "string",
-            "enum": ["OrderedReady", "Parallel"],
-            "default": "Parallel",
-            "description": "Pod management policy for StatefulSet workloads."
-          },
-          "serviceName": {
-            "type": "string",
-            "description": "Override the headless service name for a StatefulSet. Defaults to <workload-name>-headless."
-          },
-          "volumeClaimTemplates": {
+          "statefulSet": {
             "type": "object",
-            "description": "Volume claim templates for StatefulSet workloads, keyed by claim name. Each entry creates a PVC per pod.",
-            "additionalProperties": {
-              "type": "object",
-              "additionalProperties": false,
-              "required": ["storage"],
-              "properties": {
-                "accessMode": {
-                  "type": "string",
-                  "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany", "ReadWriteOncePod"]
-                },
-                "storageClassName": { "type": "string" },
-                "storage": { "type": "string" }
+            "description": "Configuration specific to StatefulSet workloads.",
+            "additionalProperties": false,
+            "properties": {
+              "partition": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Partition ordinal for StatefulSet RollingUpdate strategy. Pods with ordinal >= partition are updated."
+              },
+              "podManagementPolicy": {
+                "type": "string",
+                "enum": ["OrderedReady", "Parallel"],
+                "default": "Parallel",
+                "description": "Pod management policy for StatefulSet workloads."
+              },
+              "serviceName": {
+                "type": "string",
+                "description": "Override the headless service name for a StatefulSet. Defaults to <workload-name>-headless."
+              },
+              "volumeClaimTemplates": {
+                "type": "object",
+                "description": "Volume claim templates for StatefulSet workloads, keyed by claim name. Each entry creates a PVC per pod.",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["storage"],
+                  "properties": {
+                    "accessMode": {
+                      "type": "string",
+                      "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany", "ReadWriteOncePod"]
+                    },
+                    "storageClassName": { "type": "string" },
+                    "storage": { "type": "string" }
+                  }
+                }
               }
             }
           }

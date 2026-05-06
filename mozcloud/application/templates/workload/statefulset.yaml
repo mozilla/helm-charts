@@ -8,6 +8,8 @@
 
 {{- range $workloadName, $workloadConfig := $workloads }}
 {{- if eq (default "deployment" $workloadConfig.type) "statefulset" }}
+{{- $statefulSetConfig := $workloadConfig.statefulSet }}
+{{- $serviceName := default (printf "%s-headless" $workloadName) $statefulSetConfig.serviceName }}
 {{- /* Format containers for headless Service port enumeration */}}
 {{- $containerFormatterParams := dict "containers" $workloadConfig.containers "type" "containers" }}
 {{- $containers := include "mozcloud.formatter.containers" $containerFormatterParams | fromYaml }}
@@ -31,17 +33,17 @@ spec:
   selector:
     matchLabels:
       {{- $labels.selectorLabels | toYaml | nindent 6 }}
-  serviceName: {{ default (printf "%s-headless" $workloadName) $workloadConfig.serviceName }}
-  podManagementPolicy: {{ default "Parallel" $workloadConfig.podManagementPolicy }}
+  serviceName: {{ $serviceName }}
+  podManagementPolicy: {{ $statefulSetConfig.podManagementPolicy }}
   updateStrategy:
     type: {{ $workloadConfig.strategy }}
-    {{- if and (eq $workloadConfig.strategy "RollingUpdate") $workloadConfig.partition }}
+    {{- if and (eq $workloadConfig.strategy "RollingUpdate") $statefulSetConfig.partition }}
     rollingUpdate:
-      partition: {{ $workloadConfig.partition }}
+      partition: {{ $statefulSetConfig.partition }}
     {{- end }}
-  {{- if $workloadConfig.volumeClaimTemplates }}
+  {{- if $statefulSetConfig.volumeClaimTemplates }}
   volumeClaimTemplates:
-    {{- range $vctName, $vctSpec := $workloadConfig.volumeClaimTemplates }}
+    {{- range $vctName, $vctSpec := $statefulSetConfig.volumeClaimTemplates }}
     - metadata:
         name: {{ $vctName }}
       spec:
@@ -66,7 +68,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ default (printf "%s-headless" $workloadName) $workloadConfig.serviceName }}
+  name: {{ $serviceName }}
   labels:
     {{- $labels.labels | toYaml | nindent 4 }}
 spec:

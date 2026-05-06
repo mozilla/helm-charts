@@ -4,12 +4,13 @@ workloads:
     component: db
     type: statefulset
     strategy: RollingUpdate
-    podManagementPolicy: Parallel
-    volumeClaimTemplates:
-      data:
-        accessMode: ReadWriteOnce
-        storageClassName: standard-rwo
-        storage: 10Gi
+    statefulSet:
+      podManagementPolicy: Parallel
+      volumeClaimTemplates:
+        data:
+          accessMode: ReadWriteOnce
+          storageClassName: standard-rwo
+          storage: 10Gi
     containers:
       app:
         image:

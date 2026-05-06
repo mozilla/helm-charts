@@ -105,7 +105,7 @@ tests:
   - it: Custom serviceName overrides both StatefulSet and headless Service
     template: workload/statefulset.yaml
     set:
-      workloads.test-service.serviceName: my-custom-svc
+      workloads.test-service.statefulSet.serviceName: my-custom-svc
     documentSelector:
       path: $[?(@.kind == "StatefulSet")].metadata.name
       value: test-service
@@ -116,7 +116,7 @@ tests:
   - it: Headless Service name matches custom serviceName
     template: workload/statefulset.yaml
     set:
-      workloads.test-service.serviceName: my-custom-svc
+      workloads.test-service.statefulSet.serviceName: my-custom-svc
     documentSelector:
       path: $[?(@.kind == "Service")].metadata.name
       value: my-custom-svc
@@ -138,7 +138,7 @@ tests:
   - it: RollingUpdate partition renders when set
     template: workload/statefulset.yaml
     set:
-      workloads.test-service.partition: 3
+      workloads.test-service.statefulSet.partition: 3
     documentSelector:
       path: $[?(@.kind == "StatefulSet")].metadata.name
       value: test-service
@@ -153,7 +153,7 @@ tests:
     template: workload/statefulset.yaml
     set:
       workloads.test-service.strategy: OnDelete
-      workloads.test-service.partition: 3
+      workloads.test-service.statefulSet.partition: 3
     documentSelector:
       path: $[?(@.kind == "StatefulSet")].metadata.name
       value: test-service
