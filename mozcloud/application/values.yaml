@@ -2189,6 +2189,11 @@ workloads:
     # statefulset.
     #
     statefulSet:
+      # For RollingUpdate only: pods with ordinal >= partition are updated —
+      # e.g. partition: 2 updates pod-2 onward, leaving pod-0 and pod-1 on the
+      # current version.
+      partition: 0
+
       #   Parallel:     All pods start or stop simultaneously.
       #
       #   OrderedReady: Pods start in sequence (pod-0, pod-1, ...) and each must
@@ -2210,11 +2215,6 @@ workloads:
       #       storage: 10Gi
       #
       volumeClaimTemplates: {}
-
-      # For RollingUpdate only: pods with ordinal >= partition are updated —
-      # e.g. partition: 2 updates pod-2 onward, leaving pod-0 and pod-1 on the
-      # current version.
-      partition: 0
 
     # The number of seconds a pod should be retained after transitioning to the
     # Terminating state. This is useful if one or more containers needs to

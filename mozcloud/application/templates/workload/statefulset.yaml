@@ -79,7 +79,7 @@ spec:
   ports:
     {{- range $containerName, $containerConfig := $containers }}
     {{- if $containerConfig.port }}
-    - name: {{ include "mozcloud.portName" $containerName }}
+    - name: {{ include "mozcloud.portName" (dict "name" $containerName "containerConfig" $containerConfig) }}
       port: {{ $containerConfig.port }}
       targetPort: {{ $containerConfig.port }}
     {{- end }}
