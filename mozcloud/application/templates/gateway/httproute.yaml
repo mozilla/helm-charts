@@ -81,7 +81,7 @@ httpRoutes:
       */}}
     rules:
       {{- $rules := (list) -}}
-      {{- $defaultBackendRef := dict "name" $workloadName "port" 8080 -}}
+      {{- $defaultBackendRef := dict "name" $workloadName "port" $hostConfig.servicePort -}}
       {{- if ($hostConfig.httpRoutes).rules }}
         {{- range $ruleConfig := $hostConfig.httpRoutes.rules }}
           {{- $rule := dict }}

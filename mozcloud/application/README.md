@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 1.10.0](https://img.shields.io/badge/Version-1.10.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 1.12.0](https://img.shields.io/badge/Version-1.12.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~1.10.0
+    version: ~1.12.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -145,6 +145,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.imagePullPolicy | string | `"Always"` |  |
 | workloads.default.containers.default.lifecycle | object | `{}` |  |
 | workloads.default.containers.default.port | int | `8000` |  |
+| workloads.default.containers.default.portName | string | `""` |  |
 | workloads.default.containers.default.resources.cpu | string | `"100m"` |  |
 | workloads.default.containers.default.resources.memory | string | `"128Mi"` |  |
 | workloads.default.containers.default.secrets | list | `[]` |  |
@@ -154,6 +155,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.hosts.default.api | string | `"gateway"` |  |
 | workloads.default.hosts.default.domains[0] | string | `"example.com"` |  |
 | workloads.default.hosts.default.httpRoutes.createHttpRoutes | bool | `true` |  |
+| workloads.default.hosts.default.servicePort | int | `8080` |  |
 | workloads.default.hosts.default.targetPort | string | `"http"` |  |
 | workloads.default.hosts.default.tls.certs | list | `[]` |  |
 | workloads.default.hosts.default.tls.create | bool | `true` |  |
