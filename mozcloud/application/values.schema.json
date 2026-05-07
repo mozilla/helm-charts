@@ -349,9 +349,44 @@
         }
       }
     },
+    "podMonitorings": {
+      "type": "object",
+      "description": "PodMonitoring resources for scraping pods that this chart does not manage (e.g. a separate Telegraf agent or third-party exporter). Keyed by name suffix: each entry renders as '{app_code}-{key}'.",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "matchLabels": {
+            "type": "object",
+            "description": "Pod selector labels. At least one key-value pair required.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "port": {
+            "description": "Port name or number to scrape. Required.",
+            "oneOf": [
+              {"type": "string"},
+              {"type": "integer"}
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "HTTP path to scrape for metrics.",
+            "default": "/metrics"
+          },
+          "interval": {
+            "type": "string",
+            "description": "Scrape interval (e.g. '30s', '1m').",
+            "default": "30s"
+          }
+        },
+        "required": ["matchLabels", "port"]
+      }
+    },
     "telegraf": {
       "type": "object",
-      "description": "Telegraf PodMonitoring configuration for tenants that have not yet migrated to the OTEL Collector.",
+      "description": "Deprecated. Use podMonitorings instead. Telegraf PodMonitoring configuration for tenants that have not yet migrated to the OTEL Collector.",
       "additionalProperties": false,
       "properties": {
         "enabled": {
@@ -481,6 +516,30 @@
                     "default": 30
                   }
                 }
+              }
+            }
+          },
+          "metrics": {
+            "type": "object",
+            "description": "Expose a metrics endpoint for Prometheus scraping. Creates a GKE PodMonitoring targeting this workload's pods.",
+            "additionalProperties": false,
+            "properties": {
+              "port": {
+                "description": "Port name or number where metrics are exposed. Optional when the workload has a single container (defaults to that container's port); required for multi-container workloads.",
+                "oneOf": [
+                  {"type": "string"},
+                  {"type": "integer"}
+                ]
+              },
+              "path": {
+                "type": "string",
+                "description": "HTTP path to scrape for metrics.",
+                "default": "/metrics"
+              },
+              "interval": {
+                "type": "string",
+                "description": "Scrape interval (e.g. '30s', '1m').",
+                "default": "30s"
               }
             }
           },

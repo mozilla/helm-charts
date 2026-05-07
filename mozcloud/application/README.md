@@ -47,6 +47,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | enabled | bool | `true` |  |
 | externalSecrets.default.enabled | bool | `true` |  |
 | persistentVolumes | object | `{}` |  |
+| podMonitorings | object | `{}` |  |
 | preview.enabled | bool | `false` |  |
 | preview.endpointCheck.activeDeadlineSeconds | int | `900` |  |
 | preview.endpointCheck.backoffLimit | int | `1` |  |
