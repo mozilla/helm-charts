@@ -3,35 +3,48 @@
 {{- $context := deepCopy . }}
 {{- $_ := set $context "component_code" "podmonitoring" }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
-{{- /* Format workloads, removing default container and merging user-defined values with defaults */}}
 {{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
 {{- $formatterParams := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
 {{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
 
 {{- if $workloads }}
-{{- /* Default PodMonitoring template for all tenants */}}
 {{- if and .Values.enabled
   (not (include "mozcloud.preview.enabled" .))
   (eq $provider "gke")
-  (dig "enabled" false (default dict .Values.telegraf))
 }}
+
+{{- /* Build podMonitorings map, starting from user-provided values */}}
+{{- $podMonitorings := default dict .Values.podMonitorings | deepCopy }}
+{{- if and (dig "enabled" false (default dict .Values.telegraf)) (gt (len $podMonitorings) 0) }}
+  {{- fail "telegraf.enabled cannot be used together with podMonitorings. Remove telegraf.enabled and configure podMonitorings.telegraf instead." }}
+{{- end }}
+{{- /* Telegraf shim: when telegraf.enabled is true and podMonitorings is empty, inject the legacy config */}}
+{{- if dig "enabled" false (default dict .Values.telegraf) }}
+  {{- $_ = set $podMonitorings "telegraf" (dict
+    "matchLabels" (dict "app.kubernetes.io/name" "telegraf")
+    "port" 8080
+  ) }}
+{{- end }}
+
+{{- range $name, $config := $podMonitorings }}
 ---
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
-  name: {{ $labelParams.app_code }}-telegraf
+  name: {{ $labelParams.app_code }}-{{ $name }}
   labels:
     {{- $params := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) }}
     {{- $labels := include "mozcloud.labels" $params | fromYaml }}
     {{- $labels.labels | toYaml | nindent 4 }}
 spec:
   endpoints:
-    - port: 8080
-      scheme: http
-      interval: 30s
-      path: /metrics
+    - port: {{ $config.port }}
+      interval: {{ default "30s" $config.interval }}
+      path: {{ default "/metrics" $config.path }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: telegraf
+      {{- toYaml $config.matchLabels | nindent 6 }}
+{{- end }}
+
 {{- end }}
 {{- end }}

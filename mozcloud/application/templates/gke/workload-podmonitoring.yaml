@@ -1,0 +1,52 @@
+{{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" }}
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $context := deepCopy . }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- $formatterParams := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+
+{{- if $workloads }}
+{{- if and .Values.enabled (not (include "mozcloud.preview.enabled" .)) (eq $provider "gke") }}
+
+{{- range $workloadName, $workloadConfig := $workloads }}
+{{- if $workloadConfig.metrics }}
+{{- $metrics := $workloadConfig.metrics }}
+{{- $port := $metrics.port }}
+{{- if not $port }}
+  {{- $realContainerNames := without (keys $workloadConfig.containers) "default" }}
+  {{- if eq (len $realContainerNames) 1 }}
+    {{- $formattedContainers := include "mozcloud.formatter.containers" (dict "containers" $workloadConfig.containers "type" "containers") | fromYaml }}
+    {{- $formattedContainer := index $formattedContainers (first $realContainerNames) }}
+    {{- if and $formattedContainer.portName (ne $formattedContainer.portName "") }}
+      {{- $port = $formattedContainer.portName }}
+    {{- else }}
+      {{- $port = $formattedContainer.port | default 8000 }}
+    {{- end }}
+  {{- else }}
+    {{- fail (printf "workloads.%s.metrics.port is required when workload has multiple containers" $workloadName) }}
+  {{- end }}
+{{- end }}
+---
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: {{ $workloadName }}
+  labels:
+    {{- $component := dict "component_code" $workloadConfig.component }}
+    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+    {{- $labels := include "mozcloud.labels" $params | fromYaml }}
+    {{- $labels.labels | toYaml | nindent 4 }}
+spec:
+  endpoints:
+    - port: {{ $port }}
+      interval: {{ default "30s" $metrics.interval }}
+      path: {{ default "/metrics" $metrics.path }}
+  selector:
+    matchLabels:
+      {{- $labels.selectorLabels | toYaml | nindent 6 }}
+{{- end }}
+{{- end }}
+
+{{- end }}
+{{- end }}
