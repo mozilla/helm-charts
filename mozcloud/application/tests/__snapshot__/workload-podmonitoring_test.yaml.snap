@@ -4,17 +4,17 @@ Configuration matches entire snapshot:
     kind: PodMonitoring
     metadata:
       labels:
-        app.kubernetes.io/component: podmonitoring
+        app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        component_code: podmonitoring
+        component_code: web
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: mozcloud-test-telegraf
+      name: test-service
     spec:
       endpoints:
         - interval: 30s
@@ -22,4 +22,6 @@ Configuration matches entire snapshot:
           port: 8080
       selector:
         matchLabels:
-          app.kubernetes.io/name: telegraf
+          app.kubernetes.io/component: web
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev

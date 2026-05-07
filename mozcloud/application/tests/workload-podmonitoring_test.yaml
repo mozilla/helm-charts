@@ -1,0 +1,105 @@
+---
+suite: "mozcloud: Workload PodMonitoring"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/workload-podmonitoring.yaml
+templates:
+  - gke/workload-podmonitoring.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    set:
+      workloads.test-service.metrics.port: 8080
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: PodMonitoring is rendered with workload name, workload selector, and default endpoint values
+    set:
+      workloads.test-service.metrics.port: 8080
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: test-service
+        documentIndex: 0
+      - equal:
+          path: kind
+          value: PodMonitoring
+        documentIndex: 0
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
+          value: mozcloud-test
+        documentIndex: 0
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: web
+        documentIndex: 0
+      - equal:
+          path: spec.endpoints[0].port
+          value: 8080
+        documentIndex: 0
+      - equal:
+          path: spec.endpoints[0].path
+          value: /metrics
+        documentIndex: 0
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 30s
+        documentIndex: 0
+
+  - it: PodMonitoring respects custom path and interval
+    set:
+      workloads.test-service.metrics.port: 8080
+      workloads.test-service.metrics.path: /custom/metrics
+      workloads.test-service.metrics.interval: 60s
+    asserts:
+      - equal:
+          path: spec.endpoints[0].path
+          value: /custom/metrics
+        documentIndex: 0
+      - equal:
+          path: spec.endpoints[0].interval
+          value: 60s
+        documentIndex: 0
+
+  - it: Port defaults to single container port when metrics.port is omitted
+    values:
+      - values/globals.yaml
+      - values/workload-podmonitoring-default-port.yaml
+    asserts:
+      - equal:
+          path: spec.endpoints[0].port
+          value: 9090
+        documentIndex: 0
+
+  - it: Port uses container portName when set and metrics.port is omitted
+    values:
+      - values/globals.yaml
+      - values/workload-podmonitoring-portname.yaml
+    asserts:
+      - equal:
+          path: spec.endpoints[0].port
+          value: prometheus
+        documentIndex: 0
+
+  - it: Fails when metrics.port is omitted and workload has multiple containers
+    values:
+      - values/globals.yaml
+      - values/workload-podmonitoring-multi-container.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "workloads.test-service.metrics.port is required"
+
+  - it: PodMonitoring is not rendered when metrics is not set
+    values:
+      - values/globals.yaml
+      - values/workload-no-metrics.yaml
+    asserts:
+      - hasDocuments:
+          count: 0

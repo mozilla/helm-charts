@@ -1,0 +1,15 @@
+---
+workloads:
+  test-service:
+    component: web
+    metrics:
+      path: /metrics
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+      sidecar:
+        image:
+          repository: test-repo/sidecar
+          tag: 1.0.0
