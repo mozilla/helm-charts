@@ -221,7 +221,7 @@ ManagedCertificate template helpers
     {{- $ingress_name := include "mozcloud-ingress-lib.config.name" $params -}}
     {{- $managed_cert := dict -}}
     {{- $name := "" -}}
-    {{- $prefix := default "mcrt" $tls.prefix -}}
+    {{- $prefix := dig "prefix" "" $tls -}}
     {{- $suffixes := list -}}
     {{- $host_tls := default (dict) $host.tls -}}
     {{- if and (eq $tls.type "ManagedCertificate") (not $tls.createCertificates) (not $host_tls.certNames) -}}

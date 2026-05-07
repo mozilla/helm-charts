@@ -1,16 +1,13 @@
 ---
 ingresses:
-  # This names the Ingress and all related components "test-ingress".
-  #
-  # The ManagedCertificate resource gets a "-N" suffix (where "N" is the
-  # instance number, eg. 0) appended to its name. For example:
-  #
-  #   "test-ingress-0"
   test-ingress:
     staticIpName: mozcloud-test-dev-ip-v4
     hosts:
       - domains:
           - test-service.dev.test-domain.com
+        tls:
+          type: ManagedCertificate
+          prefix: mcrt
         paths:
           - path: /
             backend:
