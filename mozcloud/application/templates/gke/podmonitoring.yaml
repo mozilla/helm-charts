@@ -48,11 +48,7 @@
     {{- if eq (len $realContainerNames) 1 }}
       {{- $formattedContainers := include "mozcloud.formatter.containers" (dict "containers" $workloadConfig.containers "type" "containers") | fromYaml }}
       {{- $formattedContainer := index $formattedContainers (first $realContainerNames) }}
-      {{- if and $formattedContainer.portName (ne $formattedContainer.portName "") }}
-        {{- $port = $formattedContainer.portName }}
-      {{- else }}
-        {{- $port = $formattedContainer.port | default 8000 }}
-      {{- end }}
+      {{- $port = default (default 8000 $formattedContainer.port) $formattedContainer.portName }}
     {{- else }}
       {{- fail (printf "podMonitorings.%s.port is required when referencing a workload with multiple containers" $name) }}
     {{- end }}
