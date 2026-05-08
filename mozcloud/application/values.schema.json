@@ -982,17 +982,6 @@
                       "type": "boolean",
                       "default": true
                     },
-                    "type": {
-                      "type": "string",
-                      "enum": [
-                        "certmap",
-                        "ManagedCertificate",
-                        "pre-shared",
-                        "secret",
-                        "certManager"
-                      ],
-                      "default": "certmap"
-                    },
                     "issuer": {
                       "type": "string",
                       "description": "cert-manager ClusterIssuer or Issuer name. Overrides cloud.certManager.issuer for this host."
@@ -1004,6 +993,22 @@
                         "ClusterIssuer",
                         "Issuer"
                       ]
+                    },
+                    "prefix": {
+                      "type": "string",
+                      "description": "Prefix to use for auto-generated ManagedCertificate names. Only applies when type is \"ManagedCertificate\" and certs is empty. Set to \"mcrt\" to restore the legacy prefix.",
+                      "default": ""
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "certmap",
+                        "ManagedCertificate",
+                        "pre-shared",
+                        "secret",
+                        "certManager"
+                      ],
+                      "default": "certmap"
                     }
                   }
                 },

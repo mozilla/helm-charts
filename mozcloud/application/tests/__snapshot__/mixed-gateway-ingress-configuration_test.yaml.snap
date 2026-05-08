@@ -261,7 +261,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: mcrt-ingress-service-dev-test-domain-com
+      name: ingress-service-dev-test-domain-com
     spec:
       domains:
         - ingress-service.dev.test-domain.com
@@ -272,7 +272,7 @@ Configuration matches entire snapshot:
       annotations:
         kubernetes.io/ingress.class: gce
         kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4-ingress
-        networking.gke.io/managed-certificates: mcrt-ingress-service-dev-test-domain-com
+        networking.gke.io/managed-certificates: ingress-service-dev-test-domain-com
         networking.gke.io/v1beta1.FrontendConfig: ingress-service
       labels:
         app.kubernetes.io/component: web

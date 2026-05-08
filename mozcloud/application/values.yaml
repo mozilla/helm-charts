@@ -1635,7 +1635,7 @@ workloads:
           #   pre-shared: All entries are pre-shared certificate names.
           #   ManagedCertificate: Names to use for the created
           #     ManagedCertificate resources, overriding the default
-          #     auto-generated names (which use the "mcrt-" prefix).
+          #     auto-generated names.
           #   certManager: The first entry is used as the TLS secret name.
           #
           # Certificate maps and pre-shared certificates are created
@@ -1647,6 +1647,21 @@ workloads:
           # chart. Only applicable when "type" is "ManagedCertificate" and
           # "api" is "ingress".
           create: true
+
+          # Required when type is "certManager". The name of the cert-manager
+          # ClusterIssuer or Issuer to use (e.g. "letsencrypt-prod").
+          # Overrides cloud.certManager.issuer for this host.
+          #issuer: ''
+
+          # Required when type is "certManager". "ClusterIssuer" (default) or
+          # "Issuer" for namespace-scoped issuers.
+          # Overrides cloud.certManager.issuerKind for this host.
+          #issuerKind: ClusterIssuer
+
+          # Prefix to use for auto-generated ManagedCertificate names. Only
+          # applies when "type" is "ManagedCertificate" and "certs" is empty.
+          # Set to "mcrt" to restore the legacy prefix.
+          prefix: ""
 
           # Can be "certmap", "ManagedCertificate", "pre-shared",
           # "certManager", or "secret". What you use depends on the type of
@@ -1667,16 +1682,6 @@ workloads:
           #
           # As the default API is "gateway", the default TLS type is "certmap".
           type: certmap
-
-          # Required when type is "certManager". The name of the cert-manager
-          # ClusterIssuer or Issuer to use (e.g. "letsencrypt-prod").
-          # Overrides cloud.certManager.issuer for this host.
-          #issuer: ''
-
-          # Required when type is "certManager". "ClusterIssuer" (default) or
-          # "Issuer" for namespace-scoped issuers.
-          # Overrides cloud.certManager.issuerKind for this host.
-          #issuerKind: ClusterIssuer
 
         # Optionally configure the log sample rate for the load balancer, IAP
         # details, a custom backend timeout, or a Cloud Armor security policy.

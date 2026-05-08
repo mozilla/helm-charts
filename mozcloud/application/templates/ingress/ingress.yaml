@@ -86,6 +86,9 @@ ingresses:
           {{- else if and (hasKey $hostConfig.tls "create") ($hostConfig.tls.create) (eq $type "ManagedCertificate") }}
           multipleHosts: false
           {{- end }}
+          {{- if eq $type "ManagedCertificate" }}
+          prefix: {{ default "" $hostConfig.tls.prefix | quote }}
+          {{- end }}
           {{- if eq $type "pre-shared" }}
           preSharedCerts: {{ join "," (uniq $hostConfig.tls.certs | sortAlpha) | quote }}
           {{- end }}

@@ -228,11 +228,10 @@ ingresses:
       # host.
       multipleHosts: true
 
-      # Prefix to use for ManagedCertificate names. This setting is ignored if
+      # Prefix to use for auto-generated ManagedCertificate names. Set to
+      # "mcrt" to restore the legacy prefix. This setting is ignored if
       # certificate type is cert-manager or pre-shared.
-      #
-      # Default is "mcrt". Set to empty string ("") for no prefix.
-      #prefix: mcrt
+      prefix: ""
 
       # A comma-separated string containing pre-shared certificate names. This
       # is required if certificate type is pre-shared.
