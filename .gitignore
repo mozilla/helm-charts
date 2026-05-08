@@ -12,3 +12,5 @@ gha-creds*.json
 bump-result.json
 .claude
 **/.claude
+.scratch
+**/.scratch

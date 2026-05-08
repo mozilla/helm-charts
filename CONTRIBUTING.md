@@ -41,10 +41,10 @@ The release label applies uniformly to every chart changed in the PR. When a PR 
 
 If the inferred label is wrong, apply the correct one manually from the PR sidebar before merging:
 
-- `major` — significant change warranting a major version increment; often breaking, but not necessarily
-- `minor` — new functionality, backwards compatible
-- `patch` — bug fix or non-functional change
-- `no-release` — merge without bumping or publishing (e.g. docs-only changes)
+- `major`: significant change warranting a major version increment; often breaking, but not necessarily
+- `minor`: new functionality, backwards compatible
+- `patch`: bug fix or non-functional change
+- `no-release`: merge without bumping or publishing (e.g. docs-only changes)
 
 `no-release` takes precedence over any other label. To use it, add `no-release` to the PR. The other labels follow highest-severity-wins: if both `minor` and `patch` are present, `minor` wins. To avoid confusion, remove any label you are replacing rather than adding on top of it.
 
@@ -68,11 +68,11 @@ To bump and publish charts without opening a PR (for example, to cut a hotfix or
 ## Pre-commit hooks
 
 Running `make install` sets up pre-commit hooks that run automatically on commit:
-- **ruff** — formats and lints Python/TOML files (with auto-fix)
-- **helm update dependencies** — runs `make update-dependencies` when chart files change
-- **helm lint** — lints all non-deprecated charts
-- **helm unittest** — runs `make unit-tests-affected` when chart files change
-- **helm-docs** — regenerates `README.md` files from `.gotmpl` templates
+- **ruff**: formats and lints Python/TOML files (with auto-fix)
+- **helm update dependencies**: runs `make update-dependencies` when chart files change
+- **helm lint**: lints all non-deprecated charts
+- **helm unittest**: runs `make unit-tests-affected` when chart files change
+- **helm-docs**: regenerates `README.md` files from `.gotmpl` templates
 
 If a hook fails, address the reported issue before committing. Do not skip hooks.
 
@@ -231,6 +231,23 @@ All application chart schemas in this repo target [JSON Schema draft 2020-12](ht
 
 - **`default`** values in the schema should match the defaults in `values.yaml`. If they diverge, the schema governs validation but `values.yaml` governs rendering. Keep them in sync.
 
+- **Strict typing.** Prefer single-type definitions for fields. Don't introduce new `anyOf`/`oneOf` to let a field accept multiple shapes (e.g., string OR object). Instead, add a new, separately-named field with its own strict type. Existing `anyOf`/`oneOf` usages aren't a sweep-replace target. Leave them unless the surrounding code is being refactored anyway. Exception: when the upstream Kubernetes CRD or resource genuinely accepts multiple types for a field (most commonly number-vs-string, e.g. `IntOrString` types), mirroring that ambiguity with `anyOf`/`oneOf` is acceptable. Validate against the actual CRD definition before going this route.
+
+### Keep schema and values.yaml in sync
+
+Every value referenced by a template should appear in both `values.yaml` (as a documented default) and `values.schema.json` (with a strict type definition). Letting the two files drift causes one of two problems: unrecognized keys silently pass through without validation, or valid keys are rejected with confusing errors. The schema also surfaces documentation in editor tooling (e.g. the VS Code YAML extension), so keeping it accurate and well-described benefits every team using the chart.
+
+Three checks when adding or auditing values:
+
+1. **Schema covers values.yaml.** Every key in `values.yaml` (including commented examples) has a corresponding schema entry.
+2. **Schema covers template usage.** Every value referenced from a template (`.Values.foo`, `$.Values.bar`) has a schema entry.
+3. **Schema entries are used.** Every property defined in the schema is referenced somewhere in templates. Dead schema entries should be removed.
+
+When a check fails:
+- Missing schema entry → add it with a strict type.
+- Missing values.yaml entry → add a documented default (commented or uncommented per [Default values left uncommented](#default-values-left-uncommented)).
+- Unused schema entry → remove it (or wire up the template, if the entry was added in anticipation).
+
 ### What to do when changing values
 
 | Change type | Schema action required |
@@ -283,6 +300,101 @@ Charts that use dict-based collections can designate a **protected key** per col
 All charts that use this pattern designate `default` as the protected key for each collection. A user who defines a workload named `my-service` will automatically inherit all defaults from the `default` entry without having to repeat them.
 
 Avoid naming your objects `default`, as that entry is treated as a defaults template rather than a real object (unless it is the only entry in the collection).
+
+### Sibling key ordering in values.yaml and values.schema.json
+
+At every nesting level in `values.yaml` and `values.schema.json`, sibling keys should be ordered alphabetically, with **priority keys** floated to the top of their block in this order:
+
+1. **Gates**: keys that turn the block on/off: `enabled`, `create`.
+2. **Discriminators**: keys whose value determines which other fields apply: `type`, `provider` (under `cloud`).
+3. **Merge sources**: `default` (the protected key in dict-based collections; see [Protected default keys](#protected-default-keys)).
+
+Priority keys are gates, discriminators, or merge sources — keys whose value determines whether the block is active or which other keys apply. New keys that fit one of those shapes (e.g., a future `kind`, `mode`, or `api` field that gates or discriminates) should be treated as priority keys too.
+
+When inserting a new key:
+
+- If it's a priority key, place it at the top in the order above.
+- Otherwise, slot it into the correct alphabetical position among non-priority siblings.
+- Don't silently re-sort an existing block whose neighbors are already non-alphabetical, unless that's the intentional scope of your change.
+
+This rule does not apply to ordered constructs (`enum:` arrays, ordered lists), `Chart.yaml` (Helm-prescribed order), or test fixtures.
+
+### Default values left uncommented
+
+Prefer to leave default values **uncommented** in `values.yaml`. The chart's template logic should gracefully evaluate defaults (including empty values like `""`, `{}`, `[]`) and handle boolean conditionals correctly.
+
+Uncommented defaults allow Helm to merge user-provided values with the actual default value, surfacing bugs in template logic that would otherwise be hidden by commented-out lines. They also serve as documentation and as a sanity check that the rendering pipeline handles the default case.
+
+**Exception:** values that should be **conditionally defined** based on another field's value (e.g., a field that's only meaningful when another field has a specific `type`) should remain commented out **if** uncommenting them would change the rendered template output.
+
+The test for "_is this conditional?_": uncomment the value with its default, render the chart, and compare output. If output changes, keep commented. If output is unchanged, leave uncommented.
+
+If uncommenting a default changes output but the field isn't conceptually conditional, that's a sign the template logic isn't handling the default gracefully. Fix the template, then uncomment.
+
+### Helper organization
+
+Helper templates and named templates live in shared files within a chart's `templates/` directory:
+
+- **`_helpers.tpl`**: pure Go template helpers: utility functions, name generators, and logic that doesn't produce YAML directly.
+- **`_*.yaml`** (e.g. `_pod.yaml`, `_formatter.yaml`, `_annotations.yaml`, `_labels.yaml`): named templates that produce YAML structure or rely heavily on Helm template syntax.
+
+**Single-use helpers should be inlined** in the template that uses them. Only extract a helper when it's reused across templates.
+
+#### Helper naming conventions
+
+Where a helper lives determines its prefix:
+
+| Location | Prefix | Example |
+|---|---|---|
+| `templates/_helpers.tpl` | `mozcloud.` | `mozcloud.name`, `mozcloud.fullname` |
+| `templates/<subdir>/_helpers.tpl` | `mozcloud.<subdir>.` | `mozcloud.configMap.<name>`, `mozcloud.preview.<name>` |
+| `templates/_pod.yaml` | `pod.` | `pod.container.<name>` |
+| `templates/_formatter.yaml` | `mozcloud.formatter.` | `mozcloud.formatter.workloads` |
+
+Library charts use their own root prefix (e.g. `mozcloud-gateway-lib.<name>`).
+
+#### Documenting helpers
+
+Every helper should have a JSDoc-style comment block immediately above its definition:
+
+```
+{{- /*
+Brief description of what the helper does.
+
+Params:
+  paramName (type): (required/optional) Description.
+
+Returns:
+  (type) Description of the return value.
+*/ -}}
+```
+
+If a helper takes no params or returns nothing, omit those sections rather than writing "None".
+
+#### Parameter naming
+
+Function parameters should use `config` as the standard name across helpers. Avoid uniquely named parameters like `jobConfig` or `workloadConfig`. These make helpers harder to compose and obscure the fact that the same shape is being passed around.
+
+### Reading optional values: prefer `default` over `dig`
+
+When reading an optional value from a dict, use Helm's `default` function:
+
+```
+{{- $port := default 8080 $container.port -}}
+```
+
+Use `dig` only when:
+
+1. You need to traverse a nested key chain that may have absent intermediate keys: `dig "otel" "enabled" true $config`.
+2. A falsy value (empty string, `false`, `0`) is a meaningful signal that must be honored, not coerced back to the fallback. For example, `prefix: ""` to disable a default prefix:
+
+   ```
+   {{- $prefix := dig "prefix" "pr-" $config -}}
+   ```
+
+   Here, `$config.prefix: ""` (intentionally disabling the prefix) is preserved. `default "pr-" $config.prefix` would incorrectly fall back to `"pr-"`.
+
+Avoid the `if hasKey ... then read` pattern; collapse it into a single `dig` call. `hasKey` is still appropriate when you genuinely need the boolean "was the key set?" for branching logic (rare).
 
 ---
 
