@@ -39,10 +39,10 @@
     {{- fail (printf "podMonitorings.%s.match.workload: workload '%s' not found" $name $matchWorkload) }}
   {{- end }}
   {{- $component := dict "component_code" $workloadConfig.component }}
-  {{- $wlParams := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
-  {{- $wlLabels := include "mozcloud.labels" $wlParams | fromYaml }}
-  {{- $matchLabels = $wlLabels.selectorLabels }}
-  {{- $resourceLabels = $wlLabels.labels }}
+  {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+  {{- $labels := include "mozcloud.labels" $params | fromYaml }}
+  {{- $matchLabels = $labels.selectorLabels }}
+  {{- $resourceLabels = $labels.labels }}
   {{- if not $port }}
     {{- $realContainerNames := without (keys $workloadConfig.containers) "default" }}
     {{- if eq (len $realContainerNames) 1 }}
