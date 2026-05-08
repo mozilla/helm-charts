@@ -55,6 +55,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | ingresses.default.staticIpName | string | `"mozcloud-ingress-dev-ip-v4"` |  |
 | ingresses.default.tls.createCertificates | bool | `true` |  |
 | ingresses.default.tls.multipleHosts | bool | `true` |  |
+| ingresses.default.tls.prefix | string | `""` |  |
 | ingresses.default.tls.type | string | `"ManagedCertificate"` |  |
 
 ---

@@ -54,7 +54,7 @@ tests:
           content:
             kubernetes.io/ingress.class: gce
             kubernetes.io/ingress.global-static-ip-name: mozcloud-test-dev-ip-v4
-            networking.gke.io/managed-certificates: mcrt-test-ingress-0
+            networking.gke.io/managed-certificates: test-ingress-0
             networking.gke.io/v1beta1.FrontendConfig: test-ingress
         template: ingress.yaml
         documentSelector:
@@ -79,14 +79,14 @@ tests:
         template: managedcertificate.yaml
         documentSelector:
           path: $[?(@.kind == "ManagedCertificate")].metadata.name
-          value: mcrt-test-ingress-0
+          value: test-ingress-0
       - contains:
           path: spec.domains
           content: "test-service.dev.test-domain.com"
         template: managedcertificate.yaml
         documentSelector:
           path: $[?(@.kind == "ManagedCertificate")].metadata.name
-          value: mcrt-test-ingress-0
+          value: test-ingress-0
       # Service is configured correctly
       - contains:
           path: spec.ports

@@ -159,6 +159,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.hosts.default.targetPort | string | `"http"` |  |
 | workloads.default.hosts.default.tls.certs | list | `[]` |  |
 | workloads.default.hosts.default.tls.create | bool | `true` |  |
+| workloads.default.hosts.default.tls.prefix | string | `""` |  |
 | workloads.default.hosts.default.tls.type | string | `"certmap"` |  |
 | workloads.default.hosts.default.type | string | `"external"` |  |
 | workloads.default.initContainers.default.args | list | `[]` |  |

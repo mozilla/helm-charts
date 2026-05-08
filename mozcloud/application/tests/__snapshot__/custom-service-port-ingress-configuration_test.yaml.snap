@@ -76,7 +76,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: mcrt-custom-port-service-dev-test-domain-com
+      name: custom-port-service-dev-test-domain-com
     spec:
       domains:
         - custom-port-service.dev.test-domain.com
@@ -115,7 +115,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: mcrt-default-port-service-dev-test-domain-com
+      name: default-port-service-dev-test-domain-com
     spec:
       domains:
         - default-port-service.dev.test-domain.com
@@ -126,7 +126,7 @@ Configuration matches entire snapshot:
       annotations:
         kubernetes.io/ingress.class: gce
         kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
-        networking.gke.io/managed-certificates: mcrt-custom-port-service-dev-test-domain-com
+        networking.gke.io/managed-certificates: custom-port-service-dev-test-domain-com
         networking.gke.io/v1beta1.FrontendConfig: custom-port-service
       labels:
         app.kubernetes.io/component: web
@@ -183,7 +183,7 @@ Configuration matches entire snapshot:
       annotations:
         kubernetes.io/ingress.class: gce
         kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
-        networking.gke.io/managed-certificates: mcrt-default-port-service-dev-test-domain-com
+        networking.gke.io/managed-certificates: default-port-service-dev-test-domain-com
         networking.gke.io/v1beta1.FrontendConfig: default-port-service
       labels:
         app.kubernetes.io/component: web

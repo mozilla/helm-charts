@@ -76,7 +76,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: mcrt-nginx-disabled-service-dev-test-domain-com
+      name: nginx-disabled-service-dev-test-domain-com
     spec:
       domains:
         - nginx-disabled-service.dev.test-domain.com
@@ -115,7 +115,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: mcrt-test-service-dev-test-domain-com
+      name: test-service-dev-test-domain-com
     spec:
       domains:
         - test-service.dev.test-domain.com
@@ -126,7 +126,7 @@ Configuration matches entire snapshot:
       annotations:
         kubernetes.io/ingress.class: gce
         kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
-        networking.gke.io/managed-certificates: mcrt-nginx-disabled-service-dev-test-domain-com
+        networking.gke.io/managed-certificates: nginx-disabled-service-dev-test-domain-com
         networking.gke.io/v1beta1.FrontendConfig: nginx-disabled-service
       labels:
         app.kubernetes.io/component: web
@@ -183,7 +183,7 @@ Configuration matches entire snapshot:
       annotations:
         kubernetes.io/ingress.class: gce
         kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
-        networking.gke.io/managed-certificates: mcrt-test-service-dev-test-domain-com
+        networking.gke.io/managed-certificates: test-service-dev-test-domain-com
         networking.gke.io/v1beta1.FrontendConfig: test-service
       labels:
         app.kubernetes.io/component: web
