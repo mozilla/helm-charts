@@ -3,35 +3,82 @@
 {{- $context := deepCopy . }}
 {{- $_ := set $context "component_code" "podmonitoring" }}
 {{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
-{{- /* Format workloads, removing default container and merging user-defined values with defaults */}}
 {{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
 {{- $formatterParams := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
 {{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
 
 {{- if $workloads }}
-{{- /* Default PodMonitoring template for all tenants */}}
 {{- if and .Values.enabled
   (not (include "mozcloud.preview.enabled" .))
   (eq $provider "gke")
-  (dig "enabled" false (default dict .Values.telegraf))
 }}
+
+{{- /* Build podMonitorings map, starting from user-provided values */}}
+{{- $podMonitorings := default dict .Values.podMonitorings | deepCopy }}
+{{- if and (dig "enabled" false (default dict .Values.telegraf)) (gt (len $podMonitorings) 0) }}
+  {{- fail "telegraf.enabled cannot be used together with podMonitorings. Remove telegraf.enabled and configure podMonitorings.telegraf instead." }}
+{{- end }}
+{{- /* Telegraf shim: when telegraf.enabled is true and podMonitorings is empty, inject the legacy config */}}
+{{- if dig "enabled" false (default dict .Values.telegraf) }}
+  {{- $_ = set $podMonitorings "telegraf" (dict
+    "match" (dict "labels" (dict "app.kubernetes.io/name" "telegraf"))
+    "port" 8080
+  ) }}
+{{- end }}
+
+{{- range $name, $config := $podMonitorings }}
+{{- $matchWorkload := dig "match" "workload" "" $config }}
+{{- $matchLabels := dict }}
+{{- $resourceLabels := dict }}
+{{- $port := $config.port }}
+
+{{- if $matchWorkload }}
+  {{- /* Workload reference — derive selector labels and optionally port from the named workload */}}
+  {{- $workloadConfig := index $workloads $matchWorkload }}
+  {{- if not $workloadConfig }}
+    {{- fail (printf "podMonitorings.%s.match.workload: workload '%s' not found" $name $matchWorkload) }}
+  {{- end }}
+  {{- $component := dict "component_code" $workloadConfig.component }}
+  {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+  {{- $labels := include "mozcloud.labels" $params | fromYaml }}
+  {{- $matchLabels = $labels.selectorLabels }}
+  {{- $resourceLabels = $labels.labels }}
+  {{- if not $port }}
+    {{- $realContainerNames := without (keys $workloadConfig.containers) "default" }}
+    {{- if eq (len $realContainerNames) 1 }}
+      {{- $formattedContainers := include "mozcloud.formatter.containers" (dict "containers" $workloadConfig.containers "type" "containers") | fromYaml }}
+      {{- $formattedContainer := index $formattedContainers (first $realContainerNames) }}
+      {{- $port = default (default 8000 $formattedContainer.port) $formattedContainer.portName }}
+    {{- else }}
+      {{- fail (printf "podMonitorings.%s.port is required when referencing a workload with multiple containers" $name) }}
+    {{- end }}
+  {{- end }}
+{{- else }}
+  {{- $matchLabels = dig "match" "labels" dict $config }}
+  {{- $params := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) }}
+  {{- $labels := include "mozcloud.labels" $params | fromYaml }}
+  {{- $resourceLabels = $labels.labels }}
+  {{- if not $port }}
+    {{- fail (printf "podMonitorings.%s.port is required" $name) }}
+  {{- end }}
+{{- end }}
+
 ---
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
-  name: {{ $labelParams.app_code }}-telegraf
+  name: {{ $labelParams.app_code }}-{{ $name }}
   labels:
-    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) }}
-    {{- $labels := include "mozcloud.labels" $params | fromYaml }}
-    {{- $labels.labels | toYaml | nindent 4 }}
+    {{- toYaml $resourceLabels | nindent 4 }}
 spec:
   endpoints:
-    - port: 8080
-      scheme: http
-      interval: 30s
-      path: /metrics
+    - port: {{ $port }}
+      interval: {{ default "30s" $config.interval }}
+      path: {{ default "/metrics" $config.path }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: telegraf
+      {{- toYaml $matchLabels | nindent 6 }}
+{{- end }}
+
 {{- end }}
 {{- end }}

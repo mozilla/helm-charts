@@ -1,0 +1,14 @@
+---
+podMonitorings:
+  no-port:
+    match:
+      labels:
+        app.kubernetes.io/name: something
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0

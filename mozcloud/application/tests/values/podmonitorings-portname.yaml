@@ -1,0 +1,14 @@
+---
+podMonitorings:
+  app-metrics:
+    match:
+      workload: test-service
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        portName: prometheus
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0

@@ -20,7 +20,6 @@ Configuration matches entire snapshot:
         - interval: 30s
           path: /metrics
           port: 8080
-          scheme: http
       selector:
         matchLabels:
           app.kubernetes.io/name: telegraf

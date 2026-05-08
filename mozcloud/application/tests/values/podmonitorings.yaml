@@ -1,0 +1,19 @@
+---
+podMonitorings:
+  telegraf:
+    match:
+      labels:
+        app.kubernetes.io/name: telegraf
+    port: 8080
+  app-metrics:
+    match:
+      workload: test-service
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        port: 9090
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0

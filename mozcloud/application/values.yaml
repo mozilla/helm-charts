@@ -853,9 +853,53 @@ tasks:
       # failing before Kubernetes cleans it up.
       #ttlSecondsAfterFinished:
 
-# Telegraf PodMonitoring configuration - only for tenants that have not yet
-# migrated to the OTEL Collector. When enabled, a PodMonitoring resource is
-# created to scrape Telegraf metrics.
+# PodMonitoring resources for metrics scraping. Each entry creates one
+# PodMonitoring resource named "{app_code}-{key}". Only rendered on GKE and
+# when the chart is not in preview mode.
+#
+# Each entry requires a `match` block that specifies either a workload reference
+# or an explicit label selector:
+#
+#   match.workload  — references a workload managed by this chart; selector
+#                     labels are derived automatically, and port is optional
+#                     when the workload has a single container.
+#
+#   match.labels    — explicit pod selector labels; port is required.
+#
+# Example — workload managed by this chart:
+#
+#   podMonitorings:
+#     app-metrics:
+#       match:
+#         workload: my-app
+#       path: /__metrics__
+#       interval: 60s
+#
+# Example — separate Telegraf agent:
+#
+#   podMonitorings:
+#     telegraf:
+#       match:
+#         labels:
+#           app.kubernetes.io/name: telegraf
+#       port: 8080
+#
+# Example — third-party exporter:
+#
+#   podMonitorings:
+#     fastly-exporter:
+#       match:
+#         labels:
+#           app.kubernetes.io/name: prometheus-fastly-exporter
+#       port: 9116
+#       path: /metrics
+#       interval: 60s
+podMonitorings: {}
+
+# DEPRECATED: use podMonitorings instead. Retained for backwards compatibility.
+# When enabled, a PodMonitoring resource is created that scrapes a separate
+# Telegraf agent chart running in the same namespace. Cannot be combined with
+# podMonitorings.
 telegraf:
   enabled: false
 
@@ -1141,10 +1185,6 @@ workloads:
               timeoutSeconds: 5
               successThreshold: 1
               failureThreshold: 5
-
-          # Custom PodMonitoring metrics not yet supported.
-          #metrics:
-          #  path: /metrics
 
         # The image repo, name, and tag to use for the container. The format is:
         #
@@ -2231,6 +2271,5 @@ workloads:
 # We have additional features we will want to add in the coming releases.
 #
 # To do list:
-#   - Add support for additional PodMonitoring definitions
 #   - Add support for BlueGreen rollout strategy
 #   - Add support for AnalysisTemplate resources
