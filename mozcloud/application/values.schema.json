@@ -351,20 +351,45 @@
     },
     "podMonitorings": {
       "type": "object",
-      "description": "PodMonitoring resources for scraping pods that this chart does not manage (e.g. a separate Telegraf agent or third-party exporter). Keyed by name suffix: each entry renders as '{app_code}-{key}'.",
+      "description": "PodMonitoring resources for metrics scraping. Keyed by name suffix: each entry renders as '{app_code}-{key}'.",
       "additionalProperties": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "matchLabels": {
-            "type": "object",
-            "description": "Pod selector labels. At least one key-value pair required.",
-            "additionalProperties": {
-              "type": "string"
-            }
+          "match": {
+            "description": "Pod selector. Specify exactly one of workload or labels.",
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["workload"],
+                "properties": {
+                  "workload": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Name of a workload managed by this chart. Selector labels are derived automatically; port is optional for single-container workloads."
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["labels"],
+                "properties": {
+                  "labels": {
+                    "type": "object",
+                    "description": "Explicit pod selector labels.",
+                    "minProperties": 1,
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            ]
           },
           "port": {
-            "description": "Port name or number to scrape. Required.",
+            "description": "Port name or number to scrape. Required when using match.labels; optional when using match.workload with a single-container workload.",
             "oneOf": [
               {"type": "string"},
               {"type": "integer"}
@@ -381,7 +406,22 @@
             "default": "30s"
           }
         },
-        "required": ["matchLabels", "port"]
+        "required": ["match"],
+        "oneOf": [
+          {
+            "description": "Workload reference — port is optional for single-container workloads.",
+            "properties": {
+              "match": {"required": ["workload"]}
+            }
+          },
+          {
+            "description": "Explicit selector — port is required.",
+            "required": ["port"],
+            "properties": {
+              "match": {"required": ["labels"]}
+            }
+          }
+        ]
       }
     },
     "telegraf": {
@@ -516,30 +556,6 @@
                     "default": 30
                   }
                 }
-              }
-            }
-          },
-          "metrics": {
-            "type": "object",
-            "description": "Expose a metrics endpoint for Prometheus scraping. Creates a GKE PodMonitoring targeting this workload's pods.",
-            "additionalProperties": false,
-            "properties": {
-              "port": {
-                "description": "Port name or number where metrics are exposed. Optional when the workload has a single container (defaults to that container's port); required for multi-container workloads.",
-                "oneOf": [
-                  {"type": "string"},
-                  {"type": "integer"}
-                ]
-              },
-              "path": {
-                "type": "string",
-                "description": "HTTP path to scrape for metrics.",
-                "default": "/metrics"
-              },
-              "interval": {
-                "type": "string",
-                "description": "Scrape interval (e.g. '30s', '1m').",
-                "default": "30s"
               }
             }
           },

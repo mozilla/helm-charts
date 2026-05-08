@@ -16,40 +16,100 @@ tests:
       - notFailedTemplate: {}
       - matchSnapshot: {}
 
-  - it: PodMonitoring is rendered with app_code-key name format
+  - it: match.labels renders PodMonitoring with provided selector and required port
     asserts:
       - hasDocuments:
-          count: 1
+          count: 2
       - equal:
           path: metadata.name
           value: mozcloud-test-telegraf
-        documentIndex: 0
-      - equal:
-          path: kind
-          value: PodMonitoring
-        documentIndex: 0
-
-  - it: PodMonitoring uses provided matchLabels as selector
-    asserts:
+        documentSelector:
+          path: metadata.name
+          value: mozcloud-test-telegraf
       - equal:
           path: spec.selector.matchLabels["app.kubernetes.io/name"]
           value: telegraf
-        documentIndex: 0
-
-  - it: PodMonitoring applies default path and interval to endpoints
-    asserts:
+        documentSelector:
+          path: metadata.name
+          value: mozcloud-test-telegraf
       - equal:
           path: spec.endpoints[0].port
           value: 8080
-        documentIndex: 0
+        documentSelector:
+          path: metadata.name
+          value: mozcloud-test-telegraf
       - equal:
           path: spec.endpoints[0].path
           value: /metrics
-        documentIndex: 0
+        documentSelector:
+          path: metadata.name
+          value: mozcloud-test-telegraf
       - equal:
           path: spec.endpoints[0].interval
           value: 30s
+        documentSelector:
+          path: metadata.name
+          value: mozcloud-test-telegraf
+
+  - it: match.workload derives selector labels from the referenced workload and auto-detects port
+    asserts:
+      - equal:
+          path: metadata.name
+          value: mozcloud-test-app-metrics
+        documentSelector:
+          path: metadata.name
+          value: mozcloud-test-app-metrics
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
+          value: mozcloud-test
+        documentSelector:
+          path: metadata.name
+          value: mozcloud-test-app-metrics
+      - equal:
+          path: spec.selector.matchLabels["app.kubernetes.io/component"]
+          value: web
+        documentSelector:
+          path: metadata.name
+          value: mozcloud-test-app-metrics
+      - equal:
+          path: spec.endpoints[0].port
+          value: 9090
+        documentSelector:
+          path: metadata.name
+          value: mozcloud-test-app-metrics
+
+  - it: match.workload uses container portName when port is omitted
+    values:
+      - values/globals.yaml
+      - values/podmonitorings-portname.yaml
+    asserts:
+      - equal:
+          path: spec.endpoints[0].port
+          value: prometheus
         documentIndex: 0
+
+  - it: match.workload fails when workload has multiple containers and port is omitted
+    values:
+      - values/globals.yaml
+      - values/podmonitorings-multi-container.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "port is required when referencing a workload with multiple containers"
+
+  - it: match.workload with unknown workload name fails with a helpful error
+    set:
+      podMonitorings.bad-ref.match.workload: does-not-exist
+    asserts:
+      - failedTemplate:
+          errorPattern: "workload 'does-not-exist' not found"
+
+  - it: match.labels without port fails with a helpful error
+    values:
+      - values/globals.yaml
+      - values/podmonitorings-no-port.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "missing property 'port'"
 
   - it: telegraf.enabled with podMonitorings set fails with a helpful error
     set:

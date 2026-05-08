@@ -21,29 +21,67 @@
 {{- /* Telegraf shim: when telegraf.enabled is true and podMonitorings is empty, inject the legacy config */}}
 {{- if dig "enabled" false (default dict .Values.telegraf) }}
   {{- $_ = set $podMonitorings "telegraf" (dict
-    "matchLabels" (dict "app.kubernetes.io/name" "telegraf")
+    "match" (dict "labels" (dict "app.kubernetes.io/name" "telegraf"))
     "port" 8080
   ) }}
 {{- end }}
 
 {{- range $name, $config := $podMonitorings }}
+{{- $matchWorkload := dig "match" "workload" "" $config }}
+{{- $matchLabels := dict }}
+{{- $resourceLabels := dict }}
+{{- $port := $config.port }}
+
+{{- if $matchWorkload }}
+  {{- /* Workload reference — derive selector labels and optionally port from the named workload */}}
+  {{- $workloadConfig := index $workloads $matchWorkload }}
+  {{- if not $workloadConfig }}
+    {{- fail (printf "podMonitorings.%s.match.workload: workload '%s' not found" $name $matchWorkload) }}
+  {{- end }}
+  {{- $component := dict "component_code" $workloadConfig.component }}
+  {{- $wlParams := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+  {{- $wlLabels := include "mozcloud.labels" $wlParams | fromYaml }}
+  {{- $matchLabels = $wlLabels.selectorLabels }}
+  {{- $resourceLabels = $wlLabels.labels }}
+  {{- if not $port }}
+    {{- $realContainerNames := without (keys $workloadConfig.containers) "default" }}
+    {{- if eq (len $realContainerNames) 1 }}
+      {{- $formattedContainers := include "mozcloud.formatter.containers" (dict "containers" $workloadConfig.containers "type" "containers") | fromYaml }}
+      {{- $formattedContainer := index $formattedContainers (first $realContainerNames) }}
+      {{- if and $formattedContainer.portName (ne $formattedContainer.portName "") }}
+        {{- $port = $formattedContainer.portName }}
+      {{- else }}
+        {{- $port = $formattedContainer.port | default 8000 }}
+      {{- end }}
+    {{- else }}
+      {{- fail (printf "podMonitorings.%s.port is required when referencing a workload with multiple containers" $name) }}
+    {{- end }}
+  {{- end }}
+{{- else }}
+  {{- $matchLabels = dig "match" "labels" dict $config }}
+  {{- $params := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) }}
+  {{- $labels := include "mozcloud.labels" $params | fromYaml }}
+  {{- $resourceLabels = $labels.labels }}
+  {{- if not $port }}
+    {{- fail (printf "podMonitorings.%s.port is required" $name) }}
+  {{- end }}
+{{- end }}
+
 ---
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
   name: {{ $labelParams.app_code }}-{{ $name }}
   labels:
-    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) $labelParams) }}
-    {{- $labels := include "mozcloud.labels" $params | fromYaml }}
-    {{- $labels.labels | toYaml | nindent 4 }}
+    {{- toYaml $resourceLabels | nindent 4 }}
 spec:
   endpoints:
-    - port: {{ $config.port }}
+    - port: {{ $port }}
       interval: {{ default "30s" $config.interval }}
       path: {{ default "/metrics" $config.path }}
   selector:
     matchLabels:
-      {{- toYaml $config.matchLabels | nindent 6 }}
+      {{- toYaml $matchLabels | nindent 6 }}
 {{- end }}
 
 {{- end }}

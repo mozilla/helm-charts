@@ -853,30 +853,44 @@ tasks:
       # failing before Kubernetes cleans it up.
       #ttlSecondsAfterFinished:
 
-# PodMonitoring resources for scraping pods that this chart does not manage —
-# for example, a separate Telegraf agent chart or a third-party exporter running
-# in the same namespace. Each entry creates one PodMonitoring resource named
-# "{app_code}-{key}". Only rendered on GKE and when the chart is not in preview
-# mode.
+# PodMonitoring resources for metrics scraping. Each entry creates one
+# PodMonitoring resource named "{app_code}-{key}". Only rendered on GKE and
+# when the chart is not in preview mode.
 #
-# To scrape a workload's own pods, use workloads.<name>.metrics instead.
+# Each entry requires a `match` block that specifies either a workload reference
+# or an explicit label selector:
 #
-# matchLabels is used as the pod selector.
+#   match.workload  — references a workload managed by this chart; selector
+#                     labels are derived automatically, and port is optional
+#                     when the workload has a single container.
+#
+#   match.labels    — explicit pod selector labels; port is required.
+#
+# Example — workload managed by this chart:
+#
+#   podMonitorings:
+#     app-metrics:
+#       match:
+#         workload: my-app
+#       path: /__metrics__
+#       interval: 60s
 #
 # Example — separate Telegraf agent:
 #
 #   podMonitorings:
 #     telegraf:
-#       matchLabels:
-#         app.kubernetes.io/name: telegraf
+#       match:
+#         labels:
+#           app.kubernetes.io/name: telegraf
 #       port: 8080
 #
 # Example — third-party exporter:
 #
 #   podMonitorings:
 #     fastly-exporter:
-#       matchLabels:
-#         app.kubernetes.io/name: prometheus-fastly-exporter
+#       match:
+#         labels:
+#           app.kubernetes.io/name: prometheus-fastly-exporter
 #       port: 9116
 #       path: /metrics
 #       interval: 60s
@@ -1418,19 +1432,6 @@ workloads:
         #       readOnly: true
         #
         #volumes: []
-
-    # When set, creates a GKE PodMonitoring resource that scrapes a metrics
-    # endpoint on this workload's pods. Only rendered on GKE and when the chart
-    # is not in preview mode.
-    #
-    # port is optional when the workload has a single container — it defaults to
-    # that container's portName (if set) or port. port is required for workloads
-    # with multiple containers.
-    #
-    # metrics:
-    #   port: 8080           # required for multi-container workloads
-    #   path: /metrics       # default
-    #   interval: 30s        # default
 
     # Resource overrides for the GKE-injected gcsfuse sidecar. Only takes
     # effect when this workload mounts a gcsFuseCsi volume.

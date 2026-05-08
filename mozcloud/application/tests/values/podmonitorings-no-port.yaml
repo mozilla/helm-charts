@@ -1,12 +1,14 @@
 ---
+podMonitorings:
+  no-port:
+    match:
+      labels:
+        app.kubernetes.io/name: something
 workloads:
   test-service:
     component: web
-    metrics:
-      path: /metrics
     containers:
       app:
-        port: 9090
         image:
           repository: test-repo/test-image
           tag: 1.0.0
