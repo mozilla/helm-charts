@@ -825,45 +825,11 @@
                   }
                 },
                 "backends": {
-                  "type": "array",
-                  "items": {
+                  "type": "object",
+                  "additionalProperties": {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "service": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                          "portName": {
-                            "type": "string"
-                          },
-                          "port": {
-                            "type": "number"
-                          },
-                          "targetPort": {
-                            "anyOf": [
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
-                          },
-                          "createServiceExport": {
-                            "type": "boolean"
-                          }
-                        }
-                      },
-                      "disableBackendPolicy": {
-                        "type": "boolean"
-                      },
-                      "disableHealthCheck": {
-                        "type": "boolean"
-                      },
                       "backendPolicy": {
                         "type": "object",
                         "additionalProperties": false,
@@ -886,10 +852,10 @@
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                          "path": {
+                          "host": {
                             "type": "string"
                           },
-                          "host": {
+                          "path": {
                             "type": "string"
                           },
                           "port": {
@@ -913,6 +879,47 @@
                                 "type": "string"
                               }
                             }
+                          }
+                        }
+                      },
+                      "path": {
+                        "type": "string",
+                        "description": "URL path for the Ingress path rule. Ingress only (api: ingress); for Gateway API hosts use httpRoutes.rules[].matches[].path. Defaults to '/' when the host has exactly one backend; required when the host has more than one backend."
+                      },
+                      "pathType": {
+                        "type": "string",
+                        "description": "pathType for the Ingress path rule. Ingress only (api: ingress); for Gateway API hosts use httpRoutes.rules[].matches[].path.type. Defaults to 'Prefix'.",
+                        "enum": [
+                          "Exact",
+                          "ImplementationSpecific",
+                          "Prefix"
+                        ]
+                      },
+                      "service": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "createServiceExport": {
+                            "type": "boolean"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "port": {
+                            "type": "number"
+                          },
+                          "portName": {
+                            "type": "string"
+                          },
+                          "targetPort": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
                           }
                         }
                       }
@@ -1090,6 +1097,64 @@
               },
               "required": [
                 "domains"
+              ],
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "api": {
+                        "const": "ingress"
+                      }
+                    },
+                    "required": [
+                      "api"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "backends": {
+                        "additionalProperties": {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "required": [
+                                  "backendPolicy"
+                                ]
+                              },
+                              {
+                                "required": [
+                                  "healthCheck"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "backends": {
+                        "additionalProperties": {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "required": [
+                                  "path"
+                                ]
+                              },
+                              {
+                                "required": [
+                                  "pathType"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
               ]
             }
           },

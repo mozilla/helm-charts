@@ -33,6 +33,24 @@ ingresses:
   {{- range $workloadName, $workloadConfig := $workloads }}
   {{- range $hostName, $hostConfig := default dict $workloadConfig.hosts }}
   {{- if eq $hostConfig.type "external" }}
+  {{- /* When hosts.<host>.backends is set, each dict key becomes the Service /
+     BackendConfig name and the cloud.google.com/backend-config annotation
+     reference. When backends is unset, fall back to a single default entry
+     named after the workload. */}}
+  {{- $backends := default (dict $workloadName (dict)) $hostConfig.backends }}
+  {{- /* Reject duplicate (path, pathType) tuples up front. Kubernetes does not
+     enforce uniqueness; GKE silently routes duplicates non-deterministically. */}}
+  {{- if gt (len $backends) 1 }}
+    {{- $paths := list }}
+    {{- range $name, $cfg := $backends }}
+      {{- $path := default "/" $cfg.path }}
+      {{- $pathType := default "Prefix" $cfg.pathType }}
+      {{- $paths = append $paths (printf "%s|%s" $path $pathType) }}
+    {{- end }}
+    {{- if ne (len $paths) (len (uniq $paths)) }}
+      {{- fail (printf "hosts.%s.backends contains duplicate (path, pathType) entries; each backend on a single host must have a unique path/pathType combination." $hostName) }}
+    {{- end }}
+  {{- end }}
   {{ $hostName }}:
     component: {{ $workloadConfig.component }}
     hosts:
@@ -41,11 +59,18 @@ ingresses:
           - {{ $domain | quote }}
           {{- end }}
         paths:
-          - path: /
-            pathType: Prefix
+          {{- range $backendName, $backendConfig := $backends }}
+          {{- $backendService := default dict $backendConfig.service }}
+          {{- $serviceName := default $backendName $backendService.name }}
+          {{- $port := default $hostConfig.servicePort $backendService.port }}
+          {{- $targetPort := $backendService.targetPort | default $hostConfig.targetPort | default "http" }}
+          {{- $path := default "/" $backendConfig.path }}
+          {{- $pathType := default "Prefix" $backendConfig.pathType }}
+          - path: {{ $path }}
+            pathType: {{ $pathType }}
             backend:
               config:
-                name: {{ $workloadName }}
+                name: {{ $backendName }}
                 {{- if (($hostConfig.options).iap).enabled }}
                 iap:
                   enabled: {{ $hostConfig.options.iap.enabled }}
@@ -62,10 +87,11 @@ ingresses:
                 securityPolicy: {{ $hostConfig.options.securityPolicy }}
                 {{- end }}
               service:
-                name: {{ $workloadName }}
-                port: {{ $hostConfig.servicePort }}
+                name: {{ $serviceName }}
+                port: {{ $port }}
                 protocol: TCP
-                targetPort: {{ include "mozcloud.portName" (dict "name" (default "http" $hostConfig.targetPort)) }}
+                targetPort: {{ include "mozcloud.portName" (dict "name" $targetPort) }}
+          {{- end }}
         tls:
           {{- $type := ($hostConfig.tls.type) }}
           {{- if or (not $type) (eq $type "certmap") }}

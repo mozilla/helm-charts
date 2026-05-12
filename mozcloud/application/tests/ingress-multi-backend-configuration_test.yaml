@@ -1,0 +1,88 @@
+---
+suite: "mozcloud: Ingress multi-backend configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/ingress-multi-backend-configuration.yaml
+templates:
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Each backend renders its own Service, BackendConfig, and Ingress path rule
+    asserts:
+      # Each backend produces its own Service named after the dict key
+      - exists:
+          path: metadata.name
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: api-backend
+      - exists:
+          path: metadata.name
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: ui-backend
+      # Each backend produces its own BackendConfig named after the dict key
+      - exists:
+          path: metadata.name
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: api-backend
+      - exists:
+          path: metadata.name
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: ui-backend
+      # Ingress has both path rules with the right backends and ports
+      - contains:
+          path: spec.rules[0].http.paths
+          content:
+            path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: api-backend
+                port:
+                  number: 8000
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: multi-backend-host
+      - contains:
+          path: spec.rules[0].http.paths
+          content:
+            path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ui-backend
+                port:
+                  number: 3000
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: multi-backend-host
+
+  - it: Template rejects duplicate (path, pathType) tuples across backends
+    set:
+      # Override api-backend.path so both entries resolve to (/ , Prefix)
+      workloads.my-app.hosts.multi-backend-host.backends.api-backend.path: "/"
+    template: ingress/ingress.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "duplicate \\(path, pathType\\) entries"

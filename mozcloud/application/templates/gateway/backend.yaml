@@ -4,8 +4,11 @@ mozcloud-gateway-lib library chart. For each workload host, produces backend
 entries that drive Service, BackendPolicy, and HealthCheckPolicy resource
 generation.
 
-When a host defines explicit "backends" entries, those are used as-is with
-optional backendPolicy and healthCheck overrides. When no explicit backends are
+When a host defines explicit "backends" entries (a dict keyed by backend name),
+each entry's key becomes the resource name for the Service, BackendPolicy, and
+HealthCheckPolicy. Entries may optionally set service, backendPolicy, and
+healthCheck overrides; an empty entry (`my-backend: {}`) renames the default
+resources without otherwise changing behavior. When no explicit backends are
 defined, a default backend is generated for the workload with:
   - A Service on port 8080.
   - A BackendPolicy with access logging enabled (and optional IAP, sample rate,
@@ -27,40 +30,40 @@ backends:
   {{- range $workloadName, $workloadConfig := $workloads }}
   {{- range $hostName, $hostConfig := default dict $workloadConfig.hosts }}
   {{- if $hostConfig.backends }}
-  {{- range $backend := (default list $hostConfig.backends) }}
-  {{ $backend.name }}:
+  {{- range $backendName, $backendConfig := $hostConfig.backends }}
+  {{ $backendName }}:
     component: {{ $workloadConfig.component }}
     api: {{ default "gateway" $hostConfig.api }}
-    {{- if $backend.service }}
+    {{- if $backendConfig.service }}
     service:
-      {{- $backend.service | toYaml | nindent 6 }}
+      {{- $backendConfig.service | toYaml | nindent 6 }}
     {{- end }}
-    {{- if and $backend.backendPolicy (eq $provider "gke") }}
+    {{- if and $backendConfig.backendPolicy (eq $provider "gke") }}
     backendPolicy:
       targetRef:
-        {{- if and $backend.backendPolicy.targetRef.kind (eq $backend.backendPolicy.targetRef.kind "ServiceImport" )}}
-        {{- $_ := set $backend.backendPolicy.targetRef "group" "net.gke.io" }}
+        {{- if and $backendConfig.backendPolicy.targetRef.kind (eq $backendConfig.backendPolicy.targetRef.kind "ServiceImport" )}}
+        {{- $_ := set $backendConfig.backendPolicy.targetRef "group" "net.gke.io" }}
         {{- end }}
-        group: {{ default "" $backend.backendPolicy.targetRef.group | quote }}
-        kind: {{ $backend.backendPolicy.targetRef.kind }}
-        name: {{ $backend.backendPolicy.targetRef.name }}
+        group: {{ default "" $backendConfig.backendPolicy.targetRef.group | quote }}
+        kind: {{ $backendConfig.backendPolicy.targetRef.kind }}
+        name: {{ $backendConfig.backendPolicy.targetRef.name }}
     {{- end }}
-    {{- if and $backend.healthCheck (eq $provider "gke") }}
+    {{- if and $backendConfig.healthCheck (eq $provider "gke") }}
     healthCheck:
-      path: {{ $backend.healthCheck.path }}
-      {{- if ($backend.healthCheck).port }}
-      port: {{ $backend.healthCheck.port }}
+      path: {{ $backendConfig.healthCheck.path }}
+      {{- if ($backendConfig.healthCheck).port }}
+      port: {{ $backendConfig.healthCheck.port }}
       {{- end }}
-      {{- if ($backend.healthCheck).host }}
-      host: {{ $backend.healthCheck.host }}
+      {{- if ($backendConfig.healthCheck).host }}
+      host: {{ $backendConfig.healthCheck.host }}
       {{- end }}
       targetRef:
-        {{- if and $backend.healthCheck.targetRef.kind (eq $backend.healthCheck.targetRef.kind "ServiceImport" )}}
-        {{- $_ := set $backend.healthCheck.targetRef "group" "net.gke.io" }}
+        {{- if and $backendConfig.healthCheck.targetRef.kind (eq $backendConfig.healthCheck.targetRef.kind "ServiceImport" )}}
+        {{- $_ := set $backendConfig.healthCheck.targetRef "group" "net.gke.io" }}
         {{- end }}
-        group: {{ default "" $backend.healthCheck.targetRef.group | quote }}
-        kind: {{ default "Service" $backend.healthCheck.targetRef.kind }}
-        name: {{ $backend.healthCheck.targetRef.name }}
+        group: {{ default "" $backendConfig.healthCheck.targetRef.group | quote }}
+        kind: {{ default "Service" $backendConfig.healthCheck.targetRef.kind }}
+        name: {{ $backendConfig.healthCheck.targetRef.name }}
     {{- end }}
   {{- end }}
   {{- else }}
