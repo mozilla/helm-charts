@@ -38,13 +38,22 @@ ingresses:
      reference. When backends is unset, fall back to a single default entry
      named after the workload. */}}
   {{- $backends := default (dict $workloadName (dict)) $hostConfig.backends }}
+  {{- /* Filter out backends with enabled: false so they are skipped during
+     rendering and the duplicate-path check. */}}
+  {{- $enabledBackends := dict }}
+  {{- range $name, $config := $backends }}
+    {{- if dig "enabled" true $config }}
+      {{- $_ := set $enabledBackends $name $config }}
+    {{- end }}
+  {{- end }}
+  {{- $backends = $enabledBackends }}
   {{- /* Reject duplicate (path, pathType) tuples up front. Kubernetes does not
      enforce uniqueness; GKE silently routes duplicates non-deterministically. */}}
   {{- if gt (len $backends) 1 }}
     {{- $paths := list }}
-    {{- range $name, $cfg := $backends }}
-      {{- $path := default "/" $cfg.path }}
-      {{- $pathType := default "Prefix" $cfg.pathType }}
+    {{- range $name, $config := $backends }}
+      {{- $path := default "/" $config.path }}
+      {{- $pathType := default "Prefix" $config.pathType }}
       {{- $paths = append $paths (printf "%s|%s" $path $pathType) }}
     {{- end }}
     {{- if ne (len $paths) (len (uniq $paths)) }}

@@ -1587,6 +1587,11 @@ workloads:
         #
         # Per-entry fields and which API they apply to:
         #
+        # * enabled (gateway + ingress): defaults to true. Set to false to omit
+        #   this backend from rendered output. Useful for selectively disabling
+        #   a backend in a per-environment values file without removing its
+        #   definition from the base values file.
+        #
         # * service (gateway + ingress): a Service is built for the backend.
         #   Use service.name to rename the Service independently of the
         #   BackendConfig. Use service.port and service.targetPort to override
@@ -1596,10 +1601,16 @@ workloads:
         #   ServiceExport, used for multi-cluster setups.
         #
         # * backendPolicy (gateway only, "api: gateway"): a GCPBackendPolicy
-        #   is built for the backend. Not valid under "api: ingress".
+        #   is built for the backend. Not valid under "api: ingress". Set
+        #   `backendPolicy.enabled: false` to suppress creation without
+        #   removing the block (useful for disabling an inherited policy in
+        #   a per-environment values override).
         #
         # * healthCheck (gateway only, "api: gateway"): a HealthCheckPolicy
-        #   is built for the backend. Not valid under "api: ingress".
+        #   is built for the backend. Not valid under "api: ingress". Set
+        #   `healthCheck.enabled: false` to suppress creation without
+        #   removing the block (useful for disabling an inherited health
+        #   check in a per-environment values override).
         #
         # * path (ingress only, "api: ingress"): the URL path for the Ingress
         #   path rule. Defaults to "/". Required to be unique when multiple

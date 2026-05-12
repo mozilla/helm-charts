@@ -86,3 +86,37 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "duplicate \\(path, pathType\\) entries"
+
+  - it: enabled false skips a backend from rendered output
+    set:
+      workloads.my-app.hosts.multi-backend-host.backends.api-backend.enabled: false
+    asserts:
+      # The surviving backend's Service is still rendered
+      - exists:
+          path: metadata.name
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: ui-backend
+      # The surviving backend's BackendConfig is still rendered
+      - exists:
+          path: metadata.name
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: ui-backend
+      # Single remaining path collapses the Ingress to defaultBackend form pointing at the survivor.
+      # If api-backend had also rendered we would see `spec.rules[]` instead.
+      - equal:
+          path: spec.defaultBackend.service.name
+          value: ui-backend
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: multi-backend-host
+      - notExists:
+          path: spec.rules
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: multi-backend-host

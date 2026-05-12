@@ -34,7 +34,13 @@ backends:
   {{- range $workloadName, $workloadConfig := $workloads }}
   {{- range $hostName, $hostConfig := default dict $workloadConfig.hosts }}
   {{- if $hostConfig.backends }}
-  {{- range $backendName, $backendConfig := $hostConfig.backends }}
+  {{- $enabledBackends := dict }}
+  {{- range $name, $config := $hostConfig.backends }}
+    {{- if dig "enabled" true $config }}
+      {{- $_ := set $enabledBackends $name $config }}
+    {{- end }}
+  {{- end }}
+  {{- range $backendName, $backendConfig := $enabledBackends }}
   {{ $backendName }}:
     component: {{ $workloadConfig.component }}
     api: {{ default "gateway" $hostConfig.api }}
@@ -42,7 +48,7 @@ backends:
     service:
       {{- $backendConfig.service | toYaml | nindent 6 }}
     {{- end }}
-    {{- if and $backendConfig.backendPolicy (eq $provider "gke") }}
+    {{- if and $backendConfig.backendPolicy (eq $provider "gke") (dig "enabled" true $backendConfig.backendPolicy) }}
     backendPolicy:
       {{- /* targetRef is optional. When omitted, the library auto-populates a
          targetRef referencing the resolved Service name. */}}
@@ -56,7 +62,7 @@ backends:
         name: {{ $backendConfig.backendPolicy.targetRef.name }}
       {{- end }}
     {{- end }}
-    {{- if and $backendConfig.healthCheck (eq $provider "gke") }}
+    {{- if and $backendConfig.healthCheck (eq $provider "gke") (dig "enabled" true $backendConfig.healthCheck) }}
     healthCheck:
       path: {{ default $defaultHealthCheckPath $backendConfig.healthCheck.path }}
       {{- if ($backendConfig.healthCheck).port }}

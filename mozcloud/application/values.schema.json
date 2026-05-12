@@ -830,10 +830,20 @@
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Whether to render this backend. Defaults to true. Set to false to omit the backend from rendered resources (useful for selectively disabling a backend via a per-environment values override)."
+                      },
                       "backendPolicy": {
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
+                          "enabled": {
+                            "type": "boolean",
+                            "default": true,
+                            "description": "Whether to render a GCPBackendPolicy for this backend. Defaults to true. Set to false to suppress GCPBackendPolicy creation without removing the backendPolicy block; useful for selectively disabling an inherited policy in a per-environment values override."
+                          },
                           "targetRef": {
                             "type": "object",
                             "additionalProperties": false,
@@ -852,6 +862,11 @@
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
+                          "enabled": {
+                            "type": "boolean",
+                            "default": true,
+                            "description": "Whether to render a HealthCheckPolicy for this backend. Defaults to true. Set to false to suppress HealthCheckPolicy creation without removing the healthCheck block; useful for selectively disabling an inherited health check in a per-environment values override."
+                          },
                           "host": {
                             "type": "string"
                           },
