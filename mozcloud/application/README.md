@@ -112,6 +112,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.security | object | `{}` |  |
 | tasks.jobs.default.serviceAccount | string | `""` |  |
 | tasks.jobs.default.tolerations | list | `[]` |  |
+| tasks.jobs.default.topologySpreadConstraints | list | `[]` |  |
 | tasks.jobs.default.type | string | `"preDeployment"` |  |
 | telegraf.enabled | bool | `false` |  |
 | workloads.default.affinity | object | `{}` |  |
@@ -198,6 +199,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.statefulSet.volumeClaimTemplates | object | `{}` |  |
 | workloads.default.strategy | string | `"RollingUpdate"` |  |
 | workloads.default.tolerations | list | `[]` |  |
+| workloads.default.topologySpreadConstraints | list | `[]` |  |
 | workloads.default.type | string | `"deployment"` |  |
 
 ---

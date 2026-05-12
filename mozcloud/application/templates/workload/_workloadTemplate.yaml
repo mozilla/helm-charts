@@ -233,6 +233,10 @@ template:
     tolerations:
       {{- $config.tolerations | toYaml | nindent 6 }}
     {{- end }}
+    {{- if $config.topologySpreadConstraints }}
+    topologySpreadConstraints:
+      {{- $config.topologySpreadConstraints | toYaml | nindent 6 }}
+    {{- end }}
     {{- if or $nginxEnabled (gt (keys $volumes | len) 0) }}
     volumes:
       {{- include "mozcloud.workload.volumes" (dict
