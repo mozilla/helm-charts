@@ -1,0 +1,31 @@
+---
+workloads:
+  my-app:
+    component: app
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      my-host:
+        domains:
+          - my-host.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: gateway
+        tls:
+          type: ManagedCertificate
+          create: true
+        backends:
+          # The dict key drives the HealthCheckPolicy name. service.name renames
+          # only the Service; healthCheck omits `targetRef` so the library
+          # auto-populates `targetService` from the resolved Service name.
+          divergent-backend:
+            service:
+              name: divergent-service
+              port: 8080
+              targetPort: http
+            healthCheck:
+              port: 8080
+              path: /readiness/

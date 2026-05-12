@@ -1565,9 +1565,12 @@ workloads:
         # key is the backend name. By default, the same name is reused for
         # every resource generated for that backend:
         #
-        # * Gateway API: Service (and optional ServiceExport), GCPBackendPolicy,
-        #   and HealthCheckPolicy resources are all created with the dict key
-        #   as their name.
+        # * Gateway API: Service (and optional ServiceExport),
+        #   GCPBackendPolicy, and HealthCheckPolicy resources are all created
+        #   with the dict key as their name. The Service can be renamed
+        #   independently via "service.name" under the entry, in which case
+        #   the GCPBackendPolicy and HealthCheckPolicy keep the dict-key name
+        #   but their targetRef.name follows the renamed Service.
         #
         # * Ingress: the BackendConfig is created with the dict key as its
         #   name, and the Service's "cloud.google.com/backend-config"

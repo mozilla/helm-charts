@@ -1,0 +1,55 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: divergent-service
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  2: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: divergent-backend
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            port: 8080
+            requestPath: /readiness/
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: divergent-service

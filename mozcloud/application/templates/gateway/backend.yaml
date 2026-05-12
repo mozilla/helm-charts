@@ -26,6 +26,10 @@ Returns:
 {{- define "mozcloud.gateway.backends" -}}
 {{- $workloads := .workloads -}}
 {{- $provider := index (index .Values "cloud" | default dict) "provider" | default "gke" -}}
+{{- /* Default LB health check path mirrors the chart's default container
+   readiness probe path so both probe systems agree on the same endpoint
+   unless the user overrides either. */ -}}
+{{- $defaultHealthCheckPath := .Values.workloads.default.containers.default.healthCheck.readiness.path -}}
 backends:
   {{- range $workloadName, $workloadConfig := $workloads }}
   {{- range $hostName, $hostConfig := default dict $workloadConfig.hosts }}
@@ -40,6 +44,9 @@ backends:
     {{- end }}
     {{- if and $backendConfig.backendPolicy (eq $provider "gke") }}
     backendPolicy:
+      {{- /* targetRef is optional. When omitted, the library auto-populates a
+         targetRef referencing the resolved Service name. */}}
+      {{- if $backendConfig.backendPolicy.targetRef }}
       targetRef:
         {{- if and $backendConfig.backendPolicy.targetRef.kind (eq $backendConfig.backendPolicy.targetRef.kind "ServiceImport" )}}
         {{- $_ := set $backendConfig.backendPolicy.targetRef "group" "net.gke.io" }}
@@ -47,16 +54,20 @@ backends:
         group: {{ default "" $backendConfig.backendPolicy.targetRef.group | quote }}
         kind: {{ $backendConfig.backendPolicy.targetRef.kind }}
         name: {{ $backendConfig.backendPolicy.targetRef.name }}
+      {{- end }}
     {{- end }}
     {{- if and $backendConfig.healthCheck (eq $provider "gke") }}
     healthCheck:
-      path: {{ $backendConfig.healthCheck.path }}
+      path: {{ default $defaultHealthCheckPath $backendConfig.healthCheck.path }}
       {{- if ($backendConfig.healthCheck).port }}
       port: {{ $backendConfig.healthCheck.port }}
       {{- end }}
       {{- if ($backendConfig.healthCheck).host }}
       host: {{ $backendConfig.healthCheck.host }}
       {{- end }}
+      {{- /* targetRef is optional. When omitted, the library auto-populates a
+         targetRef referencing the resolved Service name. */}}
+      {{- if $backendConfig.healthCheck.targetRef }}
       targetRef:
         {{- if and $backendConfig.healthCheck.targetRef.kind (eq $backendConfig.healthCheck.targetRef.kind "ServiceImport" )}}
         {{- $_ := set $backendConfig.healthCheck.targetRef "group" "net.gke.io" }}
@@ -64,6 +75,7 @@ backends:
         group: {{ default "" $backendConfig.healthCheck.targetRef.group | quote }}
         kind: {{ default "Service" $backendConfig.healthCheck.targetRef.kind }}
         name: {{ $backendConfig.healthCheck.targetRef.name }}
+      {{- end }}
     {{- end }}
   {{- end }}
   {{- else }}
@@ -109,9 +121,9 @@ backends:
       {{- if (($hostConfig.options).healthCheck).path }}
       path: {{ $hostConfig.options.healthCheck.path }}
       {{- else if kindIs "string" (($hostConfig).healthCheckEndpoints).loadBalancer }}
-      path: {{ default "/__lbheartbeat__" (($hostConfig).healthCheckEndpoints).loadBalancer }}
+      path: {{ default $defaultHealthCheckPath (($hostConfig).healthCheckEndpoints).loadBalancer }}
       {{- else if kindIs "map" (($hostConfig).healthCheckEndpoints).loadBalancer }}
-      path: {{ default "/__lbheartbeat__" ($hostConfig.healthCheckEndpoints.loadBalancer).path }}
+      path: {{ default $defaultHealthCheckPath ($hostConfig.healthCheckEndpoints.loadBalancer).path }}
       {{- end }}
       protocol: HTTP
     {{- end }}
