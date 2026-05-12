@@ -841,6 +841,11 @@ tasks:
       # documentation and examples.
       tolerations: []
 
+      # Optionally configure topology spread constraints. See
+      # workloads.default.topologySpreadConstraints for full documentation
+      # and examples.
+      topologySpreadConstraints: []
+
       # When Kubernetes creates Job resources, the Job controller will
       # immediately begin executing the job by creating pods. If "suspend" is
       # enabled, the job will be suspended from execution, effectively
@@ -953,6 +958,21 @@ workloads:
     #       value: my-node-pool
     #       effect: NoSchedule
     tolerations: []
+
+    # Optionally configure topology spread constraints to control how pods are
+    # distributed across failure domains such as zones or nodes. Accepts the
+    # standard Kubernetes topologySpreadConstraints structure.
+    #
+    # Example:
+    #
+    #   topologySpreadConstraints:
+    #     - maxSkew: 1
+    #       topologyKey: topology.kubernetes.io/zone
+    #       whenUnsatisfiable: ScheduleAnyway
+    #       labelSelector:
+    #         matchLabels:
+    #           app.kubernetes.io/name: my-app
+    topologySpreadConstraints: []
 
     # The specific unit within an application that performs a distinct function,
     # typically aligned to a microservice or deployable artifact.

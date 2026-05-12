@@ -493,6 +493,13 @@
               }
             }
           },
+          "topologySpreadConstraints": {
+            "type": "array",
+            "description": "Topology spread constraints for pod distribution across nodes/zones",
+            "items": {
+              "type": "object"
+            }
+          },
           "type": {
             "type": "string",
             "enum": [
@@ -1773,6 +1780,13 @@
                 "type": "integer"
               }
             }
+          }
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "description": "Topology spread constraints for pod distribution across nodes/zones",
+          "items": {
+            "type": "object"
           }
         },
         "ttlSecondsAfterFinished": {
