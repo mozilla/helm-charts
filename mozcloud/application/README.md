@@ -44,6 +44,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 |-----|------|---------|-------------|
 | cloud.provider | string | `"gke"` |  |
 | configMaps | object | `{}` |  |
+| customRoutes | object | `{}` |  |
 | enabled | bool | `true` |  |
 | externalSecrets.default.enabled | bool | `true` |  |
 | persistentVolumes | object | `{}` |  |

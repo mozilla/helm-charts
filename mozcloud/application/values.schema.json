@@ -362,7 +362,9 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["workload"],
+                "required": [
+                  "workload"
+                ],
                 "properties": {
                   "workload": {
                     "type": "string",
@@ -374,7 +376,9 @@
               {
                 "type": "object",
                 "additionalProperties": false,
-                "required": ["labels"],
+                "required": [
+                  "labels"
+                ],
                 "properties": {
                   "labels": {
                     "type": "object",
@@ -391,8 +395,12 @@
           "port": {
             "description": "Port name or number to scrape. Required when using match.labels; optional when using match.workload with a single-container workload.",
             "oneOf": [
-              {"type": "string"},
-              {"type": "integer"}
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
             ]
           },
           "path": {
@@ -406,19 +414,31 @@
             "default": "30s"
           }
         },
-        "required": ["match"],
+        "required": [
+          "match"
+        ],
         "oneOf": [
           {
-            "description": "Workload reference — port is optional for single-container workloads.",
+            "description": "Workload reference \u2014 port is optional for single-container workloads.",
             "properties": {
-              "match": {"required": ["workload"]}
+              "match": {
+                "required": [
+                  "workload"
+                ]
+              }
             }
           },
           {
-            "description": "Explicit selector — port is required.",
-            "required": ["port"],
+            "description": "Explicit selector \u2014 port is required.",
+            "required": [
+              "port"
+            ],
             "properties": {
-              "match": {"required": ["labels"]}
+              "match": {
+                "required": [
+                  "labels"
+                ]
+              }
             }
           }
         ]
@@ -1268,7 +1288,10 @@
               },
               "podManagementPolicy": {
                 "type": "string",
-                "enum": ["OrderedReady", "Parallel"],
+                "enum": [
+                  "OrderedReady",
+                  "Parallel"
+                ],
                 "default": "Parallel",
                 "description": "Pod management policy for StatefulSet workloads."
               },
@@ -1282,14 +1305,25 @@
                 "additionalProperties": {
                   "type": "object",
                   "additionalProperties": false,
-                  "required": ["storage"],
+                  "required": [
+                    "storage"
+                  ],
                   "properties": {
                     "accessMode": {
                       "type": "string",
-                      "enum": ["ReadWriteOnce", "ReadOnlyMany", "ReadWriteMany", "ReadWriteOncePod"]
+                      "enum": [
+                        "ReadWriteOnce",
+                        "ReadOnlyMany",
+                        "ReadWriteMany",
+                        "ReadWriteOncePod"
+                      ]
                     },
-                    "storageClassName": { "type": "string" },
-                    "storage": { "type": "string" }
+                    "storageClassName": {
+                      "type": "string"
+                    },
+                    "storage": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -1303,21 +1337,34 @@
         "allOf": [
           {
             "if": {
-              "properties": { "type": { "const": "statefulset" } },
-              "required": ["type"]
+              "properties": {
+                "type": {
+                  "const": "statefulset"
+                }
+              },
+              "required": [
+                "type"
+              ]
             },
             "then": {
               "properties": {
                 "strategy": {
                   "type": "string",
-                  "enum": ["RollingUpdate", "OnDelete"]
+                  "enum": [
+                    "RollingUpdate",
+                    "OnDelete"
+                  ]
                 }
               }
             }
           },
           {
             "if": {
-              "properties": { "type": { "const": "deployment" } }
+              "properties": {
+                "type": {
+                  "const": "deployment"
+                }
+              }
             },
             "then": {
               "properties": {
@@ -1325,21 +1372,30 @@
                   "oneOf": [
                     {
                       "type": "string",
-                      "enum": ["Recreate", "RollingUpdate"]
+                      "enum": [
+                        "Recreate",
+                        "RollingUpdate"
+                      ]
                     },
                     {
                       "type": "object",
-                      "required": ["canary"],
+                      "required": [
+                        "canary"
+                      ],
                       "additionalProperties": false,
                       "properties": {
                         "canary": {
                           "type": "object",
-                          "required": ["steps"],
+                          "required": [
+                            "steps"
+                          ],
                           "properties": {
                             "steps": {
                               "type": "array",
                               "minItems": 1,
-                              "items": { "type": "object" }
+                              "items": {
+                                "type": "object"
+                              }
                             }
                           }
                         }
@@ -1352,8 +1408,14 @@
           },
           {
             "if": {
-              "properties": { "type": { "const": "rollout" } },
-              "required": ["type"]
+              "properties": {
+                "type": {
+                  "const": "rollout"
+                }
+              },
+              "required": [
+                "type"
+              ]
             },
             "then": {
               "properties": {
@@ -1417,6 +1479,134 @@
                 "Issuer"
               ],
               "default": "ClusterIssuer"
+            }
+          }
+        }
+      }
+    },
+    "customRoutes": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "component": {
+            "type": "string"
+          },
+          "gatewayRefs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "name",
+                "section"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "section": {
+                  "type": "string",
+                  "enum": [
+                    "http",
+                    "https"
+                  ]
+                },
+                "namespace": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "hostnames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "httpToHttpsRedirect": {
+            "type": "boolean"
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "backendRefs": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "name",
+                      "port"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "port": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ]
+                      },
+                      "weight": {
+                        "type": "number"
+                      },
+                      "kind": {
+                        "type": "string"
+                      },
+                      "group": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "matches": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "path": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "value": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string",
+                            "default": "PathPrefix"
+                          }
+                        }
+                      },
+                      "headers": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "value": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -1637,7 +1827,13 @@
               "loggingSeverity": {
                 "type": "string",
                 "description": "Severity for gcsfuse logs. Maps to volumeAttributes.gcsfuseLoggingSeverity.",
-                "enum": ["trace", "debug", "info", "warning", "error"]
+                "enum": [
+                  "trace",
+                  "debug",
+                  "info",
+                  "warning",
+                  "error"
+                ]
               }
             },
             "required": [
@@ -1682,10 +1878,26 @@
                 "else": {
                   "not": {
                     "anyOf": [
-                      {"required": ["bucketName"]},
-                      {"required": ["mountOptions"]},
-                      {"required": ["skipCSIBucketAccessCheck"]},
-                      {"required": ["loggingSeverity"]}
+                      {
+                        "required": [
+                          "bucketName"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "mountOptions"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "skipCSIBucketAccessCheck"
+                        ]
+                      },
+                      {
+                        "required": [
+                          "loggingSeverity"
+                        ]
+                      }
                     ]
                   }
                 }

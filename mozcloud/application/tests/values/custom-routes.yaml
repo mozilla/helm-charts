@@ -1,0 +1,45 @@
+---
+workloads:
+  mlpa:
+    component: llm-proxy-data
+    containers: {}
+    hosts:
+      default:
+        domains:
+          - mlpa.example.com
+        api: gateway
+        type: external
+        servicePort: 8000
+        tls:
+          type: certmap
+          certs:
+            - mlpa-nonprod-dev
+        gatewayName: llm-proxy-redirect
+        httpRoutes:
+          createHttpRoutes: false
+
+customRoutes:
+  llm-proxy-http-redirect:
+    component: llm-proxy-data
+    gatewayRefs:
+      - name: llm-proxy-redirect
+        section: http
+    hostnames:
+      - mlpa.example.com
+      - litellm.example.com
+    httpToHttpsRedirect: true
+  litellm-https:
+    component: llm-proxy-data
+    gatewayRefs:
+      - name: llm-proxy-redirect
+        section: https
+    hostnames:
+      - litellm.example.com
+    rules:
+      - backendRefs:
+          - name: litellm
+            port: 8000
+        matches:
+          - path:
+              type: PathPrefix
+              value: /

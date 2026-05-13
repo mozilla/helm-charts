@@ -1538,6 +1538,9 @@ workloads:
         # Options for HTTPRoutes.
         #
         # * createHttpRoutes: boolean, disable building HTTPRoutes completely.
+        #   Set to false when you want full control over routing via the
+        #   top-level customRoutes key instead (e.g. a single HTTP-to-HTTPS
+        #   redirect route spanning hostnames from multiple services).
         # * rules: add a custom rules array to your workload's HTTPRoute.
         #
         httpRoutes:
@@ -2324,6 +2327,74 @@ workloads:
     #
     # Default: 30, min: 1
     #terminationGracePeriodSeconds: 30
+
+# customRoutes — top-level custom HTTPRoute definitions
+#
+# Use this to define HTTPRoutes that are not tied to a specific mozcloud
+# workload. Common use cases:
+#
+# 1. A single HTTP-to-HTTPS redirect route spanning multiple domains from
+#    different services (e.g. one route covers both "mlpa.example.com" and
+#    "litellm.example.com" rather than generating separate per-host redirects
+#    via the workload httpRoutes mechanism).
+#
+# 2. An HTTPS route pointing at a Service not managed by mozcloud workloads,
+#    such as a service provided by a dependency/subchart (e.g. litellm).
+#
+# When using customRoutes for a combined redirect, suppress the per-host
+# auto-redirect on the affected workload host by setting:
+#   hosts.<host>.httpRoutes.httpToHttpsRedirect: false
+#
+# Schema for each entry:
+#   <route-name>:
+#     component: <string>      # optional; component code for labels (default: "gateway")
+#     gatewayRefs:             # required
+#       - name: <string>       # gateway name
+#         section: http|https  # gateway section
+#         namespace: <string>  # optional; cross-namespace gateway reference
+#     hostnames:               # optional list of hostnames this route serves
+#       - <string>
+#     httpToHttpsRedirect: <bool>  # true = scheme-redirect-only rule (no backendRefs needed)
+#     rules:                   # required when httpToHttpsRedirect is false/absent
+#       - backendRefs:
+#           - name: <string>
+#             port: <number>
+#             weight: <number> # optional
+#             kind: <string>   # optional (default: Service)
+#             group: <string>  # optional
+#         matches:             # optional; defaults to path: / PathPrefix
+#           - path:
+#               type: PathPrefix
+#               value: /foo
+#             headers:
+#               - name: X-My-Header
+#                 value: expected-value
+#
+# Example — one redirect + two HTTPS routes for an mlpa + litellm setup:
+#
+#customRoutes:
+#  llm-proxy-http-redirect:
+#    component: llm-proxy-data
+#    gatewayRefs:
+#      - name: llm-proxy-redirect
+#        section: http
+#    hostnames:
+#      - mlpa.example.com
+#      - litellm.example.com
+#    httpToHttpsRedirect: true
+#  litellm-https:
+#    component: llm-proxy-data
+#    gatewayRefs:
+#      - name: llm-proxy-redirect
+#        section: https
+#    hostnames:
+#      - litellm.example.com
+#    rules:
+#      - backendRefs:
+#          - name: litellm
+#            port: 8000
+
+customRoutes: {}
 
 # We have additional features we will want to add in the coming releases.
 #

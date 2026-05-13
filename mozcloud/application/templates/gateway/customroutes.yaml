@@ -1,0 +1,134 @@
+{{- /*
+Renders custom HTTPRoute resources from the top-level `customRoutes` values key.
+
+Custom routes are not tied to a specific workload and can reference any
+Kubernetes Service as a backend, including services provided by dependency
+charts. This is useful for:
+
+  - A single HTTP-to-HTTPS redirect HTTPRoute that spans hostnames from
+    multiple services (e.g. mlpa + litellm sharing one redirect route).
+  - An HTTPS backend route pointing at a service not managed by mozcloud
+    workloads (e.g. a litellm subchart service).
+
+Each custom route entry supports:
+
+  httpToHttpsRedirect (bool): when true, renders a scheme-redirect-only rule
+    (no backendRefs). Use this to create a single redirect route spanning
+    multiple hostnames from different services without generating separate
+    per-host redirect routes via the workload httpRoutes mechanism.
+
+  rules (list): when httpToHttpsRedirect is false/absent, each rule may
+    contain backendRefs (pointing at any Service) and optional matches.
+
+Example values:
+
+  customRoutes:
+    llm-proxy-redirect:
+      component: llm-proxy-data
+      gatewayRefs:
+        - name: llm-proxy-redirect
+          section: http
+      hostnames:
+        - mlpa.example.com
+        - litellm.example.com
+      httpToHttpsRedirect: true
+    litellm-https:
+      component: llm-proxy-data
+      gatewayRefs:
+        - name: llm-proxy-redirect
+          section: https
+      hostnames:
+        - litellm.example.com
+      rules:
+        - backendRefs:
+            - name: litellm
+              port: 8000
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
+*/ -}}
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $globalLabelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- range $routeName, $routeConfig := .Values.customRoutes }}
+{{- if $routeConfig }}
+{{- $labelCtx := mergeOverwrite ($ | deepCopy) ($globalLabelParams | deepCopy) }}
+{{- $_ := set $labelCtx "component_code" (default "gateway" $routeConfig.component) }}
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: {{ $routeName }}
+  labels:
+    {{- include "mozcloud-gateway-lib.labels" $labelCtx | nindent 4 }}
+spec:
+  parentRefs:
+    {{- range $gatewayRef := $routeConfig.gatewayRefs }}
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: {{ $gatewayRef.name }}
+      {{- if $gatewayRef.namespace }}
+      namespace: {{ $gatewayRef.namespace }}
+      {{- end }}
+      sectionName: {{ $gatewayRef.section }}
+    {{- end }}
+  {{- if $routeConfig.hostnames }}
+  hostnames:
+    {{- range $hostname := $routeConfig.hostnames }}
+    - {{ $hostname | quote }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- if $routeConfig.httpToHttpsRedirect }}
+    - filters:
+      - type: RequestRedirect
+        requestRedirect:
+          scheme: https
+          statusCode: 302
+      matches:
+        - path:
+            type: PathPrefix
+            value: /
+    {{- else }}
+    {{- range $rule := $routeConfig.rules }}
+    - backendRefs:
+        {{- range $backendRef := $rule.backendRefs }}
+        - group: {{ default "" $backendRef.group | quote }}
+          kind: {{ default "Service" $backendRef.kind }}
+          name: {{ $backendRef.name }}
+          port: {{ $backendRef.port }}
+          weight: {{ default 1 $backendRef.weight }}
+        {{- end }}
+      matches:
+        {{- if $rule.matches }}
+        {{- range $match := $rule.matches }}
+        {{- if and $match.path $match.headers }}
+        - path:
+            type: {{ $match.path.type }}
+            value: {{ $match.path.value }}
+          headers:
+            {{- range $header := $match.headers }}
+            - name: {{ $header.name }}
+              value: {{ $header.value }}
+            {{- end }}
+        {{- else if $match.path }}
+        - path:
+            type: {{ $match.path.type }}
+            value: {{ $match.path.value }}
+        {{- else if $match.headers }}
+        - headers:
+            {{- range $header := $match.headers }}
+            - name: {{ $header.name }}
+              value: {{ $header.value }}
+            {{- end }}
+        {{- end }}
+        {{- end }}
+        {{- else }}
+        - path:
+            type: PathPrefix
+            value: /
+        {{- end }}
+    {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}

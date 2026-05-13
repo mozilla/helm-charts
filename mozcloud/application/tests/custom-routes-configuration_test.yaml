@@ -1,0 +1,95 @@
+---
+suite: "mozcloud: Custom routes configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/custom-routes.yaml
+templates:
+  - gateway/httproute.yaml
+  - gateway/customroutes.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Combined HTTP-to-HTTPS redirect HTTPRoute covers both hostnames
+    template: gateway/customroutes.yaml
+    asserts:
+      - contains:
+          path: spec.parentRefs
+          count: 1
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: llm-proxy-redirect
+            sectionName: http
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: llm-proxy-http-redirect
+      - contains:
+          path: spec.hostnames
+          content: "mlpa.example.com"
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: llm-proxy-http-redirect
+      - contains:
+          path: spec.hostnames
+          content: "litellm.example.com"
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: llm-proxy-http-redirect
+      - contains:
+          path: spec.rules[0].filters
+          count: 1
+          content:
+            type: RequestRedirect
+            requestRedirect:
+              scheme: https
+              statusCode: 302
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: llm-proxy-http-redirect
+
+  - it: Custom backend HTTPRoute points at external service
+    template: gateway/customroutes.yaml
+    asserts:
+      - contains:
+          path: spec.parentRefs
+          count: 1
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: llm-proxy-redirect
+            sectionName: https
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: litellm-https
+      - contains:
+          path: spec.hostnames
+          content: "litellm.example.com"
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: litellm-https
+      - contains:
+          path: spec.rules[0].backendRefs
+          count: 1
+          content:
+            group: ""
+            kind: Service
+            name: litellm
+            port: 8000
+            weight: 1
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: litellm-https
+
+  - it: createHttpRoutes false suppresses all auto-generated routes for that host
+    template: gateway/httproute.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
