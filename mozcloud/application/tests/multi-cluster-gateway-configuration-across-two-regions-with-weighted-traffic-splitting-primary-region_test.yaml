@@ -290,3 +290,25 @@ tests:
         documentSelector:
           path: $[?(@.kind == "Gateway")].metadata.name
           value: mozcloud-test
+
+  - it: Disabling backendPolicy and healthCheck suppresses policy creation for a single backend
+    set:
+      workloads.mozcloud-test.hosts.mozcloud-test.backends.mozcloud-test-us-west1.backendPolicy.enabled: false
+      workloads.mozcloud-test.hosts.mozcloud-test.backends.mozcloud-test-us-west1.healthCheck.enabled: false
+    template: gke/backend.yaml
+    asserts:
+      # The disabled backend's policies are gone; europe-west1 still renders.
+      # us-west1 documents not existing surfaces here as the europe-west1 selectors succeeding
+      # while the structure of the file (4 docs total before) shrinks to 2.
+      - exists:
+          path: metadata.name
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+          value: mozcloud-test-europe-west1
+      - exists:
+          path: metadata.name
+        documentSelector:
+          path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
+          value: mozcloud-test-europe-west1
+      - hasDocuments:
+          count: 2

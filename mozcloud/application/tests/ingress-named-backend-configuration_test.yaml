@@ -1,0 +1,97 @@
+---
+suite: "mozcloud: Ingress named backend configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/ingress-named-backend-configuration.yaml
+templates:
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Backend dict key drives all resource names by default; service.name diverges only the Service
+    asserts:
+      # === same-name-host: dict key drives Service, BackendConfig, and annotation ===
+      - exists:
+          path: metadata.name
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: same-name-backend
+      - equal:
+          path: metadata.annotations["cloud.google.com/backend-config"]
+          value: '{"default": "same-name-backend"}'
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: same-name-backend
+      - exists:
+          path: metadata.name
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: same-name-backend
+      - equal:
+          path: spec.defaultBackend.service.name
+          value: same-name-backend
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: same-name-host
+
+      # === divergent-host: service.name overrides only the Service ===
+      - equal:
+          path: spec.ports[0].port
+          value: 9000
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: divergent-service
+      - exists:
+          path: metadata.name
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: divergent-backend
+      - equal:
+          path: metadata.annotations["cloud.google.com/backend-config"]
+          value: '{"default": "divergent-backend"}'
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: divergent-service
+      - equal:
+          path: spec.defaultBackend.service.name
+          value: divergent-service
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: divergent-host
+      - equal:
+          path: spec.defaultBackend.service.port.number
+          value: 9000
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Ingress")].metadata.name
+          value: divergent-host
+
+  - it: Schema rejects backendPolicy on a backend under an ingress host
+    set:
+      workloads.my-app.hosts.same-name-host.backends.same-name-backend.backendPolicy:
+        targetRef:
+          kind: Service
+          name: same-name-backend
+    asserts:
+      - failedTemplate:
+          errorPattern: "backends/same-name-backend.*'not' failed"

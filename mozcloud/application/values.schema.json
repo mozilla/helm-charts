@@ -825,49 +825,25 @@
                   }
                 },
                 "backends": {
-                  "type": "array",
-                  "items": {
+                  "type": "object",
+                  "additionalProperties": {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
-                      "name": {
-                        "type": "string"
-                      },
-                      "service": {
-                        "type": "object",
-                        "additionalProperties": false,
-                        "properties": {
-                          "portName": {
-                            "type": "string"
-                          },
-                          "port": {
-                            "type": "number"
-                          },
-                          "targetPort": {
-                            "anyOf": [
-                              {
-                                "type": "number"
-                              },
-                              {
-                                "type": "string"
-                              }
-                            ]
-                          },
-                          "createServiceExport": {
-                            "type": "boolean"
-                          }
-                        }
-                      },
-                      "disableBackendPolicy": {
-                        "type": "boolean"
-                      },
-                      "disableHealthCheck": {
-                        "type": "boolean"
+                      "enabled": {
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Whether to render this backend. Defaults to true. Set to false to omit the backend from rendered resources (useful for selectively disabling a backend via a per-environment values override)."
                       },
                       "backendPolicy": {
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
+                          "enabled": {
+                            "type": "boolean",
+                            "default": true,
+                            "description": "Whether to render a GCPBackendPolicy for this backend. Defaults to true. Set to false to suppress GCPBackendPolicy creation without removing the backendPolicy block; useful for selectively disabling an inherited policy in a per-environment values override."
+                          },
                           "targetRef": {
                             "type": "object",
                             "additionalProperties": false,
@@ -886,10 +862,15 @@
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
-                          "path": {
-                            "type": "string"
+                          "enabled": {
+                            "type": "boolean",
+                            "default": true,
+                            "description": "Whether to render a HealthCheckPolicy for this backend. Defaults to true. Set to false to suppress HealthCheckPolicy creation without removing the healthCheck block; useful for selectively disabling an inherited health check in a per-environment values override."
                           },
                           "host": {
+                            "type": "string"
+                          },
+                          "path": {
                             "type": "string"
                           },
                           "port": {
@@ -913,6 +894,47 @@
                                 "type": "string"
                               }
                             }
+                          }
+                        }
+                      },
+                      "path": {
+                        "type": "string",
+                        "description": "URL path for the Ingress path rule. Ingress only (api: ingress); for Gateway API hosts use httpRoutes.rules[].matches[].path. Defaults to '/' when the host has exactly one backend; required when the host has more than one backend."
+                      },
+                      "pathType": {
+                        "type": "string",
+                        "description": "pathType for the Ingress path rule. Ingress only (api: ingress); for Gateway API hosts use httpRoutes.rules[].matches[].path.type. Defaults to 'Prefix'.",
+                        "enum": [
+                          "Exact",
+                          "ImplementationSpecific",
+                          "Prefix"
+                        ]
+                      },
+                      "service": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                          "createServiceExport": {
+                            "type": "boolean"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "port": {
+                            "type": "number"
+                          },
+                          "portName": {
+                            "type": "string"
+                          },
+                          "targetPort": {
+                            "anyOf": [
+                              {
+                                "type": "number"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
                           }
                         }
                       }
@@ -1090,6 +1112,64 @@
               },
               "required": [
                 "domains"
+              ],
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "api": {
+                        "const": "ingress"
+                      }
+                    },
+                    "required": [
+                      "api"
+                    ]
+                  },
+                  "then": {
+                    "properties": {
+                      "backends": {
+                        "additionalProperties": {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "required": [
+                                  "backendPolicy"
+                                ]
+                              },
+                              {
+                                "required": [
+                                  "healthCheck"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "else": {
+                    "properties": {
+                      "backends": {
+                        "additionalProperties": {
+                          "not": {
+                            "anyOf": [
+                              {
+                                "required": [
+                                  "path"
+                                ]
+                              },
+                              {
+                                "required": [
+                                  "pathType"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
               ]
             }
           },

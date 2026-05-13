@@ -10,7 +10,6 @@ chart:
   version: 1.0.0
 values:
   - values/globals.yaml
-  - values/multi-cluster-gateway-configuration-across-two-regions-with-weighted-traffic-splitting-primary-region.yaml
   - values/multi-cluster-gateway-configuration-across-two-regions-with-weighted-traffic-splitting-additional-region.yaml
 templates:
   - gateway/backend.yaml

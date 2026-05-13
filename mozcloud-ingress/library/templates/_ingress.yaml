@@ -82,7 +82,7 @@ spec:
       {{- if $name_override }}
       {{- $_ := set $params "nameOverride" $name_override }}
       {{- end }}
-      name: {{ include "mozcloud-ingress-lib.config.backend.name" $params }}
+      name: {{ include "mozcloud-ingress-lib.config.service.name" $params }}
       port:
         number: {{ $backend_service.port }}
   {{- end }}
@@ -105,7 +105,7 @@ spec:
                   {{- if $name_override }}
                   {{- $_ := set $params "nameOverride" $name_override }}
                   {{- end }}
-                  name: {{ include "mozcloud-ingress-lib.config.backend.name" $params }}
+                  name: {{ include "mozcloud-ingress-lib.config.service.name" $params }}
                   port:
                     number: {{ $backend_service.port }}
             {{- end }}

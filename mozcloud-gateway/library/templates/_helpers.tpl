@@ -100,18 +100,23 @@ BackendPolicy template helpers
   {{- if or $backend.backendPolicy $backend_policy }}
   {{- $backend_policy_config := dict -}}
   {{- /* Merge service backend policy, default backend policy, and library defaults */ -}}
-  {{- $default_policy := mergeOverwrite ($defaults | deepCopy) $backend_policy -}}
+  {{- $default_policy := mergeOverwrite (deepCopy $defaults) $backend_policy -}}
   {{- $service_policy := default (dict) $backend.backendPolicy -}}
   {{- $merged_policy := mergeOverwrite $default_policy $service_policy -}}
   {{- if and (($merged_policy).sessionAffinity).type (ne (($merged_policy).sessionAffinity).type "GENERATED_COOKIE") -}}
     {{- $_ := unset $merged_policy.sessionAffinity "cookieTtlSec" -}}
   {{- end -}}
   {{- $_ := set $backend_policy_config "config" $merged_policy -}}
+  {{- /* Policy keeps the backend dict-key name; targetService points at the
+     resolved Service name so the targetRef stays correct when the Service is
+     renamed via $backend.service.name. */ -}}
+  {{- $service_name := default $name ($backend.service).name -}}
   {{- if $name_override -}}
     {{- $name = $name_override -}}
+    {{- $service_name = $name_override -}}
   {{- end -}}
   {{- $_ = set $backend_policy_config "name" $name -}}
-  {{- $_ = set $backend_policy_config "targetService" $name -}}
+  {{- $_ = set $backend_policy_config "targetService" $service_name -}}
   {{- /* Generate labels */ -}}
   {{- $label_params := dict "labels" (default (dict) $backend.labels) -}}
   {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
@@ -218,17 +223,21 @@ HealthCheckPolicy template helpers
   {{- $health_check_policy_config := dict -}}
   {{- /* Configure health check spec */ -}}
   {{- $backend_health_check_policy := default (dict) $backend.healthCheck -}}
-  {{- $config := mergeOverwrite ($defaults | deepCopy) $backend_health_check_policy -}}
+  {{- $config := mergeOverwrite (deepCopy $defaults) $backend_health_check_policy -}}
   {{- $_ := set $config "protocol" (upper $config.protocol) -}}
   {{- $protocol_property := include "mozcloud-gateway-lib.defaults.healthCheckPolicy.protocolProperty" . | fromYaml -}}
   {{- $_ = set $config "protocolProperty" (index $protocol_property $config.protocol) -}}
   {{- $_ = set $health_check_policy_config "config" $config -}}
-  {{- /* Use name helper function to populate name and targetService using rules hierarchy */ -}}
+  {{- /* Policy keeps the backend dict-key name; targetService points at the
+     resolved Service name so the targetRef stays correct when the Service is
+     renamed via $backend.service.name. */ -}}
+  {{- $service_name := default $name ($backend.service).name -}}
   {{- if $name_override -}}
     {{- $name = $name_override -}}
+    {{- $service_name = $name_override -}}
   {{- end -}}
   {{- $_ = set $health_check_policy_config "name" $name -}}
-  {{- $_ = set $health_check_policy_config "targetService" $name -}}
+  {{- $_ = set $health_check_policy_config "targetService" $service_name -}}
   {{- /* Generate labels */ -}}
   {{- $label_params := dict "labels" (default (dict) $backend.labels) -}}
   {{- $labels := include "mozcloud-gateway-lib.labels" (mergeOverwrite ($ | deepCopy) $label_params) | fromYaml -}}
@@ -315,18 +324,20 @@ Service template helpers
   {{- if $backend.service }}
   {{- $defaults := include "mozcloud-gateway-lib.defaults.service.config" . | fromYaml -}}
   {{- $service_config := dict -}}
-  {{- $backend_service := $backend.service | deepCopy -}}
+  {{- $backend_service := deepCopy $backend.service -}}
   {{- /* Only create the service if "create" is not "false" */ -}}
   {{- $create_service := (include "mozcloud-gateway-lib.defaults.service.config" . | fromYaml).create -}}
   {{- if hasKey $backend_service "create" -}}
     {{- $create_service = $backend_service.create -}}
   {{- end -}}
   {{- $_ := set $service_config "create" $create_service -}}
-  {{- /* Use name helper function to populate name using rules hierarchy */ -}}
+  {{- /* Resolve the Service resource name: prefer service.name, fall back to
+     the backend dict key. nameOverride wins over both. */ -}}
+  {{- $service_name := default $name $backend_service.name -}}
   {{- if $name_override -}}
-    {{- $name := $name_override -}}
+    {{- $service_name = $name_override -}}
   {{- end -}}
-  {{- $_ = set $service_config "fullnameOverride" $name -}}
+  {{- $_ = set $service_config "fullnameOverride" $service_name -}}
   {{- /* Include annotations, if specified */ -}}
   {{- if $backend_service.annotations -}}
     {{- $_ := set $service_config "annotations" $backend_service.annotations -}}

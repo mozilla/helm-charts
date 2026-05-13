@@ -1,0 +1,41 @@
+---
+workloads:
+  my-app:
+    component: app
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      # Backend, Service, BackendConfig, and the cloud.google.com/backend-config
+      # annotation all share the dict-key name (`same-name-backend`).
+      same-name-host:
+        domains:
+          - same-name.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: ingress
+        tls:
+          type: ManagedCertificate
+          create: true
+        backends:
+          same-name-backend: {}
+      # Service uses a custom name (`divergent-service`) on a non-default port
+      # while the BackendConfig and the cloud.google.com/backend-config
+      # annotation still use the dict-key name (`divergent-backend`).
+      divergent-host:
+        domains:
+          - divergent.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: ingress
+        tls:
+          type: ManagedCertificate
+          create: true
+        backends:
+          divergent-backend:
+            service:
+              name: divergent-service
+              port: 9000
+              targetPort: http

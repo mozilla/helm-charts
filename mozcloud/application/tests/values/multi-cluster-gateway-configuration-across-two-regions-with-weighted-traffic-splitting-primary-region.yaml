@@ -19,7 +19,7 @@ workloads:
           certs:
             - mozcloud-test-nonprod-dev
         backends:
-          - name: mozcloud-test-us-west1
+          mozcloud-test-us-west1:
             service:
               portName: http
               port: 8080
@@ -34,7 +34,7 @@ workloads:
               targetRef:
                 kind: ServiceImport
                 name: mozcloud-test-us-west1
-          - name: mozcloud-test-europe-west1
+          mozcloud-test-europe-west1:
             backendPolicy:
               targetRef:
                 kind: ServiceImport

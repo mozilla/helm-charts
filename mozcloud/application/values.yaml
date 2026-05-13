@@ -1561,35 +1561,79 @@ workloads:
         #              value: bar
         #
 
-        # Use this array to specify custom backends for your Gateway API-based
-        # workloads.
+        # Use this dictionary to specify custom backends for this host. Each
+        # key is the backend name. By default, the same name is reused for
+        # every resource generated for that backend:
         #
-        # Enabling this array will not render the default backend anymore. Using
-        # this with Ingress will not have any effect.
+        # * Gateway API: Service (and optional ServiceExport),
+        #   GCPBackendPolicy, and HealthCheckPolicy resources are all created
+        #   with the dict key as their name. The Service can be renamed
+        #   independently via "service.name" under the entry, in which case
+        #   the GCPBackendPolicy and HealthCheckPolicy keep the dict-key name
+        #   but their targetRef.name follows the renamed Service.
         #
-        # A custom backend can build different kinds of resources:
+        # * Ingress: the BackendConfig is created with the dict key as its
+        #   name, and the Service's "cloud.google.com/backend-config"
+        #   annotation always references that name. The Service itself
+        #   defaults to the dict key but can be renamed independently via
+        #   "service.name" under the entry — handy when you need the Service
+        #   to be discoverable under a name distinct from the BackendConfig.
         #
-        # * if the service dictionary is set, we build a Service for this
-        #   backend.
+        # Setting this dictionary disables the default backend that would
+        # otherwise be generated using the workload name. An empty entry value
+        # (`my-backend: {}`) is supported and renames the default resources
+        # without otherwise altering them — handy when you only need to
+        # override the backend name.
         #
-        # * if the service dictionary contains createServiceExport: true, we
-        #   also build a ServiceExport.
+        # Per-entry fields and which API they apply to:
         #
-        # * if the backendPolicy dictionary is set, we build a GCPBackendPolicy
-        #   for this backend.
+        # * enabled (gateway + ingress): defaults to true. Set to false to omit
+        #   this backend from rendered output. Useful for selectively disabling
+        #   a backend in a per-environment values file without removing its
+        #   definition from the base values file.
         #
-        # * if the healthCheck dictionary is set, we build a HealthCheckPolicy
-        #   for this backend.
+        # * service (gateway + ingress): a Service is built for the backend.
+        #   Use service.name to rename the Service independently of the
+        #   BackendConfig. Use service.port and service.targetPort to override
+        #   the host-level servicePort/targetPort for this backend.
         #
-        # This is handy in situations where you want a MultiCluster Gateway, for
-        # example. E.g., in cases where you want to apply split traffic
-        # scenarios across regions, you want a region-based Service per region,
-        # as well as a ServiceExport, but you only want HealthCheckPolicies and
-        # GCPPBBackendPolicies to exist on the primary region that holds your
-        # Gateway.
+        # * service.createServiceExport (gateway only): also builds a
+        #   ServiceExport, used for multi-cluster setups.
+        #
+        # * backendPolicy (gateway only, "api: gateway"): a GCPBackendPolicy
+        #   is built for the backend. Not valid under "api: ingress". Set
+        #   `backendPolicy.enabled: false` to suppress creation without
+        #   removing the block (useful for disabling an inherited policy in
+        #   a per-environment values override).
+        #
+        # * healthCheck (gateway only, "api: gateway"): a HealthCheckPolicy
+        #   is built for the backend. Not valid under "api: ingress". Set
+        #   `healthCheck.enabled: false` to suppress creation without
+        #   removing the block (useful for disabling an inherited health
+        #   check in a per-environment values override).
+        #
+        # * path (ingress only, "api: ingress"): the URL path for the Ingress
+        #   path rule. Defaults to "/". Required to be unique when multiple
+        #   backends are defined on the same host — duplicate paths in a
+        #   single Ingress are rejected by Kubernetes. Not valid under
+        #   "api: gateway" — for Gateway API path-based routing, use
+        #   httpRoutes.rules[].matches[].path on this host.
+        #
+        # * pathType (ingress only, "api: ingress"): the pathType for the
+        #   Ingress path rule. Defaults to "Prefix". Not valid under
+        #   "api: gateway" — for Gateway API, use
+        #   httpRoutes.rules[].matches[].path.type on this host.
+        #
+        # Multi-cluster Gateway scenarios benefit from per-backend
+        # backendPolicy/healthCheck targeting: a region-scoped Service and
+        # ServiceExport are generated in each region while the
+        # HealthCheckPolicy and GCPBackendPolicy resources only exist in the
+        # primary region that holds the Gateway.
+        #
+        # Example — Gateway API host with two named backends:
         #
         #backends:
-        #  - name: my-custom-backend
+        #  my-custom-backend:
         #    service:
         #      portName: http
         #      port: 8000
@@ -1606,6 +1650,36 @@ workloads:
         #      targetRef:
         #        kind: ServiceImport
         #        name: my-custom-backend
+        #
+        # Example — Ingress host that only renames the backend:
+        #
+        #backends:
+        #  my-custom-backend: {}
+        #
+        # Example — Ingress host where the Service uses a different name from
+        # the BackendConfig (the annotation still references the BackendConfig
+        # name, "my-custom-backend") and a non-default port:
+        #
+        #backends:
+        #  my-custom-backend:
+        #    service:
+        #      name: my-custom-service
+        #      port: 9000
+        #      targetPort: http
+        #
+        # Example — Ingress host with path-based routing across two backends:
+        #
+        #backends:
+        #  api-backend:
+        #    path: /api
+        #    pathType: Prefix
+        #    service:
+        #      port: 8000
+        #  ui-backend:
+        #    path: /
+        #    service:
+        #      port: 3000
+        backends: {}
 
         # Configure the type of load balancer to use for your host.
         #
@@ -1656,6 +1730,11 @@ workloads:
 
         # The Kubernetes Service port exposed to the load balancer. Defaults to
         # 8080. Set this when your service needs to listen on a different port.
+        #
+        # Prefer this host-level setting for single-backend hosts. When using
+        # the "backends" dictionary with multiple per-backend ports, set the
+        # port under each entry's "service.port" instead; that per-backend
+        # value overrides this default.
         servicePort: 8080
 
         # The port name or number on the pod that the Service should route
@@ -1664,6 +1743,10 @@ workloads:
         # Defaults to "http", which routes to the nginx sidecar. When nginx is
         # disabled, set this to the app container's "portName" if configured,
         # or the container name otherwise.
+        #
+        # As with "servicePort", prefer this host-level setting for
+        # single-backend hosts; use the per-entry "service.targetPort" under
+        # "backends" when multiple backends need different target ports.
         targetPort: http
 
         # Global certificate details for external gateways. Certificates MUST be

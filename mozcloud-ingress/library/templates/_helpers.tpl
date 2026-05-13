@@ -102,16 +102,21 @@ BackendConfig template helpers
 {{- range $ingress := $ingresses.ingresses -}}
   {{- range $host := $ingress.hosts -}}
     {{- range $path := $host.paths -}}
-      {{- $backend := mergeOverwrite $defaults (default (dict) $path.backend.config) -}}
+      {{- $backend := mergeOverwrite (deepCopy $defaults) (default (dict) $path.backend.config) -}}
       {{- if kindIs "string" $backend.securityPolicy -}}
         {{- $_ := set $backend "securityPolicy" (dict "name" $backend.securityPolicy) -}}
       {{- end -}}
-      {{/* If a backend name is not specified, use the service name for the backend */}}
-      {{- $params := mergeOverwrite $context (dict "backendConfig" $backend "ingressConfig" $ingress "backendService" $path.backend.service) -}}
+      {{- /* Build $params via direct set (not mergeOverwrite) so reassigning
+         backendConfig replaces the reference instead of recursively merging
+         into the previous iteration's $backend. */ -}}
+      {{- $params := deepCopy $context -}}
+      {{- $_ := set $params "backendConfig" $backend -}}
+      {{- $_ = set $params "ingressConfig" $ingress -}}
+      {{- $_ = set $params "backendService" $path.backend.service -}}
       {{- if $name_override -}}
         {{- $_ := set $params "nameOverride" $name_override -}}
       {{- end -}}
-      {{- $backend_name := include "mozcloud-ingress-lib.config.backend.name" $params -}}
+      {{- $backend_name := include "mozcloud-ingress-lib.config.backendConfig.name" $params -}}
       {{- $_ := set $backend "name" $backend_name -}}
       {{- $_ = set $backend "ingressConfig" (omit $ingress "hosts") -}}
       {{- $backends = append $backends $backend -}}
@@ -122,11 +127,49 @@ backends:
   {{ $backends | toYaml | nindent 2 }}
 {{- end -}}
 
-{{- define "mozcloud-ingress-lib.config.backend.name" -}}
-{{- if (.backendService).name -}}
+{{- /*
+Resolve the BackendConfig resource name. Prefers backendConfig.name, falls
+back to backendService.name (legacy callers that only set the service name),
+then to the chart fullname. The cloud.google.com/backend-config annotation on
+the generated Service uses this same value so the binding always points at
+the BackendConfig this library renders.
+
+Params:
+  backendConfig (dict):  (optional) BackendConfig spec from path.backend.config.
+  backendService (dict): (optional) Service spec from path.backend.service.
+  nameOverride (string): (optional) Forwarded to mozcloud-ingress-lib.config.name.
+
+Returns:
+  (string) Resolved BackendConfig resource name.
+*/ -}}
+{{- define "mozcloud-ingress-lib.config.backendConfig.name" -}}
+{{- if (.backendConfig).name -}}
+{{- include "mozcloud-ingress-lib.config.name" (dict "name" .backendConfig.name) }}
+{{- else if (.backendService).name -}}
 {{- include "mozcloud-ingress-lib.config.name" (dict "name" .backendService.name) }}
 {{- else -}}
 {{- include "mozcloud-ingress-lib.config.name" . }}
+{{- end -}}
+{{- end -}}
+
+{{- /*
+Resolve the Service resource name. Prefers backendService.name, falls back
+to the resolved BackendConfig name so single-name configurations continue to
+produce a Service and BackendConfig that share a name.
+
+Params:
+  backendConfig (dict):  (optional) BackendConfig spec from path.backend.config.
+  backendService (dict): (optional) Service spec from path.backend.service.
+  nameOverride (string): (optional) Forwarded to mozcloud-ingress-lib.config.name.
+
+Returns:
+  (string) Resolved Service resource name.
+*/ -}}
+{{- define "mozcloud-ingress-lib.config.service.name" -}}
+{{- if (.backendService).name -}}
+{{- include "mozcloud-ingress-lib.config.name" (dict "name" .backendService.name) }}
+{{- else -}}
+{{- include "mozcloud-ingress-lib.config.backendConfig.name" . }}
 {{- end -}}
 {{- end -}}
 
@@ -282,16 +325,16 @@ Service template helpers
       {{- if $name_override -}}
         {{- $_ := set $params "nameOverride" $name_override -}}
       {{- end -}}
-      {{- $service_name := include "mozcloud-ingress-lib.config.backend.name" $params -}}
-      {{- /* Check if service was already included. If so, skip to avoid duplicates. */}}
-      {{- /* Configure args for library chart */}}
-      {{- /* Service annotations */}}
-      {{- /* This allows users to explicitly specify "false" without overriding with "true" from defaults */}}
+      {{- $service_name := include "mozcloud-ingress-lib.config.service.name" $params -}}
+      {{- $backend_config_name := include "mozcloud-ingress-lib.config.backendConfig.name" $params -}}
       {{- $create_neg := (include "mozcloud-ingress-lib.defaults.service.config" . | fromYaml).createNeg -}}
       {{- if hasKey $backend_service "createNeg" -}}
         {{- $create_neg = $backend_service.createNeg -}}
       {{- end -}}
-      {{- $annotation_params := dict "backendName" $service_name "createNeg" $create_neg "provider" (default "gke" $context.provider) -}}
+      {{- /* The cloud.google.com/backend-config annotation must point at the
+         BackendConfig resource — never the Service. When service.name and
+         config.name diverge, the binding still resolves correctly. */}}
+      {{- $annotation_params := dict "backendName" $backend_config_name "createNeg" $create_neg "provider" (default "gke" $context.provider) -}}
       {{- if $ingress.annotations -}}
         {{- $_ := set $annotation_params "annotations" $ingress.annotations -}}
       {{- end -}}
