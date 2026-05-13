@@ -99,7 +99,9 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.containers.default.image.tag | string | `""` |  |
 | tasks.jobs.default.containers.default.imagePullPolicy | string | `"Always"` |  |
 | tasks.jobs.default.containers.default.lifecycle | object | `{}` |  |
-| tasks.jobs.default.containers.default.resources | object | `{}` |  |
+| tasks.jobs.default.containers.default.resources.cpu | string | `"100m"` |  |
+| tasks.jobs.default.containers.default.resources.limits | object | `{}` |  |
+| tasks.jobs.default.containers.default.resources.memory | string | `"128Mi"` |  |
 | tasks.jobs.default.containers.default.secrets | list | `[]` |  |
 | tasks.jobs.default.containers.default.security | object | `{}` |  |
 | tasks.jobs.default.containers.default.volumes | list | `[]` |  |
@@ -149,6 +151,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.port | int | `8000` |  |
 | workloads.default.containers.default.portName | string | `""` |  |
 | workloads.default.containers.default.resources.cpu | string | `"100m"` |  |
+| workloads.default.containers.default.resources.limits | object | `{}` |  |
 | workloads.default.containers.default.resources.memory | string | `"128Mi"` |  |
 | workloads.default.containers.default.secrets | list | `[]` |  |
 | workloads.default.containers.default.security | object | `{}` |  |
@@ -173,6 +176,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.initContainers.default.imagePullPolicy | string | `"Always"` |  |
 | workloads.default.initContainers.default.lifecycle | object | `{}` |  |
 | workloads.default.initContainers.default.resources.cpu | string | `"100m"` |  |
+| workloads.default.initContainers.default.resources.limits | object | `{}` |  |
 | workloads.default.initContainers.default.resources.memory | string | `"128Mi"` |  |
 | workloads.default.initContainers.default.secrets | list | `[]` |  |
 | workloads.default.initContainers.default.security | object | `{}` |  |
