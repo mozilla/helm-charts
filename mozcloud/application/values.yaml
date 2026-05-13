@@ -635,7 +635,10 @@ tasks:
           #       memory: 256Mi
           #
           # Defaults are set in .Values.tasks.common.container.resources
-          resources: {}
+          resources:
+            cpu: 100m
+            memory: 128Mi
+            limits: {}
 
           # Optionally override some securityContext settings for the container.
           # This section should not be configured unless the user knows what they
@@ -1348,6 +1351,7 @@ workloads:
           #   limits:
           #     cpu: 1000m
           #     memory: 256Mi
+          limits: {}
 
         # Optionally override some securityContext settings for the container.
         # This section should not be configured unless the user knows what they
@@ -1947,6 +1951,7 @@ workloads:
           #   limits:
           #     cpu: 1000m
           #     memory: 256Mi
+          limits: {}
 
         # Optionally override some securityContext settings for the container.
         # This section should not be configured unless the user knows what they
