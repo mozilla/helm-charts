@@ -1162,6 +1162,21 @@
                   "memory": {
                     "type": "string",
                     "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+                  },
+                  "limits": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "description": "Optional explicit container resource limits. If unset, limits default to 2x requests for cpu and memory.",
+                    "properties": {
+                      "cpu": {
+                        "type": "string",
+                        "pattern": "^(\\d+|\\d+m)$"
+                      },
+                      "memory": {
+                        "type": "string",
+                        "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+                      }
+                    }
                   }
                 }
               }
@@ -1524,6 +1539,23 @@
               "type": "string",
               "description": "Ephemeral storage request using K, Ki, M, Mi, G, or Gi units",
               "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+            },
+            "limits": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Optional explicit container resource limits. If unset, limits default to 2x requests for cpu and memory.",
+              "properties": {
+                "cpu": {
+                  "type": "string",
+                  "description": "Integer cores (e.g., 2) or millicores (e.g., 200m)",
+                  "pattern": "^(\\d+|\\d+m)$"
+                },
+                "memory": {
+                  "type": "string",
+                  "description": "K, Ki, M, Mi, G, or Gi (recommend binary units)",
+                  "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+                }
+              }
             }
           }
         },
