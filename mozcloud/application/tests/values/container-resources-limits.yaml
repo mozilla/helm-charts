@@ -1,0 +1,23 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+        resources:
+          cpu: 100m
+          memory: 150Mi
+          limits:
+            cpu: 1000m
+            memory: 256Mi
+      sidecar:
+        image:
+          repository: test-repo/test-sidecar
+          tag: "1.0.0"
+        resources:
+          # No limits override: should auto-double to 100m/256Mi
+          cpu: 50m
+          memory: 128Mi

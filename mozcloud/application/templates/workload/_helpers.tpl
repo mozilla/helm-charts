@@ -235,11 +235,14 @@ Returns:
   {{- end }}
   {{- end }}
   resources:
-    {{- $resourceParams := dict "requests" (dict 
+    {{- $resourceParams := dict "requests" (dict
       "cpu" $containerConfig.resources.cpu
-      "memory" $containerConfig.resources.memory 
+      "memory" $containerConfig.resources.memory
       "ephemeral-storage" (index $containerConfig.resources "ephemeral-storage"))
     -}}
+    {{- if $containerConfig.resources.limits -}}
+      {{- $_ := set $resourceParams "limits" $containerConfig.resources.limits -}}
+    {{- end -}}
     {{- include "pod.container.resources" $resourceParams | nindent 4 }}
   {{- /* Sidecars run as init containers need restartPolicy: Always configured */ -}}
   {{- if and (eq $type "initContainer") (dig "sidecar" false $containerConfig) }}

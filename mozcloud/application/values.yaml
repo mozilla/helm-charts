@@ -599,8 +599,8 @@ tasks:
           lifecycle: {}
 
           # The "resources" section allows you to specify the amount of CPU and
-          # memory that your container needs to run. These are equivalent to
-          # requests values.
+          # memory that your container needs to run. The top-level "cpu" and
+          # "memory" fields are equivalent to requests values.
           #
           # Format:
           #
@@ -628,8 +628,17 @@ tasks:
           #     # The default value is 128Mi.
           #     memory: 128Mi
           #
+          #     # Optional explicit container resource limits. If unset,
+          #     # limits default to 2x requests for cpu and memory.
+          #     limits:
+          #       cpu: 1000m
+          #       memory: 256Mi
+          #
           # Defaults are set in .Values.tasks.common.container.resources
-          resources: {}
+          resources:
+            cpu: 100m
+            memory: 128Mi
+            limits: {}
 
           # Optionally override some securityContext settings for the container.
           # This section should not be configured unless the user knows what they
@@ -1297,8 +1306,8 @@ workloads:
         portName: ''
 
         # The "resources" section allows you to specify the amount of CPU and
-        # memory that your container needs to run. These are equivalent to
-        # requests values.
+        # memory that your container needs to run. The top-level "cpu" and
+        # "memory" fields are equivalent to requests values.
         resources:
           # CPU can be specified in either of the following formats:
           #
@@ -1325,10 +1334,24 @@ workloads:
 
           # Ephemeral storage can optionally be specified using K, Ki, M, Mi,
           # G, or Gi suffixes. Unlike CPU and memory, limits are not
-          # auto-calculated — the limit is set equal to the request.
+          # auto-calculated, the limit is set equal to the request.
           #
           # Example:
           #   ephemeral-storage: 1Gi
+
+          # Optional explicit container resource limits. If unset, limits
+          # default to 2x requests for cpu and memory. Use this when the
+          # auto-doubled limit does not provide enough headroom (eg. a
+          # bursty HTTP front-end where the cold-start ramp peak is much
+          # higher than the HPA steady-state request) or when you need to
+          # tune the request:limit ratio away from 50% so node autoscaling
+          # sees node pressure at the same time the container does.
+          #
+          # Example:
+          #   limits:
+          #     cpu: 1000m
+          #     memory: 256Mi
+          limits: {}
 
         # Optionally override some securityContext settings for the container.
         # This section should not be configured unless the user knows what they
@@ -1883,8 +1906,8 @@ workloads:
         #port:
 
         # The "resources" section allows you to specify the amount of CPU and
-        # memory that your container needs to run. These are equivalent to
-        # requests values.
+        # memory that your container needs to run. The top-level "cpu" and
+        # "memory" fields are equivalent to requests values.
         resources:
           # CPU can be specified in either of the following formats:
           #
@@ -1911,10 +1934,24 @@ workloads:
 
           # Ephemeral storage can optionally be specified using K, Ki, M, Mi,
           # G, or Gi suffixes. Unlike CPU and memory, limits are not
-          # auto-calculated — the limit is set equal to the request.
+          # auto-calculated, the limit is set equal to the request.
           #
           # Example:
           #   ephemeral-storage: 1Gi
+
+          # Optional explicit container resource limits. If unset, limits
+          # default to 2x requests for cpu and memory. Use this when the
+          # auto-doubled limit does not provide enough headroom (eg. a
+          # bursty HTTP front-end where the cold-start ramp peak is much
+          # higher than the HPA steady-state request) or when you need to
+          # tune the request:limit ratio away from 50% so node autoscaling
+          # sees node pressure at the same time the container does.
+          #
+          # Example:
+          #   limits:
+          #     cpu: 1000m
+          #     memory: 256Mi
+          limits: {}
 
         # Optionally override some securityContext settings for the container.
         # This section should not be configured unless the user knows what they

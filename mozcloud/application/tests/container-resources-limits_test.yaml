@@ -1,0 +1,53 @@
+---
+suite: "mozcloud: Container resources explicit limits"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/container-resources-limits.yaml
+templates:
+  - workload/deployment.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Container with explicit limits uses them verbatim
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].resources.requests.cpu
+          value: "100m"
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].resources.requests.memory
+          value: "150Mi"
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].resources.limits.cpu
+          value: "1000m"
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].resources.limits.memory
+          value: "256Mi"
+
+  - it: Container without limits override falls back to auto-doubled limits
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="sidecar")].resources.requests.cpu
+          value: "50m"
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="sidecar")].resources.requests.memory
+          value: "128Mi"
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="sidecar")].resources.limits.cpu
+          value: "100m"
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="sidecar")].resources.limits.memory
+          value: "256Mi"
