@@ -1,0 +1,41 @@
+---
+suite: "mozcloud: Multi-host gateway cert aggregation"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/multi-host-gateway-cert-aggregation.yaml
+templates:
+  - gateway/gateway.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Single Gateway is emitted and lists every host's certificate
+    template: gateway/gateway.yaml
+    documentSelector:
+      path: $[?(@.kind == "Gateway")].metadata.name
+      value: mozcloud-test
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.gatewayClassName
+          value: traefik
+      - contains:
+          path: spec.listeners[?(@.name == "https")].tls.certificateRefs
+          content:
+            name: service-a-tls
+      - contains:
+          path: spec.listeners[?(@.name == "https")].tls.certificateRefs
+          content:
+            name: service-b-tls
+      - contains:
+          path: spec.listeners[?(@.name == "https")].tls.certificateRefs
+          content:
+            name: service-c-tls

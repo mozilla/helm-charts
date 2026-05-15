@@ -102,7 +102,7 @@ Returns:
         {{- $_ := set $gatewayConfig "type" $hostConfig.type }}
         {{- $_ = set $gatewayConfig "className" $className }}
         {{- $_ = set $gatewayConfig "addresses" $addresses }}
-        {{- $_ = set $gatewayConfig "certs" $certs }}
+        {{- $_ = set $gatewayConfig "certs" (list) }}
         {{- $tlsType := ($hostConfig.tls).type }}
         {{- if not $tlsType }}
           {{- if eq $provider "gke" }}
@@ -114,6 +114,20 @@ Returns:
         {{- $_ = set $gatewayConfig "tlsType" $tlsType }}
         {{- $_ = set $gatewayConfig "nameOverride" $nameOverride }}
         {{- $_ = set $gatewayConfigs $configKey $gatewayConfig }}
+      {{- end }}
+      {{- /*
+      Aggregate certs from every host sharing this gateway, deduped.
+      $existing is a reference (via `index`) to the gateway config stored
+      in $gatewayConfigs — dicts are reference types in Go templates, so
+      mutating $existing.certs mutates the stored entry. This runs for
+      every host (new key or not), letting later hosts contribute their
+      certs to a Gateway that an earlier host already created.
+      */}}
+      {{- $existing := index $gatewayConfigs $configKey }}
+      {{- range $cert := $certs }}
+        {{- if not (has $cert $existing.certs) }}
+          {{- $_ := set $existing "certs" (append $existing.certs $cert) }}
+        {{- end }}
       {{- end }}
     {{- end }}
   {{- end }}
