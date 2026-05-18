@@ -18,8 +18,9 @@ spec:
     {{- if $config.iap }}
     iap:
       enabled: {{ $config.iap.enabled }}
-      oauth2ClientId: {{ $config.iap.oauth2ClientId }}
-      oauth2ClientSecret: {{ $config.iap.oauth2ClientSecret }}
+      clientID: {{ $config.iap.oauth2ClientId }}
+      oauth2ClientSecret: 
+        name: {{ $config.iap.oauth2ClientSecret }}
     {{- end }}
     logging:
       enabled: {{ $config.logging.enabled }}
