@@ -19,7 +19,7 @@ spec:
     iap:
       enabled: {{ $config.iap.enabled }}
       clientID: {{ $config.iap.oauth2ClientId }}
-      oauth2ClientSecret: 
+      oauth2ClientSecret:
         name: {{ $config.iap.oauth2ClientSecret }}
     {{- end }}
     logging:
