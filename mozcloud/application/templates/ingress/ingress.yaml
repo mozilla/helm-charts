@@ -98,14 +98,14 @@ ingresses:
                 {{- if ($hostConfig.options).customRequestHeaders }}
                 customRequestHeaders:
                   headers:
-                    {{- range $hostConfig.options.customRequestHeaders.headers }}
+                    {{- range $hostConfig.options.customRequestHeaders }}
                     - {{ . | quote }}
                     {{- end }}
                 {{- end }}
                 {{- if ($hostConfig.options).customResponseHeaders }}
                 customResponseHeaders:
                   headers:
-                    {{- range $hostConfig.options.customResponseHeaders.headers }}
+                    {{- range $hostConfig.options.customResponseHeaders }}
                     - {{ . | quote }}
                     {{- end }}
                 {{- end }}

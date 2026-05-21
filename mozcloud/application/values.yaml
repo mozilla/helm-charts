@@ -1850,19 +1850,18 @@ workloads:
         #  #  #host: my-custom-backend-host
         #  #  #requestPath: /__lbheartbeat__
         #
-        #  # Custom headers added by the GCLB to requests before forwarding to
-        #  # backends (Ingress API only). Values may use GCLB variable
-        #  # substitution like {tls_version} and {tls_cipher_suite}; see
+        #  # Custom headers the GCLB adds to requests before forwarding to
+        #  # backends (Ingress API only). Each entry is a "Name:Value" string.
+        #  # Values may use GCLB variable substitution like {tls_version} and
+        #  # {tls_cipher_suite}; see
         #  # https://cloud.google.com/load-balancing/docs/https/custom-headers.
         #  #customRequestHeaders:
-        #  #  headers:
-        #  #    - "X-Client-TLS:{tls_version} {tls_cipher_suite}"
+        #  #  - "X-Client-TLS:{tls_version} {tls_cipher_suite}"
         #
-        #  # Custom headers added by the GCLB to responses before returning to
+        #  # Custom headers the GCLB adds to responses before returning to
         #  # clients (Ingress API only).
         #  #customResponseHeaders:
-        #  #  headers:
-        #  #    - "Strict-Transport-Security:max-age=31536000"
+        #  #  - "Strict-Transport-Security:max-age=31536000"
 
     # All of the init containers you need to deploy for your workload.
     #

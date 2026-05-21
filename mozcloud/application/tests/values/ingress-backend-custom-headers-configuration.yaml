@@ -19,12 +19,10 @@ workloads:
           create: true
         options:
           customRequestHeaders:
-            headers:
-              - "X-Client-TLS:{tls_version} {tls_cipher_suite}"
-              - "X-LB-Backend:default"
+            - "X-Client-TLS:{tls_version} {tls_cipher_suite}"
+            - "X-LB-Backend:default"
           customResponseHeaders:
-            headers:
-              - "Strict-Transport-Security:max-age=31536000"
+            - "Strict-Transport-Security:max-age=31536000"
           healthCheck:
             requestPath: /__lbheartbeat__
             port: 8000

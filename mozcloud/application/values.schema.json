@@ -1108,29 +1108,17 @@
                       }
                     },
                     "customRequestHeaders": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "description": "Custom headers added by the GCLB to requests before forwarding to backends (Ingress API only). Values may use GCLB variable substitution like {tls_version} and {tls_cipher_suite}; see https://cloud.google.com/load-balancing/docs/https/custom-headers.",
-                      "properties": {
-                        "headers": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        }
+                      "type": "array",
+                      "description": "Custom headers the GCLB adds to requests before forwarding to backends (Ingress API only). Each entry is a 'Name:Value' string. Values may use GCLB variable substitution like {tls_version} and {tls_cipher_suite}; see https://cloud.google.com/load-balancing/docs/https/custom-headers.",
+                      "items": {
+                        "type": "string"
                       }
                     },
                     "customResponseHeaders": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "description": "Custom headers added by the GCLB to responses before returning to clients (Ingress API only). See https://cloud.google.com/load-balancing/docs/https/custom-headers.",
-                      "properties": {
-                        "headers": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          }
-                        }
+                      "type": "array",
+                      "description": "Custom headers the GCLB adds to responses before returning to clients (Ingress API only). Each entry is a 'Name:Value' string. See https://cloud.google.com/load-balancing/docs/https/custom-headers.",
+                      "items": {
+                        "type": "string"
                       }
                     }
                   }
