@@ -588,6 +588,19 @@
                           "type": "boolean",
                           "default": true
                         },
+                        "exec": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["command"],
+                          "properties": {
+                            "command": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
                         "path": {
                           "type": "string",
                           "default": "/__lbheartbeat__"
@@ -647,6 +660,19 @@
                         "enabled": {
                           "type": "boolean",
                           "default": true
+                        },
+                        "exec": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["command"],
+                          "properties": {
+                            "command": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          }
                         },
                         "path": {
                           "type": "string",

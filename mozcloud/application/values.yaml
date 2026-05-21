@@ -1137,6 +1137,14 @@ workloads:
             # (eg. celery).
             enabled: true
 
+            # Configure an exec-based probe instead of the default httpGet.
+            # When set, path and httpHeaders are ignored for this probe.
+            #
+            # Example:
+            #
+            #   exec:
+            #     command: ["/bin/sh", "-c", "/usr/local/bin/healthcheck"]
+
             # This is typically configured to match the application container's
             # load balancer heartbeat health check endpoint.
             #
@@ -1192,6 +1200,15 @@ workloads:
             # Disable for worker workloads that do not require health checks
             # (eg. celery).
             enabled: true
+
+            # Configure an exec-based probe instead of the default httpGet.
+            # When set, path and httpHeaders are ignored for this probe.
+            # If not set, falls back to the readiness httpHeaders if defined.
+            #
+            # Example:
+            #
+            #   exec:
+            #     command: ["/bin/sh", "-c", "/usr/local/bin/healthcheck"]
 
             # This is typically configured to match the application container's
             # load balancer heartbeat health check endpoint.

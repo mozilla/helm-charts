@@ -189,6 +189,11 @@ Returns:
   {{- if eq $type "container" }}
   {{- if (dig "healthCheck" "liveness" "enabled" true $containerConfig) }}
   livenessProbe:
+    {{- if (($containerConfig.healthCheck).liveness).exec }}
+    exec:
+      command:
+        {{- toYaml $containerConfig.healthCheck.liveness.exec.command | nindent 8 }}
+    {{- else }}
     httpGet:
       {{- if (($containerConfig.healthCheck).liveness).httpHeaders }}
       httpHeaders:
@@ -205,6 +210,7 @@ Returns:
       {{- end }}
       path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.liveness.path }}
       port: {{ $portName }}
+    {{- end }}
     {{- if (($containerConfig.healthCheck).liveness).probes }}
     {{- range $k, $v := $containerConfig.healthCheck.liveness.probes }}
     {{ $k }}: {{ $v }}
@@ -217,6 +223,11 @@ Returns:
   {{- end }}
   {{- if (dig "healthCheck" "readiness" "enabled" true $containerConfig) }}
   readinessProbe:
+    {{- if (($containerConfig.healthCheck).readiness).exec }}
+    exec:
+      command:
+        {{- toYaml $containerConfig.healthCheck.readiness.exec.command | nindent 8 }}
+    {{- else }}
     httpGet:
       {{- if (($containerConfig.healthCheck).readiness).httpHeaders }}
       httpHeaders:
@@ -227,6 +238,7 @@ Returns:
       {{- end }}
       path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.readiness.path }}
       port: {{ $portName }}
+    {{- end }}
     {{- if (($containerConfig.healthCheck).readiness).probes }}
     {{- range $k, $v := $containerConfig.healthCheck.readiness.probes }}
     {{ $k }}: {{ $v }}
