@@ -276,6 +276,29 @@ tests:
             name: nginx-conf
             readOnly: true
             subPath: nginx.conf
+      # Exec probes render correctly and suppress httpGet
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.exec.command
+          value: ["/bin/sh", "-c", "/usr/local/bin/healthcheck"]
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.exec.command
+          value: ["/bin/sh", "-c", "/usr/local/bin/healthcheck"]
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      - notExists:
+          path: spec.template.spec.containers[0].readinessProbe.httpGet
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
 
   - it: NGINX sidecar ConfigMap is rendered with nginx.conf data
     template: workload/deployment.yaml
