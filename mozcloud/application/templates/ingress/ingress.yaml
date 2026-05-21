@@ -95,6 +95,27 @@ ingresses:
                 {{- if ($hostConfig.options).securityPolicy }}
                 securityPolicy: {{ $hostConfig.options.securityPolicy }}
                 {{- end }}
+                {{- if ($hostConfig.options).customRequestHeaders }}
+                customRequestHeaders:
+                  headers:
+                    {{- range $hostConfig.options.customRequestHeaders.headers }}
+                    - {{ . | quote }}
+                    {{- end }}
+                {{- end }}
+                {{- if ($hostConfig.options).customResponseHeaders }}
+                customResponseHeaders:
+                  headers:
+                    {{- range $hostConfig.options.customResponseHeaders.headers }}
+                    - {{ . | quote }}
+                    {{- end }}
+                {{- end }}
+                {{- if (($hostConfig.options).healthCheck).requestPath }}
+                healthCheck:
+                  requestPath: {{ $hostConfig.options.healthCheck.requestPath | quote }}
+                  {{- if $hostConfig.options.healthCheck.port }}
+                  port: {{ $hostConfig.options.healthCheck.port }}
+                  {{- end }}
+                {{- end }}
               service:
                 name: {{ $serviceName }}
                 port: {{ $port }}

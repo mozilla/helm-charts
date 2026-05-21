@@ -1839,11 +1839,30 @@ workloads:
         #  # Backend service timeout period in seconds.
         #  #timeoutSec: 30
         #
-        #  # Custom config for backend health check
+        #  # Custom config for backend health check. For Gateway API, only
+        #  # path/host/port apply. For Ingress API, requestPath sets the GCLB
+        #  # health-check path on the emitted BackendConfig (required for
+        #  # multi-container backends; see
+        #  # https://cloud.google.com/kubernetes-engine/docs/concepts/ingress#direct_hc_instead).
         #  #healthCheck:
         #  #  #path: /readiness/
         #  #  #port: 8000
         #  #  #host: my-custom-backend-host
+        #  #  #requestPath: /__lbheartbeat__
+        #
+        #  # Custom headers added by the GCLB to requests before forwarding to
+        #  # backends (Ingress API only). Values may use GCLB variable
+        #  # substitution like {tls_version} and {tls_cipher_suite}; see
+        #  # https://cloud.google.com/load-balancing/docs/https/custom-headers.
+        #  #customRequestHeaders:
+        #  #  headers:
+        #  #    - "X-Client-TLS:{tls_version} {tls_cipher_suite}"
+        #
+        #  # Custom headers added by the GCLB to responses before returning to
+        #  # clients (Ingress API only).
+        #  #customResponseHeaders:
+        #  #  headers:
+        #  #    - "Strict-Transport-Security:max-age=31536000"
 
     # All of the init containers you need to deploy for your workload.
     #

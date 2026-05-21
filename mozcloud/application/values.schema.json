@@ -1100,6 +1100,36 @@
                         },
                         "host": {
                           "type": "string"
+                        },
+                        "requestPath": {
+                          "type": "string",
+                          "description": "Path the GCLB health check should send GET requests to (Ingress API only). Required for multi-container backends per GKE docs (https://cloud.google.com/kubernetes-engine/docs/concepts/ingress#direct_hc_instead). If unset, GKE picks a container readiness probe path arbitrarily."
+                        }
+                      }
+                    },
+                    "customRequestHeaders": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "description": "Custom headers added by the GCLB to requests before forwarding to backends (Ingress API only). Values may use GCLB variable substitution like {tls_version} and {tls_cipher_suite}; see https://cloud.google.com/load-balancing/docs/https/custom-headers.",
+                      "properties": {
+                        "headers": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "customResponseHeaders": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "description": "Custom headers added by the GCLB to responses before returning to clients (Ingress API only). See https://cloud.google.com/load-balancing/docs/https/custom-headers.",
+                      "properties": {
+                        "headers": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
                         }
                       }
                     }
