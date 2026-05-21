@@ -589,17 +589,7 @@
                           "default": true
                         },
                         "exec": {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": ["command"],
-                          "properties": {
-                            "command": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            }
-                          }
+                          "$ref": "#/$defs/execProbe"
                         },
                         "path": {
                           "type": "string",
@@ -662,17 +652,7 @@
                           "default": true
                         },
                         "exec": {
-                          "type": "object",
-                          "additionalProperties": false,
-                          "required": ["command"],
-                          "properties": {
-                            "command": {
-                              "type": "array",
-                              "items": {
-                                "type": "string"
-                              }
-                            }
-                          }
+                          "$ref": "#/$defs/execProbe"
                         },
                         "path": {
                           "type": "string",
@@ -1530,6 +1510,19 @@
     }
   },
   "$defs": {
+    "execProbe": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["command"],
+      "properties": {
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "gcsFuseSidecar": {
       "type": "object",
       "additionalProperties": false,
