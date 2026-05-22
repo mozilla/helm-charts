@@ -1,0 +1,54 @@
+---
+suite: "mozcloud: Ingress backend custom headers configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/ingress-backend-custom-headers-configuration.yaml
+templates:
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: BackendConfig spec renders customRequestHeaders verbatim
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "BackendConfig")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.customRequestHeaders.headers
+          value:
+            - "X-Client-TLS:{tls_version} {tls_cipher_suite}"
+            - "X-LB-Backend:default"
+
+  - it: BackendConfig spec renders customResponseHeaders verbatim
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "BackendConfig")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.customResponseHeaders.headers
+          value:
+            - "Strict-Transport-Security:max-age=31536000"
+
+  - it: BackendConfig spec renders healthCheck.requestPath and port
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "BackendConfig")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.healthCheck.requestPath
+          value: /__lbheartbeat__
+      - equal:
+          path: spec.healthCheck.port
+          value: 8000
