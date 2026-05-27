@@ -2228,7 +2228,7 @@ workloads:
     #     #
     #     # Default:
     #     #
-    #     #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
+    #     #   us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.31
     #     image: ''
     #
     #     # Optionally define an NGINX configuration to use for nginx.conf. This
@@ -2252,8 +2252,8 @@ workloads:
     nginx:
       enabled: true
       image:
-        repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged
-        tag: "1.29"
+        repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged
+        tag: "1.31"
 
       # Optionally configure a lifecycle hook for the nginx sidecar container.
       #

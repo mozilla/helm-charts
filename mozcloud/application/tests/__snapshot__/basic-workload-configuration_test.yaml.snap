@@ -116,7 +116,7 @@ Configuration matches entire snapshot:
             realm: nonprod
         spec:
           containers:
-            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
+            - image: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.31
               imagePullPolicy: Always
               livenessProbe:
                 failureThreshold: 5
