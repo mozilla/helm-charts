@@ -42,7 +42,7 @@ tests:
       # Does not prepend registry to nginx when its repository already contains a domain
       - equal:
           path: spec.template.spec.containers[?(@.name == "nginx")].image
-          value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29"
+          value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.31"
         documentSelector:
           path: $[?(@.kind == "Deployment")].metadata.name
           value: test-service-nginx
@@ -53,15 +53,15 @@ tests:
         test-service-nginx:
           nginx:
             image:
-              repository: nginxinc/nginx-unprivileged
-              tag: "1.29"
+              repository: platform-shared-images/nginx-unprivileged
+              tag: "1.31"
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service-nginx
     asserts:
       - equal:
           path: spec.template.spec.containers[?(@.name == "nginx")].image
-          value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/nginxinc/nginx-unprivileged:1.29"
+          value: "us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.31"
   - it: Works without registry set (backwards compatible)
     set:
       global:

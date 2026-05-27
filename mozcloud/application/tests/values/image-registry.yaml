@@ -28,8 +28,8 @@ workloads:
     nginx:
       enabled: true
       image:
-        repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged
-        tag: "1.29"
+        repository: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged
+        tag: "1.31"
       configMap: nginx-config
     containers:
       app:

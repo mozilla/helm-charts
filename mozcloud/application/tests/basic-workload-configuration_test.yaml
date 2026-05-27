@@ -208,7 +208,7 @@ tests:
       # Deployment (nginx container) is configured correctly
       - equal:
           path: spec.template.spec.containers[0].image
-          value: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-dockerhub-cache/nginxinc/nginx-unprivileged:1.29
+          value: us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged:1.31
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always
