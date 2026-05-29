@@ -117,7 +117,9 @@ jobs:
             // No label set yet — infer from PR title so preview can run immediately
             const title = context.payload.pull_request.title;
             let inferred;
-            if (/^[a-z]+(\([^)]+\))?!:/.test(title) || /breaking change/i.test(title)) {
+            if (/^chore\((deps|ci)\):/.test(title)) {
+              inferred = 'no-release';
+            } else if (/^[a-z]+(\([^)]+\))?!:/.test(title) || /breaking change/i.test(title)) {
               inferred = 'major';
             } else if (/^feat(\([^)]+\))?:/.test(title)) {
               inferred = 'minor';
