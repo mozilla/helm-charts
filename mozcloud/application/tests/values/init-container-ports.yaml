@@ -1,0 +1,21 @@
+---
+workloads:
+  # A workload that defines hosts. The presence of hosts is what triggers a
+  # ports block on app containers; it must NOT trigger one on init containers,
+  # which do not serve traffic.
+  test-service:
+    component: web
+    hosts:
+      default:
+        api: ingress
+        domains: ["test.example.com"]
+    containers:
+      app:
+        image:
+          repository: test-repo/app
+          tag: 1.0.0
+    initContainers:
+      migrate:
+        image:
+          repository: test-repo/migrate
+          tag: 1.0.0
