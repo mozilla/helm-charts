@@ -177,11 +177,11 @@ Returns:
     {{- end }}
     {{- end }}
   {{- end }}
-  {{- if or
+  {{- if and (eq $type "container") (or
       $config.hosts
       (($containerConfig.healthCheck).readiness).enabled
       (($containerConfig.healthCheck).liveness).enabled
-  }}
+  ) }}
   ports:
     - name: {{ $portName }}
       containerPort: {{ $containerConfig.port }}

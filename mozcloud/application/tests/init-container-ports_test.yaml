@@ -1,0 +1,33 @@
+---
+suite: "mozcloud: Init container ports"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/init-container-ports.yaml
+templates:
+  - workload/deployment.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Init containers omit ports even when the workload defines hosts, while app containers keep them
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      # The app container gets a ports block because the workload defines hosts.
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].ports[0].containerPort
+          value: 8000
+      # The init container must NOT get a ports block; it does not serve traffic.
+      - notExists:
+          path: spec.template.spec.initContainers[?(@.name=="migrate")].ports
