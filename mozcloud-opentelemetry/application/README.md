@@ -40,6 +40,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| collectors.daemonset.priorityClassName | string | `"system-node-critical"` |  |
 | collectors.daemonset.resources.limits.cpu | string | `"500m"` |  |
 | collectors.daemonset.resources.limits.memory | string | `"1Gi"` |  |
 | collectors.daemonset.resources.requests.cpu | string | `"250m"` |  |
