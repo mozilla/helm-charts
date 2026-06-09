@@ -1,6 +1,6 @@
 # mozcloud-opentelemetry
 
-![Version: 0.3.0](https://img.shields.io/badge/Version-0.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.3.1](https://img.shields.io/badge/Version-0.3.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart for MozCloud OpenTelemetry signals collection
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud-opentelemetry
-    version: ~0.3.0
+    version: ~0.3.1
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -40,7 +40,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| collectors.daemonset.priorityClassName | string | `"system-node-critical"` |  |
+| collectors.daemonset.priorityClassName | string | `"gmp-critical"` |  |
 | collectors.daemonset.resources.limits.cpu | string | `"500m"` |  |
 | collectors.daemonset.resources.limits.memory | string | `"1Gi"` |  |
 | collectors.daemonset.resources.requests.cpu | string | `"250m"` |  |

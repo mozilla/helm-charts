@@ -13,7 +13,7 @@ global:
 
 collectors:
   daemonset:
-    priorityClassName: system-node-critical
+    priorityClassName: gmp-critical
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:

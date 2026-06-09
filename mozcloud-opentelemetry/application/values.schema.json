@@ -72,7 +72,7 @@
           "type": "object",
           "properties": {
             "priorityClassName": {
-              "description": "PriorityClass for the daemonst collectors. Set to system-node-critical (or a custom high-priority class) so the scheduler can preempt lower-priority workloads.",
+              "description": "PriorityClass for the daemonset collectors. Defaults to gmp-critical, a non-reserved high-priority class so the scheduler can preempt lower-priority workloads.",
               "type": "string"
             },
             "securityContext": {
