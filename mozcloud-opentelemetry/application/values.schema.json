@@ -71,6 +71,10 @@
         "daemonset": {
           "type": "object",
           "properties": {
+            "priorityClassName": {
+              "description": "PriorityClass for the per-node collector pods. Set to system-node-critical (or a custom high-priority class) so the scheduler can preempt lower-priority workloads on full nodes, ensuring collector coverage on every node.",
+              "type": "string"
+            },
             "securityContext": {
               "type": "object",
               "properties": {
