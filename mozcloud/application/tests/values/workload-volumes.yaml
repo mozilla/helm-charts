@@ -75,6 +75,13 @@ workloads:
             readOnly: true
             skipCSIBucketAccessCheck: true
             loggingSeverity: warning
+          - name: ephemeral-scratch
+            type: ephemeral
+            path: /data/ephemeral-scratch
+            accessModes:
+              - ReadWriteOnce
+            size: 20Gi
+            storageClassName: premium-rwo
   test-service-no-gcs:
     component: web
     containers:

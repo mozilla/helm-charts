@@ -1717,6 +1717,7 @@
                   "secret",
                   "persistentVolume",
                   "emptyDir",
+                  "ephemeral",
                   "gcsFuseCsi"
                 ]
               },
@@ -1755,6 +1756,28 @@
                 "type": "string",
                 "description": "Severity for gcsfuse logs. Maps to volumeAttributes.gcsfuseLoggingSeverity.",
                 "enum": ["trace", "debug", "info", "warning", "error"]
+              },
+              "accessModes": {
+                "type": "array",
+                "description": "Access modes for ephemeral volumes.",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "ReadWriteOnce",
+                    "ReadOnlyMany",
+                    "ReadWriteMany",
+                    "ReadWriteOncePod"
+                  ]
+                }
+              },
+              "size": {
+                "type": "string",
+                "description": "Storage request size for ephemeral volumes (e.g. 10Gi).",
+                "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+              },
+              "storageClassName": {
+                "type": "string",
+                "description": "StorageClass for ephemeral volumes."
               }
             },
             "required": [
@@ -1803,6 +1826,34 @@
                       {"required": ["mountOptions"]},
                       {"required": ["skipCSIBucketAccessCheck"]},
                       {"required": ["loggingSeverity"]}
+                    ]
+                  }
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "type": {
+                      "const": "ephemeral"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "then": {
+                  "required": [
+                    "accessModes",
+                    "size",
+                    "storageClassName"
+                  ]
+                },
+                "else": {
+                  "not": {
+                    "anyOf": [
+                      {"required": ["accessModes"]},
+                      {"required": ["size"]},
+                      {"required": ["storageClassName"]}
                     ]
                   }
                 }

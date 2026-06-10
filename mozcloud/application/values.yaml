@@ -1399,7 +1399,7 @@ workloads:
 
         # Optionally mount volumes to the container. The supported volume types
         # are "configMap" (default), "secret", "persistentVolume", "emptyDir",
-        # and "gcsFuseCsi".
+        # "ephemeral", and "gcsFuseCsi".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -1437,6 +1437,18 @@ workloads:
         #
         #   "sizeLimit": the maximum amount of storage that an emptyDir volume
         #                can consume (e.g. 500Mi)
+        #
+        # "ephemeral" volumes create a per-pod PersistentVolumeClaim via an
+        # inline volumeClaimTemplate. The PVC is bound to the pod's lifetime
+        # and deleted when the pod is removed. Useful for per-pod scratch
+        # storage on a real StorageClass (e.g. premium-rwo). All options
+        # below are required:
+        #
+        #   "accessModes": List of access modes (e.g. [ReadWriteOnce]).
+        #
+        #   "size": Storage request (e.g. 10Gi).
+        #
+        #   "storageClassName": StorageClass to use (e.g. premium-rwo).
         #
         # "gcsFuseCsi" volumes mount a Google Cloud Storage bucket as an
         # ephemeral inline CSI volume using the GKE GCS FUSE CSI driver.
@@ -1484,6 +1496,12 @@ workloads:
         #       path: /path/to/another/dir
         #       sizeLimit: 500Mi
         #       medium: Memory
+        #     - name: scratch
+        #       type: ephemeral
+        #       path: /scratch
+        #       accessModes: [ReadWriteOnce]
+        #       size: 10Gi
+        #       storageClassName: premium-rwo
         #     - name: my-gcs-bucket
         #       type: gcsFuseCsi
         #       path: /path/to/mount
@@ -2107,7 +2125,7 @@ workloads:
 
         # Optionally mount volumes to the container. The supported volume types
         # are "configMap" (default), "secret", "persistentVolume", "emptyDir",
-        # and "gcsFuseCsi".
+        # "ephemeral", and "gcsFuseCsi".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -2145,6 +2163,18 @@ workloads:
         #
         #   "sizeLimit": the maximum amount of storage that an emptyDir volume
         #                can consume (e.g. 500Mi)
+        #
+        # "ephemeral" volumes create a per-pod PersistentVolumeClaim via an
+        # inline volumeClaimTemplate. The PVC is bound to the pod's lifetime
+        # and deleted when the pod is removed. Useful for per-pod scratch
+        # storage on a real StorageClass (e.g. premium-rwo). All options
+        # below are required:
+        #
+        #   "accessModes": List of access modes (e.g. [ReadWriteOnce]).
+        #
+        #   "size": Storage request (e.g. 10Gi).
+        #
+        #   "storageClassName": StorageClass to use (e.g. premium-rwo).
         #
         # "gcsFuseCsi" volumes mount a Google Cloud Storage bucket as an
         # ephemeral inline CSI volume using the GKE GCS FUSE CSI driver.
@@ -2192,6 +2222,12 @@ workloads:
         #       path: /path/to/another/dir
         #       sizeLimit: 500Mi
         #       medium: Memory
+        #     - name: scratch
+        #       type: ephemeral
+        #       path: /scratch
+        #       accessModes: [ReadWriteOnce]
+        #       size: 10Gi
+        #       storageClassName: premium-rwo
         #     - name: my-gcs-bucket
         #       type: gcsFuseCsi
         #       path: /path/to/mount
