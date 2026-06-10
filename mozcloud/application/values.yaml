@@ -1399,7 +1399,7 @@ workloads:
 
         # Optionally mount volumes to the container. The supported volume types
         # are "configMap" (default), "secret", "persistentVolume", "emptyDir",
-        # and "gcsFuseCsi".
+        # "ephemeral", and "gcsFuseCsi".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -1429,7 +1429,10 @@ workloads:
         # "emptyDir" volumes, as the name suggests, create an empty volume
         # that's created when the Pod is assigned to a node. When a Pod is
         # removed from a node for any reason, the data in the emptyDir is
-        # deleted permanently. Config options include:
+        # deleted permanently. Prefer "ephemeral" (below) for non-trivial
+        # scratch storage: emptyDir borrows the node's local disk without
+        # capacity accounting, so a noisy pod can exhaust host storage
+        # shared with other workloads. Config options include:
         #
         #   "medium": By default, emptyDir volumes use the node's backing
         #             storage (disk, SSD, or network). Setting emptyDir.medium
@@ -1437,6 +1440,19 @@ workloads:
         #
         #   "sizeLimit": the maximum amount of storage that an emptyDir volume
         #                can consume (e.g. 500Mi)
+        #
+        # "ephemeral" volumes create a per-pod PersistentVolumeClaim via an
+        # inline volumeClaimTemplate. The PVC is bound to the pod's lifetime
+        # and deleted when the pod is removed. Prefer this over "emptyDir"
+        # for non-trivial scratch storage: emptyDir borrows the node's local
+        # disk without capacity accounting, so a noisy pod can exhaust host
+        # storage shared with other workloads. Options:
+        #
+        #   "accessModes": (required) List of access modes (e.g. [ReadWriteOnce]).
+        #
+        #   "size": (required) Storage request (e.g. 10Gi).
+        #
+        #   "storageClassName": StorageClass to use. Defaults to "standard-rwo".
         #
         # "gcsFuseCsi" volumes mount a Google Cloud Storage bucket as an
         # ephemeral inline CSI volume using the GKE GCS FUSE CSI driver.
@@ -1484,6 +1500,11 @@ workloads:
         #       path: /path/to/another/dir
         #       sizeLimit: 500Mi
         #       medium: Memory
+        #     - name: scratch
+        #       type: ephemeral
+        #       path: /scratch
+        #       accessModes: [ReadWriteOnce]
+        #       size: 10Gi
         #     - name: my-gcs-bucket
         #       type: gcsFuseCsi
         #       path: /path/to/mount
@@ -2107,7 +2128,7 @@ workloads:
 
         # Optionally mount volumes to the container. The supported volume types
         # are "configMap" (default), "secret", "persistentVolume", "emptyDir",
-        # and "gcsFuseCsi".
+        # "ephemeral", and "gcsFuseCsi".
         #
         # Volumes should use names that match either config map, external
         # secret, or persistent volume claim names created as part of and
@@ -2137,7 +2158,10 @@ workloads:
         # "emptyDir" volumes, as the name suggests, create an empty volume
         # that's created when the Pod is assigned to a node. When a Pod is
         # removed from a node for any reason, the data in the emptyDir is
-        # deleted permanently. Config options include:
+        # deleted permanently. Prefer "ephemeral" (below) for non-trivial
+        # scratch storage: emptyDir borrows the node's local disk without
+        # capacity accounting, so a noisy pod can exhaust host storage
+        # shared with other workloads. Config options include:
         #
         #   "medium": By default, emptyDir volumes use the node's backing
         #             storage (disk, SSD, or network). Setting emptyDir.medium
@@ -2145,6 +2169,19 @@ workloads:
         #
         #   "sizeLimit": the maximum amount of storage that an emptyDir volume
         #                can consume (e.g. 500Mi)
+        #
+        # "ephemeral" volumes create a per-pod PersistentVolumeClaim via an
+        # inline volumeClaimTemplate. The PVC is bound to the pod's lifetime
+        # and deleted when the pod is removed. Prefer this over "emptyDir"
+        # for non-trivial scratch storage: emptyDir borrows the node's local
+        # disk without capacity accounting, so a noisy pod can exhaust host
+        # storage shared with other workloads. Options:
+        #
+        #   "accessModes": (required) List of access modes (e.g. [ReadWriteOnce]).
+        #
+        #   "size": (required) Storage request (e.g. 10Gi).
+        #
+        #   "storageClassName": StorageClass to use. Defaults to "standard-rwo".
         #
         # "gcsFuseCsi" volumes mount a Google Cloud Storage bucket as an
         # ephemeral inline CSI volume using the GKE GCS FUSE CSI driver.
@@ -2192,6 +2229,11 @@ workloads:
         #       path: /path/to/another/dir
         #       sizeLimit: 500Mi
         #       medium: Memory
+        #     - name: scratch
+        #       type: ephemeral
+        #       path: /scratch
+        #       accessModes: [ReadWriteOnce]
+        #       size: 10Gi
         #     - name: my-gcs-bucket
         #       type: gcsFuseCsi
         #       path: /path/to/mount

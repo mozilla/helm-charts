@@ -327,6 +327,8 @@ Configuration matches entire snapshot:
                 - mountPath: /data/bucket
                   name: gcs-bucket
                   readOnly: true
+                - mountPath: /data/ephemeral-scratch
+                  name: ephemeral-scratch
           securityContext:
             runAsGroup: 10001
             runAsNonRoot: true
@@ -335,6 +337,16 @@ Configuration matches entire snapshot:
               type: RuntimeDefault
           serviceAccountName: mozcloud-test
           volumes:
+            - ephemeral:
+                volumeClaimTemplate:
+                  spec:
+                    accessModes:
+                      - ReadWriteOnce
+                    resources:
+                      requests:
+                        storage: 20Gi
+                    storageClassName: standard-rwo
+              name: ephemeral-scratch
             - csi:
                 driver: gcsfuse.csi.storage.gke.io
                 readOnly: true
