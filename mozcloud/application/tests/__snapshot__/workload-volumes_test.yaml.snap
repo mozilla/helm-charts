@@ -345,7 +345,7 @@ Configuration matches entire snapshot:
                     resources:
                       requests:
                         storage: 20Gi
-                    storageClassName: premium-rwo
+                    storageClassName: standard-rwo
               name: ephemeral-scratch
             - csi:
                 driver: gcsfuse.csi.storage.gke.io

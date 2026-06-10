@@ -81,7 +81,6 @@ workloads:
             accessModes:
               - ReadWriteOnce
             size: 20Gi
-            storageClassName: premium-rwo
   test-service-no-gcs:
     component: web
     containers:

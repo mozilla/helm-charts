@@ -1844,8 +1844,7 @@
                 "then": {
                   "required": [
                     "accessModes",
-                    "size",
-                    "storageClassName"
+                    "size"
                   ]
                 },
                 "else": {

@@ -75,7 +75,7 @@ Returns:
         resources:
           requests:
             storage: {{ $volumeConfig.size }}
-        storageClassName: {{ $volumeConfig.storageClassName }}
+        storageClassName: {{ $volumeConfig.storageClassName | default "standard-rwo" }}
   {{- else if eq $volumeConfig.type "gcsFuseCsi" }}
   {{- include "mozcloud.volumes.gcsFuseCsi" (dict "config" $volumeConfig) | nindent 2 }}
   {{- else }}

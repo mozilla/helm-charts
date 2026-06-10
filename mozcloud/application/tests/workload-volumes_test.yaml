@@ -128,7 +128,8 @@ tests:
         documentSelector:
           path: $[?(@.kind == "Deployment")].metadata.name
           value: test-service
-      # Ephemeral volume renders as inline volumeClaimTemplate
+      # Ephemeral volume renders as inline volumeClaimTemplate; storageClassName
+      # defaults to standard-rwo when not specified in values.
       - contains:
           path: spec.template.spec.volumes
           content:
@@ -141,7 +142,7 @@ tests:
                   resources:
                     requests:
                       storage: 20Gi
-                  storageClassName: premium-rwo
+                  storageClassName: standard-rwo
         template: workload/deployment.yaml
         documentSelector:
           path: $[?(@.kind == "Deployment")].metadata.name
