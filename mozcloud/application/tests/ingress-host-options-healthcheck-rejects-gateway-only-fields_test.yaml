@@ -1,0 +1,17 @@
+---
+suite: "mozcloud: Ingress host rejects gateway-only options.healthCheck fields"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/ingress-host-options-healthcheck-rejects-gateway-only-fields.yaml
+templates:
+  - ingress/ingress.yaml
+tests:
+  - it: Fails when options.healthCheck.host or path is set on an api ingress host
+    asserts:
+      - failedTemplate:
+          errorPattern: "healthCheck"

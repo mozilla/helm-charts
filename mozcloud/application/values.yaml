@@ -1877,16 +1877,50 @@ workloads:
         #  # Backend service timeout period in seconds.
         #  #timeoutSec: 30
         #
-        #  # Custom config for backend health check. For Gateway API, only
-        #  # path/host/port apply. For Ingress API, requestPath sets the GCLB
-        #  # health-check path on the emitted BackendConfig (required for
-        #  # multi-container backends; see
-        #  # https://cloud.google.com/kubernetes-engine/docs/concepts/ingress#direct_hc_instead).
+        #  # Custom config for the backend health check. The supported fields
+        #  # depend on which API the host uses — each subkey is labeled with
+        #  # the API it applies to. Fields scoped to the other API are
+        #  # rejected by schema validation.
+        #  #
+        #  # See:
+        #  #   * Gateway API HealthCheckPolicy:
+        #  #     https://cloud.google.com/kubernetes-engine/docs/how-to/gateway-health-checks
+        #  #   * Ingress API BackendConfig health check:
+        #  #     https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#direct_health
         #  #healthCheck:
-        #  #  #path: /readiness/
-        #  #  #port: 8000
+        #  #  # Gateway API only. The Ingress API has no Host-header equivalent
+        #  #  # on the BackendConfig; set the Host header via container-level
+        #  #  # healthCheck.readiness.httpHeaders instead.
         #  #  #host: my-custom-backend-host
+        #  #
+        #  #  # Gateway API only. Path the HealthCheckPolicy probes.
+        #  #  #path: /readiness/
+        #  #
+        #  #  # Both APIs. Port the GCLB health check targets.
+        #  #  #port: 8000
+        #  #
+        #  #  # Ingress API only. Path the GCLB sends GET requests to on the
+        #  #  # emitted BackendConfig (required for multi-container backends).
         #  #  #requestPath: /__lbheartbeat__
+        #  #
+        #  #  # Ingress API only. Protocol used by the GCLB health check.
+        #  #  # One of HTTP, HTTPS, HTTP2.
+        #  #  #type: HTTP
+        #  #
+        #  #  # Ingress API only. Interval in seconds between probes.
+        #  #  #checkIntervalSec: 10
+        #  #
+        #  #  # Ingress API only. Per-probe timeout in seconds. Must be <=
+        #  #  # checkIntervalSec.
+        #  #  #timeoutSec: 5
+        #  #
+        #  #  # Ingress API only. Consecutive successful probes required to
+        #  #  # mark a backend healthy.
+        #  #  #healthyThreshold: 1
+        #  #
+        #  #  # Ingress API only. Consecutive failed probes required to mark
+        #  #  # a backend unhealthy.
+        #  #  #unhealthyThreshold: 2
         #
         #  # Custom headers the GCLB adds to requests before forwarding to
         #  # backends (Ingress API only). Each entry is a "Name:Value" string.
