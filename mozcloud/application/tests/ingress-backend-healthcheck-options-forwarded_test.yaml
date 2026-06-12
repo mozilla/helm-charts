@@ -1,0 +1,67 @@
+---
+suite: "mozcloud: Ingress BackendConfig forwards full options.healthCheck"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/ingress-backend-healthcheck-options-forwarded.yaml
+templates:
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Configuration matches snapshot and forwards every supported options.healthCheck field
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+      - equal:
+          path: spec.healthCheck.requestPath
+          value: /__lbheartbeat__
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.healthCheck.port
+          value: 8000
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.healthCheck.type
+          value: HTTP
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.healthCheck.checkIntervalSec
+          value: 10
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.healthCheck.timeoutSec
+          value: 5
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.healthCheck.healthyThreshold
+          value: 1
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.healthCheck.unhealthyThreshold
+          value: 3
+        template: gke/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: test-service

@@ -109,11 +109,32 @@ ingresses:
                     - {{ . | quote }}
                     {{- end }}
                 {{- end }}
-                {{- if (($hostConfig.options).healthCheck).requestPath }}
+                {{- $healthCheck := default dict ($hostConfig.options).healthCheck }}
+                {{- /* Gate on the BackendConfig-supported fields only so a values
+                   override that sets only gateway-only keys (host/path) does
+                   not emit an empty healthCheck block on the ingress path. */}}
+                {{- if or $healthCheck.requestPath $healthCheck.port $healthCheck.type $healthCheck.checkIntervalSec $healthCheck.timeoutSec $healthCheck.healthyThreshold $healthCheck.unhealthyThreshold }}
                 healthCheck:
-                  requestPath: {{ $hostConfig.options.healthCheck.requestPath | quote }}
-                  {{- if $hostConfig.options.healthCheck.port }}
-                  port: {{ $hostConfig.options.healthCheck.port }}
+                  {{- if $healthCheck.requestPath }}
+                  requestPath: {{ $healthCheck.requestPath | quote }}
+                  {{- end }}
+                  {{- if $healthCheck.port }}
+                  port: {{ $healthCheck.port }}
+                  {{- end }}
+                  {{- if $healthCheck.type }}
+                  type: {{ $healthCheck.type }}
+                  {{- end }}
+                  {{- if $healthCheck.checkIntervalSec }}
+                  checkIntervalSec: {{ $healthCheck.checkIntervalSec }}
+                  {{- end }}
+                  {{- if $healthCheck.timeoutSec }}
+                  timeoutSec: {{ $healthCheck.timeoutSec }}
+                  {{- end }}
+                  {{- if $healthCheck.healthyThreshold }}
+                  healthyThreshold: {{ $healthCheck.healthyThreshold }}
+                  {{- end }}
+                  {{- if $healthCheck.unhealthyThreshold }}
+                  unhealthyThreshold: {{ $healthCheck.unhealthyThreshold }}
                   {{- end }}
                 {{- end }}
               service:
