@@ -1047,6 +1047,41 @@
                     }
                   }
                 },
+                "frontendConfig": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "description": "Optional overrides for the GKE FrontendConfig (Ingress only).",
+                  "properties": {
+                    "redirectToHttps": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "default": true,
+                          "description": "Whether the GCLB issues an HTTP→HTTPS redirect at the load balancer. Defaults to true."
+                        },
+                        "responseCodeName": {
+                          "type": "string",
+                          "enum": [
+                            "MOVED_PERMANENTLY_DEFAULT",
+                            "FOUND",
+                            "SEE_OTHER",
+                            "TEMPORARY_REDIRECT",
+                            "PERMANENT_REDIRECT"
+                          ],
+                          "default": "MOVED_PERMANENTLY_DEFAULT",
+                          "description": "HTTP status code returned by the redirect. Only applies when redirectToHttps.enabled is true."
+                        }
+                      }
+                    },
+                    "sslPolicy": {
+                      "type": "string",
+                      "default": "mozilla-intermediate",
+                      "description": "GCP SSL policy attached to the HTTPS frontend. Defaults to mozilla-intermediate."
+                    }
+                  }
+                },
                 "options": {
                   "type": "object",
                   "additionalProperties": false,

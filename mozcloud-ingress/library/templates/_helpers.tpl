@@ -181,6 +181,11 @@ FrontendConfig template helpers
 {{- $name_override := default "" .nameOverride -}}
 {{- $frontend_config := default (dict) .frontendConfig -}}
 {{- $ingresses := default (dict) .ingressConfig -}}
+{{- $redirect := default (dict) ($frontend_config).redirectToHttps -}}
+{{- $redirectEnabled := $defaults.redirectToHttps.enabled -}}
+{{- if hasKey $redirect "enabled" -}}
+  {{- $redirectEnabled = $redirect.enabled -}}
+{{- end -}}
 {{- range $ingress_name, $ingress_config := $ingresses -}}
   {{- $_ := set $ingress_config "name" $ingress_name -}}
   {{- $params := dict "ingressConfig" $ingress_config "frontendConfig" $frontend_config -}}
@@ -190,8 +195,10 @@ FrontendConfig template helpers
   {{- $frontend_name := include "mozcloud-ingress-lib.config.name" $params }}
 {{ $frontend_name }}:
   redirectToHttps:
-    enabled: {{ default $defaults.redirectToHttps.enabled (($frontend_config).redirectToHttps).enabled }}
-    responseCodeName: {{ default $defaults.redirectToHttps.responseCodeName (($frontend_config).redirectToHttps).responseCodeName }}
+    enabled: {{ $redirectEnabled }}
+    {{- if $redirectEnabled }}
+    responseCodeName: {{ default $defaults.redirectToHttps.responseCodeName $redirect.responseCodeName }}
+    {{- end }}
   sslPolicy: {{ default $defaults.sslPolicy ($frontend_config).sslPolicy }}
 {{- end }}
 {{- end -}}

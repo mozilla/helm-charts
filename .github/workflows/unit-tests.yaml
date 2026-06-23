@@ -46,7 +46,7 @@ jobs:
         shell: bash
 
       - name: Install Helm unittest
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version=v1.0.3 --verify=false
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version=v1.0.3
         shell: bash
 
       - name: Update dependencies
