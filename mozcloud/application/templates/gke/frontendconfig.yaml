@@ -8,9 +8,10 @@ mozcloud-ingress-lib library chart. Only processes hosts with type "external"
 since frontend configs (HTTP→HTTPS redirects and SSL policies) are only
 applicable to externally-exposed Ingress resources.
 
-For each qualifying host, produces a frontend config entry with:
-  - HTTP-to-HTTPS redirect enabled (MOVED_PERMANENTLY_DEFAULT).
-  - SSL policy set to "mozilla-intermediate".
+For each qualifying host, produces a frontend config entry. Defaults can be overridden per-host via hosts.<name>.frontendConfig:
+  - redirectToHttps.enabled         (bool;   default true)
+  - redirectToHttps.responseCodeName (string; default MOVED_PERMANENTLY_DEFAULT)
+  - sslPolicy                       (string; default mozilla-intermediate)
 
 Params:
   workloads (dict): (required) The formatted workloads dict as returned by
@@ -26,12 +27,18 @@ frontendConfigs:
   {{- range $workloadName, $workloadConfig := $workloads }}
   {{- range $hostName, $hostConfig := default dict $workloadConfig.hosts }}
   {{- if eq $hostConfig.type "external" }}
+  {{- $frontendOverride := default (dict) $hostConfig.frontendConfig }}
+  {{- $redirectOverride := default (dict) $frontendOverride.redirectToHttps }}
+  {{- $redirectEnabled := true }}
+  {{- if hasKey $redirectOverride "enabled" }}
+    {{- $redirectEnabled = $redirectOverride.enabled }}
+  {{- end }}
   {{ $hostName }}:
     component: {{ $workloadConfig.component }}
     redirectToHttps:
-      enabled: true
-      responseCodeName: MOVED_PERMANENTLY_DEFAULT
-    sslPolicy: mozilla-intermediate
+      enabled: {{ $redirectEnabled }}
+      responseCodeName: {{ default "MOVED_PERMANENTLY_DEFAULT" $redirectOverride.responseCodeName }}
+    sslPolicy: {{ default "mozilla-intermediate" $frontendOverride.sslPolicy }}
   {{- end }}
   {{- end }}
   {{- end }}

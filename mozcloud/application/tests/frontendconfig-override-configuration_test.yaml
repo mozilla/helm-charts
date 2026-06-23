@@ -1,0 +1,70 @@
+---
+suite: "mozcloud: FrontendConfig per-host overrides"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/frontendconfig-override-configuration.yaml
+templates:
+  - gateway/gateway.yaml
+  - gke/frontendconfig.yaml
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: redirect-disabled host renders enabled=false with responseCodeName omitted
+    asserts:
+      # responseCodeName is intentionally omitted when redirect is disabled —
+      # matches the legacy chart shape so migrations preserve byte-identical
+      # FrontendConfig specs when keeping HTTP-direct behavior.
+      - isSubset:
+          path: spec
+          content:
+            redirectToHttps:
+              enabled: false
+            sslPolicy: mozilla-intermediate
+        template: gke/frontendconfig.yaml
+        documentSelector:
+          path: $[?(@.kind == "FrontendConfig")].metadata.name
+          value: redirect-disabled
+      - notExists:
+          path: spec.redirectToHttps.responseCodeName
+        template: gke/frontendconfig.yaml
+        documentSelector:
+          path: $[?(@.kind == "FrontendConfig")].metadata.name
+          value: redirect-disabled
+
+  - it: custom-redirect-code host has overridden responseCodeName with redirect still enabled
+    asserts:
+      - isSubset:
+          path: spec
+          content:
+            redirectToHttps:
+              enabled: true
+              responseCodeName: TEMPORARY_REDIRECT
+            sslPolicy: mozilla-intermediate
+        template: gke/frontendconfig.yaml
+        documentSelector:
+          path: $[?(@.kind == "FrontendConfig")].metadata.name
+          value: custom-redirect-code
+
+  - it: custom-ssl-policy host has overridden sslPolicy with redirect defaults preserved
+    asserts:
+      - isSubset:
+          path: spec
+          content:
+            redirectToHttps:
+              enabled: true
+              responseCodeName: MOVED_PERMANENTLY_DEFAULT
+            sslPolicy: mozilla-modern
+        template: gke/frontendconfig.yaml
+        documentSelector:
+          path: $[?(@.kind == "FrontendConfig")].metadata.name
+          value: custom-ssl-policy
