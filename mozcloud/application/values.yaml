@@ -1847,6 +1847,39 @@ workloads:
           # As the default API is "gateway", the default TLS type is "certmap".
           type: certmap
 
+        # Optional overrides for the GKE FrontendConfig (Ingress only).
+        #
+        # New applications should NOT set this — the chart-wide defaults below
+        # are the secure baseline (HTTPS redirect on, Mozilla-intermediate TLS
+        # policy). This block supports migration of existing
+        # applications whose pre-migration behavior intentionally diverged from
+        # those defaults (e.g. an application that served HTTP directly without
+        # an LB-side redirect and is migrating to mozcloud with that behavior
+        # preserved).
+        #
+        # Defaults when this block is unset:
+        #   redirectToHttps.enabled:          true
+        #   redirectToHttps.responseCodeName: MOVED_PERMANENTLY_DEFAULT
+        #   sslPolicy:                        mozilla-intermediate
+        #
+        # When redirectToHttps.enabled is false, responseCodeName is omitted
+        # from the rendered FrontendConfig spec (it only applies when the
+        # redirect fires).
+        #frontendConfig:
+        #  redirectToHttps:
+        #    # Whether the GCLB issues an HTTP -> HTTPS redirect at the load
+        #    # balancer. Set false to serve HTTP directly without
+        #    # redirecting.
+        #    enabled: true
+        #
+        #    # HTTP status code returned by the redirect. One of:
+        #    # MOVED_PERMANENTLY_DEFAULT, FOUND, SEE_OTHER, TEMPORARY_REDIRECT,
+        #    # PERMANENT_REDIRECT.
+        #    responseCodeName: MOVED_PERMANENTLY_DEFAULT
+        #
+        #  # GCP SSL policy attached to the HTTPS frontend.
+        #  sslPolicy: mozilla-intermediate
+
         # Optionally configure the log sample rate for the load balancer, IAP
         # details, a custom backend timeout, or a Cloud Armor security policy.
         #options:
