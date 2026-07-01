@@ -144,6 +144,11 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
+          "enabled": {
+            "description": "Whether to create this PersistentVolumeClaim. Defaults to true.",
+            "type": "boolean",
+            "default": true
+          },
           "accessModes": {
             "type": "array",
             "items": {
