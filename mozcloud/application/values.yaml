@@ -171,6 +171,10 @@ externalSecrets:
 #     # the name you will reference when assigning persistent volumes to workloads
 #     # and jobs.
 #     mozcloud-pvc:
+#       # Whether to create this PersistentVolumeClaim. Set to false to suppress
+#       # the claim without removing its configuration. Defaults to true.
+#       enabled: true
+#
 #       # Access modes determine whether the volume can be mounted as read only or
 #       # read/write and by either a single node or multiple.
 #       #

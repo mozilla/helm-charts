@@ -5,6 +5,7 @@
 {{- $prefix := include "mozcloud.preview.prefix" . }}
 {{- $persistentVolumes := default dict .Values.persistentVolumes }}
 {{- range $name, $config := $persistentVolumes }}
+{{- if dig "enabled" true $config }}
 {{- $name = printf "%s%s" $prefix $name }}
 ---
 apiVersion: v1
@@ -30,4 +31,5 @@ spec:
     requests:
       storage: {{ $config.size }}
   storageClassName: {{ $config.storageClassName }}
+{{- end }}
 {{- end }}

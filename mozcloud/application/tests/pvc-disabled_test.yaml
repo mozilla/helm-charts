@@ -1,0 +1,27 @@
+---
+suite: "mozcloud: Disabled PersistentVolumeClaim is suppressed"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/pvc-disabled.yaml
+templates:
+  - pvc/pvc.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Disabled PVC is not rendered; enabled PVC is rendered
+    template: pvc/pvc.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: metadata.name
+          value: pvc-enabled
+        documentIndex: 0

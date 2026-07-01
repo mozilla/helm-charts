@@ -1,0 +1,12 @@
+persistentVolumes:
+  pvc-enabled:
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: standard
+  pvc-disabled:
+    enabled: false
+    accessModes:
+      - ReadWriteOnce
+    size: 10Gi
+    storageClassName: standard
