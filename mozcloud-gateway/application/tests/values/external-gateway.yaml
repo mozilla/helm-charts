@@ -1,0 +1,12 @@
+# Layered on top of basic-configuration.yaml: gives test-httproute two parents --
+# the tenant's own same-namespace gateway and a cross-namespace (shared,
+# HTTPS-only) gateway -- to exercise per-gatewayRef redirect handling.
+httpRoute:
+  httpRoutes:
+    test-httproute:
+      gatewayRefs:
+        - name: test-gateway
+          section: https
+        - name: shared-gateway
+          namespace: mozcloud-gateway
+          section: https

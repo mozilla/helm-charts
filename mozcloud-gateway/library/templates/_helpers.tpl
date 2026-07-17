@@ -307,6 +307,22 @@ HTTPRoute template helpers
     {{- $rules = append $rules $rule_config -}}
   {{- end -}}
   {{- $_ = set $http_route_config "rules" $rules -}}
+  {{- /*
+  Resolve per-gatewayRef httpRedirect (consumed by the http-redirect route in
+  _httproute.yaml). Explicit value wins; otherwise default true for
+  same-namespace gateways (this chart gives them an http listener) and false for
+  cross-namespace/external gateways (e.g. a shared HTTPS-only gateway with no
+  http listener -- attaching a redirect route there fails to program).
+  */ -}}
+  {{- $gateway_refs := list -}}
+  {{- range $ref := $http_route_config.gatewayRefs -}}
+    {{- $ref_config := $ref | deepCopy -}}
+    {{- if kindIs "invalid" $ref_config.httpRedirect -}}
+      {{- $_ := set $ref_config "httpRedirect" (not $ref_config.namespace) -}}
+    {{- end -}}
+    {{- $gateway_refs = append $gateway_refs $ref_config -}}
+  {{- end -}}
+  {{- $_ = set $http_route_config "gatewayRefs" $gateway_refs -}}
   {{- $output = append $output $http_route_config -}}
 {{- end -}}
 {{- $http_routes = dict "httpRoutes" $output -}}

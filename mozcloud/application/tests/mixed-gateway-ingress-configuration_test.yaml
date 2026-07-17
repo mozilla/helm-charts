@@ -128,3 +128,25 @@ tests:
           content: gateway-service
           any: true
         template: ingress/ingress.yaml
+
+  # Migration safety: a single chart can serve one workload via Ingress and
+  # another via Gateway simultaneously, and each Service carries the correct
+  # annotation profile for its api type.
+  - it: gateway Service is gateway-safe while the ingress Service keeps backend-config
+    asserts:
+      # The gateway-api Service must NOT carry the Ingress-only backend-config
+      # annotation -- GKE Gateway refuses to translate a gateway whose backend
+      # Service has it (it uses GCPBackendPolicy/NEGs instead).
+      - notExists:
+          path: metadata.annotations["cloud.google.com/backend-config"]
+        template: gateway/backend.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: gateway-service
+      # The ingress-api Service DOES carry backend-config, as the Ingress requires.
+      - exists:
+          path: metadata.annotations["cloud.google.com/backend-config"]
+        template: ingress/ingress.yaml
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: ingress-service
