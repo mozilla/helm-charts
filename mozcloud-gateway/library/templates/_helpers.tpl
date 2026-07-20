@@ -309,16 +309,17 @@ HTTPRoute template helpers
   {{- $_ = set $http_route_config "rules" $rules -}}
   {{- /*
   Resolve per-gatewayRef httpRedirect (consumed by the http-redirect route in
-  _httproute.yaml). Explicit value wins; otherwise default true for
-  same-namespace gateways (this chart gives them an http listener) and false for
-  cross-namespace/external gateways (e.g. a shared HTTPS-only gateway with no
-  http listener -- attaching a redirect route there fails to program).
+  _httproute.yaml). Defaults to true, preserving the HTTP->HTTPS redirect for
+  every parent gateway. Set httpRedirect=false on a gatewayRef to skip the
+  redirect for a gateway that has no http listener (e.g. an HTTPS-only shared
+  gateway) -- this is per-ref so a route can keep the redirect on its own gateway
+  while skipping it on a shared HTTPS-only one (tandem).
   */ -}}
   {{- $gateway_refs := list -}}
   {{- range $ref := $http_route_config.gatewayRefs -}}
     {{- $ref_config := $ref | deepCopy -}}
     {{- if kindIs "invalid" $ref_config.httpRedirect -}}
-      {{- $_ := set $ref_config "httpRedirect" (not $ref_config.namespace) -}}
+      {{- $_ := set $ref_config "httpRedirect" true -}}
     {{- end -}}
     {{- $gateway_refs = append $gateway_refs $ref_config -}}
   {{- end -}}

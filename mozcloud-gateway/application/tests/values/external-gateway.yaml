@@ -10,3 +10,5 @@ httpRoute:
         - name: shared-gateway
           namespace: mozcloud-gateway
           section: https
+          # HTTPS-only shared gateway: opt out of the HTTP->HTTPS redirect route.
+          httpRedirect: false
