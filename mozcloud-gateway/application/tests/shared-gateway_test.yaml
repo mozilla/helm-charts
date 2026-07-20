@@ -1,0 +1,53 @@
+---
+# Verifies the library's per-gatewayRef httpRedirect handling: a cross-namespace
+# / external gateway (e.g. a shared HTTPS-only gateway) is excluded from the
+# HTTP->HTTPS redirect route since it has no http listener to attach to, while
+# the tenant's own same-namespace gateway still gets the redirect. This is what
+# makes attaching an HTTPRoute to a shared gateway safe.
+suite: "mozcloud-gateway: External gateway redirect handling"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/basic-configuration.yaml
+  - values/external-gateway.yaml
+templates:
+  - templates/httproute.yaml
+tests:
+  - it: attaches the HTTPRoute to both the own and the cross-namespace gateway
+    asserts:
+      - lengthEqual:
+          path: spec.parentRefs
+          count: 2
+        documentSelector:
+          path: metadata.name
+          value: test-httproute
+      - contains:
+          path: spec.parentRefs
+          content:
+            group: gateway.networking.k8s.io
+            kind: Gateway
+            name: shared-gateway
+            namespace: mozcloud-gateway
+            sectionName: https
+        documentSelector:
+          path: metadata.name
+          value: test-httproute
+
+  - it: excludes the cross-namespace (HTTPS-only) gateway from the http-redirect route
+    asserts:
+      - lengthEqual:
+          path: spec.parentRefs
+          count: 1
+        documentSelector:
+          path: metadata.name
+          value: test-httproute-http-redirect
+      - equal:
+          path: spec.parentRefs[0].name
+          value: test-gateway
+        documentSelector:
+          path: metadata.name
+          value: test-httproute-http-redirect

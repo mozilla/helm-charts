@@ -99,7 +99,15 @@ spec:
               statusCode: {{ $rule.redirect.statusCode }}
       {{- end }}
     {{- end }}
-{{- if $http_route.httpToHttpsRedirect }}
+{{- /* Only the gateways that actually have an http listener get the redirect
+       route. Cross-namespace/external gateways (e.g. a shared HTTPS-only
+       gateway) are excluded via httpRedirect=false so we don't attach a route
+       to a nonexistent http section. */ -}}
+{{- $redirect_refs := list }}
+{{- range $gateway_ref := $http_route.gatewayRefs }}
+{{- if $gateway_ref.httpRedirect }}{{- $redirect_refs = append $redirect_refs $gateway_ref }}{{- end }}
+{{- end }}
+{{- if and $http_route.httpToHttpsRedirect $redirect_refs }}
 ---
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
@@ -109,7 +117,7 @@ metadata:
     {{- $http_route.labels | toYaml | nindent 4 }}
 spec:
   parentRefs:
-    {{- range $gateway_ref := $http_route.gatewayRefs }}
+    {{- range $gateway_ref := $redirect_refs }}
     - group: gateway.networking.k8s.io
       kind: Gateway
       name: {{ $gateway_ref.name }}
