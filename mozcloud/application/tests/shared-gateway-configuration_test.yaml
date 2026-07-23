@@ -31,7 +31,7 @@ tests:
           path: $[?(@.kind == "GCPGatewayPolicy")]
         template: gke/gateway.yaml
 
-  - it: HTTPRoutes reference the shared gateway for HTTPS and HTTP redirect
+  - it: HTTPRoute references the shared gateway for HTTPS, with no HTTP redirect route
     template: gateway/httproute.yaml
     asserts:
       # Creates HTTPRoute that references the shared gateway
@@ -54,19 +54,10 @@ tests:
         documentSelector:
           path: $[?(@.kind == "HTTPRoute")].metadata.name
           value: shared-gateway-host
-      # Creates HTTP redirect HTTPRoute that references the shared gateway
-      - contains:
-          path: spec.parentRefs
-          count: 1
-          content:
-            group: gateway.networking.k8s.io
-            kind: Gateway
-            name: sandbox-high-preview-gateway
-            namespace: preview-shared-infrastructure
-            sectionName: http
-        documentSelector:
-          path: $[?(@.kind == "HTTPRoute")].metadata.name
-          value: shared-gateway-host-http-redirect
+      # A shared HTTPS-only gateway has no http listener, so no HTTP->HTTPS
+      # redirect route is created for it (would be orphaned / NoMatchingParent).
+      - isNull:
+          path: $[?(@.kind == "HTTPRoute" && @.metadata.name == "shared-gateway-host-http-redirect")]
 
   - it: Backend Service, GCPBackendPolicy, and HealthCheckPolicy are created for the workload
     asserts:
