@@ -67,6 +67,11 @@ httpRoutes:
         {{- else }}
         section: http
         {{- end }}
+        {{- if ($hostConfig).sharedGateway }}
+        {{- /* Shared HTTPS-only gateway has no http listener; skip the
+               HTTP->HTTPS redirect route for this parent (library #292). */}}
+        httpRedirect: false
+        {{- end }}
     hostnames:
       {{- range $domain := $hostConfig.domains }}
       - {{ $domain | quote }}
