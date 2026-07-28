@@ -186,6 +186,10 @@ FrontendConfig template helpers
 {{- if hasKey $redirect "enabled" -}}
   {{- $redirectEnabled = $redirect.enabled -}}
 {{- end -}}
+{{- $sslPolicy := $defaults.sslPolicy -}}
+{{- if hasKey $frontend_config "sslPolicy" -}}
+  {{- $sslPolicy = $frontend_config.sslPolicy -}}
+{{- end -}}
 {{- range $ingress_name, $ingress_config := $ingresses -}}
   {{- $_ := set $ingress_config "name" $ingress_name -}}
   {{- $params := dict "ingressConfig" $ingress_config "frontendConfig" $frontend_config -}}
@@ -199,7 +203,7 @@ FrontendConfig template helpers
     {{- if $redirectEnabled }}
     responseCodeName: {{ default $defaults.redirectToHttps.responseCodeName $redirect.responseCodeName }}
     {{- end }}
-  sslPolicy: {{ default $defaults.sslPolicy ($frontend_config).sslPolicy }}
+  sslPolicy: {{ $sslPolicy | toYaml }}
 {{- end }}
 {{- end -}}
 

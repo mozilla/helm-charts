@@ -13,6 +13,6 @@ metadata:
 spec:
   redirectToHttps:
     {{- $frontend_config.redirectToHttps | toYaml | nindent 4 }}
-  sslPolicy: {{ $frontend_config.sslPolicy }}
+  sslPolicy: {{ $frontend_config.sslPolicy | toYaml }}
 {{- end }}
 {{- end -}}
