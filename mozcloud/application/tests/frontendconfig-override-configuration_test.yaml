@@ -68,3 +68,16 @@ tests:
         documentSelector:
           path: $[?(@.kind == "FrontendConfig")].metadata.name
           value: custom-ssl-policy
+
+  - it: empty-ssl-policy host renders sslPolicy as empty string (defers to GCP LB default)
+    asserts:
+      # An empty sslPolicy is a valid GKE FrontendConfig value that tells the LB
+      # to use its default policy (COMPATIBLE). Tenants migrating from legacy
+      # charts that shipped sslPolicy: "" need this override to survive.
+      - equal:
+          path: spec.sslPolicy
+          value: ""
+        template: gke/frontendconfig.yaml
+        documentSelector:
+          path: $[?(@.kind == "FrontendConfig")].metadata.name
+          value: empty-ssl-policy

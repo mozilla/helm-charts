@@ -33,12 +33,16 @@ frontendConfigs:
   {{- if hasKey $redirectOverride "enabled" }}
     {{- $redirectEnabled = $redirectOverride.enabled }}
   {{- end }}
+  {{- $sslPolicy := "mozilla-intermediate" }}
+  {{- if hasKey $frontendOverride "sslPolicy" }}
+    {{- $sslPolicy = $frontendOverride.sslPolicy }}
+  {{- end }}
   {{ $hostName }}:
     component: {{ $workloadConfig.component }}
     redirectToHttps:
       enabled: {{ $redirectEnabled }}
       responseCodeName: {{ default "MOVED_PERMANENTLY_DEFAULT" $redirectOverride.responseCodeName }}
-    sslPolicy: {{ default "mozilla-intermediate" $frontendOverride.sslPolicy }}
+    sslPolicy: {{ $sslPolicy | toYaml }}
   {{- end }}
   {{- end }}
   {{- end }}
