@@ -1511,6 +1511,15 @@
                 }
               }
             }
+          },
+          {
+            "description": "The replica count is only honoured when autoscaling is disabled, so setting both is rejected rather than silently ignored. Unlike the rules above, this one deliberately omits \"required\", so that an absent autoscaling block also matches: autoscaling.enabled defaults to true.",
+            "if": {
+              "properties": { "autoscaling": { "properties": { "enabled": { "const": true } } } }
+            },
+            "then": {
+              "properties": { "replicas": { "type": "null" } }
+            }
           }
         ]
       }

@@ -38,7 +38,9 @@ workloads:
           repository: test-repo/test-image
           tag: "1.0.0"
 
-  # Autoscaling enabled, so the HPA owns the replica count and replicas is ignored.
+  # Autoscaling enabled, so the HPA owns the replica count. Setting a workload
+  # replicas alongside this is rejected by values.schema.json, so it is absent
+  # here and spec.replicas must not be rendered.
   autoscaled-deployment:
     component: web
     autoscaling:
@@ -49,7 +51,6 @@ workloads:
       metrics:
         - type: cpu
           threshold: 60
-    replicas: 7
     containers:
       app:
         image:
