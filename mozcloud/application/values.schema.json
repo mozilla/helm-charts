@@ -514,6 +514,11 @@
             ],
             "default": "deployment"
           },
+          "replicas": {
+            "type": "integer",
+            "description": "Fixed pod count, applied only when autoscaling.enabled is false. Leave unset when an external autoscaler such as KEDA owns the replica count, so spec.replicas is omitted",
+            "minimum": 0
+          },
           "autoscaling": {
             "type": "object",
             "additionalProperties": false,
@@ -1596,6 +1601,15 @@
                   "type": "object"
                 }
               }
+            }
+          },
+          {
+            "description": "The replica count is only honoured when autoscaling is disabled, so setting both is rejected rather than silently ignored. Unlike the rules above, this one deliberately omits \"required\", so that an absent autoscaling block also matches: autoscaling.enabled defaults to true.",
+            "if": {
+              "properties": { "autoscaling": { "properties": { "enabled": { "const": true } } } }
+            },
+            "then": {
+              "properties": { "replicas": { "type": "null" } }
             }
           }
         ]
