@@ -514,6 +514,11 @@
             ],
             "default": "deployment"
           },
+          "replicas": {
+            "type": "integer",
+            "description": "Fixed pod count, applied only when autoscaling.enabled is false. Leave unset when an external autoscaler such as KEDA owns the replica count, so spec.replicas is omitted",
+            "minimum": 0
+          },
           "autoscaling": {
             "type": "object",
             "additionalProperties": false,
@@ -1132,7 +1137,8 @@
                       "additionalProperties": false,
                       "properties": {
                         "path": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Health check request path on the HealthCheckPolicy (Gateway API only). For the Ingress API, use requestPath instead."
                         },
                         "port": {
                           "anyOf": [
@@ -1145,11 +1151,41 @@
                           ]
                         },
                         "host": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Host header sent by the GCLB health check (Gateway API only). The Ingress API's BackendConfig health check does not accept a Host header; set the Host header via container-level healthCheck.readiness.httpHeaders instead."
                         },
                         "requestPath": {
                           "type": "string",
                           "description": "Path the GCLB health check should send GET requests to (Ingress API only). Required for multi-container backends per GKE docs (https://cloud.google.com/kubernetes-engine/docs/concepts/ingress#direct_hc_instead). If unset, GKE picks a container readiness probe path arbitrarily."
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "HTTP",
+                            "HTTPS",
+                            "HTTP2"
+                          ],
+                          "description": "Protocol used by the GCLB health check (Ingress API only). See https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#direct_health."
+                        },
+                        "checkIntervalSec": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Interval in seconds between health check probes (Ingress API only)."
+                        },
+                        "timeoutSec": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Timeout in seconds for an individual health check probe (Ingress API only). Must be less than or equal to checkIntervalSec."
+                        },
+                        "healthyThreshold": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Consecutive successful probes required to mark a backend healthy (Ingress API only)."
+                        },
+                        "unhealthyThreshold": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "description": "Consecutive failed probes required to mark a backend unhealthy (Ingress API only)."
                         }
                       }
                     },
@@ -1208,6 +1244,26 @@
                             ]
                           }
                         }
+                      },
+                      "options": {
+                        "properties": {
+                          "healthCheck": {
+                            "not": {
+                              "anyOf": [
+                                {
+                                  "required": [
+                                    "host"
+                                  ]
+                                },
+                                {
+                                  "required": [
+                                    "path"
+                                  ]
+                                }
+                              ]
+                            }
+                          }
+                        }
                       }
                     }
                   },
@@ -1228,6 +1284,46 @@
                                 ]
                               }
                             ]
+                          }
+                        }
+                      },
+                      "options": {
+                        "properties": {
+                          "healthCheck": {
+                            "not": {
+                              "anyOf": [
+                                {
+                                  "required": [
+                                    "requestPath"
+                                  ]
+                                },
+                                {
+                                  "required": [
+                                    "type"
+                                  ]
+                                },
+                                {
+                                  "required": [
+                                    "checkIntervalSec"
+                                  ]
+                                },
+                                {
+                                  "required": [
+                                    "timeoutSec"
+                                  ]
+                                },
+                                {
+                                  "required": [
+                                    "healthyThreshold"
+                                  ]
+                                },
+                                {
+                                  "required": [
+                                    "unhealthyThreshold"
+                                  ]
+                                }
+                              ]
+                            }
                           }
                         }
                       }
@@ -1505,6 +1601,15 @@
                   "type": "object"
                 }
               }
+            }
+          },
+          {
+            "description": "The replica count is only honoured when autoscaling is disabled, so setting both is rejected rather than silently ignored. Unlike the rules above, this one deliberately omits \"required\", so that an absent autoscaling block also matches: autoscaling.enabled defaults to true.",
+            "if": {
+              "properties": { "autoscaling": { "properties": { "enabled": { "const": true } } } }
+            },
+            "then": {
+              "properties": { "replicas": { "type": "null" } }
             }
           }
         ]

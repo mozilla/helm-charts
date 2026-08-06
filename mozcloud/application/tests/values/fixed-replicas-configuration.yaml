@@ -1,0 +1,96 @@
+---
+workloads:
+  # Autoscaling disabled with an explicit replica count.
+  fixed-deployment:
+    component: worker
+    autoscaling:
+      enabled: false
+    replicas: 3
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+
+  # Autoscaling disabled with no explicit count, standing in for a workload
+  # scaled by KEDA. spec.replicas must stay absent so nothing fights the
+  # external autoscaler.
+  external-autoscaler-deployment:
+    component: worker
+    autoscaling:
+      enabled: false
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+
+  # Scale-to-zero is an explicit count, so it must be emitted rather than
+  # treated as unset.
+  zero-replica-deployment:
+    component: worker
+    autoscaling:
+      enabled: false
+    replicas: 0
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+
+  # Autoscaling enabled, so the HPA owns the replica count. Setting a workload
+  # replicas alongside this is rejected by values.schema.json, so it is absent
+  # here and spec.replicas must not be rendered.
+  autoscaled-deployment:
+    component: web
+    autoscaling:
+      enabled: true
+      replicas:
+        min: 2
+        max: 10
+      metrics:
+        - type: cpu
+          threshold: 60
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+
+  fixed-statefulset:
+    component: db
+    type: statefulset
+    strategy: RollingUpdate
+    autoscaling:
+      enabled: false
+    replicas: 2
+    statefulSet:
+      podManagementPolicy: Parallel
+      volumeClaimTemplates:
+        data:
+          accessMode: ReadWriteOnce
+          storageClassName: standard-rwo
+          storage: 10Gi
+    containers:
+      app:
+        image:
+          repository: test-repo/test-db
+          tag: "1.0.0"
+
+  fixed-rollout:
+    component: web
+    type: rollout
+    strategy:
+      canary:
+        steps:
+          - setWeight: 20
+          - pause:
+              duration: 30s
+    autoscaling:
+      enabled: false
+    replicas: 4
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
