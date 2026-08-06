@@ -75,6 +75,51 @@ tests:
       - equal:
           path: spec.volumeClaimTemplates[0].spec.resources.requests.storage
           value: 10Gi
+  - it: A volume matching a volumeClaimTemplate emits no pod-level volume
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      # "data" is the only volume and nginx is disabled, so the key is dropped
+      # entirely rather than rendered empty.
+      - isNull:
+          path: spec.template.spec.volumes
+  - it: The volumeMount for a volumeClaimTemplate is still rendered
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[0].name
+          value: data
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[0].mountPath
+          value: /data
+  - it: Only the colliding volume is dropped when other volumes are present
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service-mixed
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.volumes
+          count: 1
+      - equal:
+          path: spec.template.spec.volumes[0].name
+          value: scratch
+      # Regression guard: the VCT name must never appear as a shared claim.
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: data
+            persistentVolumeClaim:
+              claimName: data
+      # Both mounts survive on the container.
+      - lengthEqual:
+          path: spec.template.spec.containers[0].volumeMounts
+          count: 2
   - it: Headless Service is created with clusterIP None
     template: workload/statefulset.yaml
     documentSelector:

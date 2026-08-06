@@ -75,6 +75,20 @@ Returns:
   {{- $nginxVolume := dict "type" "configMap" }}
   {{- $_ := set $volumes $nginxConfigMapName $nginxVolume }}
 {{- end }}
+{{- /* Volumes whose name matches one of this workload's volumeClaimTemplates are
+     provisioned per-pod by the StatefulSet controller. Emitting a pod-level volume
+     for them would reference a shared PVC that does not exist, so they are excluded
+     from the pod spec; the container volumeMount is still rendered. */}}
+{{- $vcts := dict }}
+{{- if eq (default "deployment" $config.type) "statefulset" }}
+  {{- $vcts = default dict ($config.statefulSet).volumeClaimTemplates }}
+{{- end }}
+{{- $podVolumes := dict }}
+{{- range $volumeName, $volumeConfig := $volumes }}
+  {{- if not (hasKey $vcts $volumeName) }}
+    {{- $_ := set $podVolumes $volumeName $volumeConfig }}
+  {{- end }}
+{{- end }}
 {{- /* Compute labels for the pod template */}}
 {{- $component := dict "component_code" $config.component }}
 {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
@@ -240,10 +254,10 @@ template:
     topologySpreadConstraints:
       {{- $config.topologySpreadConstraints | toYaml | nindent 6 }}
     {{- end }}
-    {{- if or $nginxEnabled (gt (keys $volumes | len) 0) }}
+    {{- if or $nginxEnabled (gt (keys $podVolumes | len) 0) }}
     volumes:
       {{- include "mozcloud.workload.volumes" (dict
-        "volumes" $volumes
+        "volumes" $podVolumes
         "nginxEnabled" $nginxEnabled
         "nginxConfigMapName" $nginxConfigMapName
       ) | trim | nindent 6 }}
