@@ -514,6 +514,11 @@
             ],
             "default": "deployment"
           },
+          "replicas": {
+            "type": "integer",
+            "description": "Fixed pod count, applied only when autoscaling.enabled is false. Leave unset when an external autoscaler such as KEDA owns the replica count, so spec.replicas is omitted",
+            "minimum": 0
+          },
           "autoscaling": {
             "type": "object",
             "additionalProperties": false,

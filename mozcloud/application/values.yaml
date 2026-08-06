@@ -1012,10 +1012,23 @@ workloads:
     #
     type: deployment
 
+    # Optionally pin the workload to a fixed pod count. Only applied when
+    # autoscaling.enabled is false, and only when you set it explicitly.
+    #
+    # Leave this unset if something outside the chart owns the replica count,
+    # such as a KEDA ScaledObject or a hand-managed HPA. When unset, the chart
+    # omits spec.replicas entirely so the external autoscaler is free to scale
+    # the workload without Argo CD reverting it.
+    #
+    # Example:
+    #
+    #   replicas: 3
+
     # A list of optional autoscaling configurations for containerized workloads.
     autoscaling:
       # If enabled, configure autoscaling via a HorizontalPodAutoscaler
-      # (HPA). If disabled, only 1 replica of this pod will run.
+      # (HPA). If disabled, no HPA is created and the pod count is left to the
+      # "replicas" field above, or to whatever scales the workload externally.
       enabled: true
 
       # By default, we will scale pods at 60% CPU utilization, but users can

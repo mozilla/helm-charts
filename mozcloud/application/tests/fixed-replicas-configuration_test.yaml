@@ -1,0 +1,77 @@
+---
+suite: "mozcloud: fixed replicas when autoscaling is disabled"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/fixed-replicas-configuration.yaml
+templates:
+  - workload/deployment.yaml
+  - workload/statefulset.yaml
+  - workload/rollout.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Deployment with autoscaling disabled sets the explicit replica count
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: fixed-deployment
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 3
+
+  - it: Deployment with autoscaling disabled and no explicit count omits replicas
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: external-autoscaler-deployment
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: Deployment pinned to zero replicas emits an explicit 0
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: zero-replica-deployment
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 0
+
+  - it: Deployment with autoscaling enabled omits replicas so the HPA owns it
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: autoscaled-deployment
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: StatefulSet with autoscaling disabled sets the explicit replica count
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: fixed-statefulset
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 2
+
+  - it: Rollout with autoscaling disabled sets the explicit replica count
+    template: workload/rollout.yaml
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: fixed-rollout
+    asserts:
+      - equal:
+          path: spec.replicas
+          value: 4
