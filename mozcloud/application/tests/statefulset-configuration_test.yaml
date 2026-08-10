@@ -75,7 +75,7 @@ tests:
       - equal:
           path: spec.volumeClaimTemplates[0].spec.resources.requests.storage
           value: 10Gi
-  - it: A volume matching a volumeClaimTemplate emits no pod-level volume
+  - it: A volume matching a volumeClaimTemplate is mounted but emits no pod-level volume
     template: workload/statefulset.yaml
     documentSelector:
       path: $[?(@.kind == "StatefulSet")].metadata.name
@@ -85,12 +85,7 @@ tests:
       # entirely rather than rendered empty.
       - isNull:
           path: spec.template.spec.volumes
-  - it: The volumeMount for a volumeClaimTemplate is still rendered
-    template: workload/statefulset.yaml
-    documentSelector:
-      path: $[?(@.kind == "StatefulSet")].metadata.name
-      value: test-service
-    asserts:
+      # The mount survives and still resolves, via the per-pod claim.
       - equal:
           path: spec.template.spec.containers[0].volumeMounts[0].name
           value: data
