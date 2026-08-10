@@ -16,3 +16,36 @@ workloads:
         image:
           repository: test-repo/test-db
           tag: "1.0.0"
+        # Mounts the volumeClaimTemplate above. The per-pod claim is created by
+        # the StatefulSet controller, so no pod-level volume should be emitted.
+        # This is the only volume and nginx is disabled, so the whole volumes
+        # key should be omitted.
+        volumes:
+          - name: data
+            type: persistentVolume
+            path: /data
+  # A volumeClaimTemplate alongside a volume that does not collide with it: only
+  # the colliding name is dropped from the pod spec.
+  test-service-mixed:
+    component: db
+    type: statefulset
+    strategy: RollingUpdate
+    statefulSet:
+      podManagementPolicy: Parallel
+      volumeClaimTemplates:
+        data:
+          accessMode: ReadWriteOnce
+          storageClassName: standard-rwo
+          storage: 10Gi
+    containers:
+      app:
+        image:
+          repository: test-repo/test-db
+          tag: "1.0.0"
+        volumes:
+          - name: data
+            type: persistentVolume
+            path: /data
+          - name: scratch
+            type: emptyDir
+            path: /scratch
