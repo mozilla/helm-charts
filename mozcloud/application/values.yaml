@@ -1035,9 +1035,7 @@ workloads:
     # after: without a soak period a rollout marches on and takes down healthy
     # pods behind it.
     #
-    # Example:
-    #
-    #   minReadySeconds: 10
+    #minReadySeconds: 10
 
     # A list of optional autoscaling configurations for containerized workloads.
     autoscaling:
