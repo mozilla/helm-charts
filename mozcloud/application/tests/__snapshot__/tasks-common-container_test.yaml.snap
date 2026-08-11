@@ -1,0 +1,426 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      labels:
+        app.kubernetes.io/component: cronjob
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: cronjob
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: inherit-cronjob
+    spec:
+      concurrencyPolicy: Allow
+      failedJobsHistoryLimit: 1
+      jobTemplate:
+        spec:
+          backoffLimit: 6
+          parallelism: 1
+          template:
+            metadata:
+              annotations:
+                resource.opentelemetry.io/app_code: mozcloud-test
+                resource.opentelemetry.io/component_code: cronjob
+                resource.opentelemetry.io/env_code: dev
+                resource.opentelemetry.io/realm: nonprod
+              labels:
+                app.kubernetes.io/component: cronjob
+                app.kubernetes.io/managed-by: argocd
+                app.kubernetes.io/name: mozcloud-test
+                app_code: mozcloud-test
+                component_code: cronjob
+                env_code: dev
+                helm.sh/chart: test-chart
+                mozcloud_chart: mozcloud
+                mozcloud_chart_version: 1.0.0
+                realm: nonprod
+            spec:
+              containers:
+                - args:
+                    - echo
+                    - inherit-cron
+                  command:
+                    - sh
+                    - -c
+                  envFrom:
+                    - configMapRef:
+                        name: common-cm
+                    - secretRef:
+                        name: common-secret
+                  image: test-repo/inherit-cron:1.0.0
+                  imagePullPolicy: Always
+                  name: job
+                  resources:
+                    limits:
+                      cpu: 1000m
+                      memory: 1024Mi
+                    requests:
+                      cpu: 500m
+                      memory: 512Mi
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                      drop:
+                        - ALL
+                    seccompProfile:
+                      type: RuntimeDefault
+              restartPolicy: Never
+              securityContext:
+                runAsGroup: 10001
+                runAsNonRoot: true
+                runAsUser: 10001
+                seccompProfile:
+                  type: RuntimeDefault
+              serviceAccountName: mozcloud-test
+      schedule: '@hourly'
+      successfulJobsHistoryLimit: 1
+  2: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        argocd.argoproj.io/hook: Sync
+        argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+        argocd.argoproj.io/sync-wave: "-1"
+      labels:
+        app.kubernetes.io/component: job
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: job
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: default-layer-job
+    spec:
+      backoffLimit: 6
+      parallelism: 1
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: job
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: job
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: job
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            realm: nonprod
+        spec:
+          containers:
+            - args:
+                - echo
+                - default-layer
+              command:
+                - sh
+                - -c
+              envFrom:
+                - configMapRef:
+                    name: common-cm
+                - secretRef:
+                    name: common-secret
+              image: test-repo/default-layer:1.0.0
+              imagePullPolicy: Always
+              name: job
+              resources:
+                limits:
+                  cpu: 500m
+                  memory: 1024Mi
+                requests:
+                  cpu: 250m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          restartPolicy: Never
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+  3: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        argocd.argoproj.io/hook: Sync
+        argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+        argocd.argoproj.io/sync-wave: "-1"
+      labels:
+        app.kubernetes.io/component: job
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: job
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: inherit-job
+    spec:
+      backoffLimit: 6
+      parallelism: 1
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: job
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: job
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: job
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            realm: nonprod
+        spec:
+          containers:
+            - args:
+                - echo
+                - inherit
+              command:
+                - sh
+                - -c
+              envFrom:
+                - configMapRef:
+                    name: common-cm
+                - secretRef:
+                    name: common-secret
+              image: test-repo/inherit:1.0.0
+              imagePullPolicy: Always
+              name: job
+              resources:
+                limits:
+                  cpu: 1000m
+                  memory: 1024Mi
+                requests:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          restartPolicy: Never
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+  4: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        argocd.argoproj.io/hook: Sync
+        argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+        argocd.argoproj.io/sync-wave: "-1"
+      labels:
+        app.kubernetes.io/component: job
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: job
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: multi-container-job
+    spec:
+      backoffLimit: 6
+      parallelism: 1
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: job
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: job
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: job
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            realm: nonprod
+        spec:
+          containers:
+            - args:
+                - echo
+                - first
+              command:
+                - sh
+                - -c
+              envFrom:
+                - configMapRef:
+                    name: common-cm
+                - secretRef:
+                    name: common-secret
+              image: test-repo/first:1.0.0
+              imagePullPolicy: Always
+              name: first
+              resources:
+                limits:
+                  cpu: 1000m
+                  memory: 1024Mi
+                requests:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+            - args:
+                - echo
+                - second
+              command:
+                - sh
+                - -c
+              envFrom:
+                - configMapRef:
+                    name: common-cm
+                - secretRef:
+                    name: common-secret
+              image: test-repo/second:1.0.0
+              imagePullPolicy: Always
+              name: second
+              resources:
+                limits:
+                  cpu: 1000m
+                  memory: 1024Mi
+                requests:
+                  cpu: 500m
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          restartPolicy: Never
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+  5: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        argocd.argoproj.io/hook: Sync
+        argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+        argocd.argoproj.io/sync-wave: "-1"
+      labels:
+        app.kubernetes.io/component: job
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: job
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: override-job
+    spec:
+      backoffLimit: 6
+      parallelism: 1
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: job
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: job
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: job
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            realm: nonprod
+        spec:
+          containers:
+            - args:
+                - echo
+                - override
+              command:
+                - sh
+                - -c
+              envFrom:
+                - configMapRef:
+                    name: common-cm
+                - secretRef:
+                    name: container-secret
+              image: test-repo/override:1.0.0
+              imagePullPolicy: Always
+              name: job
+              resources:
+                limits:
+                  cpu: 1500m
+                  memory: 1536Mi
+                requests:
+                  cpu: 750m
+                  memory: 768Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          restartPolicy: Never
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
