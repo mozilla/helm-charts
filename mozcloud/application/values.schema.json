@@ -521,6 +521,7 @@
           },
           "minReadySeconds": {
             "type": "integer",
+            "default": 0
             "description": "Seconds a newly created pod must be ready without any container crashing before it is treated as available. Omitted unless set; the Kubernetes default is 0",
             "minimum": 0
           },
