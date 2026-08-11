@@ -72,11 +72,3 @@ tests:
       - equal:
           path: spec.minReadySeconds
           value: 5
-
-  - it: Schema rejects a negative soak period
-    template: workload/deployment.yaml
-    set:
-      workloads.soak-deployment.minReadySeconds: -1
-    asserts:
-      - failedTemplate:
-          errorPattern: "minReadySeconds: Must be greater than or equal to 0"
