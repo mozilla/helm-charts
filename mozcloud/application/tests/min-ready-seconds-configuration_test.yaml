@@ -1,0 +1,74 @@
+---
+suite: "mozcloud: minReadySeconds configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/min-ready-seconds-configuration.yaml
+templates:
+  - workload/deployment.yaml
+  - workload/statefulset.yaml
+  - workload/rollout.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Deployment sets the configured soak period
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: soak-deployment
+    asserts:
+      - equal:
+          path: spec.minReadySeconds
+          value: 10
+
+  - it: Deployment without minReadySeconds omits the field
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: default-deployment
+    asserts:
+      # The field is opt-in. A default here would change the rendered manifest
+      # of every existing workload using this chart.
+      - notExists:
+          path: spec.minReadySeconds
+
+  - it: Deployment with an explicit zero emits the field
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: zero-soak-deployment
+    asserts:
+      # 0 equals the Kubernetes default but is still deliberate, so emission is
+      # gated on the key being present rather than on truthiness.
+      - exists:
+          path: spec.minReadySeconds
+      - equal:
+          path: spec.minReadySeconds
+          value: 0
+
+  - it: StatefulSet sets the configured soak period
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: soak-statefulset
+    asserts:
+      - equal:
+          path: spec.minReadySeconds
+          value: 30
+
+  - it: Rollout sets the configured soak period
+    template: workload/rollout.yaml
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: soak-rollout
+    asserts:
+      - equal:
+          path: spec.minReadySeconds
+          value: 5

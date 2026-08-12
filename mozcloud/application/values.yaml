@@ -1024,6 +1024,19 @@ workloads:
     #
     #   replicas: 3
 
+    # Optionally require a newly created pod to stay ready for this many seconds,
+    # without any of its containers crashing, before it counts as available.
+    # Applies to deployment, rollout and statefulset.
+    #
+    # Omitted entirely unless you set it. Kubernetes defaults to 0, meaning a pod
+    # is available the moment it reports ready.
+    #
+    # Useful when a pod can pass its readiness probe and then crash shortly
+    # after: without a soak period a rollout marches on and takes down healthy
+    # pods behind it.
+    #
+    #minReadySeconds: 10
+
     # A list of optional autoscaling configurations for containerized workloads.
     autoscaling:
       # If enabled, configure autoscaling via a HorizontalPodAutoscaler
@@ -1442,6 +1455,11 @@ workloads:
         #
         # "persistentVolume" volumes allow you to mount a persistent volume
         # claim created in the .Values.persistentVolumes section.
+        #
+        # On a statefulset, if the volume name matches one of the workload's
+        # statefulSet.volumeClaimTemplates entries, the per-pod claim created by
+        # the StatefulSet controller is mounted instead and no pod-level volume
+        # is emitted. No .Values.persistentVolumes entry is needed in that case.
         #
         # "emptyDir" volumes, as the name suggests, create an empty volume
         # that's created when the Pod is assigned to a node. When a Pod is
@@ -2248,6 +2266,11 @@ workloads:
         # "persistentVolume" volumes allow you to mount a persistent volume
         # claim created in the .Values.persistentVolumes section.
         #
+        # On a statefulset, if the volume name matches one of the workload's
+        # statefulSet.volumeClaimTemplates entries, the per-pod claim created by
+        # the StatefulSet controller is mounted instead and no pod-level volume
+        # is emitted. No .Values.persistentVolumes entry is needed in that case.
+        #
         # "emptyDir" volumes, as the name suggests, create an empty volume
         # that's created when the Pod is assigned to a node. When a Pod is
         # removed from a node for any reason, the data in the emptyDir is
@@ -2561,6 +2584,10 @@ workloads:
       serviceName: ''
 
       # Per-pod PVCs, keyed by claim name.
+      #
+      # To mount one, add a container volume with the same name and
+      # type: persistentVolume. The per-pod claim is used and no pod-level
+      # volume is emitted, so no .Values.persistentVolumes entry is required.
       #
       # Example:
       #   volumeClaimTemplates:
