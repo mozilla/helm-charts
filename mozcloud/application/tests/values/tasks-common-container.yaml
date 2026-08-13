@@ -1,0 +1,88 @@
+---
+tasks:
+  common:
+    # Shared defaults for every job and cron job container. Before the fix these
+    # were silently discarded for jobs, because tasks.jobs.default.containers.default
+    # re-declared the same keys and was merged in as the override side.
+    container:
+      configMaps:
+        - common-cm
+      secrets:
+        - common-secret
+      resources:
+        cpu: 500m
+        memory: 512Mi
+
+  jobs:
+    # Sets nothing itself, so every value comes from tasks.common.container.
+    inherit-job:
+      type: preDeployment
+      containers:
+        job:
+          image:
+            repository: test-repo/inherit
+            tag: "1.0.0"
+          command: ["sh", "-c"]
+          args: ["echo", "inherit"]
+
+    # Per-container values must still beat tasks.common.container.
+    override-job:
+      type: preDeployment
+      containers:
+        job:
+          image:
+            repository: test-repo/override
+            tag: "1.0.0"
+          command: ["sh", "-c"]
+          args: ["echo", "override"]
+          resources:
+            cpu: 750m
+            memory: 768Mi
+          secrets:
+            - container-secret
+
+    # A user-set containers.default sits between common and per-container. It
+    # sets only cpu, so memory must still fall through to tasks.common.container.
+    default-layer-job:
+      type: preDeployment
+      containers:
+        default:
+          resources:
+            cpu: 250m
+        job:
+          image:
+            repository: test-repo/default-layer
+            tag: "1.0.0"
+          command: ["sh", "-c"]
+          args: ["echo", "default-layer"]
+
+    # Two containers and no "default" key. This used to crash the containers
+    # formatter with "deepCopy: reflect: call of reflect.Value.Type on zero Value".
+    multi-container-job:
+      type: preDeployment
+      containers:
+        first:
+          image:
+            repository: test-repo/first
+            tag: "1.0.0"
+          command: ["sh", "-c"]
+          args: ["echo", "first"]
+        second:
+          image:
+            repository: test-repo/second
+            tag: "1.0.0"
+          command: ["sh", "-c"]
+          args: ["echo", "second"]
+
+  cronJobs:
+    # CronJobs already honoured tasks.common.container; lock that in.
+    inherit-cronjob:
+      schedule: '@hourly'
+      jobConfig:
+        containers:
+          job:
+            image:
+              repository: test-repo/inherit-cron
+              tag: "1.0.0"
+            command: ["sh", "-c"]
+            args: ["echo", "inherit-cron"]

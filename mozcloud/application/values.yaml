@@ -481,12 +481,21 @@ tasks:
       containers:
         # This is the name of your container. Use any name other than "default",
         # which is reserved for setting default values shared across all containers.
-        default:
+        #
+        # The options below are documented but intentionally left unset here.
+        # Concrete defaults live in .Values.tasks.common.container; declaring
+        # them here as well would shadow that block, since this one is merged in
+        # as the override side.
+        #
+        # To change a default for every container in a job, set it in your own
+        # values file under this key; to change it for all jobs and cron jobs,
+        # set .Values.tasks.common.container instead.
+        default: {}
           # Arguments to pass to a container. This can be an array or a string.
-          args: []
+          #args: []
 
           # The command a container should run as its entrypoint.
-          command: []
+          #command: []
 
           # A list of config map names to mount into the container as
           # environment variables. These should be defined higher up in the
@@ -500,7 +509,7 @@ tasks:
           #
           # Important: The last config map in the list will always take
           #            precedence.
-          configMaps: []
+          #configMaps: []
 
           # A dictionary of environment variables to pass to this container.
           # This should not include secrets. These variables will override
@@ -511,7 +520,7 @@ tasks:
           #   envVars:
           #     KEY1: VALUE1
           #     KEY2: VALUE2
-          envVars: {}
+          #envVars: {}
 
           # Environment variables sourced from pod/container fields via the
           # Kubernetes downward API (valueFrom.fieldRef). Keys are the env var
@@ -522,7 +531,7 @@ tasks:
           #   envFromFields:
           #     MY_NODE_NAME: spec.nodeName
           #     MY_POD_IP: status.podIP
-          envFromFields: {}
+          #envFromFields: {}
 
           # A list of Kubernetes secret names to mount in this container as
           # environment variables. Each entry is the name of a Kubernetes secret
@@ -540,7 +549,7 @@ tasks:
           #   secrets:
           #     - kubernetes-secret-name
           #     - another-kubernetes-secret-name
-          secrets: []
+          #secrets: []
 
           # The image repo, name, and tag to use for the container. The format is:
           #
@@ -568,9 +577,9 @@ tasks:
           #
           # See the tenant definition document for details:
           # https://mozilla-hub.atlassian.net/wiki/spaces/SRE/pages/588742735/Tenant+Definition
-          image:
-            repository: ''
-            tag: ''
+          #image:
+          #  repository: ''
+          #  tag: ''
 
           # The pull policy for the container image. Accepted values:
           #
@@ -581,7 +590,7 @@ tasks:
           #                  images are pre-loaded (e.g. air-gapped).
           #
           # Default: Always
-          imagePullPolicy: Always
+          #imagePullPolicy: Always
 
           # Optionally configure container lifecycle hooks. Used to run commands
           # before a container stops (preStop) or immediately after it starts
@@ -600,7 +609,7 @@ tasks:
           #
           # For full lifecycle hook documentation, see:
           # https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/
-          lifecycle: {}
+          #lifecycle: {}
 
           # The "resources" section allows you to specify the amount of CPU and
           # memory that your container needs to run. The top-level "cpu" and
@@ -639,10 +648,10 @@ tasks:
           #       memory: 256Mi
           #
           # Defaults are set in .Values.tasks.common.container.resources
-          resources:
-            cpu: 100m
-            memory: 128Mi
-            limits: {}
+          #resources:
+          #  cpu: 100m
+          #  memory: 128Mi
+          #  limits: {}
 
           # Optionally override some securityContext settings for the container.
           # This section should not be configured unless the user knows what they
@@ -669,7 +678,7 @@ tasks:
           #   # For more details, visit the page below:
           #   # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
           #   addCapabilities: []
-          security: {}
+          #security: {}
 
           # Optionally mount volumes to the container. The supported volume types
           # are "configMap" (default), "secret", "persistentVolume", and
@@ -746,7 +755,7 @@ tasks:
           #       bucketName: my-gcs-bucket
           #       mountOptions: implicit-dirs
           #       readOnly: true
-          volumes: []
+          #volumes: []
 
       # Resource overrides for the GKE-injected gcsfuse sidecar. Only takes
       # effect when this job mounts a gcsFuseCsi volume. For cronJobs, set
