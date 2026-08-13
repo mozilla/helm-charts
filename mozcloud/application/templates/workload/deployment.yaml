@@ -29,6 +29,11 @@ spec:
   {{- if and (not (dig "autoscaling" "enabled" true $workloadConfig)) (hasKey $workloadConfig "replicas") }}
   replicas: {{ $workloadConfig.replicas }}
   {{- end }}
+  {{- /* Opt-in soak period before a ready pod counts as available. Emitted only when
+     set, so existing workloads render unchanged. */}}
+  {{- if hasKey $workloadConfig "minReadySeconds" }}
+  minReadySeconds: {{ $workloadConfig.minReadySeconds }}
+  {{- end }}
   selector:
     matchLabels:
       {{- $labels.selectorLabels | toYaml | nindent 6 }}

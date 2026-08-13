@@ -1033,6 +1033,19 @@ workloads:
     #
     #   replicas: 3
 
+    # Optionally require a newly created pod to stay ready for this many seconds,
+    # without any of its containers crashing, before it counts as available.
+    # Applies to deployment, rollout and statefulset.
+    #
+    # Omitted entirely unless you set it. Kubernetes defaults to 0, meaning a pod
+    # is available the moment it reports ready.
+    #
+    # Useful when a pod can pass its readiness probe and then crash shortly
+    # after: without a soak period a rollout marches on and takes down healthy
+    # pods behind it.
+    #
+    #minReadySeconds: 10
+
     # A list of optional autoscaling configurations for containerized workloads.
     autoscaling:
       # If enabled, configure autoscaling via a HorizontalPodAutoscaler

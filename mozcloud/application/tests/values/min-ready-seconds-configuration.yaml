@@ -1,0 +1,67 @@
+---
+workloads:
+  # Deployment with a soak period.
+  soak-deployment:
+    component: web
+    minReadySeconds: 10
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+
+  # No minReadySeconds set. The field must stay absent: it is opt-in, and a
+  # default here would shift the rendered manifest of every existing workload.
+  default-deployment:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+
+  # An explicit 0 matches the Kubernetes default but is still a deliberate
+  # choice, so it must be emitted rather than treated as unset. This is why
+  # emission is gated on the key being present, not on truthiness.
+  zero-soak-deployment:
+    component: web
+    minReadySeconds: 0
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+
+  soak-statefulset:
+    component: db
+    type: statefulset
+    strategy: RollingUpdate
+    minReadySeconds: 30
+    statefulSet:
+      podManagementPolicy: Parallel
+      volumeClaimTemplates:
+        data:
+          accessMode: ReadWriteOnce
+          storageClassName: standard-rwo
+          storage: 10Gi
+    containers:
+      app:
+        image:
+          repository: test-repo/test-db
+          tag: "1.0.0"
+
+  soak-rollout:
+    component: web
+    type: rollout
+    strategy:
+      canary:
+        steps:
+          - setWeight: 20
+          - pause:
+              duration: 30s
+    minReadySeconds: 5
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
