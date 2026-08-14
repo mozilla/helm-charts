@@ -56,6 +56,8 @@ Configuration matches entire snapshot:
         - gateway.test-domain.com
         - literal-gateway.test-domain.com
         - gateway.mozcloud-test.mozcloud.example.com
+        - env-app.example.com
+        - region-prod.example.com
       parentRefs:
         - group: gateway.networking.k8s.io
           kind: Gateway
@@ -93,6 +95,8 @@ Configuration matches entire snapshot:
         - gateway.test-domain.com
         - literal-gateway.test-domain.com
         - gateway.mozcloud-test.mozcloud.example.com
+        - env-app.example.com
+        - region-prod.example.com
       parentRefs:
         - group: gateway.networking.k8s.io
           kind: Gateway

@@ -171,9 +171,16 @@ Returns:
 {{- $domain := .domain -}}
 {{- $context := .context -}}
 {{- $host := default "<unknown>" .host -}}
-{{- $blockRegexp := `\b(lookup|env|expandenv|getHostByName)\b` -}}
-{{- if regexMatch $blockRegexp $domain -}}
-  {{- fail (printf "hosts.%s.domains: domain template %q uses a blocked function; lookup, env, expandenv, and getHostByName are not permitted." $host $domain) -}}
+{{- /* Only inspect template actions so a literal domain that merely contains a
+       blocked word (e.g. "stage.env.example.com") is left alone, and match a
+       blocked name only as a call so a field access like .Values.env is
+       permitted. */ -}}
+{{- $actionRegexp := `{{-?\s*[^}]+}}` -}}
+{{- $blockRegexp := `(^|[^\w.])(lookup|env|expandenv|getHostByName)\b` -}}
+{{- range $_, $action := regexFindAll $actionRegexp $domain -1 -}}
+  {{- if regexMatch $blockRegexp $action -}}
+    {{- fail (printf "hosts.%s.domains: domain template %q uses a blocked function; lookup, env, expandenv, and getHostByName are not permitted." $host $domain) -}}
+  {{- end -}}
 {{- end -}}
 {{- $allowed := dict "Values" $context.Values "Chart" $context.Chart "Release" $context.Release -}}
 {{- $rendered := tpl $domain $allowed -}}
