@@ -6,8 +6,8 @@ Only hosts with httpRoutes.createHttpRoutes set to true are included.
 For each qualifying host, constructs:
   - A gateway reference — either from a sharedGateway config if present, or
     derived from the local gateway name using mozcloud.gateway.name.
-  - The hostname list from the host's "domains" field, rendered through tpl so
-    domains may reference values.
+  - The hostname list from the host's "domains" field, rendered via the
+    mozcloud.renderDomain helper so domains may reference values.
   - HTTP-to-HTTPS redirect behavior (disabled for internal hosts).
   - Routing rules with backend references, supporting optional custom rules
     with path/header matching and weighted backends for multi-cluster

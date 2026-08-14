@@ -8,7 +8,7 @@ since internal hosts are not exposed via Ingress resources.
 
 For each qualifying host, constructs a full ingress entry including:
   - Domain list and path rules (a single "/" Prefix path per host). Domains are
-    rendered through tpl, so they may reference values.
+    rendered via the mozcloud.renderDomain helper, so they may reference values.
   - TLS configuration, supporting ManagedCertificate (default), certmap, and
     pre-shared certificate types.
   - Backend service reference with port 8080.
