@@ -109,7 +109,9 @@ Example:
 }}
   {{- $containers = omit $containers $defaultKey -}}
   {{- range $name, $config := $containers -}}
-    {{- $defaults := index $containerValues $defaultKey -}}
+    {{- /* Absent when a task or workload declares 2+ containers without a
+       "default" key. deepCopy on nil is a fatal template error. */ -}}
+    {{- $defaults := default dict (index $containerValues $defaultKey) -}}
     {{- $_ := set $containers $name (mergeOverwrite ($defaults | deepCopy) $config) -}}
   {{- end -}}
 {{- end -}}

@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 3.9.0](https://img.shields.io/badge/Version-3.9.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 3.9.1](https://img.shields.io/badge/Version-3.9.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~3.9.0
+    version: ~3.9.1
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -90,21 +90,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.cronJobs.default.schedule | string | `""` |  |
 | tasks.jobs.default.affinity | object | `{}` |  |
 | tasks.jobs.default.argo | object | `{}` |  |
-| tasks.jobs.default.containers.default.args | list | `[]` |  |
-| tasks.jobs.default.containers.default.command | list | `[]` |  |
-| tasks.jobs.default.containers.default.configMaps | list | `[]` |  |
-| tasks.jobs.default.containers.default.envFromFields | object | `{}` |  |
-| tasks.jobs.default.containers.default.envVars | object | `{}` |  |
-| tasks.jobs.default.containers.default.image.repository | string | `""` |  |
-| tasks.jobs.default.containers.default.image.tag | string | `""` |  |
-| tasks.jobs.default.containers.default.imagePullPolicy | string | `"Always"` |  |
-| tasks.jobs.default.containers.default.lifecycle | object | `{}` |  |
-| tasks.jobs.default.containers.default.resources.cpu | string | `"100m"` |  |
-| tasks.jobs.default.containers.default.resources.limits | object | `{}` |  |
-| tasks.jobs.default.containers.default.resources.memory | string | `"128Mi"` |  |
-| tasks.jobs.default.containers.default.secrets | list | `[]` |  |
-| tasks.jobs.default.containers.default.security | object | `{}` |  |
-| tasks.jobs.default.containers.default.volumes | list | `[]` |  |
+| tasks.jobs.default.containers.default | object | `{}` |  |
 | tasks.jobs.default.generateName | bool | `false` |  |
 | tasks.jobs.default.nodeSelector | object | `{}` |  |
 | tasks.jobs.default.otel.autoInstrumentation.enabled | bool | `false` |  |

@@ -1,0 +1,115 @@
+---
+suite: "mozcloud: tasks.common.container inheritance"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/tasks-common-container.yaml
+templates:
+  - task/job.yaml
+  - task/cronjob.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: A job container with no values of its own inherits tasks.common.container
+    template: task/job.yaml
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: inherit-job
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 512Mi
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: common-secret
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: common-cm
+
+  - it: Per-container values still beat tasks.common.container
+    template: task/job.yaml
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: override-job
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 750m
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 768Mi
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: container-secret
+      # secrets is a list, so the per-container value replaces rather than
+      # merges: the common secret must not leak through.
+      - notContains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: common-secret
+
+  - it: A user-set containers.default layers between common and per-container
+    template: task/job.yaml
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: default-layer-job
+    asserts:
+      # cpu comes from the job's own containers.default ...
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 250m
+      # ... while memory, which it does not set, falls through to common.
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.memory
+          value: 512Mi
+
+  - it: A job with two containers and no default key renders
+    template: task/job.yaml
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: multi-container-job
+    asserts:
+      # Regression guard for the containers formatter deepCopy-on-nil crash.
+      - notFailedTemplate: {}
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 2
+      # Both still inherit from tasks.common.container.
+      - equal:
+          path: spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - equal:
+          path: spec.template.spec.containers[1].resources.requests.cpu
+          value: 500m
+
+  - it: CronJob containers still inherit tasks.common.container
+    template: task/cronjob.yaml
+    documentSelector:
+      path: $[?(@.kind == "CronJob")].metadata.name
+      value: inherit-cronjob
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].resources.requests.cpu
+          value: 500m
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: common-secret
