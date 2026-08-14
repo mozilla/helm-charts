@@ -162,7 +162,7 @@ Params:
   domain  (string): (required) The domain, which may contain tpl expressions.
   context (dict):   (required) The Helm root context. Only .Values, .Chart,
                     and .Release are exposed to the rendered expression.
-  host    (string): (optional) The host name, used only in error messages.
+  host    (string): (required) The host name, used only in error messages.
 
 Returns:
   (string) The rendered domain.
@@ -170,7 +170,7 @@ Returns:
 {{- define "mozcloud.renderDomain" -}}
 {{- $domain := .domain -}}
 {{- $context := .context -}}
-{{- $host := default "<unknown>" .host -}}
+{{- $host := required "mozcloud.renderDomain: host is required" .host -}}
 {{- /* Only inspect template actions so a literal domain that merely contains a
        blocked word (e.g. "stage.env.example.com") is left alone, and match a
        blocked name only as a call so a field access like .Values.env is
