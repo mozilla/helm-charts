@@ -149,3 +149,36 @@ Returns:
 {{- define "mozcloud.debug" -}}
 {{- . | mustToPrettyJson | printf "\nThe JSON output of the dumped var is: \n%s" | fail }}
 {{- end -}}
+
+
+{{- /*
+Renders a single host domain that may contain Helm template expressions via
+tpl, so domains can reference values instead of being hardcoded per host.
+
+Context passed is .Values, .Chart and .Release. The functions lookup, env, expandenv, and 
+getHostByName are rejected, mirroring the mozcloud.configMap.formatter.renderTpl blocklist.
+
+Params:
+  domain  (string): (required) The domain, which may contain tpl expressions.
+  context (dict):   (required) The Helm root context. Only .Values, .Chart,
+                    and .Release are exposed to the rendered expression.
+  host    (string): (optional) The host name, used only in error messages.
+
+Returns:
+  (string) The rendered domain.
+*/ -}}
+{{- define "mozcloud.renderDomain" -}}
+{{- $domain := .domain -}}
+{{- $context := .context -}}
+{{- $host := default "<unknown>" .host -}}
+{{- $blockRegexp := `\b(lookup|env|expandenv|getHostByName)\b` -}}
+{{- if regexMatch $blockRegexp $domain -}}
+  {{- fail (printf "hosts.%s.domains: domain template %q uses a blocked function; lookup, env, expandenv, and getHostByName are not permitted." $host $domain) -}}
+{{- end -}}
+{{- $allowed := dict "Values" $context.Values "Chart" $context.Chart "Release" $context.Release -}}
+{{- $rendered := tpl $domain $allowed -}}
+{{- if or (not $rendered) (contains "<no value>" $rendered) (regexMatch `(^\.)|(\.\.)|(\.$)` $rendered) -}}
+  {{- fail (printf "hosts.%s.domains: domain template %q rendered to %q. A referenced value is likely undefined or misspelled." $host $domain $rendered) -}}
+{{- end -}}
+{{- $rendered -}}
+{{- end -}}

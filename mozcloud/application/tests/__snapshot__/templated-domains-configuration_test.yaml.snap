@@ -55,6 +55,7 @@ Configuration matches entire snapshot:
       hostnames:
         - gateway.test-domain.com
         - literal-gateway.test-domain.com
+        - gateway.mozcloud-test.mozcloud.example.com
       parentRefs:
         - group: gateway.networking.k8s.io
           kind: Gateway
@@ -91,6 +92,7 @@ Configuration matches entire snapshot:
       hostnames:
         - gateway.test-domain.com
         - literal-gateway.test-domain.com
+        - gateway.mozcloud-test.mozcloud.example.com
       parentRefs:
         - group: gateway.networking.k8s.io
           kind: Gateway

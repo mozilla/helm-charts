@@ -76,7 +76,7 @@ httpRoutes:
         {{- end }}
     hostnames:
       {{- range $domain := $hostConfig.domains }}
-      - {{ tpl $domain $context | quote }}
+      - {{ include "mozcloud.renderDomain" (dict "domain" $domain "context" $context "host" $hostName) | quote }}
       {{- end }}
     {{- if eq $hostConfig.type "internal" }}
     httpToHttpsRedirect: false

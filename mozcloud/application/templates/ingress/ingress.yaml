@@ -67,7 +67,7 @@ ingresses:
     hosts:
       - domains:
           {{- range $domain := $hostConfig.domains }}
-          - {{ tpl $domain $context | quote }}
+          - {{ include "mozcloud.renderDomain" (dict "domain" $domain "context" $context "host" $hostName) | quote }}
           {{- end }}
         paths:
           {{- range $backendName, $backendConfig := $backends }}

@@ -19,6 +19,8 @@ workloads:
           - 'gateway.{{ .Values.global.hostname }}'
           # Plain domain, to confirm rendering is a no-op for literals.
           - literal-gateway.test-domain.com
+          # Confirms .Chart and .Release are also on the render allowlist.
+          - 'gateway.{{ .Release.Name }}.{{ .Chart.Name }}.example.com'
         addresses:
           - mozcloud-dev-external-ip-v4
         tls:

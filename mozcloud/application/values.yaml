@@ -1568,14 +1568,9 @@ workloads:
       default:
         # A list of domains to use for each host.
         #
-        # Domains are rendered with tpl, so they may reference other values
-        # instead of being repeated per host. This is useful when several
-        # hosts share a base domain that is defined once. For example, with a
-        # global.hostname value of "example.com":
-        #
-        #   domains:
-        #     - api.{{ .Values.global.hostname }}
-        #
+        # Domains are rendered via the mozcloud.renderDomain helper, so they
+        # may reference .Values, .Chart, and .Release (e.g.
+        # "api.{{ .Values.global.hostname }}").
         domains:
           - example.com
 

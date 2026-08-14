@@ -28,6 +28,7 @@ tests:
           value:
             - gateway.test-domain.com
             - literal-gateway.test-domain.com
+            - gateway.mozcloud-test.mozcloud.example.com
         template: gateway/httproute.yaml
         documentSelector:
           path: $[?(@.kind == "HTTPRoute")].metadata.name
