@@ -159,3 +159,24 @@ tests:
         documentSelector:
           path: $[?(@.kind == "CronJob")].metadata.name
           value: test-cronjob
+
+  - it: CronJob renders startingDeadlineSeconds only when it is configured
+    template: task/cronjob.yaml
+    asserts:
+      - equal:
+          path: spec.startingDeadlineSeconds
+          value: 600
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-with-deadline
+      - equal:
+          path: spec.startingDeadlineSeconds
+          value: 0
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-zero-deadline
+      - notExists:
+          path: spec.startingDeadlineSeconds
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob

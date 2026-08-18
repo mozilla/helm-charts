@@ -310,6 +310,7 @@ tasks:
       #concurrencyPolicy:
       jobHistory: {}
       schedule: ''
+      #startingDeadlineSeconds:
       #suspend:
 
     # Common job configurations. These can be used as defaults for all job
@@ -387,6 +388,15 @@ tasks:
       #            Schedules using macros must be single quoted. Single quotes
       #            are recommended in general as a best practice.
       schedule: ''
+
+      # Deadline in seconds for starting a scheduled job if it misses its
+      # scheduled time — for example because the controller was down, or the
+      # previous run was still blocking it. If the job cannot be started within
+      # this window, the run is counted as failed instead of being started late.
+      #
+      # This is unset by default, which means Kubernetes will start a missed job
+      # whenever it can.
+      #startingDeadlineSeconds: 600
 
       # When Kubernetes creates CronJob resources, the Job controller will
       # immediately enforce the cron job in the schedule you define. If
