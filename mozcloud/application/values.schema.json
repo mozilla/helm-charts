@@ -2010,6 +2010,10 @@
               }
             ]
           }
+        },
+        "workingDir": {
+          "type": "string",
+          "description": "Path inside the container to use as its working directory. Overrides the WORKDIR baked into the image."
         }
       }
     },

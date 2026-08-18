@@ -497,6 +497,10 @@ tasks:
           # The command a container should run as its entrypoint.
           #command: []
 
+          # The directory inside the container to run the command in. Overrides
+          # the WORKDIR baked into the image. Omit to use the image's default.
+          #workingDir: /app
+
           # A list of config map names to mount into the container as
           # environment variables. These should be defined higher up in the
           # file under the "configMaps" key.
@@ -1117,6 +1121,10 @@ workloads:
 
         # The command a container should run as its entrypoint.
         command: []
+
+        # The directory inside the container to run the command in. Overrides
+        # the WORKDIR baked into the image. Omit to use the image's default.
+        #workingDir: /app
 
         # A list of config map names to mount into the container as environment
         # variables. These should be defined higher up in the file under the
@@ -2034,6 +2042,10 @@ workloads:
 
         # The command a container should run as its entrypoint.
         command: []
+
+        # The directory inside the container to run the command in. Overrides
+        # the WORKDIR baked into the image. Omit to use the image's default.
+        #workingDir: /app
 
         # A list of config map names to mount into the container as environment
         # variables. These should be defined higher up in the file under the
