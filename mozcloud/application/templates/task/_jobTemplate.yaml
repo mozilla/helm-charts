@@ -107,6 +107,9 @@ template:
           - {{ $line | quote }}
           {{- end }}
         {{- end }}
+        {{- if $containerConfig.workingDir }}
+        workingDir: {{ $containerConfig.workingDir | quote }}
+        {{- end }}
         {{- $otelContainerEnabled := and $otelEnabled (not $otelAutoInstrumentationEnabled) (has $containerName $otelContainerNames) }}
         {{- /*
         If OTEL is enabled but auto instrumentation is disabled, we need to

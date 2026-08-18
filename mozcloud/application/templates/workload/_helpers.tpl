@@ -146,6 +146,9 @@ Returns:
     - {{ $line | quote }}
     {{- end }}
   {{- end }}
+  {{- if $containerConfig.workingDir }}
+  workingDir: {{ $containerConfig.workingDir | quote }}
+  {{- end }}
   {{- $otelContainerEnabled := and $otelEnabled (not $otelAutoInstrumentationEnabled) (has $containerName $otelContainerNames) }}
   {{- if or $containerConfig.envVars $otelContainerEnabled $containerConfig.envFromFields }}
   env:
