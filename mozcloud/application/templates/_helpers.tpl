@@ -179,6 +179,11 @@ Returns:
 {{- $config := $ref -}}
 {{- if kindIs "string" $ref -}}
 {{- $config = dict "key" $ref -}}
+{{- else if not (kindIs "map" $ref) -}}
+{{- /* Defence in depth: values.schema.json already rejects other types, but
+   without this guard a bypassed schema surfaces an opaque Go error such as
+   "can't evaluate field name in type float64" pointing into this helper. */ -}}
+{{- fail (printf "env var %q must be either the source key as a string or a mapping with name/key" $envVarName) }}
 {{- end -}}
 {{- $sourceName := default $defaultName $config.name -}}
 {{- if not $sourceName }}

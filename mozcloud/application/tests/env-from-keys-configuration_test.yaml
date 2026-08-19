@@ -130,6 +130,18 @@ tests:
                 name: pr123-app-config
                 key: log_level
 
+  - it: Schema rejects an entry that is neither a string nor a mapping
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.envFromSecretKeys.BAD_ENTRY: 5
+    asserts:
+      # mozcloud.env.keyRefs also guards against this and fails with a
+      # descriptive message, but schema validation runs first, so this is what a
+      # chart author actually sees. The template guard only matters when schema
+      # validation is bypassed, where it replaces an opaque Go type error.
+      - failedTemplate:
+          errorPattern: "got number, want string"
+
   - it: Omitting name fails descriptively when the default secret is disabled
     template: workload/deployment.yaml
     set:
