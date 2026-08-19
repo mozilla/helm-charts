@@ -743,7 +743,7 @@
                   "description": "Override the name used for this container's port. Defaults to the container name normalized to RFC 6335 format."
                 },
                 "extraPorts": {
-                  "description": "Additional ports beyond the primary `port`. Rendered as extra containerPort entries on the container. Each port must have a distinct name.",
+                  "description": "Additional ports beyond the primary `port`. Rendered as extra containerPort entries on the container. Names are sanitized via `mozcloud.portName` (lowercased, non-`[a-z0-9-]` replaced with `-`, truncated to 15). When a workload is a StatefulSet its headless Service surfaces every container's primary port and extraPorts; names and port numbers must be unique across ALL containers on that workload or template rendering fails.",
                   "type": "array",
                   "items": {
                     "type": "object",
@@ -752,7 +752,7 @@
                     "properties": {
                       "name": {
                         "type": "string",
-                        "description": "Port name (used as the containerPort name; must be RFC 6335 <= 15 chars)."
+                        "description": "Port name. Sanitized to RFC 6335 form via `mozcloud.portName`; supply a lowercase, hyphenated string <= 15 chars to avoid surprises."
                       },
                       "port": {
                         "type": "integer",
