@@ -741,6 +741,26 @@
                 "portName": {
                   "type": "string",
                   "description": "Override the name used for this container's port. Defaults to the container name normalized to RFC 6335 format."
+                },
+                "extraPorts": {
+                  "description": "Additional ports beyond the primary `port`. Rendered as extra containerPort entries on the container. Each port must have a distinct name.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["name", "port"],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Port name (used as the containerPort name; must be RFC 6335 <= 15 chars)."
+                      },
+                      "port": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 65535
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -2256,6 +2276,26 @@
             "Always",
             "OnRootMismatch"
           ]
+        },
+        "sysctls": {
+          "description": "List of pod-level sysctl entries applied via securityContext.sysctls. Non-safe sysctls (e.g. net.ipv4.ip_local_port_range) require the pod's namespace to allow them via the 'privileged' Pod Security Standard.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     }

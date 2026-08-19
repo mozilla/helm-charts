@@ -189,14 +189,22 @@ Returns:
     {{- end }}
     {{- end }}
   {{- end }}
-  {{- if and (eq $type "container") (or
+  {{- $emitPrimaryPort := and (eq $type "container") (or
       $config.hosts
       (($containerConfig.healthCheck).readiness).enabled
       (($containerConfig.healthCheck).liveness).enabled
   ) }}
+  {{- $extraPorts := default list $containerConfig.extraPorts }}
+  {{- if or $emitPrimaryPort $extraPorts }}
   ports:
+    {{- if $emitPrimaryPort }}
     - name: {{ $portName }}
       containerPort: {{ $containerConfig.port }}
+    {{- end }}
+    {{- range $p := $extraPorts }}
+    - name: {{ $p.name }}
+      containerPort: {{ $p.port }}
+    {{- end }}
   {{- end }}
   {{- if eq $type "container" }}
   {{- if (dig "healthCheck" "liveness" "enabled" true $containerConfig) }}

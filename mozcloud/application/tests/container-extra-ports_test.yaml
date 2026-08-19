@@ -1,0 +1,30 @@
+---
+suite: "mozcloud: Container extraPorts configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/container-extra-ports.yaml
+templates:
+  - workload/deployment.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: extraPorts render as additional containerPort entries
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: my-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].ports[?(@.name=="router")].containerPort
+          value: 8081

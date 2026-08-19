@@ -210,6 +210,11 @@ Params:
                        Defaults to true.
   user (int):          (optional) UID to run the pod as. Defaults to 10001.
   group (int):         (optional) GID to run the pod as. Defaults to 10001.
+  sysctls (list):      (optional) List of {name, value} sysctl entries
+                       applied to the pod. Non-safe sysctls (e.g.
+                       net.ipv4.ip_local_port_range) require the pod's
+                       namespace to allow them via the "privileged" pod
+                       security standard.
 
 Returns:
   (string) YAML-encoded pod security context.
@@ -226,6 +231,13 @@ runAsGroup: {{ default 10001 .group }}
 fsGroup: {{ .fsGroup }}
   {{- if .fsGroupChangePolicy }}
 fsGroupChangePolicy: {{ .fsGroupChangePolicy }}
+  {{- end }}
+{{- end }}
+{{- if .sysctls }}
+sysctls:
+  {{- range $entry := .sysctls }}
+  - name: {{ $entry.name }}
+    value: {{ $entry.value | quote }}
   {{- end }}
 {{- end }}
 {{- end -}}
