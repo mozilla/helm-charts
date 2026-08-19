@@ -92,6 +92,11 @@ spec:
       port: {{ $containerConfig.port }}
       targetPort: {{ $containerConfig.port }}
     {{- end }}
+    {{- range $p := default list $containerConfig.extraPorts }}
+    - name: {{ $p.name }}
+      port: {{ $p.port }}
+      targetPort: {{ $p.port }}
+    {{- end }}
     {{- end }}
 {{- $nginxEnabled := and (dig "nginx" "enabled" "true" $workloadConfig) $workloadConfig.hosts }}
 {{- if and $nginxEnabled (not $workloadConfig.nginx.configMap) }}
