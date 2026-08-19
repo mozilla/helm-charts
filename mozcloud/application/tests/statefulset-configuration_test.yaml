@@ -218,3 +218,18 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "got object, want string"
+  - it: StatefulSet caps retained revisions when revisionHistoryLimit is set
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.revisionHistoryLimit: 5
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      # StatefulSets retain ControllerRevisions rather than ReplicaSets, but the
+      # spec field is the same. The unset case needs no case of its own: the
+      # suite snapshot renders the fixture without the field and would fail if it
+      # were ever emitted.
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 5
