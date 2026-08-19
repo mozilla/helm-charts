@@ -35,6 +35,9 @@ spec:
   failedJobsHistoryLimit: {{ $config.jobHistory.failed }}
   {{- end }}
   schedule: {{ $config.schedule | quote }}
+  {{- if hasKey $config "startingDeadlineSeconds" }}
+  startingDeadlineSeconds: {{ $config.startingDeadlineSeconds }}
+  {{- end }}
   {{- if $config.suspend }}
   suspend: {{ $config.suspend }}
   {{- end }}

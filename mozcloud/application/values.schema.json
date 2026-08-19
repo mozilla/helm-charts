@@ -2030,6 +2030,10 @@
               }
             ]
           }
+        },
+        "workingDir": {
+          "type": "string",
+          "description": "Path inside the container to use as its working directory. Overrides the WORKDIR baked into the image."
         }
       }
     },
@@ -2058,6 +2062,11 @@
         },
         "schedule": {
           "type": "string"
+        },
+        "startingDeadlineSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Deadline in seconds for starting a scheduled job if it misses its scheduled time. A run that cannot start within this window is counted as failed."
         },
         "suspend": {
           "type": "boolean"
