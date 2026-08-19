@@ -134,6 +134,69 @@ Returns:
 
 
 {{- /*
+Renders env entries that source their value from a single key of a Secret or a
+ConfigMap (valueFrom.secretKeyRef / valueFrom.configMapKeyRef). This is what
+allows an env var name to differ from the key it is read from — envFrom can only
+produce env vars named exactly like the key, and keys containing dashes are not
+valid env var names at all.
+
+Each map entry is keyed by the env var name, so duplicate env var names are
+impossible by construction. The value is either the source key as a plain
+string (short form) or a dict with an explicit source (long form):
+
+  envFromSecretKeys:
+    DATABASE_USERNAME: db-username        # short form, default tenant secret
+    PROXY_MASTER_KEY:
+      name: other-secret                  # long form, explicit secret
+      key: litellm-masterkey
+
+The short form is only meaningful for secrets, where defaultName supplies the
+tenant's default secret. ConfigMap refs have no equivalent default and must
+name their source.
+
+All source names are rendered through prefix so preview environments reference
+their own prefixed Secret/ConfigMap rather than the shared one.
+
+Params:
+  refs        (dict):   (required) Map of env var name -> source key (string)
+                        or {name, key} dict.
+  refType     (string): (required) "secretKeyRef" or "configMapKeyRef".
+  prefix      (string): (optional) Preview prefix to prepend to source names.
+  defaultName (string): (optional) Unprefixed source name used when an entry
+                        omits name. Pass an empty string to require an explicit
+                        name.
+
+Returns:
+  (string) YAML env list entries, unindented — pipe through nindent at the call
+           site.
+*/ -}}
+{{- define "mozcloud.env.keyRefs" -}}
+{{- $refs := default dict .refs -}}
+{{- $refType := .refType -}}
+{{- $prefix := default "" .prefix -}}
+{{- $defaultName := default "" .defaultName -}}
+{{- range $envVarName, $ref := $refs }}
+{{- $config := $ref -}}
+{{- if kindIs "string" $ref -}}
+{{- $config = dict "key" $ref -}}
+{{- end -}}
+{{- $sourceName := default $defaultName $config.name -}}
+{{- if not $sourceName }}
+{{- fail (printf "env var %q sets %s without a source name. Either set name explicitly, or enable the default tenant secret (externalSecrets.default.enabled) if you meant to read from it." $envVarName $refType) }}
+{{- end }}
+{{- if not $config.key }}
+{{- fail (printf "env var %q sets %s without a key." $envVarName $refType) }}
+{{- end }}
+- name: {{ $envVarName }}
+  valueFrom:
+    {{ $refType }}:
+      name: {{ printf "%s%s" $prefix $sourceName }}
+      key: {{ $config.key }}
+{{- end }}
+{{- end }}
+
+
+{{- /*
 A debug utility that serializes the piped-in value as pretty-printed JSON and
 immediately fails the template render with that output as the error message.
 Use this to inspect any Helm variable or context dict during template

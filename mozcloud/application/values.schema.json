@@ -1768,6 +1768,52 @@
             "type": "string"
           }
         },
+        "envFromSecretKeys": {
+          "type": "object",
+          "description": "Env vars sourced from a single Secret key (valueFrom.secretKeyRef), keyed by env var name. The value is either the source key as a string — read from the tenant's default secret — or an object naming an explicit secret.",
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "key"
+                ],
+                "properties": {
+                  "key": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "envFromConfigMapKeys": {
+          "type": "object",
+          "description": "Env vars sourced from a single ConfigMap key (valueFrom.configMapKeyRef), keyed by env var name. ConfigMap refs have no default source, so name is required.",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "key",
+              "name"
+            ],
+            "properties": {
+              "key": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
         "image": {
           "type": "object",
           "additionalProperties": false,

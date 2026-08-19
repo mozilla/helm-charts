@@ -42,6 +42,18 @@ Returns:
 {{- $podLabels := (include "mozcloud.labels" $labelsParams | fromYaml).labels }}
 {{- $globals := $context.Values.global.mozcloud }}
 {{- $defaultServiceAccount := printf "%s%s" $prefix $globals.app_code -}}
+{{- /*
+Name of the tenant's default secret, used as the fallback source for
+envFromSecretKeys entries that omit an explicit name. Left empty when the
+default ExternalSecret is disabled, so that referencing it without naming it
+fails with a descriptive error instead of pointing at a Secret that does not
+exist. Derived the same way as in workload/_workloadTemplate.yaml, minus the
+preview prefix, which mozcloud.env.keyRefs applies itself.
+*/ -}}
+{{- $defaultSecretRefName := "" -}}
+{{- if dig "default" "enabled" true (default dict $context.Values.externalSecrets) -}}
+{{- $defaultSecretRefName = printf "%s-secrets" $globals.chart -}}
+{{- end -}}
 {{- if $jobConfig.activeDeadlineSeconds }}
 activeDeadlineSeconds: {{ $jobConfig.activeDeadlineSeconds }}
 {{- end }}
@@ -115,7 +127,12 @@ template:
         If OTEL is enabled but auto instrumentation is disabled, we need to
         create the HOST_IP environment variable directly in the container.
         */}}
-        {{- if or $containerConfig.envVars $otelContainerEnabled }}
+        {{- if or
+            $containerConfig.envVars
+            $otelContainerEnabled
+            $containerConfig.envFromSecretKeys
+            $containerConfig.envFromConfigMapKeys
+        }}
         env:
           {{- if $otelContainerEnabled }}
           - name: HOST_IP
@@ -127,6 +144,23 @@ template:
           {{- range $envVarName, $envVarValue := $containerConfig.envVars }}
           - name: {{ $envVarName }}
             value: {{ $envVarValue | quote }}
+          {{- end }}
+          {{- if $containerConfig.envFromSecretKeys }}
+          {{- $secretKeyParams := dict
+              "refs" $containerConfig.envFromSecretKeys
+              "refType" "secretKeyRef"
+              "prefix" $prefix
+              "defaultName" $defaultSecretRefName
+          -}}
+          {{- include "mozcloud.env.keyRefs" $secretKeyParams | trim | nindent 10 }}
+          {{- end }}
+          {{- if $containerConfig.envFromConfigMapKeys }}
+          {{- $configMapKeyParams := dict
+              "refs" $containerConfig.envFromConfigMapKeys
+              "refType" "configMapKeyRef"
+              "prefix" $prefix
+          -}}
+          {{- include "mozcloud.env.keyRefs" $configMapKeyParams | trim | nindent 10 }}
           {{- end }}
         {{- end }}
         {{- if or $containerConfig.configMaps $containerConfig.secrets }}

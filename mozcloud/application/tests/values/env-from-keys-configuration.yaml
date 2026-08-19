@@ -1,0 +1,68 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        # Short form: read from the tenant's default secret (test-chart-secrets).
+        envFromSecretKeys:
+          DATABASE_USERNAME: db-username
+          # Long form: explicit secret.
+          PROXY_MASTER_KEY:
+            name: other-secret
+            key: litellm-masterkey
+        envFromConfigMapKeys:
+          LOG_LEVEL:
+            name: app-config
+            key: log_level
+        # Literal env vars must keep working alongside the key refs.
+        envVars:
+          PLAIN_VALUE: literal
+      sidecar:
+        image:
+          repository: test-repo/test-sidecar-image
+          tag: 1.0.0
+    initContainers:
+      setup:
+        image:
+          repository: test-repo/test-init-image
+          tag: 1.0.0
+        command: ["sh", "-c"]
+        args: ["echo setup"]
+        envFromSecretKeys:
+          INIT_TOKEN: init-token
+tasks:
+  jobs:
+    test-job:
+      type: preDeployment
+      containers:
+        job:
+          image:
+            repository: test-repo/test-job-image
+            tag: 2.0.0
+          command: ["sh", "-c"]
+          args: ["echo migrating"]
+          envFromSecretKeys:
+            DATABASE_PASSWORD: db-password
+  cronJobs:
+    test-cronjob:
+      schedule: "0 0 * * *"
+      jobConfig:
+        containers:
+          job:
+            image:
+              repository: test-repo/test-cronjob-image
+              tag: 3.0.0
+            command: ["sh", "-c"]
+            args: ["echo scheduled"]
+            envFromSecretKeys:
+              SLACK_WEBHOOK_URL:
+                name: other-secret
+                key: aiplat-slack-webhook-url
+            envFromConfigMapKeys:
+              RETENTION_DAYS:
+                name: app-config
+                key: retention_days

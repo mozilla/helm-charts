@@ -150,7 +150,17 @@ Returns:
   workingDir: {{ $containerConfig.workingDir | quote }}
   {{- end }}
   {{- $otelContainerEnabled := and $otelEnabled (not $otelAutoInstrumentationEnabled) (has $containerName $otelContainerNames) }}
-  {{- if or $containerConfig.envVars $otelContainerEnabled $containerConfig.envFromFields }}
+  {{- $defaultSecretRefName := "" }}
+  {{- if $defaultSecretEnabled }}
+  {{- $defaultSecretRefName = printf "%s-secrets" $globals.chart }}
+  {{- end }}
+  {{- if or
+      $containerConfig.envVars
+      $otelContainerEnabled
+      $containerConfig.envFromFields
+      $containerConfig.envFromSecretKeys
+      $containerConfig.envFromConfigMapKeys
+  }}
   env:
     {{- if $otelContainerEnabled }}
     - name: HOST_IP
@@ -168,6 +178,23 @@ Returns:
     {{- range $envVarKey, $envVarValue := $containerConfig.envVars }}
     - name: {{ $envVarKey }}
       value: {{ $envVarValue | quote }}
+    {{- end }}
+    {{- if $containerConfig.envFromSecretKeys }}
+    {{- $secretKeyParams := dict
+        "refs" $containerConfig.envFromSecretKeys
+        "refType" "secretKeyRef"
+        "prefix" $prefix
+        "defaultName" $defaultSecretRefName
+    -}}
+    {{- include "mozcloud.env.keyRefs" $secretKeyParams | trim | nindent 4 }}
+    {{- end }}
+    {{- if $containerConfig.envFromConfigMapKeys }}
+    {{- $configMapKeyParams := dict
+        "refs" $containerConfig.envFromConfigMapKeys
+        "refType" "configMapKeyRef"
+        "prefix" $prefix
+    -}}
+    {{- include "mozcloud.env.keyRefs" $configMapKeyParams | trim | nindent 4 }}
     {{- end }}
   {{- end }}
   {{- if or $containerConfig.configMaps $defaultSecretEnabled $containerConfig.secrets }}

@@ -547,6 +547,37 @@ tasks:
           #     MY_POD_IP: status.podIP
           #envFromFields: {}
 
+          # Environment variables sourced from a single key of a Kubernetes
+          # secret (valueFrom.secretKeyRef). Use this when the env var name
+          # differs from the key it is read from — the "secrets" list below can
+          # only produce env vars named exactly like the key, and keys
+          # containing dashes are not valid env var names at all.
+          #
+          # Keys are the env var names. A string value is the source key, read
+          # from the tenant's default secret; an object value names an explicit
+          # secret.
+          #
+          # Format:
+          #
+          #   envFromSecretKeys:
+          #     DATABASE_USERNAME: db-username
+          #     PROXY_MASTER_KEY:
+          #       name: other-secret
+          #       key: litellm-masterkey
+          #envFromSecretKeys: {}
+
+          # Environment variables sourced from a single key of a ConfigMap
+          # (valueFrom.configMapKeyRef). Keys are the env var names. Unlike
+          # secrets there is no default source, so "name" is required.
+          #
+          # Format:
+          #
+          #   envFromConfigMapKeys:
+          #     LOG_LEVEL:
+          #       name: app-config
+          #       key: log_level
+          #envFromConfigMapKeys: {}
+
           # A list of Kubernetes secret names to mount in this container as
           # environment variables. Each entry is the name of a Kubernetes secret
           # whose contents will be injected via envFrom.
@@ -1160,6 +1191,37 @@ workloads:
         #     KEY1: VALUE1
         #     KEY2: VALUE2
         envVars: {}
+
+        # Environment variables sourced from a single key of a Kubernetes
+        # secret (valueFrom.secretKeyRef). Use this when the env var name
+        # differs from the key it is read from — the "secrets" list below can
+        # only produce env vars named exactly like the key, and keys containing
+        # dashes are not valid env var names at all.
+        #
+        # Keys are the env var names. A string value is the source key, read
+        # from the tenant's default secret; an object value names an explicit
+        # secret.
+        #
+        # Format:
+        #
+        #   envFromSecretKeys:
+        #     DATABASE_USERNAME: db-username
+        #     PROXY_MASTER_KEY:
+        #       name: other-secret
+        #       key: litellm-masterkey
+        #envFromSecretKeys: {}
+
+        # Environment variables sourced from a single key of a ConfigMap
+        # (valueFrom.configMapKeyRef). Keys are the env var names. Unlike
+        # secrets there is no default source, so "name" is required.
+        #
+        # Format:
+        #
+        #   envFromConfigMapKeys:
+        #     LOG_LEVEL:
+        #       name: app-config
+        #       key: log_level
+        #envFromConfigMapKeys: {}
 
         # A list of Kubernetes secret names to mount in this container as
         # environment variables. Each entry is the name of a Kubernetes secret
@@ -2081,6 +2143,33 @@ workloads:
         #     KEY1: VALUE1
         #     KEY2: VALUE2
         envVars: {}
+
+        # Environment variables sourced from a single key of a Kubernetes
+        # secret (valueFrom.secretKeyRef). Use this when the env var name
+        # differs from the key it is read from. Keys are the env var names; a
+        # string value is the source key, read from the tenant's default
+        # secret, while an object value names an explicit secret.
+        #
+        # Format:
+        #
+        #   envFromSecretKeys:
+        #     DATABASE_USERNAME: db-username
+        #     PROXY_MASTER_KEY:
+        #       name: other-secret
+        #       key: litellm-masterkey
+        #envFromSecretKeys: {}
+
+        # Environment variables sourced from a single key of a ConfigMap
+        # (valueFrom.configMapKeyRef). Keys are the env var names. Unlike
+        # secrets there is no default source, so "name" is required.
+        #
+        # Format:
+        #
+        #   envFromConfigMapKeys:
+        #     LOG_LEVEL:
+        #       name: app-config
+        #       key: log_level
+        #envFromConfigMapKeys: {}
 
         # A list of Kubernetes secret names to mount in this init container as
         # environment variables. Each entry is the name of a Kubernetes secret

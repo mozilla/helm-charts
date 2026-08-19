@@ -1,0 +1,177 @@
+---
+suite: "mozcloud: envFromSecretKeys and envFromConfigMapKeys configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/env-from-keys-configuration.yaml
+templates:
+  - workload/deployment.yaml
+  - task/job.yaml
+  - task/cronjob.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Deployment container sources a secret key, defaulting to the tenant secret
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATABASE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: test-chart-secrets
+                key: db-username
+
+  - it: Deployment container sources a secret key from an explicitly named secret
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PROXY_MASTER_KEY
+            valueFrom:
+              secretKeyRef:
+                name: other-secret
+                key: litellm-masterkey
+
+  - it: Deployment container sources a ConfigMap key
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_LEVEL
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: log_level
+
+  - it: Literal envVars still render alongside key refs
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PLAIN_VALUE
+            value: literal
+
+  - it: Init container sources a secret key
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers[0].env
+          content:
+            name: INIT_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: test-chart-secrets
+                key: init-token
+
+  - it: Container without key refs renders no env block from this feature
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[1].env
+
+  - it: Source names are preview-prefixed in preview mode
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: pr123-test-service
+    set:
+      preview.enabled: true
+      preview.httpRoute.enabled: false
+      preview.endpointCheck.enabled: false
+      global.preview.pr: "123"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATABASE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: pr123-test-chart-secrets
+                key: db-username
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_LEVEL
+            valueFrom:
+              configMapKeyRef:
+                name: pr123-app-config
+                key: log_level
+
+  - it: Omitting name fails descriptively when the default secret is disabled
+    template: workload/deployment.yaml
+    set:
+      externalSecrets.default.enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: 'env var "DATABASE_USERNAME" sets secretKeyRef without a source name. Either set name explicitly, or enable the default tenant secret (externalSecrets.default.enabled) if you meant to read from it.'
+
+  - it: Job container sources a secret key
+    template: task/job.yaml
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-job
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DATABASE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: test-chart-secrets
+                key: db-password
+
+  - it: CronJob container sources both a secret key and a ConfigMap key
+    template: task/cronjob.yaml
+    documentSelector:
+      path: $[?(@.kind == "CronJob")].metadata.name
+      value: test-cronjob
+    asserts:
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: SLACK_WEBHOOK_URL
+            valueFrom:
+              secretKeyRef:
+                name: other-secret
+                key: aiplat-slack-webhook-url
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: RETENTION_DAYS
+            valueFrom:
+              configMapKeyRef:
+                name: app-config
+                key: retention_days
