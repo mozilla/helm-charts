@@ -90,33 +90,33 @@ spec:
      requires both port names and (protocol, port) tuples to be unique within
      a Service; fail fast at template time rather than at apply. */}}
   {{- $servicePorts := list -}}
-  {{- $seenNames := dict -}}
-  {{- $seenPorts := dict -}}
+  {{- $seenPortNames := dict -}}
+  {{- $seenPortNumbers := dict -}}
   {{- range $containerName, $containerConfig := $containers -}}
     {{- if $containerConfig.port -}}
-      {{- $n := include "mozcloud.portName" (dict "name" $containerName "containerConfig" $containerConfig) -}}
-      {{- $p := $containerConfig.port | toString -}}
-      {{- if hasKey $seenNames $n }}{{ fail (printf "duplicate Service port name %q on statefulset %q (from container %q); port names must be unique across all containers' ports and additionalPorts" $n $workloadName $containerName) }}{{ end -}}
-      {{- if hasKey $seenPorts $p }}{{ fail (printf "duplicate Service port number %s on statefulset %q (from container %q); port numbers must be unique across all containers' ports and additionalPorts" $p $workloadName $containerName) }}{{ end -}}
-      {{- $_ := set $seenNames $n true -}}
-      {{- $_ := set $seenPorts $p true -}}
-      {{- $servicePorts = append $servicePorts (dict "name" $n "port" $containerConfig.port) -}}
+      {{- $portName := include "mozcloud.portName" (dict "name" $containerName "containerConfig" $containerConfig) -}}
+      {{- $portNumber := $containerConfig.port | toString -}}
+      {{- if hasKey $seenPortNames $portName }}{{ fail (printf "duplicate Service port name %q on statefulset %q (from container %q); port names must be unique across all containers' ports and additionalPorts" $portName $workloadName $containerName) }}{{ end -}}
+      {{- if hasKey $seenPortNumbers $portNumber }}{{ fail (printf "duplicate Service port number %s on statefulset %q (from container %q); port numbers must be unique across all containers' ports and additionalPorts" $portNumber $workloadName $containerName) }}{{ end -}}
+      {{- $_ := set $seenPortNames $portName true -}}
+      {{- $_ := set $seenPortNumbers $portNumber true -}}
+      {{- $servicePorts = append $servicePorts (dict "name" $portName "port" $containerConfig.port) -}}
     {{- end -}}
-    {{- range $ap := default list $containerConfig.additionalPorts -}}
-      {{- $n := include "mozcloud.portName" (dict "name" $ap.name) -}}
-      {{- $p := $ap.port | toString -}}
-      {{- if hasKey $seenNames $n }}{{ fail (printf "duplicate Service port name %q on statefulset %q (from container %q additionalPorts); port names must be unique across all containers' ports and additionalPorts" $n $workloadName $containerName) }}{{ end -}}
-      {{- if hasKey $seenPorts $p }}{{ fail (printf "duplicate Service port number %s on statefulset %q (from container %q additionalPorts); port numbers must be unique across all containers' ports and additionalPorts" $p $workloadName $containerName) }}{{ end -}}
-      {{- $_ := set $seenNames $n true -}}
-      {{- $_ := set $seenPorts $p true -}}
-      {{- $servicePorts = append $servicePorts (dict "name" $n "port" $ap.port) -}}
+    {{- range $additionalPort := default list $containerConfig.additionalPorts -}}
+      {{- $portName := include "mozcloud.portName" (dict "name" $additionalPort.name) -}}
+      {{- $portNumber := $additionalPort.port | toString -}}
+      {{- if hasKey $seenPortNames $portName }}{{ fail (printf "duplicate Service port name %q on statefulset %q (from container %q additionalPorts); port names must be unique across all containers' ports and additionalPorts" $portName $workloadName $containerName) }}{{ end -}}
+      {{- if hasKey $seenPortNumbers $portNumber }}{{ fail (printf "duplicate Service port number %s on statefulset %q (from container %q additionalPorts); port numbers must be unique across all containers' ports and additionalPorts" $portNumber $workloadName $containerName) }}{{ end -}}
+      {{- $_ := set $seenPortNames $portName true -}}
+      {{- $_ := set $seenPortNumbers $portNumber true -}}
+      {{- $servicePorts = append $servicePorts (dict "name" $portName "port" $additionalPort.port) -}}
     {{- end -}}
   {{- end }}
   ports:
-    {{- range $sp := $servicePorts }}
-    - name: {{ $sp.name }}
-      port: {{ $sp.port }}
-      targetPort: {{ $sp.port }}
+    {{- range $servicePort := $servicePorts }}
+    - name: {{ $servicePort.name }}
+      port: {{ $servicePort.port }}
+      targetPort: {{ $servicePort.port }}
     {{- end }}
 {{- $nginxEnabled := and (dig "nginx" "enabled" "true" $workloadConfig) $workloadConfig.hosts }}
 {{- if and $nginxEnabled (not $workloadConfig.nginx.configMap) }}
