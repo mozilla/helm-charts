@@ -735,12 +735,33 @@
                   }
                 },
                 "port": {
+                  "description": "The container's primary port. Rendered as a `containerPort` on the pod, referenced by the workload's livenessProbe/readinessProbe port targeting, and (for StatefulSet workloads) exposed on the headless Service. For Ingress/Gateway workloads the backing Service's `targetPort` defaults to the nginx sidecar's `http` port name (8080 → forwards to `127.0.0.1:8000`); this default assumes nginx is enabled and `port` is 8000. When nginx is disabled or the container listens on a non-8000 port, override the Service target via `hosts.<host>.targetPort` (points at any port name on the container) or `hosts.<host>.backends.<backend>.service.targetPort` for per-backend routing. The nginx sidecar upstream itself is hardcoded to `127.0.0.1:8000`; supply a custom `nginx.configMap` to change it.",
                   "type": "integer",
                   "default": 8000
                 },
                 "portName": {
                   "type": "string",
-                  "description": "Override the name used for this container's port. Defaults to the container name normalized to RFC 6335 format."
+                  "description": "Override the name used for this container's primary port. Defaults to the container name normalized to RFC 6335 format."
+                },
+                "additionalPorts": {
+                  "description": "Extra containerPort declarations exposed on the pod alongside the primary `port`. Use for internal or peer-to-peer ports (e.g. an inter-pod router listener) that should be visible in the pod spec but are NOT the default Service/backend target. Additional ports do NOT participate in Ingress or Gateway routing unless explicitly referenced by name from `hosts.<host>.targetPort` or `hosts.<host>.backends.<backend>.service.targetPort`. `name` is optional (matches the Kubernetes ContainerPort spec); when supplied it is sanitized via `mozcloud.portName` (lowercased, non-`[a-z0-9-]` replaced with `-`, truncated to 15). When a workload is a StatefulSet, its headless Service surfaces every container's primary port and additionalPorts; unnamed additionalPorts are given a synthesized name of `port-<number>` for the Service entry. Names and port numbers must be unique across ALL containers on that workload or template rendering fails.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["port"],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Optional port name. When set it is sanitized to RFC 6335 form via `mozcloud.portName`; supply a lowercase, hyphenated string <= 15 chars to avoid surprises. Required only if you plan to reference this port by name from a probe, Service targetPort, or backend."
+                      },
+                      "port": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 65535
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -2265,6 +2286,26 @@
             "Always",
             "OnRootMismatch"
           ]
+        },
+        "sysctls": {
+          "description": "List of pod-level sysctl entries applied via securityContext.sysctls. Non-safe sysctls (e.g. net.ipv4.ip_local_port_range) require the pod's namespace to allow them via the 'privileged' Pod Security Standard.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     }

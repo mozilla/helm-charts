@@ -1,0 +1,18 @@
+---
+workloads:
+  my-service:
+    component: web
+    nginx:
+      enabled: false
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        port: 8080
+        additionalPorts:
+          - name: router
+            port: 8081
+          # `name` is optional (matches K8s ContainerPort). When omitted the
+          # container renders `containerPort` without a `name` field.
+          - port: 9090
