@@ -51,6 +51,20 @@ jobs:
         run: helm plugin install https://github.com/helm-unittest/helm-unittest.git --version=v1.0.3
         shell: bash
 
+      - name: Install conftest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo open-policy-agent/conftest v0.68.2 --pattern '*_Linux_x86_64.tar.gz' --output /tmp/conftest.tar.gz
+          tar -xzf /tmp/conftest.tar.gz --directory /usr/local/bin conftest
+          chmod +x /usr/local/bin/conftest
+          rm /tmp/conftest.tar.gz
+        shell: bash
+
+      - name: Run policy tests
+        run: make policy-tests
+        shell: bash
+
       - name: Update dependencies
         run: make update-dependencies
         shell: bash

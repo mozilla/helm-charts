@@ -78,6 +78,10 @@ unit-tests-affected: ## Run unit tests for staged charts and their dependents
 		$(CHART_KIT) unittest $(UPDATE_SNAPSHOTS_ARG) $$affected; \
 	fi
 
+policy-tests: ## Run conftest unit tests for the automerge policies
+	@echo "Running conftest verify against policy/..."
+	@conftest verify -p policy
+
 kubeconform: ## Validate snapshot resources against Kubernetes and GKE CRD schemas
 	@echo "Running kubeconform against test snapshots..."
 	@for snap in mozcloud/application/tests/__snapshot__/*.snap; do \
