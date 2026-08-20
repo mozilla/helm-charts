@@ -1,5 +1,5 @@
 ---
-suite: "mozcloud: Container extraPorts configuration"
+suite: "mozcloud: Container additionalPorts configuration"
 release:
   name: mozcloud-test
   namespace: mozcloud-test-dev
@@ -10,7 +10,7 @@ chart:
   version: 1.0.0
 values:
   - values/globals.yaml
-  - values/container-extra-ports.yaml
+  - values/container-additional-ports.yaml
 templates:
   - workload/deployment.yaml
 tests:
@@ -19,7 +19,7 @@ tests:
       - notFailedTemplate: {}
       - matchSnapshot: {}
 
-  - it: extraPorts render as additional containerPort entries
+  - it: additionalPorts render as additional containerPort entries
     template: workload/deployment.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name

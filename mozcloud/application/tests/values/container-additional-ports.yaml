@@ -10,6 +10,6 @@ workloads:
           repository: test-repo/test-image
           tag: 1.0.0
         port: 8080
-        extraPorts:
+        additionalPorts:
           - name: router
             port: 8081

@@ -197,14 +197,14 @@ Returns:
       (($containerConfig.healthCheck).readiness).enabled
       (($containerConfig.healthCheck).liveness).enabled
   ) }}
-  {{- $extraPorts := default list $containerConfig.extraPorts }}
-  {{- if or $emitPrimaryPort $extraPorts }}
+  {{- $additionalPorts := default list $containerConfig.additionalPorts }}
+  {{- if or $emitPrimaryPort $additionalPorts }}
   ports:
     {{- if $emitPrimaryPort }}
     - name: {{ $portName }}
       containerPort: {{ $containerConfig.port }}
     {{- end }}
-    {{- range $p := $extraPorts }}
+    {{- range $p := $additionalPorts }}
     - name: {{ include "mozcloud.portName" (dict "name" $p.name) }}
       containerPort: {{ $p.port }}
     {{- end }}
