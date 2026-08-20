@@ -28,3 +28,12 @@ tests:
       - equal:
           path: spec.template.spec.containers[?(@.name=="app")].ports[?(@.name=="router")].containerPort
           value: 8081
+
+  - it: additionalPorts without a name render containerPort without name
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: my-service
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[?(@.name=="app")].ports[?(@.containerPort==9090)].name

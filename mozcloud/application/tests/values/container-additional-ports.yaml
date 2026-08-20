@@ -13,3 +13,6 @@ workloads:
         additionalPorts:
           - name: router
             port: 8081
+          # `name` is optional (matches K8s ContainerPort). When omitted the
+          # container renders `containerPort` without a `name` field.
+          - port: 9090

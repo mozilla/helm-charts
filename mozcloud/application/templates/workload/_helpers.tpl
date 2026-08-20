@@ -205,8 +205,10 @@ Returns:
       containerPort: {{ $containerConfig.port }}
     {{- end }}
     {{- range $additionalPort := $additionalPorts }}
-    - name: {{ include "mozcloud.portName" (dict "name" $additionalPort.name) }}
-      containerPort: {{ $additionalPort.port }}
+    - containerPort: {{ $additionalPort.port }}
+      {{- if $additionalPort.name }}
+      name: {{ include "mozcloud.portName" (dict "name" $additionalPort.name) }}
+      {{- end }}
     {{- end }}
   {{- end }}
   {{- if eq $type "container" }}

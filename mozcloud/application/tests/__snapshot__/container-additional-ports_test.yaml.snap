@@ -63,6 +63,7 @@ Configuration matches entire snapshot:
                   name: app
                 - containerPort: 8081
                   name: router
+                - containerPort: 9090
               readinessProbe:
                 failureThreshold: 3
                 httpGet:

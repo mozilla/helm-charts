@@ -103,7 +103,15 @@ spec:
       {{- $servicePorts = append $servicePorts (dict "name" $portName "port" $containerConfig.port) -}}
     {{- end -}}
     {{- range $additionalPort := default list $containerConfig.additionalPorts -}}
-      {{- $portName := include "mozcloud.portName" (dict "name" $additionalPort.name) -}}
+      {{- /* A K8s Service with >1 port requires each entry to be named. When
+         the user omitted `name` on the additionalPort, synthesize a stable
+         one from the port number so the headless Service stays valid. */ -}}
+      {{- $portName := "" -}}
+      {{- if $additionalPort.name -}}
+        {{- $portName = include "mozcloud.portName" (dict "name" $additionalPort.name) -}}
+      {{- else -}}
+        {{- $portName = printf "port-%d" (int $additionalPort.port) -}}
+      {{- end -}}
       {{- $portNumber := $additionalPort.port | toString -}}
       {{- if hasKey $seenPortNames $portName }}{{ fail (printf "duplicate Service port name %q on statefulset %q (from container %q additionalPorts); port names must be unique across all containers' ports and additionalPorts" $portName $workloadName $containerName) }}{{ end -}}
       {{- if hasKey $seenPortNumbers $portNumber }}{{ fail (printf "duplicate Service port number %s on statefulset %q (from container %q additionalPorts); port numbers must be unique across all containers' ports and additionalPorts" $portNumber $workloadName $containerName) }}{{ end -}}
