@@ -146,6 +146,9 @@ Returns:
     - {{ $line | quote }}
     {{- end }}
   {{- end }}
+  {{- if $containerConfig.workingDir }}
+  workingDir: {{ $containerConfig.workingDir | quote }}
+  {{- end }}
   {{- $otelContainerEnabled := and $otelEnabled (not $otelAutoInstrumentationEnabled) (has $containerName $otelContainerNames) }}
   {{- if or $containerConfig.envVars $otelContainerEnabled $containerConfig.envFromFields }}
   env:
@@ -189,14 +192,24 @@ Returns:
     {{- end }}
     {{- end }}
   {{- end }}
-  {{- if and (eq $type "container") (or
+  {{- $emitPrimaryPort := and (eq $type "container") (or
       $config.hosts
       (($containerConfig.healthCheck).readiness).enabled
       (($containerConfig.healthCheck).liveness).enabled
   ) }}
+  {{- $additionalPorts := default list $containerConfig.additionalPorts }}
+  {{- if or $emitPrimaryPort $additionalPorts }}
   ports:
+    {{- if $emitPrimaryPort }}
     - name: {{ $portName }}
       containerPort: {{ $containerConfig.port }}
+    {{- end }}
+    {{- range $additionalPort := $additionalPorts }}
+    - containerPort: {{ $additionalPort.port }}
+      {{- if $additionalPort.name }}
+      name: {{ include "mozcloud.portName" (dict "name" $additionalPort.name) }}
+      {{- end }}
+    {{- end }}
   {{- end }}
   {{- if eq $type "container" }}
   {{- if (dig "healthCheck" "liveness" "enabled" true $containerConfig) }}

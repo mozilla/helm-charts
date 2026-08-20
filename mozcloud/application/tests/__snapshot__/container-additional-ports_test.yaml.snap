@@ -14,7 +14,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: test-service
+      name: my-service
     spec:
       selector:
         matchLabels:
@@ -59,8 +59,11 @@ Configuration matches entire snapshot:
                 timeoutSeconds: 5
               name: app
               ports:
-                - containerPort: 8000
+                - containerPort: 8080
                   name: app
+                - containerPort: 8081
+                  name: router
+                - containerPort: 9090
               readinessProbe:
                 failureThreshold: 3
                 httpGet:
@@ -80,25 +83,14 @@ Configuration matches entire snapshot:
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
-                  add:
-                    - NET_BIND_SERVICE
                   drop:
                     - ALL
-                runAsGroup: 12000
-                runAsUser: 11000
                 seccompProfile:
                   type: RuntimeDefault
           securityContext:
-            fsGroup: 15000
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 14000
-            runAsNonRoot: false
-            runAsUser: 13000
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
-            sysctls:
-              - name: net.ipv4.ip_local_port_range
-                value: 2000 65000
-              - name: net.core.somaxconn
-                value: "16384"
           serviceAccountName: mozcloud-test

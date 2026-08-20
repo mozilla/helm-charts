@@ -1,41 +1,41 @@
 Configuration matches entire snapshot:
   1: |
     apiVersion: apps/v1
-    kind: Deployment
+    kind: StatefulSet
     metadata:
       labels:
-        app.kubernetes.io/component: web
+        app.kubernetes.io/component: db
         app.kubernetes.io/managed-by: argocd
         app.kubernetes.io/name: mozcloud-test
         app_code: mozcloud-test
-        component_code: web
+        component_code: db
         env_code: dev
         helm.sh/chart: test-chart
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: test-service
+      name: additional-ports-svc
     spec:
+      podManagementPolicy: Parallel
       selector:
         matchLabels:
-          app.kubernetes.io/component: web
+          app.kubernetes.io/component: db
           app.kubernetes.io/name: mozcloud-test
           env_code: dev
-      strategy:
-        type: RollingUpdate
+      serviceName: additional-ports-svc-headless
       template:
         metadata:
           annotations:
             resource.opentelemetry.io/app_code: mozcloud-test
-            resource.opentelemetry.io/component_code: web
+            resource.opentelemetry.io/component_code: db
             resource.opentelemetry.io/env_code: dev
             resource.opentelemetry.io/realm: nonprod
           labels:
-            app.kubernetes.io/component: web
+            app.kubernetes.io/component: db
             app.kubernetes.io/managed-by: argocd
             app.kubernetes.io/name: mozcloud-test
             app_code: mozcloud-test
-            component_code: web
+            component_code: db
             env_code: dev
             helm.sh/chart: test-chart
             mozcloud_chart: mozcloud
@@ -46,7 +46,7 @@ Configuration matches entire snapshot:
             - envFrom:
                 - secretRef:
                     name: test-chart-secrets
-              image: test-repo/test-image:1.0.0
+              image: test-repo/test-db:1.0.0
               imagePullPolicy: Always
               livenessProbe:
                 failureThreshold: 5
@@ -59,8 +59,10 @@ Configuration matches entire snapshot:
                 timeoutSeconds: 5
               name: app
               ports:
-                - containerPort: 8000
+                - containerPort: 8080
                   name: app
+                - containerPort: 9090
+                  name: metrics
               readinessProbe:
                 failureThreshold: 3
                 httpGet:
@@ -80,25 +82,46 @@ Configuration matches entire snapshot:
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
-                  add:
-                    - NET_BIND_SERVICE
                   drop:
                     - ALL
-                runAsGroup: 12000
-                runAsUser: 11000
                 seccompProfile:
                   type: RuntimeDefault
           securityContext:
-            fsGroup: 15000
-            fsGroupChangePolicy: OnRootMismatch
-            runAsGroup: 14000
-            runAsNonRoot: false
-            runAsUser: 13000
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
             seccompProfile:
               type: RuntimeDefault
-            sysctls:
-              - name: net.ipv4.ip_local_port_range
-                value: 2000 65000
-              - name: net.core.somaxconn
-                value: "16384"
           serviceAccountName: mozcloud-test
+      updateStrategy:
+        type: RollingUpdate
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: db
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: db
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: additional-ports-svc-headless
+    spec:
+      clusterIP: None
+      ports:
+        - name: app
+          port: 8080
+          targetPort: 8080
+        - name: metrics
+          port: 9090
+          targetPort: 9090
+      selector:
+        app.kubernetes.io/component: db
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP

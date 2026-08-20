@@ -85,13 +85,46 @@ spec:
   clusterIP: None
   selector:
     {{- $labels.selectorLabels | toYaml | nindent 4 }}
+  {{- /* Collect all (name, port) tuples from every container's primary port
+     and additionalPorts, sanitizing names via mozcloud.portName. Kubernetes
+     requires both port names and (protocol, port) tuples to be unique within
+     a Service; fail fast at template time rather than at apply. */}}
+  {{- $servicePorts := list -}}
+  {{- $seenPortNames := dict -}}
+  {{- $seenPortNumbers := dict -}}
+  {{- range $containerName, $containerConfig := $containers -}}
+    {{- if $containerConfig.port -}}
+      {{- $portName := include "mozcloud.portName" (dict "name" $containerName "containerConfig" $containerConfig) -}}
+      {{- $portNumber := $containerConfig.port | toString -}}
+      {{- if hasKey $seenPortNames $portName }}{{ fail (printf "duplicate Service port name %q on statefulset %q (from container %q); port names must be unique across all containers' ports and additionalPorts" $portName $workloadName $containerName) }}{{ end -}}
+      {{- if hasKey $seenPortNumbers $portNumber }}{{ fail (printf "duplicate Service port number %s on statefulset %q (from container %q); port numbers must be unique across all containers' ports and additionalPorts" $portNumber $workloadName $containerName) }}{{ end -}}
+      {{- $_ := set $seenPortNames $portName true -}}
+      {{- $_ := set $seenPortNumbers $portNumber true -}}
+      {{- $servicePorts = append $servicePorts (dict "name" $portName "port" $containerConfig.port) -}}
+    {{- end -}}
+    {{- range $additionalPort := default list $containerConfig.additionalPorts -}}
+      {{- /* A K8s Service with >1 port requires each entry to be named. When
+         the user omitted `name` on the additionalPort, synthesize a stable
+         one from the port number so the headless Service stays valid. */ -}}
+      {{- $portName := "" -}}
+      {{- if $additionalPort.name -}}
+        {{- $portName = include "mozcloud.portName" (dict "name" $additionalPort.name) -}}
+      {{- else -}}
+        {{- $portName = printf "port-%d" (int $additionalPort.port) -}}
+      {{- end -}}
+      {{- $portNumber := $additionalPort.port | toString -}}
+      {{- if hasKey $seenPortNames $portName }}{{ fail (printf "duplicate Service port name %q on statefulset %q (from container %q additionalPorts); port names must be unique across all containers' ports and additionalPorts" $portName $workloadName $containerName) }}{{ end -}}
+      {{- if hasKey $seenPortNumbers $portNumber }}{{ fail (printf "duplicate Service port number %s on statefulset %q (from container %q additionalPorts); port numbers must be unique across all containers' ports and additionalPorts" $portNumber $workloadName $containerName) }}{{ end -}}
+      {{- $_ := set $seenPortNames $portName true -}}
+      {{- $_ := set $seenPortNumbers $portNumber true -}}
+      {{- $servicePorts = append $servicePorts (dict "name" $portName "port" $additionalPort.port) -}}
+    {{- end -}}
+  {{- end }}
   ports:
-    {{- range $containerName, $containerConfig := $containers }}
-    {{- if $containerConfig.port }}
-    - name: {{ include "mozcloud.portName" (dict "name" $containerName "containerConfig" $containerConfig) }}
-      port: {{ $containerConfig.port }}
-      targetPort: {{ $containerConfig.port }}
-    {{- end }}
+    {{- range $servicePort := $servicePorts }}
+    - name: {{ $servicePort.name }}
+      port: {{ $servicePort.port }}
+      targetPort: {{ $servicePort.port }}
     {{- end }}
 {{- $nginxEnabled := and (dig "nginx" "enabled" "true" $workloadConfig) $workloadConfig.hosts }}
 {{- if and $nginxEnabled (not $workloadConfig.nginx.configMap) }}
