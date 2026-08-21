@@ -93,7 +93,7 @@ tests:
           value: mozcloud-test-internal
       - equal:
           path: spec.gatewayClassName
-          value: gke-l7-global-external-managed
+          value: gke-l7-rilb
         documentSelector:
           path: $[?(@.kind == "Gateway")].metadata.name
           value: mozcloud-test-internal

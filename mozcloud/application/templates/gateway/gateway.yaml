@@ -22,8 +22,11 @@ and address list — so multiple workloads that share the same gateway attribute
 produce only one Gateway resource.
 
 For each unique configuration, determines:
-  - GKE gateway class ("gke-l7-global-external-managed" for single-cluster,
-    "gke-l7-global-external-managed-mc" for multi-cluster).
+  - GKE gateway class for multi-cluster hosts
+    ("gke-l7-global-external-managed-mc"). Single-cluster GKE hosts leave the
+    class unset so mozcloud-gateway-lib.config.gateways can resolve it from
+    type/scope (e.g. "gke-l7-rilb" for internal, "gke-l7-global-external-managed"
+    for external).
   - Static IP address(es), defaulting to "<app_code>-<env_code>-ip-v4".
   - TLS certificate references for external gateways, defaulting to
     "<app_code>-<realm>-<env_code>".
@@ -58,7 +61,12 @@ Returns:
       {{- /* Build gateway configuration key based on unique attributes */}}
       {{- $className := "" }}
       {{- if eq $provider "gke" }}
-        {{- $className = "gke-l7-global-external-managed" }}
+        {{- /*
+        Leave className unset for GKE — mozcloud-gateway-lib.config.gateways
+        resolves it from type/scope, which correctly distinguishes internal
+        (gke-l7-rilb) from external (gke-l7-global-external-managed) hosts.
+        Multi-cluster has no library-provided class, so it's still set here.
+        */}}
         {{- if ($hostConfig).multiCluster }}
           {{- $className = "gke-l7-global-external-managed-mc" }}
         {{- end }}

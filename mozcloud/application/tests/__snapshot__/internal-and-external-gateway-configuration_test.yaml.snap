@@ -55,7 +55,7 @@ Configuration matches entire snapshot:
       addresses:
         - type: NamedAddress
           value: mozcloud-dev-internal-ip-v4
-      gatewayClassName: gke-l7-global-external-managed
+      gatewayClassName: gke-l7-rilb
       listeners:
         - allowedRoutes:
             namespaces:
