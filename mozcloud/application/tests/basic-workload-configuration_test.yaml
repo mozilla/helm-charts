@@ -401,3 +401,17 @@ tests:
       - equal:
           path: spec.template.metadata.labels["registry.gke.io/functional-type"]
           value: AGENT
+
+  - it: Custom workload annotations are accepted by the schema and applied to the Deployment
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.annotations:
+        iam.gke.io/spiffe-identity-type: agent-identity
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - notFailedTemplate: {}
+      - equal:
+          path: metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity

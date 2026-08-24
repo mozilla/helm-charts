@@ -974,6 +974,10 @@ workloads:
     #                   - my-node-pool
     affinity: {}
 
+    # Annotations to pass down to workload resources, e.g. Deployments and
+    # Pods.
+    annotations: {}
+
     # Optionally restrict pods to specific nodes using label selectors.
     #
     # Example:
