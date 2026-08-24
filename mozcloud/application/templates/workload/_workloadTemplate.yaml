@@ -91,7 +91,7 @@ Returns:
 {{- end }}
 {{- /* Compute labels for the pod template */}}
 {{- $component := dict "component_code" $config.component }}
-{{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+{{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) "labels" (default dict $config.labels) }}
 {{- $labels := include "mozcloud.labels" $params | fromYaml -}}
 template:
   metadata:

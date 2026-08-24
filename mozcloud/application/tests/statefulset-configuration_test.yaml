@@ -233,3 +233,18 @@ tests:
       - equal:
           path: spec.revisionHistoryLimit
           value: 5
+  - it: Custom workload labels propagate to StatefulSet and Pod template
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.labels:
+        registry.gke.io/functional-type: AGENT
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+      - equal:
+          path: spec.template.metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
