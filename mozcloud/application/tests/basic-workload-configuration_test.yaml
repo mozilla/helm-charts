@@ -354,3 +354,34 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: missing property 'sizeLimit'
+
+  - it: Deployment emits revisionHistoryLimit only when set, explicit zero included
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.revisionHistoryLimit: 3
+      workloads.test-worker-exec.revisionHistoryLimit: 0
+    asserts:
+      # The field is opt-in. A default here would change the rendered manifest of
+      # every existing workload using this chart. That case needs no case of its
+      # own: the suite snapshot renders the fixture without the field and would
+      # fail if it were ever emitted.
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 3
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # 0 keeps no revisions at all, so there is nothing left to roll back to.
+      # That is a deliberate choice rather than "unset", which is why emission is
+      # gated on the key being present rather than on truthiness.
+      - exists:
+          path: spec.revisionHistoryLimit
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 0
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec

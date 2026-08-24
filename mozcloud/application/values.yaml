@@ -1060,6 +1060,18 @@ workloads:
     #
     #minReadySeconds: 10
 
+    # Optionally cap how many old revisions Kubernetes keeps around for rollback
+    # — ReplicaSets for deployment and rollout, ControllerRevisions for
+    # statefulset. Applies to all three.
+    #
+    # Omitted entirely unless you set it. Kubernetes defaults to 10.
+    #
+    # Lower it to keep the object list tidy for workloads that deploy many times
+    # a day. 0 is valid and keeps no history at all, which also means no rollback
+    # target — deliberate, but worth knowing before you set it.
+    #
+    #revisionHistoryLimit: 3
+
     # A list of optional autoscaling configurations for containerized workloads.
     autoscaling:
       # If enabled, configure autoscaling via a HorizontalPodAutoscaler

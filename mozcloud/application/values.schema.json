@@ -525,6 +525,12 @@
             "description": "Seconds a newly created pod must be ready without any container crashing before it is treated as available. Omitted unless set; the Kubernetes default is 0",
             "minimum": 0
           },
+          "revisionHistoryLimit": {
+            "type": "integer",
+            "default": 10,
+            "description": "Number of old revisions to retain for rollback (ReplicaSets for deployments and rollouts, ControllerRevisions for stateful sets). Omitted unless set; the Kubernetes default is 10. Set to 0 to retain none, which disables rollback",
+            "minimum": 0
+          },
           "autoscaling": {
             "type": "object",
             "additionalProperties": false,
