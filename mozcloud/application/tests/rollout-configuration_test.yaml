@@ -113,3 +113,16 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "additional properties 'blueGreen' not allowed"
+  - it: Rollout caps retained revisions when revisionHistoryLimit is set
+    template: workload/rollout.yaml
+    set:
+      workloads.test-service.revisionHistoryLimit: 2
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      # The unset case needs no case of its own: the suite snapshot renders the
+      # fixture without the field and would fail if it were ever emitted.
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 2

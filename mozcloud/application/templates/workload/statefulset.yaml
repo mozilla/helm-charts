@@ -39,6 +39,9 @@ spec:
   {{- if hasKey $workloadConfig "minReadySeconds" }}
   minReadySeconds: {{ $workloadConfig.minReadySeconds }}
   {{- end }}
+  {{- if hasKey $workloadConfig "revisionHistoryLimit" }}
+  revisionHistoryLimit: {{ $workloadConfig.revisionHistoryLimit }}
+  {{- end }}
   selector:
     matchLabels:
       {{- $labels.selectorLabels | toYaml | nindent 6 }}
