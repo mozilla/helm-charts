@@ -248,3 +248,18 @@ tests:
       - equal:
           path: spec.template.metadata.labels["registry.gke.io/functional-type"]
           value: AGENT
+  - it: Custom workload annotations propagate to StatefulSet and Pod template
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.annotations:
+        iam.gke.io/spiffe-identity-type: agent-identity
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity
+      - equal:
+          path: spec.template.metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity
