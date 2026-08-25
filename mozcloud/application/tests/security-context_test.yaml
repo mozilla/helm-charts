@@ -55,3 +55,62 @@ tests:
             runAsUser: 11000
             seccompProfile:
               type: RuntimeDefault
+
+  # GID 0 is a legitimate group for images whose files are group-root readable,
+  # so an explicit zero must survive instead of falling back to the default.
+  - it: Explicit zero UID and GID are preserved at pod and container level
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    set:
+      workloads.test-service.security.user: 0
+      workloads.test-service.security.group: 0
+      workloads.test-service.security.fsGroup: 0
+      workloads.test-service.containers.app.security.user: 0
+      workloads.test-service.containers.app.security.group: 0
+    asserts:
+      - isSubset:
+          path: spec.template.spec.securityContext
+          content:
+            runAsUser: 0
+            runAsGroup: 0
+            fsGroup: 0
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            runAsUser: 0
+            runAsGroup: 0
+
+  # Setting only one of user/group mirrors it onto the other, and must never
+  # emit a null for the one that was left out.
+  - it: Container UID and GID mirror each other when only one of them is set
+    template: workload/deployment.yaml
+    set:
+      workloads.test-user-only.enabled: true
+      workloads.test-user-only.component: user-only
+      workloads.test-user-only.containers.app.image.repository: test-repo/test-image
+      workloads.test-user-only.containers.app.image.tag: 1.0.0
+      workloads.test-user-only.containers.app.security.user: 21000
+      workloads.test-group-only.enabled: true
+      workloads.test-group-only.component: group-only
+      workloads.test-group-only.containers.app.image.repository: test-repo/test-image
+      workloads.test-group-only.containers.app.image.tag: 1.0.0
+      workloads.test-group-only.containers.app.security.group: 22000
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            runAsUser: 21000
+            runAsGroup: 21000
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-user-only
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            runAsUser: 22000
+            runAsGroup: 22000
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-group-only
