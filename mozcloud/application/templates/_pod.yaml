@@ -182,18 +182,11 @@ capabilities:
   {{- end }}
   drop:
     - ALL
-{{- $user := default "" .user }}
-{{- $group := default "" .group }}
-{{- if and $user (not $group) }}
-  {{- $group = $user }}
-{{- else if and $group (not $user) }}
-  {{- $user = $group }}
-{{- end -}}
-{{- if $user }}
-runAsUser: {{ .user }}
-{{- end }}
-{{- if $group }}
-runAsGroup: {{ .group }}
+{{- $hasUser := hasKey . "user" }}
+{{- $hasGroup := hasKey . "group" }}
+{{- if or $hasUser $hasGroup }}
+runAsUser: {{ ternary .user .group $hasUser }}
+runAsGroup: {{ ternary .group .user $hasGroup }}
 {{- end }}
 seccompProfile:
   type: "RuntimeDefault"
@@ -210,6 +203,10 @@ Params:
                        Defaults to true.
   user (int):          (optional) UID to run the pod as. Defaults to 10001.
   group (int):         (optional) GID to run the pod as. Defaults to 10001.
+  fsGroup (int):       (optional) Supplemental group applied to mounted
+                       volumes. Omitted entirely when unset.
+  fsGroupChangePolicy (string): (optional) Either "Always" or
+                       "OnRootMismatch". Only meaningful with fsGroup.
   sysctls (list):      (optional) List of {name, value} sysctl entries
                        applied to the pod. Non-safe sysctls (e.g.
                        net.ipv4.ip_local_port_range) require the pod's
@@ -225,9 +222,9 @@ Returns:
 seccompProfile:
   type: "RuntimeDefault"
 runAsNonRoot: {{ dig "runAsNonRoot" true . }}
-runAsUser: {{ default 10001 .user }}
-runAsGroup: {{ default 10001 .group }}
-{{- if .fsGroup }}
+runAsUser: {{ dig "user" 10001 . }}
+runAsGroup: {{ dig "group" 10001 . }}
+{{- if hasKey . "fsGroup" }}
 fsGroup: {{ .fsGroup }}
   {{- if .fsGroupChangePolicy }}
 fsGroupChangePolicy: {{ .fsGroupChangePolicy }}
