@@ -190,6 +190,13 @@
               "type": "boolean",
               "default": true
             },
+            "annotations": {
+              "type": "object",
+              "description": "Additional annotations to apply to the ServiceAccount.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
             "imagePullSecrets": {
               "type": "array",
               "description": "List of image pull secret names to attach to the service account.",
