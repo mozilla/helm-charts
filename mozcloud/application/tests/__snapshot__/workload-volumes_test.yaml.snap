@@ -124,6 +124,8 @@ Configuration matches entire snapshot:
                   volumeMounts:
                     - mountPath: /data/bucket
                       name: gcs-bucket
+                    - mountPath: /cache
+                      name: scratch-disk
               restartPolicy: Never
               securityContext:
                 runAsGroup: 10001
@@ -138,6 +140,8 @@ Configuration matches entire snapshot:
                     volumeAttributes:
                       bucketName: my-test-bucket
                   name: gcs-bucket
+                - emptyDir: {}
+                  name: scratch-disk
       schedule: '@hourly'
       successfulJobsHistoryLimit: 1
   4: |
@@ -214,6 +218,12 @@ Configuration matches entire snapshot:
               volumeMounts:
                 - mountPath: /data/bucket
                   name: gcs-bucket
+                - mountPath: /cache
+                  name: scratch-disk
+                - mountPath: /dev/shm
+                  name: scratch-memory
+                - mountPath: /work
+                  name: scratch-pvc
           restartPolicy: Never
           securityContext:
             runAsGroup: 10001
@@ -229,6 +239,22 @@ Configuration matches entire snapshot:
                   bucketName: my-test-bucket
                   gcsfuseLoggingSeverity: warning
               name: gcs-bucket
+            - emptyDir: {}
+              name: scratch-disk
+            - emptyDir:
+                medium: Memory
+                sizeLimit: 64Mi
+              name: scratch-memory
+            - ephemeral:
+                volumeClaimTemplate:
+                  spec:
+                    accessModes:
+                      - ReadWriteOnce
+                    resources:
+                      requests:
+                        storage: 5Gi
+                    storageClassName: standard-rwo
+              name: scratch-pvc
   5: |
     apiVersion: apps/v1
     kind: Deployment
