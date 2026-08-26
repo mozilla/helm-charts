@@ -1173,6 +1173,17 @@ workloads:
         #     KEY2: VALUE2
         envVars: {}
 
+        # Environment variables sourced from pod/container fields via the
+        # Kubernetes downward API (valueFrom.fieldRef). Keys are the env var
+        # names and values are the field paths.
+        #
+        # Format:
+        #
+        #   envFromFields:
+        #     MY_NODE_NAME: spec.nodeName
+        #     MY_POD_IP: status.podIP
+        envFromFields: {}
+
         # A list of Kubernetes secret names to mount in this container as
         # environment variables. Each entry is the name of a Kubernetes secret
         # whose contents will be injected via envFrom.
@@ -1300,6 +1311,53 @@ workloads:
               timeoutSeconds: 5
               successThreshold: 1
               failureThreshold: 5
+
+          # This section is used to configure the startupProbe section of a pod.
+          # Startup probes are used for containers that need a long time to come
+          # up: while the startup probe is running, the kubelet holds off the
+          # liveness and readiness probes, so a slow start no longer has to be
+          # absorbed by an inflated liveness initialDelaySeconds.
+          startup:
+            # Unlike readiness and liveness, this probe is opt-in — it is only
+            # rendered when enabled is true. Leaving the section empty or absent
+            # means no startupProbe at all.
+            enabled: false
+
+            # Configure an exec-based probe instead of the default httpGet.
+            # When set, path and httpHeaders are ignored for this probe. Useful
+            # for containers whose readiness depends on work that has no HTTP
+            # endpoint, such as loading a model into memory.
+            #
+            # Example:
+            #
+            #   exec:
+            #     command: ["python", "warmup.py"]
+
+            # The endpoint polled until the container reports itself started.
+            #
+            # Default: /__lbheartbeat__
+            path: /__lbheartbeat__
+
+            # Optionally configure HTTP headers to use in the startup probe. The
+            # format matches the readiness httpHeaders above.
+            #
+            # By default, these will match the httpHeaders used in the readiness
+            # configuration section, if defined.
+            httpHeaders: []
+
+            # Probe configurations for the startup probe. The format matches the
+            # readiness probes above, minus successThreshold, which Kubernetes
+            # requires to be 1 for startup probes.
+            #
+            # periodSeconds multiplied by failureThreshold is the startup budget:
+            # the defaults below allow 5 minutes before the container is
+            # considered failed and restarted. Unlike the liveness probe, these
+            # values are never inherited from the readiness section.
+            probes:
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 30
 
         # The image repo, name, and tag to use for the container. The format is:
         #
@@ -2093,6 +2151,17 @@ workloads:
         #     KEY1: VALUE1
         #     KEY2: VALUE2
         envVars: {}
+
+        # Environment variables sourced from pod/container fields via the
+        # Kubernetes downward API (valueFrom.fieldRef). Keys are the env var
+        # names and values are the field paths.
+        #
+        # Format:
+        #
+        #   envFromFields:
+        #     MY_NODE_NAME: spec.nodeName
+        #     MY_POD_IP: status.podIP
+        envFromFields: {}
 
         # A list of Kubernetes secret names to mount in this init container as
         # environment variables. Each entry is the name of a Kubernetes secret
