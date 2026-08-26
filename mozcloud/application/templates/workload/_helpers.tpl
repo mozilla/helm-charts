@@ -22,11 +22,15 @@ data:
 
 
 {{- /*
-Renders all volume definitions for a workload pod template, including the
-NGINX configmap volume (when enabled) and all user-defined volumes.
+Renders all volume definitions for a pod template, including the NGINX
+configmap volume (when enabled) and all user-defined volumes.
+
+Used by both the workload pod template and the task (Job/CronJob) pod template;
+task callers pass nginxEnabled false.
 
 Params:
-  nginxConfigMapName (string): (required) Name of the NGINX configmap.
+  nginxConfigMapName (string): (optional) Name of the NGINX configmap. Required
+                               when nginxEnabled is true; omit otherwise.
   nginxEnabled (bool):         (required) Whether the NGINX sidecar is enabled.
   volumes (dict):              (required) All volumes keyed by name.
 

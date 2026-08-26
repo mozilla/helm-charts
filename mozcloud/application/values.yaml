@@ -695,8 +695,8 @@ tasks:
           #security: {}
 
           # Optionally mount volumes to the container. The supported volume types
-          # are "configMap" (default), "secret", "persistentVolume", and
-          # "gcsFuseCsi".
+          # are "configMap" (default), "secret", "persistentVolume", "emptyDir",
+          # "ephemeral", and "gcsFuseCsi".
           #
           # Volumes should use names that match either config map, external
           # secret, or persistent volume claim names created as part of and

@@ -222,20 +222,9 @@ template:
     {{- end }}
     {{- if gt (keys $volumes | len) 0 }}
     volumes:
-      {{- range $volumeName, $volumeConfig := $volumes }}
-      - name: {{ $volumeName }}
-        {{- if eq $volumeConfig.type "persistentVolume" }}
-        persistentVolumeClaim:
-          claimName: {{ $volumeName }}
-        {{- else if eq $volumeConfig.type "configMap" }}
-        configMap:
-          name: {{ $volumeName }}
-        {{- else if eq $volumeConfig.type "secret" }}
-        secret:
-          secretName: {{ $volumeName }}
-        {{- else if eq $volumeConfig.type "gcsFuseCsi" }}
-        {{- include "mozcloud.volumes.gcsFuseCsi" (dict "config" $volumeConfig) | nindent 8 }}
-        {{- end }}
-      {{- end }}
+      {{- include "mozcloud.workload.volumes" (dict
+        "volumes" $volumes
+        "nginxEnabled" false
+      ) | trim | nindent 6 }}
     {{- end }}
 {{- end -}}
