@@ -1,0 +1,27 @@
+---
+# Overlay applied on top of values/basic-configuration.yaml. It only enables the
+# opt-in startup probe on two of that fixture's existing workloads, so container
+# ordering and every other rendered field stay identical to the base suite.
+#
+# test-service covers the httpGet default: enabling the probe and nothing else.
+# test-worker-exec covers the exec form, and — because it sets no startup
+# timings — also pins that those are not inherited from its readiness probe.
+#
+# The nginx sidecar and every other container are deliberately left untouched:
+# they are what proves the probe stays absent unless it is asked for.
+workloads:
+  test-service:
+    containers:
+      app:
+        healthCheck:
+          startup:
+            enabled: true
+
+  test-worker-exec:
+    containers:
+      app:
+        healthCheck:
+          startup:
+            enabled: true
+            exec:
+              command: ["python", "warmup.py"]

@@ -130,6 +130,13 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.healthCheck.readiness.probes.periodSeconds | int | `6` |  |
 | workloads.default.containers.default.healthCheck.readiness.probes.successThreshold | int | `1` |  |
 | workloads.default.containers.default.healthCheck.readiness.probes.timeoutSeconds | int | `5` |  |
+| workloads.default.containers.default.healthCheck.startup.enabled | bool | `false` |  |
+| workloads.default.containers.default.healthCheck.startup.httpHeaders | list | `[]` |  |
+| workloads.default.containers.default.healthCheck.startup.path | string | `"/__lbheartbeat__"` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.failureThreshold | int | `30` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.initialDelaySeconds | int | `0` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.periodSeconds | int | `10` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.timeoutSeconds | int | `5` |  |
 | workloads.default.containers.default.image.repository | string | `""` |  |
 | workloads.default.containers.default.image.tag | string | `""` |  |
 | workloads.default.containers.default.imagePullPolicy | string | `"Always"` |  |

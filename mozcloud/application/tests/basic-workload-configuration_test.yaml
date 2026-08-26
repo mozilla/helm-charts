@@ -385,3 +385,63 @@ tests:
         documentSelector:
           path: $[?(@.kind == "Deployment")].metadata.name
           value: test-worker-exec
+
+  - it: Deployment emits a startupProbe only when enabled, httpGet and exec
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/startup-probe-configuration.yaml
+    asserts:
+      # Enabling the probe alone yields a usable 5 minute startup budget
+      # (periodSeconds 10 * failureThreshold 30) against the container's own
+      # primary port, without repeating the readiness configuration.
+      - isSubset:
+          path: spec.template.spec.containers[1].startupProbe
+          content:
+            failureThreshold: 30
+            httpGet:
+              path: /__lbheartbeat__
+              port: app
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Kubernetes requires successThreshold to be 1 for startup probes, so the
+      # field is not offered and must never be rendered.
+      - notExists:
+          path: spec.template.spec.containers[1].startupProbe.successThreshold
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # The startup timings are independent of readiness. test-worker-exec sets
+      # neither, so it keeps the startup defaults above while its readiness probe
+      # continues to use the fixture's own values.
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.exec.command
+          value: ["python", "warmup.py"]
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      - notExists:
+          path: spec.template.spec.containers[0].startupProbe.httpGet
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.failureThreshold
+          value: 30
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      # The probe is opt-in, so the nginx sidecar — which is not configurable
+      # through healthCheck — never gets one. The absent-by-default case needs no
+      # case of its own: the suite snapshot renders both fixtures without the
+      # field and would fail if it were ever emitted.
+      - notExists:
+          path: spec.template.spec.containers[0].startupProbe
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
