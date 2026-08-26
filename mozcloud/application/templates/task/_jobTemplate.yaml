@@ -117,7 +117,7 @@ template:
         If OTEL is enabled but auto instrumentation is disabled, we need to
         create the HOST_IP environment variable directly in the container.
         */}}
-        {{- if or $containerConfig.envVars $otelContainerEnabled }}
+        {{- if or $containerConfig.envVars $otelContainerEnabled $containerConfig.envFromFields }}
         env:
           {{- if $otelContainerEnabled }}
           - name: HOST_IP
@@ -125,6 +125,12 @@ template:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.hostIP
+          {{- end }}
+          {{- range $fieldName, $fieldPath := (default dict $containerConfig.envFromFields) }}
+          - name: {{ $fieldName }}
+            valueFrom:
+              fieldRef:
+                fieldPath: {{ $fieldPath }}
           {{- end }}
           {{- range $envVarName, $envVarValue := $containerConfig.envVars }}
           - name: {{ $envVarName }}

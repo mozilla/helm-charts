@@ -10,6 +10,8 @@ values:
   - values/env-from-fields-configuration.yaml
 templates:
   - workload/deployment.yaml
+  - task/job.yaml
+  - task/cronjob.yaml
 tests:
   - it: Configuration matches entire snapshot
     asserts:
@@ -43,3 +45,66 @@ tests:
             valueFrom:
               fieldRef:
                 fieldPath: metadata.name
+
+  - it: Job renders envFromFields and composes with envVars, OTEL and tasks.common
+    template: task/job.yaml
+    documentSelector:
+      path: $[?(@.kind == "Job")].metadata.name
+      value: test-job
+    asserts:
+      - notFailedTemplate: {}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MY_POD_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.name
+      # Inherited from tasks.common.container, which merges with the container's
+      # own entries rather than replacing them.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: MY_COMMON_NODE
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+      # The feature is additive: the OTEL HOST_IP entry and plain envVars have to
+      # survive alongside it, since all three share one env block and one gate.
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOST_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PLAIN_VAR
+            value: plain-value
+
+  - it: CronJob renders envFromFields from its jobConfig
+    template: task/cronjob.yaml
+    documentSelector:
+      path: $[?(@.kind == "CronJob")].metadata.name
+      value: test-cronjob
+    asserts:
+      - notFailedTemplate: {}
+      # Cron jobs reach the shared job template through jobConfig, so the job
+      # case above does not cover this path.
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: MY_POD_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.podIP
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[0].env
+          content:
+            name: MY_COMMON_NODE
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName

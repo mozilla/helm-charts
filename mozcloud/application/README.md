@@ -113,6 +113,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.args | list | `[]` |  |
 | workloads.default.containers.default.command | list | `[]` |  |
 | workloads.default.containers.default.configMaps | list | `[]` |  |
+| workloads.default.containers.default.envFromFields | object | `{}` |  |
 | workloads.default.containers.default.envVars | object | `{}` |  |
 | workloads.default.containers.default.healthCheck.liveness.enabled | bool | `true` |  |
 | workloads.default.containers.default.healthCheck.liveness.httpHeaders | list | `[]` |  |
@@ -164,6 +165,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.initContainers.default.args | list | `[]` |  |
 | workloads.default.initContainers.default.command | list | `[]` |  |
 | workloads.default.initContainers.default.configMaps | list | `[]` |  |
+| workloads.default.initContainers.default.envFromFields | object | `{}` |  |
 | workloads.default.initContainers.default.envVars | object | `{}` |  |
 | workloads.default.initContainers.default.image.repository | string | `""` |  |
 | workloads.default.initContainers.default.image.tag | string | `""` |  |
