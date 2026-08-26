@@ -402,6 +402,26 @@ tests:
           path: spec.template.metadata.labels["registry.gke.io/functional-type"]
           value: AGENT
 
+  - it: Custom workload labels cannot overwrite MozCloud-managed labels
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.labels:
+        app_code: hacked
+        env_code: hacked
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      # mozcloud.labels always merges the MozCloud-managed values (from
+      # global.mozcloud) on top of any user-provided base, so these keys
+      # cannot be overridden through workloads.<name>.labels.
+      - notEqual:
+          path: metadata.labels.app_code
+          value: hacked
+      - notEqual:
+          path: metadata.labels.env_code
+          value: hacked
+
   - it: Custom workload annotations are accepted by the schema and applied to Deployment and Pod template
     template: workload/deployment.yaml
     set:
