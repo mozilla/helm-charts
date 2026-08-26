@@ -96,9 +96,10 @@ Returns:
 Renders a list of containers for a workload pod template. Supports both
 spec.containers and spec.initContainers via the type param.
 
-When type is "container", liveness and readiness probes are rendered and OTEL
-environment variables are injected if enabled. When type is "initContainer",
-probes are omitted and a restartPolicy of Always is set for sidecar containers.
+When type is "container", startup, liveness and readiness probes are rendered
+and OTEL environment variables are injected if enabled. When type is
+"initContainer", probes are omitted and a restartPolicy of Always is set for
+sidecar containers.
 
 Params:
   config (dict):                         (required) The workload configuration.
@@ -196,6 +197,7 @@ Returns:
       $config.hosts
       (($containerConfig.healthCheck).readiness).enabled
       (($containerConfig.healthCheck).liveness).enabled
+      (($containerConfig.healthCheck).startup).enabled
   ) }}
   {{- $additionalPorts := default list $containerConfig.additionalPorts }}
   {{- if or $emitPrimaryPort $additionalPorts }}
@@ -212,6 +214,41 @@ Returns:
     {{- end }}
   {{- end }}
   {{- if eq $type "container" }}
+  {{- if (dig "healthCheck" "startup" "enabled" false $containerConfig) }}
+  startupProbe:
+    {{- if (($containerConfig.healthCheck).startup).exec }}
+    exec:
+      command:
+        {{- toYaml $containerConfig.healthCheck.startup.exec.command | nindent 8 }}
+    {{- else }}
+    httpGet:
+      {{- if (($containerConfig.healthCheck).startup).httpHeaders }}
+      httpHeaders:
+        {{- range $header := $containerConfig.healthCheck.startup.httpHeaders }}
+        - name: {{ $header.name }}
+          value: {{ $header.value }}
+        {{- end }}
+      {{- else if (($containerConfig.healthCheck).readiness).httpHeaders }}
+      httpHeaders:
+        {{- range $header := $containerConfig.healthCheck.readiness.httpHeaders }}
+        - name: {{ $header.name }}
+          value: {{ $header.value }}
+        {{- end }}
+      {{- end }}
+      path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.startup.path }}
+      port: {{ $portName }}
+    {{- end }}
+    {{- /*
+    Unlike the liveness probe below, the startup probe does not fall back to the
+    readiness timings. A startup budget is deliberately chosen per application
+    and must not silently inherit an unrelated interval.
+    */}}
+    {{- if (($containerConfig.healthCheck).startup).probes }}
+    {{- range $k, $v := $containerConfig.healthCheck.startup.probes }}
+    {{ $k }}: {{ $v }}
+    {{- end }}
+    {{- end }}
+  {{- end }}
   {{- if (dig "healthCheck" "liveness" "enabled" true $containerConfig) }}
   livenessProbe:
     {{- if (($containerConfig.healthCheck).liveness).exec }}
