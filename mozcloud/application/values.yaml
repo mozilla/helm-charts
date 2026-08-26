@@ -1653,6 +1653,10 @@ workloads:
       # workload name will be used as the resource name instead.
       default:
         # A list of domains to use for each host.
+        #
+        # Domains are rendered via the mozcloud.renderDomain helper, so they
+        # may reference .Values, .Chart, and .Release (e.g.
+        # "api.{{ .Values.global.hostname }}").
         domains:
           - example.com
 

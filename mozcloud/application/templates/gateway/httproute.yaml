@@ -6,7 +6,8 @@ Only hosts with httpRoutes.createHttpRoutes set to true are included.
 For each qualifying host, constructs:
   - A gateway reference — either from a sharedGateway config if present, or
     derived from the local gateway name using mozcloud.gateway.name.
-  - The hostname list from the host's "domains" field.
+  - The hostname list from the host's "domains" field, rendered via the
+    mozcloud.renderDomain helper so domains may reference values.
   - HTTP-to-HTTPS redirect behavior (disabled for internal hosts).
   - Routing rules with backend references, supporting optional custom rules
     with path/header matching and weighted backends for multi-cluster
@@ -23,6 +24,7 @@ Returns:
            HTTPRoute configurations keyed by host name.
 */ -}}
 {{- define "mozcloud.gateway.httpRoutes" -}}
+{{- $context := . -}}
 {{- $globals := .Values.global.mozcloud -}}
 {{- $workloads := .workloads -}}
 httpRoutes:
@@ -74,7 +76,7 @@ httpRoutes:
         {{- end }}
     hostnames:
       {{- range $domain := $hostConfig.domains }}
-      - {{ $domain | quote }}
+      - {{ include "mozcloud.renderDomain" (dict "domain" $domain "context" $context "host" $hostName) | quote }}
       {{- end }}
     {{- if eq $hostConfig.type "internal" }}
     httpToHttpsRedirect: false
