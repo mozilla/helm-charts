@@ -1173,6 +1173,17 @@ workloads:
         #     KEY2: VALUE2
         envVars: {}
 
+        # Environment variables sourced from pod/container fields via the
+        # Kubernetes downward API (valueFrom.fieldRef). Keys are the env var
+        # names and values are the field paths.
+        #
+        # Format:
+        #
+        #   envFromFields:
+        #     MY_NODE_NAME: spec.nodeName
+        #     MY_POD_IP: status.podIP
+        envFromFields: {}
+
         # A list of Kubernetes secret names to mount in this container as
         # environment variables. Each entry is the name of a Kubernetes secret
         # whose contents will be injected via envFrom.
@@ -2140,6 +2151,17 @@ workloads:
         #     KEY1: VALUE1
         #     KEY2: VALUE2
         envVars: {}
+
+        # Environment variables sourced from pod/container fields via the
+        # Kubernetes downward API (valueFrom.fieldRef). Keys are the env var
+        # names and values are the field paths.
+        #
+        # Format:
+        #
+        #   envFromFields:
+        #     MY_NODE_NAME: spec.nodeName
+        #     MY_POD_IP: status.podIP
+        envFromFields: {}
 
         # A list of Kubernetes secret names to mount in this init container as
         # environment variables. Each entry is the name of a Kubernetes secret
