@@ -213,7 +213,6 @@ template:
       {{- include "mozcloud.workload.volumes" (dict
         "volumes" $volumes
         "nginxEnabled" false
-        "nginxConfigMapName" ""
       ) | trim | nindent 6 }}
     {{- end }}
 {{- end -}}
