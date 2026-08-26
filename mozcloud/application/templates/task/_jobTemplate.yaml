@@ -15,6 +15,8 @@ Renders the complete Job spec including:
     security context, and volume mounts).
   - Pod-level security context.
   - Optional service account reference.
+  - Optional pod scheduling fields: affinity, nodeSelector, tolerations,
+    topologySpreadConstraints.
   - Volumes derived from container volume mount definitions.
 
 Params:
@@ -207,6 +209,10 @@ template:
     {{- if $jobConfig.tolerations }}
     tolerations:
       {{- $jobConfig.tolerations | toYaml | nindent 6 }}
+    {{- end }}
+    {{- if $jobConfig.topologySpreadConstraints }}
+    topologySpreadConstraints:
+      {{- $jobConfig.topologySpreadConstraints | toYaml | nindent 6 }}
     {{- end }}
     {{- if gt (keys $volumes | len) 0 }}
     volumes:
