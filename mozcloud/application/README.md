@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 3.13.1](https://img.shields.io/badge/Version-3.13.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 3.14.3](https://img.shields.io/badge/Version-3.14.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~3.13.1
+    version: ~3.14.3
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -114,6 +114,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.args | list | `[]` |  |
 | workloads.default.containers.default.command | list | `[]` |  |
 | workloads.default.containers.default.configMaps | list | `[]` |  |
+| workloads.default.containers.default.envFromFields | object | `{}` |  |
 | workloads.default.containers.default.envVars | object | `{}` |  |
 | workloads.default.containers.default.healthCheck.liveness.enabled | bool | `true` |  |
 | workloads.default.containers.default.healthCheck.liveness.httpHeaders | list | `[]` |  |
@@ -131,6 +132,13 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.healthCheck.readiness.probes.periodSeconds | int | `6` |  |
 | workloads.default.containers.default.healthCheck.readiness.probes.successThreshold | int | `1` |  |
 | workloads.default.containers.default.healthCheck.readiness.probes.timeoutSeconds | int | `5` |  |
+| workloads.default.containers.default.healthCheck.startup.enabled | bool | `false` |  |
+| workloads.default.containers.default.healthCheck.startup.httpHeaders | list | `[]` |  |
+| workloads.default.containers.default.healthCheck.startup.path | string | `"/__lbheartbeat__"` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.failureThreshold | int | `30` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.initialDelaySeconds | int | `0` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.periodSeconds | int | `10` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.timeoutSeconds | int | `5` |  |
 | workloads.default.containers.default.image.repository | string | `""` |  |
 | workloads.default.containers.default.image.tag | string | `""` |  |
 | workloads.default.containers.default.imagePullPolicy | string | `"Always"` |  |
@@ -158,6 +166,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.initContainers.default.args | list | `[]` |  |
 | workloads.default.initContainers.default.command | list | `[]` |  |
 | workloads.default.initContainers.default.configMaps | list | `[]` |  |
+| workloads.default.initContainers.default.envFromFields | object | `{}` |  |
 | workloads.default.initContainers.default.envVars | object | `{}` |  |
 | workloads.default.initContainers.default.image.repository | string | `""` |  |
 | workloads.default.initContainers.default.image.tag | string | `""` |  |

@@ -15,6 +15,8 @@ Renders the complete Job spec including:
     security context, and volume mounts).
   - Pod-level security context.
   - Optional service account reference.
+  - Optional pod scheduling fields: affinity, nodeSelector, tolerations,
+    topologySpreadConstraints.
   - Volumes derived from container volume mount definitions.
 
 Params:
@@ -115,7 +117,7 @@ template:
         If OTEL is enabled but auto instrumentation is disabled, we need to
         create the HOST_IP environment variable directly in the container.
         */}}
-        {{- if or $containerConfig.envVars $otelContainerEnabled }}
+        {{- if or $containerConfig.envVars $otelContainerEnabled $containerConfig.envFromFields }}
         env:
           {{- if $otelContainerEnabled }}
           - name: HOST_IP
@@ -123,6 +125,12 @@ template:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.hostIP
+          {{- end }}
+          {{- range $fieldName, $fieldPath := (default dict $containerConfig.envFromFields) }}
+          - name: {{ $fieldName }}
+            valueFrom:
+              fieldRef:
+                fieldPath: {{ $fieldPath }}
           {{- end }}
           {{- range $envVarName, $envVarValue := $containerConfig.envVars }}
           - name: {{ $envVarName }}
@@ -208,22 +216,15 @@ template:
     tolerations:
       {{- $jobConfig.tolerations | toYaml | nindent 6 }}
     {{- end }}
+    {{- if $jobConfig.topologySpreadConstraints }}
+    topologySpreadConstraints:
+      {{- $jobConfig.topologySpreadConstraints | toYaml | nindent 6 }}
+    {{- end }}
     {{- if gt (keys $volumes | len) 0 }}
     volumes:
-      {{- range $volumeName, $volumeConfig := $volumes }}
-      - name: {{ $volumeName }}
-        {{- if eq $volumeConfig.type "persistentVolume" }}
-        persistentVolumeClaim:
-          claimName: {{ $volumeName }}
-        {{- else if eq $volumeConfig.type "configMap" }}
-        configMap:
-          name: {{ $volumeName }}
-        {{- else if eq $volumeConfig.type "secret" }}
-        secret:
-          secretName: {{ $volumeName }}
-        {{- else if eq $volumeConfig.type "gcsFuseCsi" }}
-        {{- include "mozcloud.volumes.gcsFuseCsi" (dict "config" $volumeConfig) | nindent 8 }}
-        {{- end }}
-      {{- end }}
+      {{- include "mozcloud.workload.volumes" (dict
+        "volumes" $volumes
+        "nginxEnabled" false
+      ) | trim | nindent 6 }}
     {{- end }}
 {{- end -}}
