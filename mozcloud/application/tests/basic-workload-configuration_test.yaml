@@ -388,9 +388,10 @@ tests:
 
   - it: Custom workload labels propagate to Deployment and Pod template
     template: workload/deployment.yaml
-    set:
-      workloads.test-service.labels:
-        registry.gke.io/functional-type: AGENT
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/workload-labels-configuration.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -404,10 +405,10 @@ tests:
 
   - it: Custom workload labels cannot overwrite MozCloud-managed labels
     template: workload/deployment.yaml
-    set:
-      workloads.test-service.labels:
-        app_code: hacked
-        env_code: hacked
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/protected-workload-labels-configuration.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
@@ -424,9 +425,10 @@ tests:
 
   - it: Custom workload annotations are accepted by the schema and applied to Deployment and Pod template
     template: workload/deployment.yaml
-    set:
-      workloads.test-service.annotations:
-        iam.gke.io/spiffe-identity-type: agent-identity
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/workload-annotations-configuration.yaml
     documentSelector:
       path: $[?(@.kind == "Deployment")].metadata.name
       value: test-service
