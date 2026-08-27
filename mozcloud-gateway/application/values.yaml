@@ -260,6 +260,15 @@ httpRoute:
       # default.
       #httpToHttpsRedirect: true
 
+      # Configures the HTTP-to-HTTPS redirect created by
+      # "httpToHttpsRedirect" above.
+      #redirect:
+      #  # Status code the redirect returns. Set to 301 for a host migrating
+      #  # off GKE Ingress, whose FrontendConfig served
+      #  # MOVED_PERMANENTLY_DEFAULT, so the redirect's cache semantics do not
+      #  # change during the migration. Only 301 and 302 are accepted.
+      #  statusCode: 302
+
       rules:
           # A list of the backend services to receive traffic.
         - backendRefs:

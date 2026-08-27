@@ -2015,6 +2015,21 @@ workloads:
         # Optionally configure the log sample rate for the load balancer, IAP
         # details, a custom backend timeout, or a Cloud Armor security policy.
         #options:
+        #  # HTTP to HTTPS redirect behavior for this host (Gateway API only).
+        #  # Ingress hosts configure the equivalent via
+        #  # frontendConfig.redirectToHttps.
+        #  #httpsRedirect:
+        #  #  # Whether to create the HTTP to HTTPS redirect HTTPRoute. Set to
+        #  #  # false to serve HTTP directly, rather than suppressing the
+        #  #  # redirect by declaring the host internal.
+        #  #  enabled: true
+        #  #
+        #  #  # Status code the redirect returns. Set to 301 for a host
+        #  #  # migrating off GKE Ingress, whose FrontendConfig served
+        #  #  # MOVED_PERMANENTLY_DEFAULT, so the redirect's cache semantics do
+        #  #  # not change during the migration. Only 301 and 302 are accepted.
+        #  #  statusCode: 302
+        #
         #  # Configures Identity-Aware Proxy for the service.
         #  #iap:
         #  #  # You must explicitly enable this feature.

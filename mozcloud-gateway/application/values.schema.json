@@ -351,6 +351,15 @@
         "httpToHttpsRedirect": {
           "type": "boolean"
         },
+        "redirect": {
+          "type": "object",
+          "description": "Configures the auto-generated \"<name>-http-redirect\" HTTPRoute created when httpToHttpsRedirect is enabled.",
+          "properties": {
+            "statusCode": {
+              "$ref": "#/$defs/redirectStatusCode"
+            }
+          }
+        },
         "rules": {
           "type": "array",
           "items": {
@@ -423,7 +432,7 @@
                     "type": "string"
                   },
                   "statusCode": {
-                    "type": "number"
+                    "$ref": "#/$defs/redirectStatusCode"
                   }
                 }
               },
@@ -453,6 +462,15 @@
           "type": "object"
         }
       }
+    },
+    "redirectStatusCode": {
+      "type": "integer",
+      "enum": [
+        301,
+        302
+      ],
+      "default": 302,
+      "description": "HTTP status code returned by a RequestRedirect filter. Defaults to 302. Set to 301 for a host migrating off GKE Ingress, whose FrontendConfig served MOVED_PERMANENTLY_DEFAULT, so the redirect's cache semantics do not change during the migration. The Gateway API standard channel accepts only 301 and 302."
     }
   }
 }
