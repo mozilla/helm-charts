@@ -266,7 +266,8 @@ httpRoute:
       #  # Status code the redirect returns. Set to 301 for a host migrating
       #  # off GKE Ingress, whose FrontendConfig served
       #  # MOVED_PERMANENTLY_DEFAULT, so the redirect's cache semantics do not
-      #  # change during the migration. Only 301 and 302 are accepted.
+      #  # change during the migration. One of 301, 302, 303, 307 or 308; GKE
+      #  # support for 303, 307 and 308 is untested by us.
       #  statusCode: 302
 
       rules:

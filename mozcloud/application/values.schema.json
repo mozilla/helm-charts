@@ -1205,10 +1205,13 @@
                           "type": "integer",
                           "enum": [
                             301,
-                            302
+                            302,
+                            303,
+                            307,
+                            308
                           ],
                           "default": 302,
-                          "description": "HTTP status code the redirect returns. Defaults to 302. Set to 301 for a host migrating off GKE Ingress, whose FrontendConfig served MOVED_PERMANENTLY_DEFAULT, so the redirect's cache semantics do not change during the migration. The Gateway API standard channel accepts only 301 and 302 on a RequestRedirect filter."
+                          "description": "HTTP status code the redirect returns. Defaults to 302. Set to 301 for a host migrating off GKE Ingress, whose FrontendConfig served MOVED_PERMANENTLY_DEFAULT, so the redirect's cache semantics do not change during the migration. These are the values the Gateway API standard channel accepts on a RequestRedirect filter as of v1.5.0, though GKE controller support for 303, 307 and 308 is untested by us."
                         }
                       }
                     },

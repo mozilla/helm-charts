@@ -71,9 +71,11 @@ tests:
           path: $[?(@.kind == "HTTPRoute")].metadata.name
           value: disabled-redirect
 
+  # 404 is not a redirect code and is absent from the enum at every Gateway API
+  # version. Do not use 308 here: the standard channel accepts it as of v1.5.0.
   - it: Schema rejects a status code the Gateway API does not accept
     set:
-      workloads.test-service.hosts.default-redirect.options.httpsRedirect.statusCode: 308
+      workloads.test-service.hosts.default-redirect.options.httpsRedirect.statusCode: 404
     asserts:
       - failedTemplate:
           errorPattern: "statusCode"
