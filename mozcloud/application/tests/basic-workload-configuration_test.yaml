@@ -445,3 +445,58 @@ tests:
         documentSelector:
           path: $[?(@.kind == "Deployment")].metadata.name
           value: test-service
+
+  - it: Custom workload labels propagate to Deployment and Pod template
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/workload-labels-configuration.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+      - equal:
+          path: spec.template.metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+
+  - it: Custom workload labels cannot overwrite MozCloud-managed labels
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/protected-workload-labels-configuration.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      # mozcloud.labels always merges the MozCloud-managed values (from
+      # global.mozcloud) on top of any user-provided base, so these keys
+      # cannot be overridden through workloads.<name>.labels.
+      - notEqual:
+          path: metadata.labels.app_code
+          value: hacked
+      - notEqual:
+          path: metadata.labels.env_code
+          value: hacked
+
+  - it: Custom workload annotations are accepted by the schema and applied to Deployment and Pod template
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/workload-annotations-configuration.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - notFailedTemplate: {}
+      - equal:
+          path: metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity
+      - equal:
+          path: spec.template.metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity

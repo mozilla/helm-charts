@@ -126,3 +126,33 @@ tests:
       - equal:
           path: spec.revisionHistoryLimit
           value: 2
+  - it: Custom workload labels propagate to Rollout and Pod template
+    template: workload/rollout.yaml
+    set:
+      workloads.test-service.labels:
+        registry.gke.io/functional-type: AGENT
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+      - equal:
+          path: spec.template.metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+  - it: Custom workload annotations propagate to Rollout and Pod template
+    template: workload/rollout.yaml
+    set:
+      workloads.test-service.annotations:
+        iam.gke.io/spiffe-identity-type: agent-identity
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity
+      - equal:
+          path: spec.template.metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity

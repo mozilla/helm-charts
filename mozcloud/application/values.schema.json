@@ -190,6 +190,13 @@
               "type": "boolean",
               "default": true
             },
+            "annotations": {
+              "type": "object",
+              "description": "Additional annotations to apply to the ServiceAccount.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
             "imagePullSecrets": {
               "type": "array",
               "description": "List of image pull secret names to attach to the service account.",
@@ -454,6 +461,13 @@
           "affinity": {
             "type": "object",
             "description": "Pod affinity rules (nodeAffinity, podAffinity, podAntiAffinity)"
+          },
+          "annotations": {
+            "type": "object",
+            "description": "Annotations to pass down to workload resources, e.g. Deployments and Pods",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "component": {
             "type": "string"

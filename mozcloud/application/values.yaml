@@ -272,9 +272,17 @@ persistentVolumes: {}
 #     #   imagePullSecrets:
 #     #     - my-registry-secret
 #     #     - another-registry-secret
+#
+#     # Additional annotations to apply to the ServiceAccount.
+#     #
+#     #   annotations:
+#     #     iam.gke.io/spiffe-identity-type: agent-identity
 serviceAccounts:
   default:
     enabled: true
+    # Additional annotations to apply to the default ServiceAccount. See the
+    # example above for other service accounts created via this dictionary.
+    annotations: {}
 
 # The consolidation of all jobs to tasks is coming soon.
 tasks:
@@ -973,6 +981,10 @@ workloads:
     #                 values:
     #                   - my-node-pool
     affinity: {}
+
+    # Annotations to pass down to workload resources, e.g. Deployments and
+    # Pods.
+    annotations: {}
 
     # Optionally restrict pods to specific nodes using label selectors.
     #
