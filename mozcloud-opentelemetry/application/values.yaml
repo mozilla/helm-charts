@@ -15,7 +15,7 @@ collectors:
   daemonset:
     priorityClassName: gmp-critical
     tolerations:
-      operator: Exists
+      - operator: Exists
     securityContext:
       allowPrivilegeEscalation: false
       capabilities:
