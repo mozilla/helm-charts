@@ -14,7 +14,7 @@ spec:
   priorityClassName: {{ . }}
   {{- end }}
   {{- with .Values.collectors.daemonset.tolerations }}
-  tolerations: {{ . }}
+  tolerations: {{ toYaml . | nindent 4 }}
   {{- end }}
   {{- with .Values.collectors.daemonset.securityContext }}
   securityContext: {{ toYaml . | nindent 4 }}

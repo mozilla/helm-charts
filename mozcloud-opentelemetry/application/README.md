@@ -52,7 +52,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | collectors.daemonset.securityContext.runAsNonRoot | bool | `true` |  |
 | collectors.daemonset.securityContext.runAsUser | int | `10001` |  |
 | collectors.daemonset.securityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
-| collectors.daemonset.tolerations.operator | string | `"Exists"` |  |
+| collectors.daemonset.tolerations[0].operator | string | `"Exists"` |  |
 | collectors.gateway.autoscaler.maxReplicas | int | `5` |  |
 | collectors.gateway.autoscaler.minReplicas | int | `2` |  |
 | collectors.gateway.autoscaler.targetCPUUtilization | int | `50` |  |
