@@ -500,3 +500,105 @@ tests:
       - equal:
           path: spec.template.metadata.annotations["iam.gke.io/spiffe-identity-type"]
           value: agent-identity
+
+  - it: Deployment emits rollingUpdate per key, absolute and percentage forms
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/deployment-rolling-update-configuration.yaml
+    asserts:
+      # The tuning is opt-in. The absent case needs no case of its own: the
+      # suite snapshot renders both fixtures with strategy.type alone and would
+      # fail if a rollingUpdate block were ever emitted.
+      - isSubset:
+          path: spec.strategy
+          content:
+            type: RollingUpdate
+            rollingUpdate:
+              maxSurge: 1
+              maxUnavailable: 0
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # 0 means "never drop below the desired count", a deliberate choice rather
+      # than "unset", which is why each key is gated on presence instead of
+      # truthiness.
+      - equal:
+          path: spec.strategy.rollingUpdate.maxUnavailable
+          value: 0
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Kubernetes takes both fields as IntOrString, so the percentage form has
+      # to survive as a string rather than being coerced to a number.
+      - equal:
+          path: spec.strategy.rollingUpdate.maxSurge
+          value: "25%"
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      # maxSurge alone must not pull in a default sibling: an unset
+      # maxUnavailable stays with the Kubernetes default of 25%.
+      - notExists:
+          path: spec.strategy.rollingUpdate.maxUnavailable
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+
+  - it: Schema rejects rollingUpdate combined with the Recreate strategy
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.strategy: Recreate
+      workloads.test-service.deployment.rollingUpdate.maxSurge: 1
+    asserts:
+      # Kubernetes rejects the combination outright, so the chart must not
+      # accept it and quietly render a Recreate deployment without the tuning.
+      - failedTemplate:
+          errorPattern: rollingUpdate
+
+  - it: Recreate strategy validates against the empty rollingUpdate default
+    template: workload/deployment.yaml
+    set:
+      workloads.default.strategy: Recreate
+    asserts:
+      # values.yaml documents the tuning as an empty rollingUpdate block under
+      # workloads.default, so a chart-wide strategy: Recreate is validated with
+      # that default in place. Constraining the block itself to null would fail
+      # here on the chart's own value, leaving the tenant nothing to remove.
+      - notFailedTemplate: {}
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - notExists:
+          path: spec.strategy.rollingUpdate
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+
+  - it: Schema rejects maxSurge and maxUnavailable both being zero
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.deployment.rollingUpdate.maxSurge: 0
+      workloads.test-service.deployment.rollingUpdate.maxUnavailable: 0
+    asserts:
+      # The pair leaves Kubernetes no room to either add or remove a pod, so the
+      # API server rejects it on apply. Nothing earlier in the pipeline catches
+      # it — kubeconform validates the structure only — so without this rule the
+      # manifest renders clean and the rollout fails in the cluster.
+      - failedTemplate:
+          errorPattern: rollingUpdate
+
+  - it: Schema rejects the percentage form of both fields being zero
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.deployment.rollingUpdate.maxSurge: "0%"
+      workloads.test-service.deployment.rollingUpdate.maxUnavailable: "0%"
+    asserts:
+      # Kubernetes resolves a percentage before comparing, so "0%" is the same
+      # zero as 0 and has to be rejected in the same pairing.
+      - failedTemplate:
+          errorPattern: rollingUpdate
