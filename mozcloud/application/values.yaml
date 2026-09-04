@@ -314,9 +314,16 @@ tasks:
     # for details on how to configure each option.
     #
     # Some options are commented out as they are omitted by default.
+    #
+    # Precedence, lowest to highest: .Values.tasks.cronJobs.default, then this
+    # block, then the individual cron job. Dictionary options such as labels and
+    # annotations are deep-merged per key across all three rather than replaced,
+    # so a cron job only has to restate the keys it wants to change.
     cronJob:
+      annotations: {}
       #concurrencyPolicy:
       jobHistory: {}
+      labels: {}
       schedule: ''
       #startingDeadlineSeconds:
       #suspend:
@@ -328,12 +335,19 @@ tasks:
     # details on how to configure each option.
     #
     # Some options are commented out as they are omitted by default.
+    #
+    # Precedence, lowest to highest: .Values.tasks.jobs.default, then this
+    # block, then the individual job. Dictionary options such as labels and
+    # annotations are deep-merged per key across all three rather than replaced,
+    # so a job only has to restate the keys it wants to change.
     job:
       # While "type" is required in job definitions, it is not required here.
       type: preDeployment
       generateName: false
       #activeDeadlineSeconds:
+      annotations: {}
       backoffLimit: 6
+      labels: {}
       otel:
         enabled: true
       parallelism: 1
@@ -354,6 +368,15 @@ tasks:
       # Default: true
       #enabled: false
 
+      # Annotations to apply to the CronJob resource.
+      #
+      # Unlike labels, the chart generates no annotations of its own here, so
+      # the CronJob carries exactly what is set below and nothing else.
+      #
+      # These stay on the CronJob itself. They are not passed down to the Jobs
+      # it creates, nor to their pods.
+      annotations: {}
+
       # Controls how Kubernetes handles overlapping executions of the same cron
       # job. Valid values are:
       #
@@ -366,6 +389,13 @@ tasks:
       jobHistory:
         successful: 1
         failed: 1
+
+      # Labels to apply to the CronJob resource, in addition to the ones the
+      # chart generates.
+      #
+      # These stay on the CronJob itself. To label the pods it runs, use
+      # jobConfig.labels below.
+      labels: {}
 
       # The schedule for the cron job. The value typically follows the cron or
       # Vixie cron formats. This is a required field.
@@ -420,6 +450,7 @@ tasks:
       #   - activeDeadlineSeconds
       #   - backoffLimit
       #   - containers
+      #   - labels
       #   - otel
       #   - parallelism
       #   - restartPolicy
@@ -427,6 +458,10 @@ tasks:
       #   - serviceAccount
       #   - suspend
       #   - ttlSecondsAfterFinished
+      #
+      # "labels" here applies to the pods only. A CronJob renders no Job
+      # resource of its own — its Jobs are created by Kubernetes at runtime from
+      # jobTemplate — so "annotations" has nothing to attach to and is ignored.
       jobConfig: {}
 
   jobs:
@@ -488,6 +523,19 @@ tasks:
       # marked with a status of "Failed" regardless of any backoffLimit that
       # may be configured.
       #activeDeadlineSeconds:
+
+      # Annotations to apply to the Job resource, in addition to the ones the
+      # chart generates.
+      #
+      # These are merged over the generated ArgoCD annotations, so setting a key
+      # the chart already emits — "argocd.argoproj.io/sync-wave" or
+      # "argocd.argoproj.io/hook-delete-policy", for example — replaces the
+      # generated value rather than being ignored. Prefer argo.syncWave above
+      # for the sync wave; reach for this only when there is no dedicated
+      # option.
+      #
+      # Annotations apply to the Job resource only, not to its pods.
+      annotations: {}
 
       # The number of times a failed job will be re-run before it will be
       # marked with a status of "Failed". Certain jobs (eg. smoke tests) may
@@ -790,6 +838,13 @@ tasks:
       #   cpu: "500m"
       #   memory: "512Mi"
 
+
+      # Labels to apply to the Job resource and to its pods, in addition to the
+      # ones the chart generates.
+      #
+      # Unlike annotations, labels do reach the pod template, so they can be
+      # selected on in log and metric queries.
+      labels: {}
 
       # Configure auto instrumentation for the OTEL Collector.
       #

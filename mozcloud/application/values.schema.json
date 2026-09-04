@@ -2179,6 +2179,13 @@
     "cronJob": {
       "type": "object",
       "properties": {
+        "annotations": {
+          "type": "object",
+          "description": "Annotations to apply to the CronJob resource. They are not passed down to the Jobs the CronJob creates, nor to their pods.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "concurrencyPolicy": {
           "type": "string",
           "enum": [
@@ -2197,6 +2204,13 @@
             "failed": {
               "type": "number"
             }
+          }
+        },
+        "labels": {
+          "type": "object",
+          "description": "Labels to apply to the CronJob resource. They are not passed down to the pods it creates; use jobConfig.labels for those.",
+          "additionalProperties": {
+            "type": "string"
           }
         },
         "schedule": {
@@ -2225,6 +2239,13 @@
           "type": "object",
           "description": "Pod affinity rules (nodeAffinity, podAffinity, podAntiAffinity)"
         },
+        "annotations": {
+          "type": "object",
+          "description": "Annotations to apply to the Job resource. Values set here take precedence over the ArgoCD hook and sync-wave annotations the chart generates. Under cronJobs.<name>.jobConfig they have no effect, because a CronJob renders no Job resource of its own.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "generateName": {
           "type": "boolean"
         },
@@ -2234,6 +2255,13 @@
         "backoffLimit": {
           "type": "integer",
           "default": 6
+        },
+        "labels": {
+          "type": "object",
+          "description": "Labels to apply to the Job resource and to its pods. Under cronJobs.<name>.jobConfig only the pods are labelled, because a CronJob renders no Job resource of its own.",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "nodeSelector": {
           "type": "object",

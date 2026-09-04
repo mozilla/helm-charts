@@ -207,3 +207,61 @@ tests:
         documentSelector:
           path: $[?(@.kind == "CronJob")].metadata.name
           value: test-cronjob-with-deadline
+
+  - it: CronJob labels and annotations stay on the CronJob, jobConfig labels the pods
+    template: task/cronjob.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-cronjob-configuration.yaml
+      - values/cronjob-labels-annotations-configuration.yaml
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: mozcloud
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - equal:
+          path: metadata.annotations["example.com/owner"]
+          value: mozcloud
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # The CronJob's own metadata is not inherited by the pods it runs.
+      - notExists:
+          path: spec.jobTemplate.spec.template.metadata.labels.team
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # jobConfig configures the pod template, so its labels land there and
+      # nowhere else.
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.labels.tier
+          value: batch
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - notExists:
+          path: metadata.labels.tier
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # A CronJob renders no Job resource of its own, so a jobConfig annotation
+      # has nothing to attach to and is dropped. Pinned here so that wiring it
+      # up later is a deliberate change rather than an accident.
+      - notExists:
+          path: spec.jobTemplate.spec.template.metadata.annotations["example.com/ignored"]
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - notExists:
+          path: metadata.annotations["example.com/ignored"]
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # The other cron jobs in the fixture stay clean.
+      - notExists:
+          path: metadata.labels.team
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-with-deadline
