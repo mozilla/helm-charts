@@ -150,6 +150,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.resources.memory | string | `"128Mi"` |  |
 | workloads.default.containers.default.secrets | list | `[]` |  |
 | workloads.default.containers.default.security | object | `{}` |  |
+| workloads.default.deployment.rollingUpdate | object | `{}` |  |
 | workloads.default.enabled | bool | `true` |  |
 | workloads.default.hosts.default.addresses | list | `[]` |  |
 | workloads.default.hosts.default.api | string | `"gateway"` |  |

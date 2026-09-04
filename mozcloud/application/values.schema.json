@@ -1602,6 +1602,44 @@
             "minimum": 1,
             "default": 30
           },
+          "deployment": {
+            "type": "object",
+            "description": "Configuration specific to Deployment workloads.",
+            "additionalProperties": false,
+            "properties": {
+              "rollingUpdate": {
+                "type": "object",
+                "description": "Tuning for the RollingUpdate strategy, rendered under spec.strategy.rollingUpdate. Only used when type is deployment and strategy is RollingUpdate.",
+                "additionalProperties": false,
+                "properties": {
+                  "maxSurge": {
+                    "type": ["integer", "string"],
+                    "minimum": 0,
+                    "pattern": "^(0|[1-9][0-9]*)%$",
+                    "description": "Maximum number of pods, or percentage of the desired count, that may be created above the desired count during an update. Omitted unless set; the Kubernetes default is 25%."
+                  },
+                  "maxUnavailable": {
+                    "type": ["integer", "string"],
+                    "minimum": 0,
+                    "pattern": "^(0|[1-9][0-9]*)%$",
+                    "description": "Maximum number of pods, or percentage of the desired count, that may be unavailable during an update. Omitted unless set; the Kubernetes default is 25%. Set to 0 for a surge-only rollout that never drops below the desired count."
+                  }
+                },
+                "allOf": [
+                  {
+                    "description": "Kubernetes rejects a Deployment whose maxSurge and maxUnavailable are both zero, because no pod may then be added or removed and the rollout can never make progress. Only the combination is invalid: either field may be zero on its own, since Kubernetes then defaults the other one to 25%. The percentage forms are enumerated alongside the integers because Kubernetes resolves a percentage before comparing, and the pattern above admits \"0%\" as the only zero-valued string.",
+                    "not": {
+                      "required": ["maxSurge", "maxUnavailable"],
+                      "properties": {
+                        "maxSurge": { "enum": [0, "0%"] },
+                        "maxUnavailable": { "enum": [0, "0%"] }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
           "statefulSet": {
             "type": "object",
             "description": "Configuration specific to StatefulSet workloads.",
@@ -1716,6 +1754,27 @@
             },
             "then": {
               "properties": { "replicas": { "type": "null" } }
+            }
+          },
+          {
+            "description": "Kubernetes rejects spec.strategy.rollingUpdate on a Recreate deployment, so the combination is rejected here rather than dropped from the rendered manifest. The constraint is placed on the two fields instead of on the rollingUpdate block itself so that an empty block still validates: values.yaml ships rollingUpdate: {} as the documented default under workloads.default, and requiring the block to be absent would make setting strategy: Recreate there fail on the chart's own default.",
+            "if": {
+              "properties": { "strategy": { "const": "Recreate" } },
+              "required": ["strategy"]
+            },
+            "then": {
+              "properties": {
+                "deployment": {
+                  "properties": {
+                    "rollingUpdate": {
+                      "properties": {
+                        "maxSurge": { "type": "null" },
+                        "maxUnavailable": { "type": "null" }
+                      }
+                    }
+                  }
+                }
+              }
             }
           }
         ]

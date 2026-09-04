@@ -40,8 +40,19 @@ spec:
   selector:
     matchLabels:
       {{- $labels.selectorLabels | toYaml | nindent 6 }}
+  {{- $strategy := default "RollingUpdate" $workloadConfig.strategy }}
   strategy:
-    type: {{ default "RollingUpdate" $workloadConfig.strategy }}
+    type: {{ $strategy }}
+    {{- $rollingUpdate := dig "deployment" "rollingUpdate" dict $workloadConfig }}
+    {{- if and (eq $strategy "RollingUpdate") $rollingUpdate }}
+    rollingUpdate:
+      {{- if hasKey $rollingUpdate "maxSurge" }}
+      maxSurge: {{ $rollingUpdate.maxSurge | toYaml }}
+      {{- end }}
+      {{- if hasKey $rollingUpdate "maxUnavailable" }}
+      maxUnavailable: {{ $rollingUpdate.maxUnavailable | toYaml }}
+      {{- end }}
+    {{- end }}
   {{- /*
   The template below can be found in templates/workload/_workloadTemplate.yaml
   */}}

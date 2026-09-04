@@ -2686,6 +2686,36 @@ workloads:
     #
     strategy: RollingUpdate
 
+    # Configuration specific to Deployment workloads. Only used when type is
+    # deployment.
+    #
+    deployment:
+      # Rollout pacing for the RollingUpdate strategy, rendered under
+      # spec.strategy.rollingUpdate. Both fields take either an absolute pod
+      # count or a percentage string ("25%"), and both are omitted unless set —
+      # Kubernetes then applies its own default of 25% for each.
+      #
+      # maxSurge:       extra pods allowed above the desired count while
+      #                 updating. Raising it trades cluster capacity for a
+      #                 faster rollout.
+      # maxUnavailable: pods allowed to be unavailable while updating. Set it to
+      #                 0 for a surge-only rollout that never serves with less
+      #                 than the desired count.
+      #
+      # Either field may be 0 on its own, but both at once is rejected by the
+      # schema: Kubernetes could then neither add nor remove a pod, so the
+      # rollout would never progress.
+      #
+      # Only valid with strategy: RollingUpdate. Setting either field alongside
+      # Recreate is rejected by the schema instead of being silently dropped.
+      #
+      # Example:
+      #   rollingUpdate:
+      #     maxSurge: 1
+      #     maxUnavailable: 0
+      #
+      rollingUpdate: {}
+
     # Configuration specific to StatefulSet workloads. Only used when type is
     # statefulset.
     #
