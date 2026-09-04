@@ -60,21 +60,21 @@ jobs:
         run: echo "charts=$(echo "${CHARTS_INPUT}" | tr ',' ' ')" >> $GITHUB_OUTPUT
 
       - name: Bump chart versions and generate Helm docs
-        uses: ./.github/actions/bump-and-generate-docs
+        uses: $/.github/actions/bump-and-generate-docs
         with:
           chart-paths: ${{ steps.normalize.outputs.charts }}
           release-type: ${{ inputs.release-type }}
 
       - name: Package and push charts
         id: package-push
-        uses: ./.github/actions/package-and-push
+        uses: $/.github/actions/package-and-push
         with:
           gcp-project-id: ${{ env.GAR_PROJECT_ID }}
           workload-identity-provider: ${{ vars.GCPV2_GITHUB_WORKLOAD_IDENTITY_PROVIDER }}
           helm-registry: ${{ env.HELM_REGISTRY }}
 
       - name: Commit, push, and create GitHub release
-        uses: ./.github/actions/commit-and-create-gh-release
+        uses: $/.github/actions/commit-and-create-gh-release
         with:
           app-id: ${{ secrets.APP_ID }}
           chart-tags: ${{ steps.package-push.outputs.chart-tags }}
