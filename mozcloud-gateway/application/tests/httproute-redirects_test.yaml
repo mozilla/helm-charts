@@ -1,0 +1,60 @@
+---
+# Covers the two redirect paths on an HTTPRoute:
+#
+#   * The route-level HTTP-to-HTTPS redirect, whose status code comes from
+#     redirect.statusCode (default 302, set to 301 here).
+#   * The per-rule path redirect, where statusCode is a sibling of path on the
+#     HTTPRequestRedirectFilter rather than a child of the HTTPPathModifier.
+#
+# Note: the Gateway API forbids combining a RequestRedirect filter with
+# backendRefs on the same rule, and this library always renders a backendRef, so
+# the per-rule redirect rule below is not yet applyable. This suite pins the
+# filter's shape only.
+suite: "mozcloud-gateway: HTTPRoute redirects"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/basic-configuration.yaml
+  - values/httproute-redirects.yaml
+templates:
+  - templates/httproute.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Route-level and per-rule redirects render the correct filter shape
+    asserts:
+      # The HTTP-to-HTTPS redirect returns the configured status code.
+      - equal:
+          path: spec.rules[0].filters[0].requestRedirect
+          value:
+            scheme: https
+            statusCode: 301
+        documentSelector:
+          path: metadata.name
+          value: test-httproute-http-redirect
+      # statusCode sits alongside path on the filter, not inside it.
+      - equal:
+          path: spec.rules[0].filters[0].requestRedirect
+          value:
+            path:
+              type: ReplaceFullPath
+              replaceFullPath: /new
+            statusCode: 302
+        documentSelector:
+          path: metadata.name
+          value: test-path-redirect
+      - notExists:
+          path: spec.rules[0].filters[0].requestRedirect.path.statusCode
+        documentSelector:
+          path: metadata.name
+          value: test-path-redirect

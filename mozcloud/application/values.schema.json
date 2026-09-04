@@ -1205,6 +1205,30 @@
                     "createBackendPolicy": {
                       "type": "boolean"
                     },
+                    "httpsRedirect": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "description": "HTTP-to-HTTPS redirect behavior for this host (Gateway API only). Governs the auto-generated \"<host>-http-redirect\" HTTPRoute. Ingress hosts configure the equivalent via frontendConfig.redirectToHttps.",
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "default": true,
+                          "description": "Whether to create the HTTP-to-HTTPS redirect HTTPRoute for this host. Defaults to true. Set to false to serve HTTP directly without redirecting, instead of suppressing the redirect by declaring the host internal."
+                        },
+                        "statusCode": {
+                          "type": "integer",
+                          "enum": [
+                            301,
+                            302,
+                            303,
+                            307,
+                            308
+                          ],
+                          "default": 302,
+                          "description": "HTTP status code the redirect returns. Defaults to 302. Set to 301 for a host migrating off GKE Ingress, whose FrontendConfig served MOVED_PERMANENTLY_DEFAULT, so the redirect's cache semantics do not change during the migration. These are the values the Gateway API standard channel accepts on a RequestRedirect filter as of v1.5.0, though GKE controller support for 303, 307 and 308 is untested by us."
+                        }
+                      }
+                    },
                     "iap": {
                       "type": "object",
                       "additionalProperties": false,
@@ -1352,6 +1376,11 @@
                         }
                       },
                       "options": {
+                        "not": {
+                          "required": [
+                            "httpsRedirect"
+                          ]
+                        },
                         "properties": {
                           "healthCheck": {
                             "not": {

@@ -1,0 +1,89 @@
+---
+# Verifies hosts.<host>.options.httpsRedirect: the status code returned by the
+# auto-generated "<host>-http-redirect" HTTPRoute, and the per-host opt out that
+# suppresses that route entirely (previously only reachable via type: internal).
+suite: "mozcloud: HTTPS redirect host options"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/gateway-https-redirect.yaml
+templates:
+  - gateway/httproute.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Redirect routes are created with the configured status code, and suppressed when disabled
+    asserts:
+      # Unconfigured hosts keep the chart default of 302.
+      - equal:
+          path: spec.rules[0].filters[0].requestRedirect
+          value:
+            scheme: https
+            statusCode: 302
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: default-redirect-http-redirect
+      # An explicit "enabled: true, statusCode: 302" is the same as omitting it.
+      - equal:
+          path: spec.rules[0].filters[0].requestRedirect
+          value:
+            scheme: https
+            statusCode: 302
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: explicitly-enabled-redirect-http-redirect
+      # statusCode: 301 is passed through to the redirect filter.
+      - equal:
+          path: spec.rules[0].filters[0].requestRedirect
+          value:
+            scheme: https
+            statusCode: 301
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: permanent-redirect-http-redirect
+      # The status code applies only to the redirect route: the host's primary
+      # HTTPRoute is unaffected and still routes to the backend.
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: test-service
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: permanent-redirect
+      # enabled: false suppresses the redirect route entirely, while leaving the
+      # host's primary HTTPRoute in place: four hosts render seven HTTPRoutes,
+      # not eight.
+      - hasDocuments:
+          count: 7
+      - equal:
+          path: spec.rules[0].backendRefs[0].name
+          value: test-service
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: disabled-redirect
+
+  # 404 is not a redirect code and is absent from the enum at every Gateway API
+  # version. Do not use 308 here: the standard channel accepts it as of v1.5.0.
+  - it: Schema rejects a status code the Gateway API does not accept
+    set:
+      workloads.test-service.hosts.default-redirect.options.httpsRedirect.statusCode: 404
+    asserts:
+      - failedTemplate:
+          errorPattern: "statusCode"
+
+  - it: Schema rejects httpsRedirect on an Ingress host
+    set:
+      workloads.test-service.hosts.default-redirect.api: ingress
+      workloads.test-service.hosts.default-redirect.options.httpsRedirect.statusCode: 301
+    asserts:
+      - failedTemplate:
+          errorPattern: "options"
