@@ -1,0 +1,16 @@
+---
+# Overlay applied on top of values/basic-job-configuration.yaml. Only
+# test-predeployment-job carries the extra metadata, so test-postdeployment-job
+# stays in the same render as the unconfigured control.
+#
+# The ArgoCD sync-wave key is set deliberately: task annotations are merged over
+# the annotations the chart generates, so this pins that a caller's value wins
+# instead of being dropped. The chart would otherwise emit -1 here.
+tasks:
+  jobs:
+    test-predeployment-job:
+      annotations:
+        argocd.argoproj.io/sync-wave: "-5"
+        example.com/owner: mozcloud
+      labels:
+        team: mozcloud

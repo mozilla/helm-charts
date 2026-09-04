@@ -1,0 +1,32 @@
+---
+# Overlay applied on top of values/basic-job-configuration.yaml. It sets labels
+# and annotations on all three merge layers at once, with one shared key
+# ("layer"/"alayer") to pin precedence and one key unique to each layer to pin
+# that the layers are deep-merged per key rather than replacing one another.
+#
+# test-predeployment-job configures its own values, test-postdeployment-job does
+# not, so a single render covers both the contested and the uncontested case.
+tasks:
+  common:
+    job:
+      annotations:
+        alayer: from-common
+        aonly-common: "1"
+      labels:
+        layer: from-common
+        only-common: "1"
+  jobs:
+    default:
+      annotations:
+        alayer: from-default
+        aonly-default: "1"
+      labels:
+        layer: from-default
+        only-default: "1"
+    test-predeployment-job:
+      annotations:
+        alayer: from-job
+        aonly-job: "1"
+      labels:
+        layer: from-job
+        only-job: "1"

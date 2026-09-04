@@ -1,0 +1,20 @@
+---
+# Overlay applied on top of values/basic-cronjob-configuration.yaml. Only
+# test-cronjob carries the extra metadata; the other cron jobs in the fixture
+# stay unconfigured as the control.
+#
+# jobConfig carries a label and an annotation on purpose. Labels reach the pod
+# template, annotations have nothing to attach to: a CronJob renders no Job
+# resource of its own, its Jobs are created by Kubernetes from jobTemplate.
+tasks:
+  cronJobs:
+    test-cronjob:
+      annotations:
+        example.com/owner: mozcloud
+      labels:
+        team: mozcloud
+      jobConfig:
+        annotations:
+          example.com/ignored: "true"
+        labels:
+          tier: batch

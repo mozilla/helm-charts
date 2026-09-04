@@ -316,3 +316,123 @@ tests:
         documentSelector:
           path: $[?(@.kind == "Job")].metadata.name
           value: test-postdeployment-job
+
+  - it: Job labels reach the pods, annotations stay on the Job
+    template: task/job.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-job-configuration.yaml
+      - values/job-labels-annotations-configuration.yaml
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: mozcloud
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      - equal:
+          path: spec.template.metadata.labels.team
+          value: mozcloud
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      - equal:
+          path: metadata.annotations["example.com/owner"]
+          value: mozcloud
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      # Annotations stop at the Job. The pod template is built by
+      # _jobTemplate.yaml, which only emits the generated OTEL annotations, so
+      # the asymmetry with labels above is deliberate rather than an oversight.
+      - notExists:
+          path: spec.template.metadata.annotations["example.com/owner"]
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      # The unconfigured job in the same render pins that nothing leaks across.
+      - notExists:
+          path: metadata.labels.team
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
+
+  - it: Job annotations take precedence over the generated ArgoCD annotations
+    template: task/job.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-job-configuration.yaml
+      - values/job-labels-annotations-configuration.yaml
+    asserts:
+      # The chart derives -1 for a pre-deployment job; the caller's value has to
+      # win, otherwise the override would be silently dropped.
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/sync-wave"]
+          value: "-5"
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      # Keys the caller does not set survive the merge untouched.
+      - equal:
+          path: metadata.annotations["argocd.argoproj.io/hook"]
+          value: Sync
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+
+  - it: Labels and annotations deep-merge across common, default, and the job
+    template: task/job.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-job-configuration.yaml
+      - values/job-labels-annotations-layers.yaml
+    asserts:
+      # Every layer contributes its own keys; none of them replaces another
+      # wholesale.
+      - isSubset:
+          path: metadata.labels
+          content:
+            only-common: "1"
+            only-default: "1"
+            only-job: "1"
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      - isSubset:
+          path: metadata.annotations
+          content:
+            aonly-common: "1"
+            aonly-default: "1"
+            aonly-job: "1"
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      # On a contested key the individual job wins.
+      - equal:
+          path: metadata.labels.layer
+          value: from-job
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      - equal:
+          path: metadata.annotations.alayer
+          value: from-job
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      # Where the job stays silent, tasks.common.job wins over the protected
+      # "default" key — the formatter merges common in as the override side and
+      # the default key as the base, which is the opposite of what the naming
+      # suggests.
+      - equal:
+          path: metadata.labels.layer
+          value: from-common
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
+      - equal:
+          path: metadata.annotations.alayer
+          value: from-common
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-postdeployment-job
