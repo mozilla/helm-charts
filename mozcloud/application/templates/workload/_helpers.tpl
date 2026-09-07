@@ -224,6 +224,9 @@ Returns:
     exec:
       command:
         {{- toYaml $containerConfig.healthCheck.startup.exec.command | nindent 8 }}
+    {{- else if hasKey (dig "healthCheck" "startup" dict $containerConfig) "tcpSocket" }}
+    tcpSocket:
+      port: {{ dig "healthCheck" "startup" "tcpSocket" "port" $portName $containerConfig }}
     {{- else }}
     httpGet:
       {{- if (($containerConfig.healthCheck).startup).httpHeaders }}
@@ -259,6 +262,9 @@ Returns:
     exec:
       command:
         {{- toYaml $containerConfig.healthCheck.liveness.exec.command | nindent 8 }}
+    {{- else if hasKey (dig "healthCheck" "liveness" dict $containerConfig) "tcpSocket" }}
+    tcpSocket:
+      port: {{ dig "healthCheck" "liveness" "tcpSocket" "port" $portName $containerConfig }}
     {{- else }}
     httpGet:
       {{- if (($containerConfig.healthCheck).liveness).httpHeaders }}
@@ -293,6 +299,9 @@ Returns:
     exec:
       command:
         {{- toYaml $containerConfig.healthCheck.readiness.exec.command | nindent 8 }}
+    {{- else if hasKey (dig "healthCheck" "readiness" dict $containerConfig) "tcpSocket" }}
+    tcpSocket:
+      port: {{ dig "healthCheck" "readiness" "tcpSocket" "port" $portName $containerConfig }}
     {{- else }}
     httpGet:
       {{- if (($containerConfig.healthCheck).readiness).httpHeaders }}

@@ -627,6 +627,9 @@
                         "exec": {
                           "$ref": "#/$defs/execProbe"
                         },
+                        "tcpSocket": {
+                          "$ref": "#/$defs/tcpSocketProbe"
+                        },
                         "path": {
                           "type": "string",
                           "default": "/__lbheartbeat__"
@@ -677,7 +680,22 @@
                             }
                           }
                         }
-                      }
+                      },
+                      "allOf": [
+                        {
+                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders (which only applies to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
+                          "if": {
+                            "required": ["tcpSocket"]
+                          },
+                          "then": {
+                            "properties": {
+                              "exec": false,
+                              "path": false,
+                              "httpHeaders": false
+                            }
+                          }
+                        }
+                      ]
                     },
                     "liveness": {
                       "type": "object",
@@ -689,6 +707,9 @@
                         },
                         "exec": {
                           "$ref": "#/$defs/execProbe"
+                        },
+                        "tcpSocket": {
+                          "$ref": "#/$defs/tcpSocketProbe"
                         },
                         "path": {
                           "type": "string",
@@ -740,7 +761,22 @@
                             }
                           }
                         }
-                      }
+                      },
+                      "allOf": [
+                        {
+                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders (which only applies to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
+                          "if": {
+                            "required": ["tcpSocket"]
+                          },
+                          "then": {
+                            "properties": {
+                              "exec": false,
+                              "path": false,
+                              "httpHeaders": false
+                            }
+                          }
+                        }
+                      ]
                     },
                     "metrics": {
                       "type": "object",
@@ -763,6 +799,9 @@
                         },
                         "exec": {
                           "$ref": "#/$defs/execProbe"
+                        },
+                        "tcpSocket": {
+                          "$ref": "#/$defs/tcpSocketProbe"
                         },
                         "path": {
                           "type": "string",
@@ -809,7 +848,22 @@
                             }
                           }
                         }
-                      }
+                      },
+                      "allOf": [
+                        {
+                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders (which only applies to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
+                          "if": {
+                            "required": ["tcpSocket"]
+                          },
+                          "then": {
+                            "properties": {
+                              "exec": false,
+                              "path": false,
+                              "httpHeaders": false
+                            }
+                          }
+                        }
+                      ]
                     }
                   }
                 },
@@ -1848,6 +1902,17 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "tcpSocketProbe": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Probe a TCP listener instead of an HTTP endpoint, for containers that speak a non-HTTP protocol. An empty mapping probes the container's own port, which is the usual case; set port to reach one of the additionalPorts instead.",
+      "properties": {
+        "port": {
+          "type": ["integer", "string"],
+          "description": "Port number, or the name of a port declared on the container. Defaults to the container's port."
         }
       }
     },
