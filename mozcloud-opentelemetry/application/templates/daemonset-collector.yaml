@@ -10,6 +10,8 @@ spec:
   mode: daemonset
   terminationGracePeriodSeconds: 600
   hostNetwork: true
+  networkPolicy:
+    enabled: false
   {{- with .Values.collectors.daemonset.priorityClassName }}
   priorityClassName: {{ . }}
   {{- end }}
