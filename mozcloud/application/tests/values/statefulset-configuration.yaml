@@ -3,6 +3,7 @@ workloads:
   test-service:
     component: db
     type: statefulset
+    progressDeadlineSeconds: 300
     strategy: RollingUpdate
     statefulSet:
       podManagementPolicy: Parallel
