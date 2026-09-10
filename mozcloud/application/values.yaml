@@ -327,6 +327,7 @@ tasks:
       schedule: ''
       #startingDeadlineSeconds:
       #suspend:
+      #timeZone:
 
     # Common job configurations. These can be used as defaults for all job
     # configurations.
@@ -443,6 +444,18 @@ tasks:
       #
       # This is unset/disabled by default.
       #suspend: false
+
+      # Time zone the schedule above is interpreted in, given as a name from
+      # the IANA database — for example "America/Los_Angeles" or "UTC".
+      #
+      # This is unset by default, which means the schedule follows the time
+      # zone of the kube-controller-manager process. That is part of the
+      # managed control plane, so it is not something you control or can rely
+      # on staying put; set this explicitly if the run time matters.
+      #
+      # Kubernetes rejects a name it cannot resolve, so a typo fails the
+      # CronJob rather than silently falling back.
+      #timeZone: America/Los_Angeles
 
       # This section follows the same format as .Values.tasks.jobs.default,
       # however options are limited to the following:

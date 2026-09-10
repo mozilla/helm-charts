@@ -1,0 +1,12 @@
+---
+# Overlay applied on top of values/basic-cronjob-configuration.yaml.
+#
+# tasks.common.cronJob applies to every cron job, and an individual cron job
+# beats it. Both halves are asserted from this one render.
+tasks:
+  common:
+    cronJob:
+      timeZone: UTC
+  cronJobs:
+    test-cronjob:
+      timeZone: America/Los_Angeles

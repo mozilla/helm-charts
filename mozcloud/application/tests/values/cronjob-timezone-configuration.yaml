@@ -1,0 +1,10 @@
+---
+# Overlay applied on top of values/basic-cronjob-configuration.yaml.
+#
+# Only test-cronjob sets a zone. The other two are deliberately left untouched,
+# so the same render also pins that an unset timeZone stays absent rather than
+# defaulting to something.
+tasks:
+  cronJobs:
+    test-cronjob:
+      timeZone: America/Los_Angeles

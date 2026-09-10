@@ -265,3 +265,55 @@ tests:
         documentSelector:
           path: $[?(@.kind == "CronJob")].metadata.name
           value: test-cronjob-with-deadline
+
+  - it: CronJob renders timeZone only where it is set
+    template: task/cronjob.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-cronjob-configuration.yaml
+      - values/cronjob-timezone-configuration.yaml
+    asserts:
+      - equal:
+          path: spec.timeZone
+          value: America/Los_Angeles
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # Unset must stay absent: an empty timeZone is not the same as no
+      # timeZone, and Kubernetes rejects the former.
+      - notExists:
+          path: spec.timeZone
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-with-deadline
+      - notExists:
+          path: spec.timeZone
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-zero-deadline
+
+  - it: CronJob inherits timeZone from tasks.common.cronJob and lets the job override it
+    template: task/cronjob.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-cronjob-configuration.yaml
+      - values/cronjob-timezone-common-configuration.yaml
+    asserts:
+      - equal:
+          path: spec.timeZone
+          value: America/Los_Angeles
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - equal:
+          path: spec.timeZone
+          value: UTC
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-with-deadline
+      - equal:
+          path: spec.timeZone
+          value: UTC
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-zero-deadline
