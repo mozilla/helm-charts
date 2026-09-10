@@ -1292,6 +1292,15 @@ workloads:
             #   exec:
             #     command: ["/bin/sh", "-c", "/usr/local/bin/healthcheck"]
 
+            # Configure a tcpSocket probe instead of the default httpGet, for
+            # containers that speak a protocol other than HTTP. Mutually exclusive
+            # with exec, path and httpHeaders. An empty mapping probes the
+            # container's own port; set port to reach one of the additionalPorts.
+            #
+            # Example:
+            #
+            #   tcpSocket: {}
+
             # This is typically configured to match the application container's
             # load balancer heartbeat health check endpoint.
             #
@@ -1357,6 +1366,15 @@ workloads:
             #   exec:
             #     command: ["/bin/sh", "-c", "/usr/local/bin/healthcheck"]
 
+            # Configure a tcpSocket probe instead of the default httpGet, for
+            # containers that speak a protocol other than HTTP. Mutually exclusive
+            # with exec, path and httpHeaders. An empty mapping probes the
+            # container's own port; set port to reach one of the additionalPorts.
+            #
+            # Example:
+            #
+            #   tcpSocket: {}
+
             # This is typically configured to match the application container's
             # load balancer heartbeat health check endpoint.
             #
@@ -1399,6 +1417,16 @@ workloads:
             #
             #   exec:
             #     command: ["python", "warmup.py"]
+
+            # Configure a tcpSocket probe instead of the default httpGet, for
+            # containers that speak a protocol other than HTTP. Mutually exclusive
+            # with exec, path and httpHeaders. An empty mapping probes the
+            # container's own port; set port to reach one of the additionalPorts.
+            #
+            # Example:
+            #
+            #   tcpSocket:
+            #     port: 5432
 
             # The endpoint polled until the container reports itself started.
             #

@@ -602,3 +602,86 @@ tests:
       # zero as 0 and has to be rejected in the same pairing.
       - failedTemplate:
           errorPattern: rollingUpdate
+
+  - it: Probes accept a tcpSocket handler, defaulting to the container's port
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/tcp-socket-probe-configuration.yaml
+    asserts:
+      # An empty tcpSocket mapping is the common case — probe the port the
+      # container already declares. It is also the case most easily broken:
+      # an empty mapping is falsey in Go templates, so a truthiness check would
+      # fall through to httpGet and render a probe nobody asked for.
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].livenessProbe.tcpSocket.port
+          value: app
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - notExists:
+          path: spec.template.spec.containers[?(@.name=="app")].livenessProbe.httpGet
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # An explicit port reaches a listener other than the container's own,
+      # which is the reason the field exists at all.
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].readinessProbe.tcpSocket.port
+          value: 9187
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].startupProbe.tcpSocket.port
+          value: app
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # The exec fixture in the same render must be untouched: the three
+      # handlers are branches of one conditional, so a wrong branch order shows
+      # up here before it shows up in a tenant.
+      - exists:
+          path: spec.template.spec.containers[?(@.name=="app")].livenessProbe.exec
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+
+  - it: Schema rejects tcpSocket combined with another handler
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.tcpSocket: {}
+      workloads.test-service.containers.app.healthCheck.liveness.exec.command:
+        - /bin/true
+    asserts:
+      # Kubernetes accepts exactly one handler per probe. Without the rule the
+      # template picks a branch and silently discards the other handler, so the
+      # caller runs a probe they did not configure. The rule is written so the
+      # error names the conflicting field, not just the probe.
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/exec
+
+  - it: Schema rejects tcpSocket combined with path
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.tcpSocket: {}
+      workloads.test-service.containers.app.healthCheck.liveness.path: /healthz
+    asserts:
+      # path renders an httpGet handler, so this is the same conflict as exec
+      # even though path does not look like a handler in the values.
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/path
+
+  - it: Schema rejects tcpSocket combined with httpHeaders
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.tcpSocket: {}
+      workloads.test-service.containers.app.healthCheck.liveness.httpHeaders:
+        - name: X-Probe
+          value: "1"
+    asserts:
+      # httpHeaders only mean anything to httpGet; accepting them next to
+      # tcpSocket would render a probe that quietly ignores them.
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/httpHeaders
