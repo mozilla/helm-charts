@@ -7,7 +7,8 @@ mozcloud-ingress-lib library chart. Only processes hosts with type "external"
 since internal hosts are not exposed via Ingress resources.
 
 For each qualifying host, constructs a full ingress entry including:
-  - Domain list and path rules (a single "/" Prefix path per host).
+  - Domain list and path rules (a single "/" Prefix path per host). Domains are
+    rendered via the mozcloud.renderDomain helper, so they may reference values.
   - TLS configuration, supporting ManagedCertificate (default), certmap, and
     pre-shared certificate types.
   - Backend service reference with port 8080.
@@ -27,6 +28,7 @@ Returns:
 */ -}}
 {{- define "mozcloud.config.ingresses" -}}
 {{- $cloudCertManager := default dict .cloudCertManager }}
+{{- $context := . }}
 {{- $globals := .globals }}
 {{- $workloads := .workloads }}
 ingresses:
@@ -65,7 +67,7 @@ ingresses:
     hosts:
       - domains:
           {{- range $domain := $hostConfig.domains }}
-          - {{ $domain | quote }}
+          - {{ include "mozcloud.renderDomain" (dict "domain" $domain "context" $context "host" $hostName) | quote }}
           {{- end }}
         paths:
           {{- range $backendName, $backendConfig := $backends }}

@@ -1,0 +1,28 @@
+---
+suite: "mozcloud: Templated host domains fail on unsafe or invalid input"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/templated-domains-configuration.yaml
+tests:
+  - it: Fails when a domain template uses a blocked function
+    template: gateway/httproute.yaml
+    set:
+      workloads.test-gateway-service.hosts.test-gateway-service.domains:
+        - '{{ lookup "v1" "Secret" "default" "mysecret" }}'
+    asserts:
+      - failedTemplate:
+          errorPattern: "uses a blocked function"
+
+  - it: Fails when a domain template references an undefined value
+    template: ingress/ingress.yaml
+    set:
+      workloads.test-ingress-service.hosts.test-ingress-service.domains:
+        - 'ingress.{{ .Values.global.hostnam }}'
+    asserts:
+      - failedTemplate:
+          errorPattern: "A referenced value is likely undefined or misspelled"

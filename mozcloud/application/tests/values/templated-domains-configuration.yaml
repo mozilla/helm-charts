@@ -1,0 +1,54 @@
+---
+# A base domain defined once and referenced by every host below.
+global:
+  hostname: test-domain.com
+  # A value whose key collides with the blocked "env" function name, used to
+  # confirm a field access is not mistaken for a function call.
+  env: prod
+
+workloads:
+  test-gateway-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      test-gateway-service:
+        type: external
+        domains:
+          # Templated domain, resolved from a value rather than hardcoded.
+          - 'gateway.{{ .Values.global.hostname }}'
+          # Plain domain, to confirm rendering is a no-op for literals.
+          - literal-gateway.test-domain.com
+          # Confirms .Chart and .Release are also on the render allowlist.
+          - 'gateway.{{ .Release.Name }}.{{ .Chart.Name }}.example.com'
+          # Literal containing a blocked word ("env"); it has no template
+          # action, so it must pass through untouched.
+          - env-app.example.com
+          # Field access whose leaf name ("env") collides with a blocked
+          # function; it is not a call, so it must not be blocked.
+          - 'region-{{ .Values.global.env }}.example.com'
+        addresses:
+          - mozcloud-dev-external-ip-v4
+        tls:
+          certs:
+            - test-gateway-service-nonprod-dev
+
+  test-ingress-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      test-ingress-service:
+        domains:
+          - 'ingress.{{ .Values.global.hostname }}'
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: ingress
+        tls:
+          type: ManagedCertificate
