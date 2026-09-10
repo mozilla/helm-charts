@@ -2288,6 +2288,11 @@
         },
         "suspend": {
           "type": "boolean"
+        },
+        "timeZone": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Time zone the schedule is interpreted in, as a name from the IANA database (for example \"America/Los_Angeles\"). Unset means the schedule follows the time zone of the kube-controller-manager process, which is not something a tenant controls. Kubernetes rejects a name it cannot resolve."
         }
       },
       "required": [

@@ -41,6 +41,9 @@ spec:
   {{- if $config.suspend }}
   suspend: {{ $config.suspend }}
   {{- end }}
+  {{- if $config.timeZone }}
+  timeZone: {{ $config.timeZone | quote }}
+  {{- end }}
   jobTemplate:
     spec:
       {{- /*
