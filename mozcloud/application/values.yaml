@@ -1140,6 +1140,20 @@ workloads:
     #
     #minReadySeconds: 10
 
+    # Optionally cap how long a rollout has to make progress before Kubernetes
+    # marks it as failed. Applies to deployment and rollout; statefulset has no
+    # such field.
+    #
+    # Omitted entirely unless you set it. Kubernetes defaults to 600.
+    #
+    # The clock resets whenever the rollout moves forward, so this caps how
+    # long it may sit stuck, not how long it may take. Lower it to fail fast on
+    # a bad image or a crash loop.
+    #
+    # Must be greater than minReadySeconds, otherwise the API rejects it.
+    #
+    #progressDeadlineSeconds: 300
+
     # Optionally cap how many old revisions Kubernetes keeps around for rollback
     # — ReplicaSets for deployment and rollout, ControllerRevisions for
     # statefulset. Applies to all three.

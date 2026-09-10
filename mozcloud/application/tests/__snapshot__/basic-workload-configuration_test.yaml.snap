@@ -89,6 +89,7 @@ Configuration matches entire snapshot:
         realm: nonprod
       name: test-service
     spec:
+      progressDeadlineSeconds: 300
       selector:
         matchLabels:
           app.kubernetes.io/component: web

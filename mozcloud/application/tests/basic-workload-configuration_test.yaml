@@ -355,6 +355,23 @@ tests:
       - failedTemplate:
           errorPattern: missing property 'sizeLimit'
 
+  - it: Deployment emits progressDeadlineSeconds only when set
+    template: workload/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 300
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # The field is opt-in. A default here would change the rendered manifest
+      # of every existing workload using this chart.
+      - notExists:
+          path: spec.progressDeadlineSeconds
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+
   - it: Deployment emits revisionHistoryLimit only when set, explicit zero included
     template: workload/deployment.yaml
     set:
