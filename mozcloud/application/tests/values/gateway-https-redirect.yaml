@@ -1,0 +1,34 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers: {}
+    hosts:
+      # No options.httpsRedirect: the redirect route is created and returns the
+      # chart default status code (302).
+      default-redirect:
+        domains: ["default.redirect"]
+
+      # Opts into a permanent redirect, matching what a host migrating off GKE
+      # Ingress (MOVED_PERMANENTLY_DEFAULT) was already serving.
+      permanent-redirect:
+        domains: ["permanent.redirect"]
+        options:
+          httpsRedirect:
+            statusCode: 301
+
+      # Serves HTTP directly, with no redirect route created at all.
+      disabled-redirect:
+        domains: ["disabled.redirect"]
+        options:
+          httpsRedirect:
+            enabled: false
+
+      # enabled: true is the default, and is spelled out here to prove it does
+      # not change anything.
+      explicitly-enabled-redirect:
+        domains: ["explicitly.enabled.redirect"]
+        options:
+          httpsRedirect:
+            enabled: true
+            statusCode: 302

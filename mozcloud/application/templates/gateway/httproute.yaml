@@ -76,8 +76,18 @@ httpRoutes:
       {{- range $domain := $hostConfig.domains }}
       - {{ $domain | quote }}
       {{- end }}
-    {{- if eq $hostConfig.type "internal" }}
+    {{- /*
+    No redirect route for internal hosts (no HTTPS listener) or hosts opting
+    out via options.httpsRedirect.enabled. Defer redirect statusCode defaults
+    to the mozcloud-gateway library chart.
+    */}}
+    {{- $httpsRedirect := default dict (($hostConfig).options).httpsRedirect }}
+    {{- if or (eq $hostConfig.type "internal") (not (dig "enabled" true $httpsRedirect)) }}
     httpToHttpsRedirect: false
+    {{- end }}
+    {{- if $httpsRedirect.statusCode }}
+    redirect:
+      statusCode: {{ $httpsRedirect.statusCode }}
     {{- end }}
       {{/*
       Some tenants might want to pass HTTPRoute rules in from values. A rules Array item

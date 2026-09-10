@@ -1,0 +1,25 @@
+# Layered on top of basic-configuration.yaml: sets a permanent (301) status code
+# on test-httproute's HTTP-to-HTTPS redirect, and adds a second route carrying a
+# per-rule path redirect so the shape of that filter is covered too.
+httpRoute:
+  httpRoutes:
+    test-httproute:
+      redirect:
+        statusCode: 301
+    test-path-redirect:
+      gatewayRefs:
+        - name: test-gateway
+          section: https
+      hostnames:
+        - old.dev.test-domain.com
+      rules:
+        - backendRefs:
+            - name: test-service
+              port: 8080
+          matches:
+            - path:
+                value: /old
+                type: PathPrefix
+          redirect:
+            path: /new
+            type: ReplaceFullPath

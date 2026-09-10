@@ -96,7 +96,7 @@ spec:
               {{- else if eq $rule.redirect.type "ReplacePrefixMatch" }}
               replacePrefixMatch: {{ $rule.redirect.path }}
               {{- end }}
-              statusCode: {{ $rule.redirect.statusCode }}
+            statusCode: {{ $rule.redirect.statusCode }}
       {{- end }}
     {{- end }}
 {{- /* Only the gateways that actually have an http listener get the redirect
@@ -137,7 +137,7 @@ spec:
       - type: RequestRedirect
         requestRedirect:
           scheme: https
-          statusCode: 302
+          statusCode: {{ $http_route.redirect.statusCode }}
       matches:
         - path:
             type: PathPrefix
