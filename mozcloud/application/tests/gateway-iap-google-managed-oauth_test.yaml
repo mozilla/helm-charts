@@ -1,0 +1,39 @@
+---
+suite: "mozcloud: Gateway IAP with Google-managed OAuth"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/gateway-iap-google-managed-oauth.yaml
+templates:
+  - gke/backend.yaml
+  - gateway/backend.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: IAP is enabled without emitting the custom OAuth client fields
+    template: gke/backend.yaml
+    documentSelector:
+      path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
+      value: my-app
+    asserts:
+      - equal:
+          path: spec.default.iap.enabled
+          value: true
+      # clientID and oauth2ClientSecret.name are string-typed on the
+      # GCPBackendPolicy CRD. Emitting them with no value renders nulls and the
+      # API server rejects the resource, so they must be omitted entirely when
+      # the tenant relies on Google-managed OAuth.
+      - notExists:
+          path: spec.default.iap.clientID
+      - notExists:
+          path: spec.default.iap.oauth2ClientSecret

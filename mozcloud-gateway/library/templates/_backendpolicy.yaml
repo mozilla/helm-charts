@@ -18,9 +18,17 @@ spec:
     {{- if $config.iap }}
     iap:
       enabled: {{ $config.iap.enabled }}
+      {{- /* clientID and oauth2ClientSecret are only set for a custom OAuth
+         client. Emitting them unconditionally renders nulls into two
+         string-typed fields, which the CRD rejects; omitting them selects
+         Google-managed OAuth, which is the documented default. */}}
+      {{- if $config.iap.oauth2ClientId }}
       clientID: {{ $config.iap.oauth2ClientId }}
+      {{- end }}
+      {{- if $config.iap.oauth2ClientSecret }}
       oauth2ClientSecret:
         name: {{ $config.iap.oauth2ClientSecret }}
+      {{- end }}
     {{- end }}
     logging:
       enabled: {{ $config.logging.enabled }}
