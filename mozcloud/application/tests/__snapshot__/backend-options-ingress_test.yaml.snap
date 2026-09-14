@@ -1,0 +1,621 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: app
+    spec:
+      iap:
+        enabled: true
+      logging:
+        enable: true
+        sampleRate: 0.1
+      securityPolicy:
+        name: host-policy
+      timeoutSec: 120
+  2: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: app-webhook
+    spec:
+      logging:
+        enable: true
+        sampleRate: 0.1
+      securityPolicy:
+        name: host-policy
+      timeoutSec: 300
+  3: |
+    apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: iap-host-dev-test-domain-com
+    spec:
+      domains:
+        - iap-host.dev.test-domain.com
+  4: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: logged
+    spec:
+      logging:
+        enable: true
+        sampleRate: 0.5
+  5: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: silenced
+    spec:
+      logging:
+        enable: true
+        sampleRate: 0
+  6: |
+    apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: log-sample-host-dev-test-domain-com
+    spec:
+      domains:
+        - log-sample-host.dev.test-domain.com
+  7: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-open
+    spec:
+      logging:
+        enable: true
+        sampleRate: 0.1
+  8: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-protected
+    spec:
+      iap:
+        enabled: true
+      logging:
+        enable: true
+        sampleRate: 0.1
+  9: |
+    apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-host-dev-test-domain-com
+    spec:
+      domains:
+        - optin-host.dev.test-domain.com
+  10: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: shared-api
+    spec:
+      iap:
+        enabled: true
+      logging:
+        enable: true
+        sampleRate: 0.1
+  11: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: shared-root
+    spec:
+      iap:
+        enabled: true
+      logging:
+        enable: true
+        sampleRate: 0.1
+  12: |
+    apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: shared-service-host-dev-test-domain-com
+    spec:
+      domains:
+        - shared-service-host.dev.test-domain.com
+  13: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: gce
+        kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
+        networking.gke.io/managed-certificates: iap-host-dev-test-domain-com
+        networking.gke.io/v1beta1.FrontendConfig: iap-host
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: iap-host
+    spec:
+      rules:
+        - host: iap-host.dev.test-domain.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: app
+                    port:
+                      number: 8080
+                path: /
+                pathType: Prefix
+              - backend:
+                  service:
+                    name: app-webhook
+                    port:
+                      number: 8080
+                path: /bugzilla_webhook
+                pathType: Exact
+  14: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "app"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: app
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  15: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "app-webhook"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: app-webhook
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  16: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: gce
+        kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
+        networking.gke.io/managed-certificates: log-sample-host-dev-test-domain-com
+        networking.gke.io/v1beta1.FrontendConfig: log-sample-host
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: log-sample-host
+    spec:
+      rules:
+        - host: log-sample-host.dev.test-domain.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: logged
+                    port:
+                      number: 8080
+                path: /
+                pathType: Prefix
+              - backend:
+                  service:
+                    name: silenced
+                    port:
+                      number: 8080
+                path: /quiet
+                pathType: Exact
+  17: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "logged"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: logged
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  18: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "silenced"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: silenced
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  19: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: gce
+        kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
+        networking.gke.io/managed-certificates: optin-host-dev-test-domain-com
+        networking.gke.io/v1beta1.FrontendConfig: optin-host
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-host
+    spec:
+      rules:
+        - host: optin-host.dev.test-domain.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: optin-open
+                    port:
+                      number: 8080
+                path: /
+                pathType: Prefix
+              - backend:
+                  service:
+                    name: optin-protected
+                    port:
+                      number: 8080
+                path: /admin
+                pathType: Exact
+  20: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "optin-open"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-open
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  21: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "optin-protected"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-protected
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  22: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: gce
+        kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
+        networking.gke.io/managed-certificates: shared-service-host-dev-test-domain-com
+        networking.gke.io/v1beta1.FrontendConfig: shared-service-host
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: shared-service-host
+    spec:
+      rules:
+        - host: shared-service-host.dev.test-domain.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: shared-service
+                    port:
+                      number: 8080
+                path: /api
+                pathType: Prefix
+              - backend:
+                  service:
+                    name: shared-service
+                    port:
+                      number: 8080
+                path: /
+                pathType: Prefix
+  23: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "shared-api"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: shared-service
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP

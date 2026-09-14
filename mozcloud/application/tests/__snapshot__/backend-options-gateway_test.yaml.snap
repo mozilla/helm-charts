@@ -1,0 +1,665 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: app
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  2: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: app-webhook
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  3: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: google-oauth
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  4: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: opt-out-full
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  5: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: opt-out-no-healthcheck
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  6: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: opt-out-no-policy
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  7: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-open
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  8: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-protected
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  9: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: silenced-gateway
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  10: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: app
+    spec:
+      default:
+        iap:
+          clientID: my-client-id
+          enabled: true
+          oauth2ClientSecret:
+            name: my-client-secret
+        logging:
+          enabled: true
+          sampleRate: 500000
+        securityPolicy: host-policy
+        timeoutSec: 120
+      targetRef:
+        group: ""
+        kind: Service
+        name: app
+  11: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: app
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: app
+  12: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: app-webhook
+    spec:
+      default:
+        logging:
+          enabled: true
+          sampleRate: 500000
+        securityPolicy: host-policy
+        timeoutSec: 120
+      targetRef:
+        group: ""
+        kind: Service
+        name: app-webhook
+  13: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: app-webhook
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: app-webhook
+  14: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: google-oauth
+    spec:
+      default:
+        iap:
+          enabled: true
+        logging:
+          enabled: true
+          sampleRate: 100000
+      targetRef:
+        group: ""
+        kind: Service
+        name: google-oauth
+  15: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: google-oauth
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: google-oauth
+  16: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: opt-out-full
+    spec:
+      default:
+        logging:
+          enabled: true
+          sampleRate: 100000
+      targetRef:
+        group: ""
+        kind: Service
+        name: opt-out-full
+  17: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: opt-out-full
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: opt-out-full
+  18: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: opt-out-no-healthcheck
+    spec:
+      default:
+        logging:
+          enabled: true
+          sampleRate: 100000
+      targetRef:
+        group: ""
+        kind: Service
+        name: opt-out-no-healthcheck
+  19: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: opt-out-no-policy
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: opt-out-no-policy
+  20: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-open
+    spec:
+      default:
+        logging:
+          enabled: true
+          sampleRate: 100000
+      targetRef:
+        group: ""
+        kind: Service
+        name: optin-open
+  21: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-open
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: optin-open
+  22: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-protected
+    spec:
+      default:
+        iap:
+          enabled: true
+        logging:
+          enabled: true
+          sampleRate: 100000
+      targetRef:
+        group: ""
+        kind: Service
+        name: optin-protected
+  23: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: optin-protected
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: optin-protected
+  24: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: silenced-gateway
+    spec:
+      default:
+        logging:
+          enabled: true
+          sampleRate: 0
+      targetRef:
+        group: ""
+        kind: Service
+        name: silenced-gateway
+  25: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: silenced-gateway
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: silenced-gateway

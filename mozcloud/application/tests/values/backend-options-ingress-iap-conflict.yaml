@@ -1,0 +1,14 @@
+---
+# Overlay on backend-options-ingress.yaml. Points the IAP-exempt backend at the
+# protected backend's Service so both resolve to a single
+# cloud.google.com/backend-config annotation while declaring opposite IAP
+# postures. The chart must fail the render rather than let GKE apply one
+# posture to both paths.
+workloads:
+  my-app:
+    hosts:
+      iap-host:
+        backends:
+          app-webhook:
+            service:
+              name: app
