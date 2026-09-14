@@ -141,6 +141,27 @@ tests/
 
 Each scenario-specific values file should contain only the values that make that scenario distinct. Share as little as possible between scenarios so that test failures are easy to localize.
 
+#### Prefer values files over inline `set`
+
+Express a test scenario as a named file under `tests/values/` rather than an inline `set:` block. Scenarios in values files are easy to find and reference later; the same configuration buried inside a test suite is not.
+
+Both the suite and each individual `it:` accept a `values:` list, so a suite can keep a shared baseline while individual cases layer on their own scenario:
+
+```yaml
+values:
+  - values/globals.yaml
+  - values/my-base-scenario.yaml
+tests:
+  - it: Variant behaves differently
+    values:
+      - values/globals.yaml
+      - values/my-variant-scenario.yaml
+```
+
+Per-test `values` files are merged over the suite-level ones rather than replacing them, so a variant file cannot remove a key the base file sets. When a variant needs to drop or contradict part of the base, make it a complete, self-contained scenario file and reduce the suite-level `values` to `globals.yaml`.
+
+`set:` is still the right tool when the point of the test is the absence or malformation of a value, such as omitting a required field to assert a schema validation failure. Moving those into a values file would obscure what is being tested.
+
 ### Assertions
 
 helm-unittest provides a range of assertion types. The most commonly used in this repo are listed below. For the full reference, see the [helm-unittest documentation](https://github.com/helm-unittest/helm-unittest/blob/main/DOCUMENT.md).

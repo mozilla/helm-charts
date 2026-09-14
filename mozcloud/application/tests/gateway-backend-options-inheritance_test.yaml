@@ -93,9 +93,9 @@ tests:
           value: app-webhook
 
   - it: Backend iap.enabled true overrides a host default of false
-    set:
-      workloads.my-app.hosts.iap-host.options.iap.enabled: false
-      workloads.my-app.hosts.iap-host.backends.app-webhook.options.iap.enabled: true
+    values:
+      - values/globals.yaml
+      - values/gateway-backend-iap-host-disabled.yaml
     template: gke/backend.yaml
     asserts:
       - notExists:
@@ -111,8 +111,9 @@ tests:
           value: app-webhook
 
   - it: backendPolicy.enabled false suppresses an inherited GCPBackendPolicy
-    set:
-      workloads.my-app.hosts.iap-host.backends.app-webhook.backendPolicy.enabled: false
+    values:
+      - values/globals.yaml
+      - values/gateway-backend-policy-disabled.yaml
     template: gke/backend.yaml
     asserts:
       - hasDocuments:
@@ -124,8 +125,9 @@ tests:
           value: app
 
   - it: healthCheck.enabled false suppresses an inherited HealthCheckPolicy
-    set:
-      workloads.my-app.hosts.iap-host.backends.app-webhook.healthCheck.enabled: false
+    values:
+      - values/globals.yaml
+      - values/gateway-backend-healthcheck-disabled.yaml
     template: gke/backend.yaml
     asserts:
       - hasDocuments:

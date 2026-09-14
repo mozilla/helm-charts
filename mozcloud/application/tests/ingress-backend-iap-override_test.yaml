@@ -84,9 +84,9 @@ tests:
           value: app-webhook
 
   - it: Backend iap.enabled true overrides a host default of false
-    set:
-      workloads.my-app.hosts.iap-host.options.iap.enabled: false
-      workloads.my-app.hosts.iap-host.backends.app-webhook.options.iap.enabled: true
+    values:
+      - values/globals.yaml
+      - values/ingress-backend-iap-host-disabled.yaml
     template: gke/ingress.yaml
     asserts:
       - notExists:
@@ -102,20 +102,18 @@ tests:
           value: app-webhook
 
   - it: Template rejects backends that share a Service but disagree on IAP
-    set:
-      # Point the exempt backend at the protected backend's Service. Both would
-      # then resolve to a single backend-config annotation, so GKE would apply
-      # one IAP posture to both paths.
-      workloads.my-app.hosts.iap-host.backends.app-webhook.service.name: app
+    values:
+      - values/globals.yaml
+      - values/ingress-backend-shared-service-conflict.yaml
     template: ingress/ingress.yaml
     asserts:
       - failedTemplate:
           errorPattern: "conflicting IAP postures"
 
   - it: Backends may share a Service when their IAP postures agree
-    set:
-      workloads.my-app.hosts.iap-host.backends.app-webhook.service.name: app
-      workloads.my-app.hosts.iap-host.backends.app-webhook.options.iap.enabled: true
+    values:
+      - values/globals.yaml
+      - values/ingress-backend-shared-service-aligned.yaml
     template: ingress/ingress.yaml
     asserts:
       - notFailedTemplate: {}
