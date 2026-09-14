@@ -2184,6 +2184,7 @@ workloads:
         #
         #  # The sample rate at which HTTP access should be logged. This can be
         #  # configured as a float, integer, or string. The default is 10 (10%).
+        #  # Set to 0 to disable access logging for the backend.
         #  #logSampleRate: 10
         #
         #  # Cloud Armor security policy to attach to the load balancer backend.
@@ -2194,7 +2195,8 @@ workloads:
         #  # NOT use this — use Fastly for WAF instead.
         #  #securityPolicy: my-app-policy
         #
-        #  # Backend service timeout period in seconds.
+        #  # Backend service timeout period in seconds. GCP requires at least
+        #  # 1 second.
         #  #timeoutSec: 30
         #
         #  # Custom config for the backend health check. The supported fields

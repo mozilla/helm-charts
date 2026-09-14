@@ -1861,9 +1861,6 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "createBackendPolicy": {
-          "type": "boolean"
-        },
         "iap": {
           "type": "object",
           "additionalProperties": false,
@@ -1894,8 +1891,9 @@
         },
         "timeoutSec": {
           "type": "integer",
-          "minimum": 0,
-          "default": 30
+          "minimum": 1,
+          "default": 30,
+          "description": "Backend service timeout in seconds. GCP requires at least 1; the GCPBackendPolicy CRD rejects 0."
         },
         "healthCheck": {
           "type": "object",

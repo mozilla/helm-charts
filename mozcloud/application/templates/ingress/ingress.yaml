@@ -111,7 +111,8 @@ ingresses:
                 iap:
                   enabled: {{ $options.iap.enabled }}
                 {{- end }}
-                {{- if $options.logSampleRate }}
+                {{- /* Presence check so logSampleRate 0 is honored, not omitted. */}}
+                {{- if hasKey $options "logSampleRate" }}
                 logging:
                   {{- $sampleRate := $options.logSampleRate | float64 }}
                   sampleRate: {{ divf $sampleRate 100 }}

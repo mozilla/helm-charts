@@ -66,7 +66,8 @@ backends:
     backendPolicy:
       logging:
         enabled: true
-      {{- if $options.logSampleRate }}
+      {{- /* Presence check so logSampleRate 0 is honored, not omitted. */}}
+      {{- if hasKey $options "logSampleRate" }}
         {{- $sampleRate := $options.logSampleRate | float64 }}
         sampleRate: {{ mulf $sampleRate 10000 | int }}
       {{- end }}
@@ -143,7 +144,8 @@ backends:
     backendPolicy:
       logging:
         enabled: true
-      {{- if ($hostConfig.options).logSampleRate }}
+      {{- /* Presence check so logSampleRate 0 is honored, not omitted. */}}
+      {{- if hasKey (default dict $hostConfig.options) "logSampleRate" }}
         {{- $sampleRate := $hostConfig.options.logSampleRate | float64 }}
         sampleRate: {{ mulf $sampleRate 10000 | int }}
       {{- end }}
