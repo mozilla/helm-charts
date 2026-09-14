@@ -12,7 +12,8 @@ For each qualifying host, constructs a full ingress entry including:
     pre-shared certificate types.
   - Backend service reference with port 8080.
   - Optional BackendConfig settings for IAP, access log sample rate, and
-    timeout.
+    timeout, taken from the host's "options" and overridable per backend
+    through backends.<name>.options.
   - Static IP name, defaulting to "<app_code>-<env_code>-ip-v4".
 
 Params:
@@ -60,6 +61,24 @@ ingresses:
       {{- fail (printf "hosts.%s.backends contains duplicate (path, pathType) entries; each backend on a single host must have a unique path/pathType combination." $hostName) }}
     {{- end }}
   {{- end }}
+  {{- /* A Service carries a single cloud.google.com/backend-config annotation
+     per port, so backends that resolve to the same Service cannot have
+     different IAP postures. GKE would silently bind them all to whichever
+     BackendConfig the first backend produced, leaving a path the tenant
+     believes is exempt (or protected) doing the opposite. */}}
+  {{- $iapByService := dict }}
+  {{- range $name, $config := $backends }}
+    {{- $service := default $name ($config.service).name }}
+    {{- $backendOptions := mergeOverwrite (deepCopy (default dict $hostConfig.options)) (deepCopy (default dict $config.options)) }}
+    {{- $iap := ternary "enabled" "disabled" (dig "iap" "enabled" false $backendOptions) }}
+    {{- if hasKey $iapByService $service }}
+      {{- if ne (index $iapByService $service) $iap }}
+        {{- fail (printf "hosts.%s.backends: backends sharing Service %q declare conflicting IAP postures. A Service carries a single cloud.google.com/backend-config annotation per port, so give the IAP-exempt backend its own Service via backends.<name>.service.name, or align their options.iap.enabled values." $hostName $service) }}
+      {{- end }}
+    {{- else }}
+      {{- $_ := set $iapByService $service $iap }}
+    {{- end }}
+  {{- end }}
   {{ $hostName }}:
     component: {{ $workloadConfig.component }}
     hosts:
@@ -75,41 +94,49 @@ ingresses:
           {{- $targetPort := $backendService.targetPort | default $hostConfig.targetPort | default "http" }}
           {{- $path := default "/" $backendConfig.path }}
           {{- $pathType := default "Prefix" $backendConfig.pathType }}
+          {{- /* Host options are the default for every backend on the host; a
+             backend's own options block overrides them field by field. deepCopy
+             keeps one backend's merge from leaking into the next iteration. */}}
+          {{- $options := mergeOverwrite (deepCopy (default dict $hostConfig.options)) (deepCopy (default dict $backendConfig.options)) }}
           - path: {{ $path }}
             pathType: {{ $pathType }}
             backend:
               config:
                 name: {{ $backendName }}
-                {{- if (($hostConfig.options).iap).enabled }}
+                {{- /* Emitted only when IAP resolves to enabled. A backend that
+                   overrides the host default with `iap.enabled: false` drops the
+                   block entirely, which is how a BackendConfig represents an
+                   unprotected backend. */}}
+                {{- if ($options.iap).enabled }}
                 iap:
-                  enabled: {{ $hostConfig.options.iap.enabled }}
+                  enabled: {{ $options.iap.enabled }}
                 {{- end }}
-                {{- if ($hostConfig.options).logSampleRate }}
+                {{- if $options.logSampleRate }}
                 logging:
-                  {{- $sampleRate := $hostConfig.options.logSampleRate | float64 }}
+                  {{- $sampleRate := $options.logSampleRate | float64 }}
                   sampleRate: {{ divf $sampleRate 100 }}
                 {{- end }}
-                {{- if ($hostConfig.options).timeoutSec }}
-                timeoutSec: {{ $hostConfig.options.timeoutSec }}
+                {{- if $options.timeoutSec }}
+                timeoutSec: {{ $options.timeoutSec }}
                 {{- end }}
-                {{- if ($hostConfig.options).securityPolicy }}
-                securityPolicy: {{ $hostConfig.options.securityPolicy }}
+                {{- if $options.securityPolicy }}
+                securityPolicy: {{ $options.securityPolicy }}
                 {{- end }}
-                {{- if ($hostConfig.options).customRequestHeaders }}
+                {{- if $options.customRequestHeaders }}
                 customRequestHeaders:
                   headers:
-                    {{- range $hostConfig.options.customRequestHeaders }}
+                    {{- range $options.customRequestHeaders }}
                     - {{ . | quote }}
                     {{- end }}
                 {{- end }}
-                {{- if ($hostConfig.options).customResponseHeaders }}
+                {{- if $options.customResponseHeaders }}
                 customResponseHeaders:
                   headers:
-                    {{- range $hostConfig.options.customResponseHeaders }}
+                    {{- range $options.customResponseHeaders }}
                     - {{ . | quote }}
                     {{- end }}
                 {{- end }}
-                {{- $healthCheck := default dict ($hostConfig.options).healthCheck }}
+                {{- $healthCheck := default dict $options.healthCheck }}
                 {{- /* Gate on the BackendConfig-supported fields only so a values
                    override that sets only gateway-only keys (host/path) does
                    not emit an empty healthCheck block on the ingress path. */}}

@@ -1,0 +1,121 @@
+---
+suite: "mozcloud: Ingress per-backend IAP override"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/ingress-backend-iap-override.yaml
+templates:
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Backend without an override inherits the host IAP setting
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "BackendConfig")].metadata.name
+      value: app
+    asserts:
+      - equal:
+          path: spec.iap.enabled
+          value: true
+
+  - it: Backend overriding iap.enabled to false is exempted from IAP
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "BackendConfig")].metadata.name
+      value: app-webhook
+    asserts:
+      # An exempt backend omits the iap block entirely, which is how a
+      # BackendConfig represents an unprotected backend.
+      - notExists:
+          path: spec.iap
+
+  - it: Overriding one option leaves the rest of the host options inherited
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "BackendConfig")].metadata.name
+      value: app-webhook
+    asserts:
+      - equal:
+          path: spec.timeoutSec
+          value: 300
+      - equal:
+          path: spec.securityPolicy.name
+          value: host-policy
+
+  - it: A backend override does not leak into the other backends on the host
+    template: gke/ingress.yaml
+    documentSelector:
+      path: $[?(@.kind == "BackendConfig")].metadata.name
+      value: app
+    asserts:
+      - equal:
+          path: spec.timeoutSec
+          value: 120
+      - equal:
+          path: spec.securityPolicy.name
+          value: host-policy
+
+  - it: Each backend binds to its own BackendConfig
+    template: ingress/ingress.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["cloud.google.com/backend-config"]
+          value: '{"default": "app"}'
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: app
+      - equal:
+          path: metadata.annotations["cloud.google.com/backend-config"]
+          value: '{"default": "app-webhook"}'
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: app-webhook
+
+  - it: Backend iap.enabled true overrides a host default of false
+    set:
+      workloads.my-app.hosts.iap-host.options.iap.enabled: false
+      workloads.my-app.hosts.iap-host.backends.app-webhook.options.iap.enabled: true
+    template: gke/ingress.yaml
+    asserts:
+      - notExists:
+          path: spec.iap
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: app
+      - equal:
+          path: spec.iap.enabled
+          value: true
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: app-webhook
+
+  - it: Template rejects backends that share a Service but disagree on IAP
+    set:
+      # Point the exempt backend at the protected backend's Service. Both would
+      # then resolve to a single backend-config annotation, so GKE would apply
+      # one IAP posture to both paths.
+      workloads.my-app.hosts.iap-host.backends.app-webhook.service.name: app
+    template: ingress/ingress.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "conflicting IAP postures"
+
+  - it: Backends may share a Service when their IAP postures agree
+    set:
+      workloads.my-app.hosts.iap-host.backends.app-webhook.service.name: app
+      workloads.my-app.hosts.iap-host.backends.app-webhook.options.iap.enabled: true
+    template: ingress/ingress.yaml
+    asserts:
+      - notFailedTemplate: {}

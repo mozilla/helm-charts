@@ -1971,6 +1971,35 @@ workloads:
         #    path: /
         #    service:
         #      port: 3000
+        #
+        # Every backend inherits the host's "options" block and may override
+        # any field through its own "options". This is how a single path is
+        # exempted from IAP: IAP is enforced per backend service, not per URL
+        # path, so the exempt path needs its own backend.
+        #
+        # A Service carries one cloud.google.com/backend-config annotation per
+        # port, so two backends that resolve to the same Service cannot have
+        # different IAP postures — give the exempt backend its own Service via
+        # service.name. The chart fails the render when they conflict rather
+        # than letting GKE silently apply one posture to both paths.
+        #
+        # An IAP-exempt backend is reachable without authentication and needs
+        # its own controls: restrict its callers with a Cloud Armor policy
+        # (options.securityPolicy) and validate requests in the application.
+        #
+        # Example — Ingress host behind IAP with a webhook path exempted:
+        #
+        #backends:
+        #  app:
+        #    path: /
+        #  app-webhook:
+        #    path: /webhook
+        #    pathType: Exact
+        #    service:
+        #      name: app-webhook
+        #    options:
+        #      iap:
+        #        enabled: false
         backends: {}
 
         # Configure the type of load balancer to use for your host.
@@ -2136,6 +2165,10 @@ workloads:
 
         # Optionally configure the log sample rate for the load balancer, IAP
         # details, a custom backend timeout, or a Cloud Armor security policy.
+        #
+        # These apply to every backend on the host. Individual backends can
+        # override any of them through backends.<name>.options — see the
+        # "backends" examples above.
         #options:
         #  # Configures Identity-Aware Proxy for the service.
         #  #iap:
