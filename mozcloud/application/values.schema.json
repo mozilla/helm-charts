@@ -1079,6 +1079,10 @@
                           }
                         }
                       },
+                      "options": {
+                        "$ref": "#/$defs/hostOptions",
+                        "description": "Per-backend overrides for the host's options block. Any field set here replaces the host-level value for this backend only; unset fields are inherited from hosts.<host>.options. Use this to exempt a single path from IAP (options.iap.enabled: false) while the rest of the host stays protected. Backends that resolve to the same Service must agree on options.iap.enabled, since a Service carries a single cloud.google.com/backend-config annotation per port."
+                      },
                       "path": {
                         "type": "string",
                         "description": "URL path for the Ingress path rule. Ingress only (api: ingress); for Gateway API hosts use httpRoutes.rules[].matches[].path. Defaults to '/' when the host has exactly one backend; required when the host has more than one backend."
@@ -1259,117 +1263,8 @@
                   }
                 },
                 "options": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "createBackendPolicy": {
-                      "type": "boolean"
-                    },
-                    "iap": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "default": false
-                        },
-                        "oauth2ClientId": {
-                          "type": "string"
-                        },
-                        "oauth2ClientSecret": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "logSampleRate": {
-                      "type": [
-                        "number",
-                        "integer",
-                        "string"
-                      ],
-                      "default": 10
-                    },
-                    "securityPolicy": {
-                      "type": "string",
-                      "description": "Cloud Armor security policy name to attach to the load balancer backend. For migration of existing applications only \u2014 new applications should use Fastly for WAF instead."
-                    },
-                    "timeoutSec": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "default": 30
-                    },
-                    "healthCheck": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "description": "Health check request path on the HealthCheckPolicy (Gateway API only). For the Ingress API, use requestPath instead."
-                        },
-                        "port": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "number"
-                            }
-                          ]
-                        },
-                        "host": {
-                          "type": "string",
-                          "description": "Host header sent by the GCLB health check (Gateway API only). The Ingress API's BackendConfig health check does not accept a Host header; set the Host header via container-level healthCheck.readiness.httpHeaders instead."
-                        },
-                        "requestPath": {
-                          "type": "string",
-                          "description": "Path the GCLB health check should send GET requests to (Ingress API only). Required for multi-container backends per GKE docs (https://cloud.google.com/kubernetes-engine/docs/concepts/ingress#direct_hc_instead). If unset, GKE picks a container readiness probe path arbitrarily."
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "HTTP",
-                            "HTTPS",
-                            "HTTP2"
-                          ],
-                          "description": "Protocol used by the GCLB health check (Ingress API only). See https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#direct_health."
-                        },
-                        "checkIntervalSec": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "Interval in seconds between health check probes (Ingress API only)."
-                        },
-                        "timeoutSec": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "Timeout in seconds for an individual health check probe (Ingress API only). Must be less than or equal to checkIntervalSec."
-                        },
-                        "healthyThreshold": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "Consecutive successful probes required to mark a backend healthy (Ingress API only)."
-                        },
-                        "unhealthyThreshold": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "Consecutive failed probes required to mark a backend unhealthy (Ingress API only)."
-                        }
-                      }
-                    },
-                    "customRequestHeaders": {
-                      "type": "array",
-                      "description": "Custom headers the GCLB adds to requests before forwarding to backends (Ingress API only). Each entry is a 'Name:Value' string. Values may use GCLB variable substitution like {tls_version} and {tls_cipher_suite}; see https://cloud.google.com/load-balancing/docs/https/custom-headers.",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "customResponseHeaders": {
-                      "type": "array",
-                      "description": "Custom headers the GCLB adds to responses before returning to clients (Ingress API only). Each entry is a 'Name:Value' string. See https://cloud.google.com/load-balancing/docs/https/custom-headers.",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
+                  "$ref": "#/$defs/hostOptions",
+                  "description": "Load balancer settings applied to every backend on this host. Individual backends may override any of these through backends.<name>.options."
                 },
                 "gatewayClass": {
                   "type": "string",
@@ -1408,6 +1303,28 @@
                                 ]
                               }
                             ]
+                          },
+                          "properties": {
+                            "options": {
+                              "properties": {
+                                "healthCheck": {
+                                  "not": {
+                                    "anyOf": [
+                                      {
+                                        "required": [
+                                          "host"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "path"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            }
                           }
                         }
                       },
@@ -1450,6 +1367,48 @@
                                 ]
                               }
                             ]
+                          },
+                          "properties": {
+                            "options": {
+                              "properties": {
+                                "healthCheck": {
+                                  "not": {
+                                    "anyOf": [
+                                      {
+                                        "required": [
+                                          "requestPath"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "type"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "checkIntervalSec"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "timeoutSec"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "healthyThreshold"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "unhealthyThreshold"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            }
                           }
                         }
                       },
@@ -1898,6 +1857,117 @@
     }
   },
   "$defs": {
+    "hostOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "iap": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "oauth2ClientId": {
+              "type": "string"
+            },
+            "oauth2ClientSecret": {
+              "type": "string"
+            }
+          }
+        },
+        "logSampleRate": {
+          "type": [
+            "number",
+            "integer",
+            "string"
+          ],
+          "default": 10
+        },
+        "securityPolicy": {
+          "type": "string",
+          "description": "Cloud Armor security policy name to attach to the load balancer backend. For migration of existing applications only \u2014 new applications should use Fastly for WAF instead."
+        },
+        "timeoutSec": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 30,
+          "description": "Backend service timeout in seconds. GCP requires at least 1; the GCPBackendPolicy CRD rejects 0."
+        },
+        "healthCheck": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Health check request path on the HealthCheckPolicy (Gateway API only). For the Ingress API, use requestPath instead."
+            },
+            "port": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "host": {
+              "type": "string",
+              "description": "Host header sent by the GCLB health check (Gateway API only). The Ingress API's BackendConfig health check does not accept a Host header; set the Host header via container-level healthCheck.readiness.httpHeaders instead."
+            },
+            "requestPath": {
+              "type": "string",
+              "description": "Path the GCLB health check should send GET requests to (Ingress API only). Required for multi-container backends per GKE docs (https://cloud.google.com/kubernetes-engine/docs/concepts/ingress#direct_hc_instead). If unset, GKE picks a container readiness probe path arbitrarily."
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "HTTP",
+                "HTTPS",
+                "HTTP2"
+              ],
+              "description": "Protocol used by the GCLB health check (Ingress API only). See https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#direct_health."
+            },
+            "checkIntervalSec": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Interval in seconds between health check probes (Ingress API only)."
+            },
+            "timeoutSec": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Timeout in seconds for an individual health check probe (Ingress API only). Must be less than or equal to checkIntervalSec."
+            },
+            "healthyThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Consecutive successful probes required to mark a backend healthy (Ingress API only)."
+            },
+            "unhealthyThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Consecutive failed probes required to mark a backend unhealthy (Ingress API only)."
+            }
+          }
+        },
+        "customRequestHeaders": {
+          "type": "array",
+          "description": "Custom headers the GCLB adds to requests before forwarding to backends (Ingress API only). Each entry is a 'Name:Value' string. Values may use GCLB variable substitution like {tls_version} and {tls_cipher_suite}; see https://cloud.google.com/load-balancing/docs/https/custom-headers.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "customResponseHeaders": {
+          "type": "array",
+          "description": "Custom headers the GCLB adds to responses before returning to clients (Ingress API only). Each entry is a 'Name:Value' string. See https://cloud.google.com/load-balancing/docs/https/custom-headers.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "execProbe": {
       "type": "object",
       "additionalProperties": false,

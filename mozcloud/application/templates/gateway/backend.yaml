@@ -8,8 +8,15 @@ When a host defines explicit "backends" entries (a dict keyed by backend name),
 each entry's key becomes the resource name for the Service, BackendPolicy, and
 HealthCheckPolicy. Entries may optionally set service, backendPolicy, and
 healthCheck overrides; an empty entry (`my-backend: {}`) renames the default
-resources without otherwise changing behavior. When no explicit backends are
-defined, a default backend is generated for the workload with:
+resources without otherwise changing behavior.
+
+Every explicit backend inherits the host's "options" (IAP, log sample rate,
+timeout, Cloud Armor policy, health check) and may override any of them through
+its own "options" block. Set backendPolicy.enabled or healthCheck.enabled to
+false to suppress an inherited policy entirely.
+
+When no explicit backends are defined, a default backend is generated for the
+workload with:
   - A Service on port 8080.
   - A BackendPolicy with access logging enabled (and optional IAP, sample rate,
     and timeout settings from host options).
@@ -41,6 +48,13 @@ backends:
     {{- end }}
   {{- end }}
   {{- range $backendName, $backendConfig := $enabledBackends }}
+  {{- /* Host options are the default for every backend on the host; a backend's
+     own options block overrides them field by field. deepCopy keeps one
+     backend's merge from leaking into the next iteration. */}}
+  {{- $options := mergeOverwrite (deepCopy (default dict $hostConfig.options)) (deepCopy (default dict $backendConfig.options)) }}
+  {{- $backendPolicy := default dict $backendConfig.backendPolicy }}
+  {{- $healthCheck := default dict $backendConfig.healthCheck }}
+  {{- $hostHealthCheck := default dict $options.healthCheck }}
   {{ $backendName }}:
     component: {{ $workloadConfig.component }}
     api: {{ default "gateway" $hostConfig.api }}
@@ -48,39 +62,74 @@ backends:
     service:
       {{- $backendConfig.service | toYaml | nindent 6 }}
     {{- end }}
-    {{- if and $backendConfig.backendPolicy (eq $provider "gke") (dig "enabled" true $backendConfig.backendPolicy) }}
+    {{- if and (eq $provider "gke") (dig "enabled" true $backendPolicy) }}
     backendPolicy:
+      logging:
+        enabled: true
+      {{- /* Presence check so logSampleRate 0 is honored, not omitted. */}}
+      {{- if hasKey $options "logSampleRate" }}
+        {{- $sampleRate := $options.logSampleRate | float64 }}
+        sampleRate: {{ mulf $sampleRate 10000 | int }}
+      {{- end }}
+      {{- /* Emitted only when IAP resolves to enabled. A backend that overrides
+         the host default with `iap.enabled: false` drops the block entirely,
+         which is how GCP represents an unprotected backend. */}}
+      {{- if ($options.iap).enabled }}
+      iap:
+        enabled: true
+        {{- if $options.iap.oauth2ClientId }}
+        oauth2ClientId: {{ $options.iap.oauth2ClientId }}
+        {{- end }}
+        {{- if $options.iap.oauth2ClientSecret }}
+        oauth2ClientSecret: {{ $options.iap.oauth2ClientSecret }}
+        {{- end }}
+      {{- end }}
+      {{- if $options.timeoutSec }}
+      timeoutSec: {{ $options.timeoutSec | int }}
+      {{- end }}
+      {{- if $options.securityPolicy }}
+      securityPolicy: {{ $options.securityPolicy }}
+      {{- end }}
       {{- /* targetRef is optional. When omitted, the library auto-populates a
          targetRef referencing the resolved Service name. */}}
-      {{- if $backendConfig.backendPolicy.targetRef }}
+      {{- if $backendPolicy.targetRef }}
       targetRef:
-        {{- if and $backendConfig.backendPolicy.targetRef.kind (eq $backendConfig.backendPolicy.targetRef.kind "ServiceImport" )}}
-        {{- $_ := set $backendConfig.backendPolicy.targetRef "group" "net.gke.io" }}
+        {{- if and $backendPolicy.targetRef.kind (eq $backendPolicy.targetRef.kind "ServiceImport" )}}
+        {{- $_ := set $backendPolicy.targetRef "group" "net.gke.io" }}
         {{- end }}
-        group: {{ default "" $backendConfig.backendPolicy.targetRef.group | quote }}
-        kind: {{ $backendConfig.backendPolicy.targetRef.kind }}
-        name: {{ $backendConfig.backendPolicy.targetRef.name }}
+        group: {{ default "" $backendPolicy.targetRef.group | quote }}
+        kind: {{ $backendPolicy.targetRef.kind }}
+        name: {{ $backendPolicy.targetRef.name }}
       {{- end }}
     {{- end }}
-    {{- if and $backendConfig.healthCheck (eq $provider "gke") (dig "enabled" true $backendConfig.healthCheck) }}
+    {{- if and (eq $provider "gke") (dig "enabled" true $healthCheck) }}
     healthCheck:
-      path: {{ default $defaultHealthCheckPath $backendConfig.healthCheck.path }}
-      {{- if ($backendConfig.healthCheck).port }}
-      port: {{ $backendConfig.healthCheck.port }}
+      {{- $lbEndpoint := ($hostConfig.healthCheckEndpoints).loadBalancer }}
+      {{- $lbPath := "" }}
+      {{- if kindIs "string" $lbEndpoint }}
+        {{- $lbPath = $lbEndpoint }}
+      {{- else if kindIs "map" $lbEndpoint }}
+        {{- $lbPath = default "" $lbEndpoint.path }}
       {{- end }}
-      {{- if ($backendConfig.healthCheck).host }}
-      host: {{ $backendConfig.healthCheck.host }}
+      path: {{ $healthCheck.path | default $hostHealthCheck.path | default $lbPath | default $defaultHealthCheckPath }}
+      {{- $healthCheckPort := $healthCheck.port | default $hostHealthCheck.port }}
+      {{- if $healthCheckPort }}
+      port: {{ $healthCheckPort }}
+      {{- end }}
+      {{- $healthCheckHost := $healthCheck.host | default $hostHealthCheck.host }}
+      {{- if $healthCheckHost }}
+      host: {{ $healthCheckHost }}
       {{- end }}
       {{- /* targetRef is optional. When omitted, the library auto-populates a
          targetRef referencing the resolved Service name. */}}
-      {{- if $backendConfig.healthCheck.targetRef }}
+      {{- if $healthCheck.targetRef }}
       targetRef:
-        {{- if and $backendConfig.healthCheck.targetRef.kind (eq $backendConfig.healthCheck.targetRef.kind "ServiceImport" )}}
-        {{- $_ := set $backendConfig.healthCheck.targetRef "group" "net.gke.io" }}
+        {{- if and $healthCheck.targetRef.kind (eq $healthCheck.targetRef.kind "ServiceImport" )}}
+        {{- $_ := set $healthCheck.targetRef "group" "net.gke.io" }}
         {{- end }}
-        group: {{ default "" $backendConfig.healthCheck.targetRef.group | quote }}
-        kind: {{ default "Service" $backendConfig.healthCheck.targetRef.kind }}
-        name: {{ $backendConfig.healthCheck.targetRef.name }}
+        group: {{ default "" $healthCheck.targetRef.group | quote }}
+        kind: {{ default "Service" $healthCheck.targetRef.kind }}
+        name: {{ $healthCheck.targetRef.name }}
       {{- end }}
     {{- end }}
   {{- end }}
@@ -95,7 +144,8 @@ backends:
     backendPolicy:
       logging:
         enabled: true
-      {{- if ($hostConfig.options).logSampleRate }}
+      {{- /* Presence check so logSampleRate 0 is honored, not omitted. */}}
+      {{- if hasKey (default dict $hostConfig.options) "logSampleRate" }}
         {{- $sampleRate := $hostConfig.options.logSampleRate | float64 }}
         sampleRate: {{ mulf $sampleRate 10000 | int }}
       {{- end }}

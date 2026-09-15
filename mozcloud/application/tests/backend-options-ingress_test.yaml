@@ -1,0 +1,129 @@
+---
+suite: "mozcloud: Ingress per-backend options"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/backend-options-ingress.yaml
+templates:
+  - gke/ingress.yaml
+  - ingress/ingress.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Backends inherit host options and override them individually
+    template: gke/ingress.yaml
+    asserts:
+      # Inherits the host default.
+      - equal:
+          path: spec.iap.enabled
+          value: true
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: app
+      # An exempt backend omits the iap block entirely, which is how a
+      # BackendConfig represents an unprotected backend.
+      - notExists:
+          path: spec.iap
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: app-webhook
+      # Overriding one option leaves the rest inherited.
+      - equal:
+          path: spec.timeoutSec
+          value: 300
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: app-webhook
+      - equal:
+          path: spec.securityPolicy.name
+          value: host-policy
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: app-webhook
+      # The override does not leak into the other backends on the host.
+      - equal:
+          path: spec.timeoutSec
+          value: 120
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: app
+
+  - it: A backend can opt into IAP when the host leaves it off
+    template: gke/ingress.yaml
+    asserts:
+      - notExists:
+          path: spec.iap
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: optin-open
+      - equal:
+          path: spec.iap.enabled
+          value: true
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: optin-protected
+
+  - it: A logSampleRate of zero disables access logging instead of being dropped
+    template: gke/ingress.yaml
+    asserts:
+      # A truthiness guard would drop the 0 here and let the library default of
+      # 10% apply, silently logging traffic the tenant asked not to log.
+      - equal:
+          path: spec.logging.sampleRate
+          value: 0
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: silenced
+      - equal:
+          path: spec.logging.sampleRate
+          value: 0.5
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: logged
+
+  - it: Each backend binds to its own BackendConfig
+    template: ingress/ingress.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["cloud.google.com/backend-config"]
+          value: '{"default": "app"}'
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: app
+      - equal:
+          path: metadata.annotations["cloud.google.com/backend-config"]
+          value: '{"default": "app-webhook"}'
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: app-webhook
+      # Backends may share a Service when their IAP postures agree. The shared
+      # Service is rendered once and its single backend-config annotation
+      # points at whichever backend sorts first, so both backends are governed
+      # by shared-api's BackendConfig. That is precisely why backends sharing a
+      # Service are required to agree on IAP.
+      - equal:
+          path: metadata.annotations["cloud.google.com/backend-config"]
+          value: '{"default": "shared-api"}'
+        documentSelector:
+          path: $[?(@.kind == "Service")].metadata.name
+          value: shared-service
+
+  - it: Template rejects backends that share a Service but disagree on IAP
+    values:
+      - values/globals.yaml
+      - values/backend-options-ingress.yaml
+      - values/backend-options-ingress-iap-conflict.yaml
+    template: ingress/ingress.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "conflicting IAP postures"

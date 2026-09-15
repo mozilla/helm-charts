@@ -190,7 +190,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution workflows, unit testing 
 
 Tests live in each chart's `tests/` directory and are written using [helm-unittest](https://github.com/helm-unittest/helm-unittest). They generally fall into three categories:
 
-- **Scenario tests** verify that a given set of values renders the expected resources. Each scenario has its own values file under `tests/values/` and a corresponding `_test.yaml` file. Scenarios cover things like basic workload configuration, multiple containers, ingress and gateway setups, security contexts, preview environments, and so on.
+- **Scenario tests** verify that a given set of values renders the expected resources. Each scenario has its own values file under `tests/values/` and a corresponding `_test.yaml` file. Scenarios cover things like basic workload configuration, multiple containers, ingress and gateway setups, security contexts, preview environments, and so on. Describe scenarios in values files rather than inline `set:` blocks so they stay easy to find and reuse; both suites and individual test cases accept a `values:` list.
 - **Snapshot tests** capture the full rendered output of a scenario and store it in `tests/__snapshot__/`. They serve as a regression baseline: if a change unexpectedly alters rendered output, the snapshot diff surfaces it.
 - **Schema validation tests** verify that the JSON schema correctly rejects invalid input by asserting that specific bad values cause a render failure.
 
