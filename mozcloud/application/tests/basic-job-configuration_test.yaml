@@ -317,6 +317,29 @@ tests:
           path: $[?(@.kind == "Job")].metadata.name
           value: test-postdeployment-job
 
+  - it: Job scheduling fields set to null render as if unset
+    template: task/job.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-job-configuration.yaml
+      - values/job-scheduling-cleared-configuration.yaml
+    asserts:
+      - notExists:
+          path: spec.template.spec.nodeSelector
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      - notExists:
+          path: spec.template.spec.tolerations
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+      - notExists:
+          path: spec.template.spec.topologySpreadConstraints
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-predeployment-job
+
   - it: Job labels reach the pods, annotations stay on the Job
     template: task/job.yaml
     values:

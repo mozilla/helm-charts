@@ -1,0 +1,12 @@
+---
+# Overlay on values/basic-job-configuration.yaml: clears every pod scheduling
+# field with null, which is how a tenant drops a node pool pin that only some
+# environments have. Not layered on job-scheduling-configuration.yaml because
+# helm-unittest coalesces tables and refuses to replace a map with a non-map,
+# unlike `helm template -f`, where the later null wins.
+tasks:
+  jobs:
+    test-predeployment-job:
+      nodeSelector: null
+      tolerations: null
+      topologySpreadConstraints: null

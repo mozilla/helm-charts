@@ -459,7 +459,10 @@
             "default": true
           },
           "affinity": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "Pod affinity rules (nodeAffinity, podAffinity, podAntiAffinity)"
           },
           "annotations": {
@@ -473,14 +476,20 @@
             "type": "string"
           },
           "nodeSelector": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "Node label selectors for pod scheduling",
             "additionalProperties": {
               "type": "string"
             }
           },
           "tolerations": {
-            "type": "array",
+            "type": [
+              "array",
+              "null"
+            ],
             "description": "Pod tolerations for tainted nodes",
             "items": {
               "type": "object",
@@ -513,7 +522,10 @@
             }
           },
           "topologySpreadConstraints": {
-            "type": "array",
+            "type": [
+              "array",
+              "null"
+            ],
             "description": "Topology spread constraints for pod distribution across nodes/zones",
             "items": {
               "type": "object"
@@ -2382,7 +2394,10 @@
           "$ref": "#/$defs/gcsFuseSidecar"
         },
         "affinity": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "description": "Pod affinity rules (nodeAffinity, podAffinity, podAntiAffinity)"
         },
         "annotations": {
@@ -2410,7 +2425,10 @@
           }
         },
         "nodeSelector": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "description": "Node label selectors for pod scheduling",
           "additionalProperties": {
             "type": "string"
@@ -2442,7 +2460,10 @@
           "type": "boolean"
         },
         "tolerations": {
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "description": "Pod tolerations for tainted nodes",
           "items": {
             "type": "object",
@@ -2475,7 +2496,10 @@
           }
         },
         "topologySpreadConstraints": {
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "description": "Topology spread constraints for pod distribution across nodes/zones",
           "items": {
             "type": "object"
