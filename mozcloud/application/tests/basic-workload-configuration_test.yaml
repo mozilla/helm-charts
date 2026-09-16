@@ -702,3 +702,48 @@ tests:
       # tcpSocket would render a probe that quietly ignores them.
       - failedTemplate:
           errorPattern: healthCheck/liveness/httpHeaders
+
+  - it: Workload renders every pod scheduling field when it is configured
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/workload-scheduling-configuration.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            tenant: test-service
+      - exists:
+          path: spec.template.spec.affinity.nodeAffinity
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: tenant
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].maxSkew
+          value: 1
+
+  - it: Workload scheduling fields cleared with null render as if unset
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/workload-scheduling-configuration.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-worker-exec
+    asserts:
+      # null has to validate and then be dropped. An empty map cannot do this
+      # job: Helm deep-merges maps, so affinity: {} leaves the inherited rules
+      # in place, which is the trap this guards against.
+      - notExists:
+          path: spec.template.spec.nodeSelector
+      - notExists:
+          path: spec.template.spec.affinity
+      - notExists:
+          path: spec.template.spec.tolerations
+      - notExists:
+          path: spec.template.spec.topologySpreadConstraints

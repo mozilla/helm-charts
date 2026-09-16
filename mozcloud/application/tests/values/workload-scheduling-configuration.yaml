@@ -1,0 +1,35 @@
+---
+# Overlay on values/basic-configuration.yaml: test-service sets every pod
+# scheduling field, test-worker-exec clears each one with null. Clearing is how
+# a tenant drops a node pool pin that only some environments have, and Helm
+# keeps the null instead of deleting the key when it merges -f files.
+workloads:
+  test-service:
+    nodeSelector:
+      tenant: test-service
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: tenant
+                  operator: In
+                  values: ["test-service"]
+    tolerations:
+      - key: tenant
+        operator: Equal
+        value: test-service
+        effect: NoSchedule
+    topologySpreadConstraints:
+      - maxSkew: 1
+        topologyKey: topology.kubernetes.io/zone
+        whenUnsatisfiable: ScheduleAnyway
+        labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: test-chart
+
+  test-worker-exec:
+    nodeSelector: null
+    affinity: null
+    tolerations: null
+    topologySpreadConstraints: null
