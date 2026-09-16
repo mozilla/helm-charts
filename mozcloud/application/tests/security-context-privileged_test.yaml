@@ -1,0 +1,60 @@
+---
+suite: "mozcloud: Privileged init container security context"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/security-context-privileged.yaml
+templates:
+  - workload/deployment.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Privileged init container omits allowPrivilegeEscalation and the capability drop
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].securityContext
+          value:
+            privileged: true
+            runAsUser: 0
+            runAsGroup: 0
+            seccompProfile:
+              type: RuntimeDefault
+      # The API server rejects privileged=true alongside
+      # allowPrivilegeEscalation=false, so neither it nor the contradictory
+      # capability drop list may be emitted.
+      - notExists:
+          path: spec.template.spec.initContainers[0].securityContext.allowPrivilegeEscalation
+      - notExists:
+          path: spec.template.spec.initContainers[0].securityContext.capabilities
+
+  - it: Non-privileged app container keeps the restricted context
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            runAsUser: 11000
+            runAsGroup: 12000
+            seccompProfile:
+              type: RuntimeDefault
