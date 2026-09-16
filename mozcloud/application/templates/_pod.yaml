@@ -148,6 +148,11 @@ CPU resources can only be integers/floats for an entire CPU or millicpu (m)
     {{- $_ := set $resources.limits "ephemeral-storage" (index $requests "ephemeral-storage") -}}
   {{- end -}}
 {{- end -}}
+{{- range $name, $quantity := omit $resources.requests "cpu" "memory" "ephemeral-storage" -}}
+  {{- if not (index $resources.limits $name) -}}
+    {{- $_ := set $resources.limits $name $quantity -}}
+  {{- end -}}
+{{- end -}}
 {{- /* Return resources */ -}}
 {{- $resources | toYaml }}
 {{- end -}}
