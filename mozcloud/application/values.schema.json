@@ -2164,6 +2164,11 @@
             },
             "addCapabilities": {
               "type": "array"
+            },
+            "privileged": {
+              "description": "Run the container in privileged mode (maps to securityContext.privileged). Defaults to false. Intended for init containers that must mutate kernel state the declarative path cannot reach - e.g. writing unsafe sysctls via `sysctl -w` when the target node pool's kubelet does not list them in --allowed-unsafe-sysctls. Prefer workloads.<name>.security.sysctls where the sysctl is safe or the pool is allowlisted. Requires the target namespace to permit privileged pods via the 'privileged' Pod Security Standard. When true, allowPrivilegeEscalation and the capability drop list are omitted, since the API server rejects privileged=true with allowPrivilegeEscalation=false.",
+              "type": "boolean",
+              "default": false
             }
           }
         },
@@ -2627,7 +2632,7 @@
           ]
         },
         "sysctls": {
-          "description": "List of pod-level sysctl entries applied via securityContext.sysctls. Non-safe sysctls (e.g. net.ipv4.ip_local_port_range) require the pod's namespace to allow them via the 'privileged' Pod Security Standard.",
+          "description": "List of pod-level sysctl entries applied via securityContext.sysctls. Safe sysctls (e.g. net.ipv4.ip_local_port_range, and since k8s 1.29 the net.ipv4.tcp_keepalive_* family) need nothing extra. Unsafe sysctls (e.g. net.ipv4.tcp_max_syn_backlog, net.ipv4.tcp_max_tw_buckets, net.ipv4.tcp_retries2) are gated twice: the pod's namespace must permit them via the 'privileged' Pod Security Standard, AND the kubelet on the target node pool must list them in --allowed-unsafe-sysctls. A privileged namespace alone only lets the pod declare the sysctl; without the kubelet allowlist the pod is rejected with reason SysctlForbidden. Where the pool cannot be allowlisted, an init container with security.privileged can set them via `sysctl -w` instead.",
           "type": "array",
           "items": {
             "type": "object",
