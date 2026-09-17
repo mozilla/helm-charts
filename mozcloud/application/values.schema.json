@@ -400,6 +400,11 @@
               }
             ]
           },
+          "nameOverride": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Full resource name, replacing the default '{app_code}-{key}'. Managed Prometheus derives the 'job' label from it, so an override keeps existing queries working when a workload moves onto this chart."
+          },
           "port": {
             "description": "Port name or number to scrape. Required when using match.labels; optional when using match.workload with a single-container workload.",
             "oneOf": [

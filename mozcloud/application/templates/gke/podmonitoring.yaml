@@ -67,7 +67,7 @@
 apiVersion: monitoring.googleapis.com/v1
 kind: PodMonitoring
 metadata:
-  name: {{ $labelParams.app_code }}-{{ $name }}
+  name: {{ default (printf "%s-%s" $labelParams.app_code $name) $config.nameOverride }}
   labels:
     {{- toYaml $resourceLabels | nindent 4 }}
 spec:

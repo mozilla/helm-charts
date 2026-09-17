@@ -1000,6 +1000,10 @@ tasks:
 #
 #   match.labels    — explicit pod selector labels; port is required.
 #
+# Entries render as `{app_code}-{key}` unless `nameOverride` sets the full name.
+# Managed Prometheus derives the `job` label from it, so an override keeps
+# existing queries working.
+#
 # Example — workload managed by this chart:
 #
 #   podMonitorings:
@@ -1028,6 +1032,14 @@ tasks:
 #       port: 9116
 #       path: /metrics
 #       interval: 60s
+#
+# Example — keeping the job label a workload's existing queries use:
+#
+#   podMonitorings:
+#     legacy-metrics:
+#       match:
+#         workload: my-app
+#       nameOverride: my-app-legacy
 podMonitorings: {}
 
 # DEPRECATED: use podMonitorings instead. Retained for backwards compatibility.
