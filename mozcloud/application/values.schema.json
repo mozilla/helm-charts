@@ -101,6 +101,25 @@
         }
       }
     },
+    "experimental": {
+      "type": "object",
+      "description": "Opt-in gates for experimental, unsupported chart features.",
+      "additionalProperties": false,
+      "properties": {
+        "tplEnabled": {
+          "type": "object",
+          "description": "Enables embedded Helm templates (tpl) in values for specific resource types.",
+          "additionalProperties": false,
+          "properties": {
+            "hosts": {
+              "description": "Whether host domains may embed Helm template expressions. Defaults to false.",
+              "type": "boolean",
+              "default": false
+            }
+          }
+        }
+      }
+    },
     "externalSecrets": {
       "type": "object",
       "properties": {

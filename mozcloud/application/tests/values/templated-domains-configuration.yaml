@@ -1,4 +1,8 @@
 ---
+experimental:
+  tplEnabled:
+    hosts: true
+
 # A base domain defined once and referenced by every host below.
 global:
   hostname: test-domain.com

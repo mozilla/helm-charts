@@ -26,3 +26,11 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "A referenced value is likely undefined or misspelled"
+
+  - it: Fails when a domain template is used without opting in
+    template: ingress/ingress.yaml
+    set:
+      experimental.tplEnabled.hosts: false
+    asserts:
+      - failedTemplate:
+          errorPattern: "templated domains are opt-in"

@@ -117,6 +117,30 @@ preview:
 #         ORIGIN: "https://{{ .Values.global.hostname }}/"
 configMaps: {}
 
+# EXPERIMENTAL: Opt-in gates for embedded Helm templates (tpl) in values.
+#
+# hosts: Allows the domains under workloads.*.hosts.*.domains to embed Helm
+#        template expressions, so a shared base domain can live in one value
+#        instead of being hardcoded per host. Expressions may only reference
+#        .Values, .Chart, and .Release; the lookup, env, expandenv, and
+#        getHostByName functions are rejected.
+#
+# Example:
+#
+#   experimental:
+#     tplEnabled:
+#       hosts: true
+#
+#   workloads:
+#     my-app:
+#       hosts:
+#         default:
+#           domains:
+#             - 'api.{{ .Values.global.hostname }}'
+experimental:
+  tplEnabled:
+    hosts: false
+
 # External secrets to sync from Google Secret Manager (GSM) into Kubernetes
 # secrets. Each entry here creates an ExternalSecret resource that produces a
 # Kubernetes secret. The key name (e.g. "kubernetes-secret-name") becomes the
@@ -1577,9 +1601,8 @@ workloads:
       default:
         # A list of domains to use for each host.
         #
-        # Domains are rendered via the mozcloud.renderDomain helper, so they
-        # may reference .Values, .Chart, and .Release (e.g.
-        # "api.{{ .Values.global.hostname }}").
+        # When .Values.experimental.tplEnabled.hosts is true, these may embed
+        # Helm template expressions (e.g. "api.{{ .Values.global.hostname }}").
         domains:
           - example.com
 

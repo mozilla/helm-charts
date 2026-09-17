@@ -155,6 +155,10 @@ Returns:
 Renders a single host domain that may contain Helm template expressions via
 tpl, so domains can reference values instead of being hardcoded per host.
 
+Opt-in via .Values.experimental.tplEnabled.hosts; when disabled a domain
+containing a template expression fails rather than rendering an invalid
+hostname.
+
 Context passed is .Values, .Chart and .Release. The functions lookup, env, expandenv, and 
 getHostByName are rejected, mirroring the mozcloud.configMap.formatter.renderTpl blocklist.
 
@@ -177,15 +181,23 @@ Returns:
        permitted. */ -}}
 {{- $actionRegexp := `{{-?\s*[^}]+}}` -}}
 {{- $blockRegexp := `(^|[^\w.])(lookup|env|expandenv|getHostByName)\b` -}}
-{{- range $_, $action := regexFindAll $actionRegexp $domain -1 -}}
-  {{- if regexMatch $blockRegexp $action -}}
-    {{- fail (printf "hosts.%s.domains: domain template %q uses a blocked function; lookup, env, expandenv, and getHostByName are not permitted." $host $domain) -}}
+{{- $actions := regexFindAll $actionRegexp $domain -1 -}}
+{{- if not ((($context.Values).experimental).tplEnabled).hosts -}}
+  {{- if $actions -}}
+    {{- fail (printf "hosts.%s.domains: domain %q contains a template expression, but templated domains are opt-in. Set experimental.tplEnabled.hosts to true to enable them." $host $domain) -}}
   {{- end -}}
+  {{- $domain -}}
+{{- else -}}
+  {{- range $_, $action := $actions -}}
+    {{- if regexMatch $blockRegexp $action -}}
+      {{- fail (printf "hosts.%s.domains: domain template %q uses a blocked function; lookup, env, expandenv, and getHostByName are not permitted." $host $domain) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $allowed := dict "Values" $context.Values "Chart" $context.Chart "Release" $context.Release -}}
+  {{- $rendered := tpl $domain $allowed -}}
+  {{- if or (not $rendered) (contains "<no value>" $rendered) (regexMatch `(^\.)|(\.\.)|(\.$)` $rendered) -}}
+    {{- fail (printf "hosts.%s.domains: domain template %q rendered to %q. A referenced value is likely undefined or misspelled." $host $domain $rendered) -}}
+  {{- end -}}
+  {{- $rendered -}}
 {{- end -}}
-{{- $allowed := dict "Values" $context.Values "Chart" $context.Chart "Release" $context.Release -}}
-{{- $rendered := tpl $domain $allowed -}}
-{{- if or (not $rendered) (contains "<no value>" $rendered) (regexMatch `(^\.)|(\.\.)|(\.$)` $rendered) -}}
-  {{- fail (printf "hosts.%s.domains: domain template %q rendered to %q. A referenced value is likely undefined or misspelled." $host $domain $rendered) -}}
-{{- end -}}
-{{- $rendered -}}
 {{- end -}}
