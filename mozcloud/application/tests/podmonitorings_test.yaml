@@ -19,7 +19,7 @@ tests:
   - it: match.labels renders PodMonitoring with provided selector and required port
     asserts:
       - hasDocuments:
-          count: 2
+          count: 3
       - equal:
           path: metadata.name
           value: mozcloud-test-telegraf
@@ -117,3 +117,15 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "Remove telegraf.enabled and configure podMonitorings.telegraf instead"
+
+  # The name carries the Managed Prometheus "job" label, so it has to be
+  # settable for a workload whose existing queries already use another value.
+  # The sibling entries in the values file cover the generated name.
+  - it: nameOverride replaces the generated resource name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: legacy-job-name
+        documentSelector:
+          path: spec.selector.matchLabels["app.kubernetes.io/name"]
+          value: legacy-exporter
