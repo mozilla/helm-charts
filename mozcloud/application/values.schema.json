@@ -2110,6 +2110,11 @@
         "resources": {
           "type": "object",
           "additionalProperties": false,
+          "patternProperties": {
+            "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)+/[A-Za-z0-9]([-A-Za-z0-9_.]*[A-Za-z0-9])?$": {
+              "$ref": "#/$defs/extendedResourceQuantity"
+            }
+          },
           "properties": {
             "cpu": {
               "type": "string",
@@ -2131,7 +2136,12 @@
             "limits": {
               "type": "object",
               "additionalProperties": false,
-              "description": "Optional explicit container resource limits. If unset, limits default to 2x requests for cpu and memory.",
+              "description": "Optional explicit container resource limits. If unset, limits default to 2x requests for cpu and memory, and an extended resource request is mirrored rather than doubled.",
+              "patternProperties": {
+                "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)+/[A-Za-z0-9]([-A-Za-z0-9_.]*[A-Za-z0-9])?$": {
+                  "$ref": "#/$defs/extendedResourceQuantity"
+                }
+              },
               "properties": {
                 "cpu": {
                   "type": "string",
@@ -2398,6 +2408,19 @@
       },
       "required": [
         "schedule"
+      ]
+    },
+    "extendedResourceQuantity": {
+      "description": "Quantity for an extended resource such as nvidia.com/gpu. The key must be domain-qualified (<domain>/<name>), so a typo in cpu or memory is not mistaken for a device-plugin resource. Whole units only: Kubernetes requires request and limit to be equal, so a request is mirrored to the limit rather than doubled.",
+      "anyOf": [
+        {
+          "type": "string",
+          "pattern": "^\\d+$"
+        },
+        {
+          "type": "integer",
+          "minimum": 0
+        }
       ]
     },
     "job": {

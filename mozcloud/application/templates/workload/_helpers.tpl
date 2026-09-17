@@ -322,11 +322,7 @@ Returns:
   {{- end }}
   {{- end }}
   resources:
-    {{- $resourceParams := dict "requests" (dict
-      "cpu" $containerConfig.resources.cpu
-      "memory" $containerConfig.resources.memory
-      "ephemeral-storage" (index $containerConfig.resources "ephemeral-storage"))
-    -}}
+    {{- $resourceParams := dict "requests" (omit $containerConfig.resources "limits") -}}
     {{- if $containerConfig.resources.limits -}}
       {{- $_ := set $resourceParams "limits" $containerConfig.resources.limits -}}
     {{- end -}}

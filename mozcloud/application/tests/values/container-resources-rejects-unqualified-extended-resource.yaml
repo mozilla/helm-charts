@@ -1,0 +1,15 @@
+---
+workloads:
+  test-service:
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+        resources:
+          cpu: 100m
+          memory: 150Mi
+          # Not domain-qualified, so it must not pass as an extended resource.
+          # Without that guard a typo in "cpu" or "memory" would be forwarded
+          # to the pod spec as a device plugin resource instead of failing.
+          nvidia-gpu: "1"

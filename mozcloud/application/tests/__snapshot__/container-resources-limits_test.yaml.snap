@@ -74,9 +74,11 @@ Configuration matches entire snapshot:
                 limits:
                   cpu: 1000m
                   memory: 256Mi
+                  nvidia.com/gpu: "1"
                 requests:
                   cpu: 100m
                   memory: 150Mi
+                  nvidia.com/gpu: "1"
               securityContext:
                 allowPrivilegeEscalation: false
                 capabilities:
@@ -115,6 +117,7 @@ Configuration matches entire snapshot:
                 limits:
                   cpu: 100m
                   memory: 256Mi
+                  nvidia.com/gpu: 2
                 requests:
                   cpu: 50m
                   memory: 128Mi
