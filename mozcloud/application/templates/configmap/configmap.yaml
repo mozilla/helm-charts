@@ -25,8 +25,8 @@ metadata:
     {{- $annotations | toYaml | nindent 4 }}
   {{- end }}
 data:
-  {{- range $key, $value := $config.data }}
   {{- $enabled := or $tplEnabled $config.tplEnabled }}
+  {{- range $key, $value := $config.data }}
   {{- $field := printf "configMaps.%s.data.%s" $name $key }}
   {{- $params = dict "value" $value "context" $context "enabled" $enabled "field" $field }}
   {{ $key }}: {{ include "mozcloud.renderTpl" $params | quote }}

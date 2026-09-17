@@ -106,8 +106,9 @@ preview:
 # Enable this for every ConfigMap with experimental.tplEnabled.configMaps, or
 # for a single ConfigMap by setting "tplEnabled: true" in the configMap object.
 # When enabled you can embed simple helm templates into the value strings of
-# ConfigMap data. Templates are restricted to direct access of `.Values`,
-# `.Chart`, and `.Release`.
+# ConfigMap data, with access to the usual chart context (`.Values`, `.Chart`,
+# `.Release`, `.Files`). Values without templates are emitted as-is, so a
+# config file containing literal braces does not need this disabled.
 #
 # Example:
 #
@@ -119,16 +120,17 @@ preview:
 configMaps: {}
 
 # EXPERIMENTAL: Opt-in gates for embedded Helm templates (tpl) in values.
-# Expressions may only reference .Values, .Chart, and .Release; the lookup,
-# env, expandenv, and getHostByName functions are rejected.
+# The lookup, env, expandenv, and getHostByName functions are rejected.
 #
 # configMaps: Allows the values under configMaps.*.data to embed Helm template
-#             expressions. A single ConfigMap can opt in on its own instead,
-#             via configMaps.<name>.tplEnabled.
+#             expressions, with access to the usual chart context. A single
+#             ConfigMap can opt in on its own instead, via
+#             configMaps.<name>.tplEnabled.
 #
 # hosts:      Allows the domains under workloads.*.hosts.*.domains to embed
 #             Helm template expressions, so a shared base domain can live in
-#             one value instead of being hardcoded per host.
+#             one value instead of being hardcoded per host. Expressions may
+#             only reference .Values, .Chart, and .Release.
 #
 # Example:
 #

@@ -67,12 +67,32 @@ tests:
           path: metadata.name
           value: test-global-tpl-configmap
 
-  - it: Fails when a template expression is used without opting in
+  - it: Values are emitted as-is when the ConfigMap has not opted in
     set:
       configMaps:
         test-no-optin-configmap:
           data:
-            RESOLVED_VALUE: "{{ .Values.global.mozcloud.app_code }}"
+            LITERAL_BRACES: "{{ .Values.global.mozcloud.app_code }}"
     asserts:
-      - failedTemplate:
-          errorPattern: "templated values are opt-in"
+      - equal:
+          path: data.LITERAL_BRACES
+          value: "{{ .Values.global.mozcloud.app_code }}"
+        documentSelector:
+          path: metadata.name
+          value: test-no-optin-configmap
+
+  - it: Expressions reach the wider chart context, not just .Values
+    set:
+      configMaps:
+        test-tpl-configmap:
+          tplEnabled: true
+          data:
+            CHART_NAME: "{{ .Chart.Name }}"
+            KUBE_MAJOR: "{{ .Capabilities.KubeVersion.Major }}"
+    asserts:
+      - equal:
+          path: data.CHART_NAME
+          value: "mozcloud"
+      - equal:
+          path: data.KUBE_MAJOR
+          value: "1"

@@ -33,4 +33,4 @@ tests:
       experimental.tplEnabled.hosts: false
     asserts:
       - failedTemplate:
-          errorPattern: "templated values are opt-in"
+          errorPattern: "templated domains are opt-in"
