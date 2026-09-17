@@ -51,3 +51,28 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "uses a blocked function"
+
+  - it: The chart-wide gate renders ConfigMaps that do not opt in individually
+    set:
+      experimental.tplEnabled.configMaps: true
+      configMaps:
+        test-global-tpl-configmap:
+          data:
+            RESOLVED_VALUE: "{{ .Values.global.mozcloud.app_code }}"
+    asserts:
+      - equal:
+          path: data.RESOLVED_VALUE
+          value: "mozcloud-test"
+        documentSelector:
+          path: metadata.name
+          value: test-global-tpl-configmap
+
+  - it: Fails when a template expression is used without opting in
+    set:
+      configMaps:
+        test-no-optin-configmap:
+          data:
+            RESOLVED_VALUE: "{{ .Values.global.mozcloud.app_code }}"
+    asserts:
+      - failedTemplate:
+          errorPattern: "templated values are opt-in"

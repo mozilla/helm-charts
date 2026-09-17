@@ -4,9 +4,7 @@
 {{- $params := dict "configMaps" .Values.configMaps "context" $context }}
 {{- /* Transform configMap names and data for preview environments, if enabled */}}
 {{- $configMaps := include "mozcloud.configMap.formatter.preview" $params | fromYaml }}
-{{- /* Execute embedded templates if enabled */}}
-{{- $_ := set $params "configMaps" $configMaps }}
-{{- $configMaps = include "mozcloud.configMap.formatter.tpl" $params | fromYaml }}
+{{- $tplEnabled := ((.Values.experimental).tplEnabled).configMaps }}
 {{- if $configMaps }}
 {{- $_ := set $context "component_code" "configmap" -}}
 {{- range $name, $config := $configMaps }}
@@ -28,7 +26,10 @@ metadata:
   {{- end }}
 data:
   {{- range $key, $value := $config.data }}
-  {{ $key }}: {{ $value | quote }}
+  {{- $enabled := or $tplEnabled $config.tplEnabled }}
+  {{- $field := printf "configMaps.%s.data.%s" $name $key }}
+  {{- $params = dict "value" $value "context" $context "enabled" $enabled "field" $field }}
+  {{ $key }}: {{ include "mozcloud.renderTpl" $params | quote }}
   {{- end }}
 {{- end }}
 {{- end }}

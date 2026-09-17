@@ -111,6 +111,11 @@
           "description": "Enables embedded Helm templates (tpl) in values for specific resource types.",
           "additionalProperties": false,
           "properties": {
+            "configMaps": {
+              "description": "Whether all ConfigMap data values may embed Helm template expressions. Defaults to false.",
+              "type": "boolean",
+              "default": false
+            },
             "hosts": {
               "description": "Whether host domains may embed Helm template expressions. Defaults to false.",
               "type": "boolean",

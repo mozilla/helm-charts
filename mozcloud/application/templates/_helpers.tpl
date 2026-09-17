@@ -152,20 +152,60 @@ Returns:
 
 
 {{- /*
-Renders a single host domain that may contain Helm template expressions via
-tpl, so domains can reference values instead of being hardcoded per host.
+Renders a value that may contain Helm template expressions via tpl, so values
+can reference other values instead of being duplicated per environment.
 
-Opt-in via .Values.experimental.tplEnabled.hosts; when disabled a domain
-containing a template expression fails rather than rendering an invalid
-hostname.
+Callers own the opt-in gate (see .Values.experimental.tplEnabled). When
+disabled, a value containing a template expression fails rather than emitting
+literal braces.
 
-Context passed is .Values, .Chart and .Release. The functions lookup, env, expandenv, and 
-getHostByName are rejected, mirroring the mozcloud.configMap.formatter.renderTpl blocklist.
+Params:
+  value   (string): (required) The value, which may contain tpl expressions.
+  context (dict):   (required) The Helm root context. Only .Values, .Chart,
+                    and .Release are exposed to the rendered expression.
+  enabled (bool):   (required) Whether tpl rendering has been opted in to.
+  field   (string): (required) Dotted values path, used only in error messages.
+
+Returns:
+  (string) The rendered value.
+*/ -}}
+{{- define "mozcloud.renderTpl" -}}
+{{- $value := toString .value -}}
+{{- $context := .context -}}
+{{- $field := required "mozcloud.renderTpl: field is required" .field -}}
+{{- /* Only inspect template actions so a literal value that merely contains a
+       blocked word (e.g. "stage.env.example.com") is left alone, and match a
+       blocked name only as a call so a field access like .Values.env is
+       permitted. */ -}}
+{{- $actionRegexp := `{{-?\s*[^}]+}}` -}}
+{{- $blockRegexp := `(^|[^\w.])(lookup|env|expandenv|getHostByName)\b` -}}
+{{- $actions := regexFindAll $actionRegexp $value -1 -}}
+{{- if not .enabled -}}
+  {{- if $actions -}}
+    {{- fail (printf "%s: %q contains a template expression, but templated values are opt-in. Enable them under experimental.tplEnabled." $field $value) -}}
+  {{- end -}}
+  {{- $value -}}
+{{- else -}}
+  {{- range $_, $action := $actions -}}
+    {{- if regexMatch $blockRegexp $action -}}
+      {{- fail (printf "%s: template %q uses a blocked function; lookup, env, expandenv, and getHostByName are not permitted." $field $value) -}}
+    {{- end -}}
+  {{- end -}}
+  {{- $allowed := dict "Values" $context.Values "Chart" $context.Chart "Release" $context.Release -}}
+  {{- tpl $value $allowed -}}
+{{- end -}}
+{{- end -}}
+
+
+{{- /*
+Renders a single host domain via mozcloud.renderTpl, then rejects results that
+are not plausible hostnames.
+
+Opt-in via .Values.experimental.tplEnabled.hosts.
 
 Params:
   domain  (string): (required) The domain, which may contain tpl expressions.
-  context (dict):   (required) The Helm root context. Only .Values, .Chart,
-                    and .Release are exposed to the rendered expression.
+  context (dict):   (required) The Helm root context.
   host    (string): (required) The host name, used only in error messages.
 
 Returns:
@@ -175,29 +215,16 @@ Returns:
 {{- $domain := .domain -}}
 {{- $context := .context -}}
 {{- $host := required "mozcloud.renderDomain: host is required" .host -}}
-{{- /* Only inspect template actions so a literal domain that merely contains a
-       blocked word (e.g. "stage.env.example.com") is left alone, and match a
-       blocked name only as a call so a field access like .Values.env is
-       permitted. */ -}}
-{{- $actionRegexp := `{{-?\s*[^}]+}}` -}}
-{{- $blockRegexp := `(^|[^\w.])(lookup|env|expandenv|getHostByName)\b` -}}
-{{- $actions := regexFindAll $actionRegexp $domain -1 -}}
-{{- if not ((($context.Values).experimental).tplEnabled).hosts -}}
-  {{- if $actions -}}
-    {{- fail (printf "hosts.%s.domains: domain %q contains a template expression, but templated domains are opt-in. Set experimental.tplEnabled.hosts to true to enable them." $host $domain) -}}
-  {{- end -}}
-  {{- $domain -}}
-{{- else -}}
-  {{- range $_, $action := $actions -}}
-    {{- if regexMatch $blockRegexp $action -}}
-      {{- fail (printf "hosts.%s.domains: domain template %q uses a blocked function; lookup, env, expandenv, and getHostByName are not permitted." $host $domain) -}}
-    {{- end -}}
-  {{- end -}}
-  {{- $allowed := dict "Values" $context.Values "Chart" $context.Chart "Release" $context.Release -}}
-  {{- $rendered := tpl $domain $allowed -}}
+{{- $field := printf "hosts.%s.domains" $host -}}
+{{- $enabled := ((($context.Values).experimental).tplEnabled).hosts -}}
+{{- $params := dict "value" $domain "context" $context "enabled" $enabled "field" $field -}}
+{{- $rendered := include "mozcloud.renderTpl" $params -}}
+{{- /* A rendered domain never matches its source, so literal domains skip
+       these checks and are left to the API server to validate. */ -}}
+{{- if ne $rendered $domain -}}
   {{- if or (not $rendered) (contains "<no value>" $rendered) (regexMatch `(^\.)|(\.\.)|(\.$)` $rendered) -}}
-    {{- fail (printf "hosts.%s.domains: domain template %q rendered to %q. A referenced value is likely undefined or misspelled." $host $domain $rendered) -}}
+    {{- fail (printf "%s: domain template %q rendered to %q. A referenced value is likely undefined or misspelled." $field $domain $rendered) -}}
   {{- end -}}
-  {{- $rendered -}}
 {{- end -}}
+{{- $rendered -}}
 {{- end -}}
