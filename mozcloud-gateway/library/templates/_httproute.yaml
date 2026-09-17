@@ -41,6 +41,10 @@ spec:
         {{- else }}
         weight: {{ $backend_ref.weight }}
         {{- end }}
+        {{- if $backend_ref.filters }}
+        filters:
+          {{- toYaml $backend_ref.filters | nindent 10 }}
+        {{- end }}
       {{- end }}
       matches:
         {{- if $rule.matches }}

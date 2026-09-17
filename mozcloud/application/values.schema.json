@@ -980,6 +980,14 @@
                                 },
                                 "weight": {
                                   "type": "number"
+                                },
+                                "filters": {
+                                  "description": "Gateway API filters applied to this backendRef only, rendered as spec.rules[].backendRefs[].filters. The payload is typed loosely so any filter type the GatewayClass supports can be expressed; the common case is a responseHeaderModifier marking which backend served the request during a canary.",
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "required": ["type"]
+                                  }
                                 }
                               }
                             }
