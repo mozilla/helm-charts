@@ -32,7 +32,7 @@ spec:
     {{- end }}
     logging:
       enabled: {{ $config.logging.enabled }}
-      sampleRate: {{ $config.logging.sampleRate }}
+      sampleRate: {{ $config.logging.sampleRate | int }}
     {{- if $config.sessionAffinity }}
     sessionAffinity:
       type: {{ $config.sessionAffinity.type }}
