@@ -81,8 +81,9 @@ httpRoutes:
     {{- end }}
       {{/*
       Some tenants might want to pass HTTPRoute rules in from values. A rules Array item
-      has a high number of possible combinations of values, so we currently only want to
-      support weighted backends here (e.g. for Multi-Cluster Scenarios)
+      has a high number of possible combinations of values, so we currently only support
+      weighted backends (e.g. for Multi-Cluster Scenarios), path and header matches, and
+      filters on an individual backendRef. Rule-level filters are not passed through.
       */}}
     rules:
       {{- $rules := (list) -}}
@@ -104,6 +105,9 @@ httpRoutes:
               {{- $_ := set $backendRef "port" (default 8080 $backendRefConfig.port) }}
               {{- if or (eq (toString $backendRefConfig.weight) "0") (gt (int $backendRefConfig.weight) 0) }}
                 {{- $_ := set $backendRef "weight" $backendRefConfig.weight }}
+              {{- end }}
+              {{- if $backendRefConfig.filters }}
+                {{- $_ := set $backendRef "filters" $backendRefConfig.filters }}
               {{- end }}
               {{- $backendRefs = append $backendRefs $backendRef }}
             {{- end }}

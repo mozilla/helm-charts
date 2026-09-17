@@ -186,7 +186,7 @@ Returns:
   stays RuntimeDefault.
 */ -}}
 privileged: true
-{{- else }}
+{{- else -}}
 allowPrivilegeEscalation: false
 capabilities:
   {{- if gt (len (default list .addCapabilities)) 0 }}

@@ -89,3 +89,43 @@ tests:
         documentSelector:
           path: $[?(@.kind == "HTTPRoute")].metadata.name
           value: headers-and-path
+
+  # Filters on a backendRef, rather than on the rule, so the header reflects
+  # whichever backend actually served the request — the shape a canary needs,
+  # where the weights are rewritten while traffic shifts.
+  - it: Per-backendRef filters render on each weighted backend
+    asserts:
+      - contains:
+          path: spec.rules[0].backendRefs
+          content:
+            group: ""
+            kind: Service
+            name: test-service
+            port: 8080
+            weight: 100
+            filters:
+              - type: ResponseHeaderModifier
+                responseHeaderModifier:
+                  set:
+                    - name: X-Canary
+                      value: stable
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: backendref-filters
+      - contains:
+          path: spec.rules[0].backendRefs
+          content:
+            group: ""
+            kind: Service
+            name: test-service-canary
+            port: 8080
+            weight: 0
+            filters:
+              - type: ResponseHeaderModifier
+                responseHeaderModifier:
+                  set:
+                    - name: X-Canary
+                      value: canary
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: backendref-filters
