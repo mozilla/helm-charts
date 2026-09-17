@@ -218,3 +218,60 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "got object, want string"
+  - it: StatefulSet ignores progressDeadlineSeconds
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      # progressDeadlineSeconds is a workload-level key, so it validates against
+      # the schema here — but a StatefulSet has no such field in the API and
+      # would be rejected on apply if the template emitted one.
+      - notExists:
+          path: spec.progressDeadlineSeconds
+
+  - it: StatefulSet caps retained revisions when revisionHistoryLimit is set
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.revisionHistoryLimit: 5
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      # StatefulSets retain ControllerRevisions rather than ReplicaSets, but the
+      # spec field is the same. The unset case needs no case of its own: the
+      # suite snapshot renders the fixture without the field and would fail if it
+      # were ever emitted.
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 5
+  - it: Custom workload labels propagate to StatefulSet and Pod template
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.labels:
+        registry.gke.io/functional-type: AGENT
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+      - equal:
+          path: spec.template.metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+  - it: Custom workload annotations propagate to StatefulSet and Pod template
+    template: workload/statefulset.yaml
+    set:
+      workloads.test-service.annotations:
+        iam.gke.io/spiffe-identity-type: agent-identity
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity
+      - equal:
+          path: spec.template.metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity

@@ -1,0 +1,14 @@
+---
+workloads:
+  test-service:
+    containers:
+      app:
+        healthCheck:
+          liveness:
+            tcpSocket: {}
+          readiness:
+            tcpSocket:
+              port: 9187
+          startup:
+            enabled: true
+            tcpSocket: {}

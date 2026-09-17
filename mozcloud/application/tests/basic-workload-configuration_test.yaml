@@ -354,3 +354,396 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: missing property 'sizeLimit'
+
+  - it: Deployment emits progressDeadlineSeconds only when set
+    template: workload/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 300
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # The field is opt-in. A default here would change the rendered manifest
+      # of every existing workload using this chart.
+      - notExists:
+          path: spec.progressDeadlineSeconds
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+
+  - it: Deployment emits revisionHistoryLimit only when set, explicit zero included
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.revisionHistoryLimit: 3
+      workloads.test-worker-exec.revisionHistoryLimit: 0
+    asserts:
+      # The field is opt-in. A default here would change the rendered manifest of
+      # every existing workload using this chart. That case needs no case of its
+      # own: the suite snapshot renders the fixture without the field and would
+      # fail if it were ever emitted.
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 3
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # 0 keeps no revisions at all, so there is nothing left to roll back to.
+      # That is a deliberate choice rather than "unset", which is why emission is
+      # gated on the key being present rather than on truthiness.
+      - exists:
+          path: spec.revisionHistoryLimit
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 0
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+
+  - it: Deployment emits a startupProbe only when enabled, httpGet and exec
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/startup-probe-configuration.yaml
+    asserts:
+      # Enabling the probe alone yields a usable 5 minute startup budget
+      # (periodSeconds 10 * failureThreshold 30) against the container's own
+      # primary port, without repeating the readiness configuration.
+      - isSubset:
+          path: spec.template.spec.containers[1].startupProbe
+          content:
+            failureThreshold: 30
+            httpGet:
+              path: /__lbheartbeat__
+              port: app
+            initialDelaySeconds: 0
+            periodSeconds: 10
+            timeoutSeconds: 5
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Kubernetes requires successThreshold to be 1 for startup probes, so the
+      # field is not offered and must never be rendered.
+      - notExists:
+          path: spec.template.spec.containers[1].startupProbe.successThreshold
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # The startup timings are independent of readiness. test-worker-exec sets
+      # neither, so it keeps the startup defaults above while its readiness probe
+      # continues to use the fixture's own values.
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.exec.command
+          value: ["python", "warmup.py"]
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      - notExists:
+          path: spec.template.spec.containers[0].startupProbe.httpGet
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      - equal:
+          path: spec.template.spec.containers[0].startupProbe.failureThreshold
+          value: 30
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      # The probe is opt-in, so the nginx sidecar — which is not configurable
+      # through healthCheck — never gets one. The absent-by-default case needs no
+      # case of its own: the suite snapshot renders both fixtures without the
+      # field and would fail if it were ever emitted.
+      - notExists:
+          path: spec.template.spec.containers[0].startupProbe
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+
+  - it: Custom workload labels propagate to Deployment and Pod template
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/workload-labels-configuration.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+      - equal:
+          path: spec.template.metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+
+  - it: Custom workload labels cannot overwrite MozCloud-managed labels
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/protected-workload-labels-configuration.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      # mozcloud.labels always merges the MozCloud-managed values (from
+      # global.mozcloud) on top of any user-provided base, so these keys
+      # cannot be overridden through workloads.<name>.labels.
+      - notEqual:
+          path: metadata.labels.app_code
+          value: hacked
+      - notEqual:
+          path: metadata.labels.env_code
+          value: hacked
+
+  - it: Custom workload annotations are accepted by the schema and applied to Deployment and Pod template
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/workload-annotations-configuration.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - notFailedTemplate: {}
+      - equal:
+          path: metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity
+      - equal:
+          path: spec.template.metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity
+
+  - it: Deployment emits rollingUpdate per key, absolute and percentage forms
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/deployment-rolling-update-configuration.yaml
+    asserts:
+      # The tuning is opt-in. The absent case needs no case of its own: the
+      # suite snapshot renders both fixtures with strategy.type alone and would
+      # fail if a rollingUpdate block were ever emitted.
+      - isSubset:
+          path: spec.strategy
+          content:
+            type: RollingUpdate
+            rollingUpdate:
+              maxSurge: 1
+              maxUnavailable: 0
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # 0 means "never drop below the desired count", a deliberate choice rather
+      # than "unset", which is why each key is gated on presence instead of
+      # truthiness.
+      - equal:
+          path: spec.strategy.rollingUpdate.maxUnavailable
+          value: 0
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # Kubernetes takes both fields as IntOrString, so the percentage form has
+      # to survive as a string rather than being coerced to a number.
+      - equal:
+          path: spec.strategy.rollingUpdate.maxSurge
+          value: "25%"
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      # maxSurge alone must not pull in a default sibling: an unset
+      # maxUnavailable stays with the Kubernetes default of 25%.
+      - notExists:
+          path: spec.strategy.rollingUpdate.maxUnavailable
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+
+  - it: Schema rejects rollingUpdate combined with the Recreate strategy
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.strategy: Recreate
+      workloads.test-service.deployment.rollingUpdate.maxSurge: 1
+    asserts:
+      # Kubernetes rejects the combination outright, so the chart must not
+      # accept it and quietly render a Recreate deployment without the tuning.
+      - failedTemplate:
+          errorPattern: rollingUpdate
+
+  - it: Recreate strategy validates against the empty rollingUpdate default
+    template: workload/deployment.yaml
+    set:
+      workloads.default.strategy: Recreate
+    asserts:
+      # values.yaml documents the tuning as an empty rollingUpdate block under
+      # workloads.default, so a chart-wide strategy: Recreate is validated with
+      # that default in place. Constraining the block itself to null would fail
+      # here on the chart's own value, leaving the tenant nothing to remove.
+      - notFailedTemplate: {}
+      - equal:
+          path: spec.strategy.type
+          value: Recreate
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - notExists:
+          path: spec.strategy.rollingUpdate
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+
+  - it: Schema rejects maxSurge and maxUnavailable both being zero
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.deployment.rollingUpdate.maxSurge: 0
+      workloads.test-service.deployment.rollingUpdate.maxUnavailable: 0
+    asserts:
+      # The pair leaves Kubernetes no room to either add or remove a pod, so the
+      # API server rejects it on apply. Nothing earlier in the pipeline catches
+      # it — kubeconform validates the structure only — so without this rule the
+      # manifest renders clean and the rollout fails in the cluster.
+      - failedTemplate:
+          errorPattern: rollingUpdate
+
+  - it: Schema rejects the percentage form of both fields being zero
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.deployment.rollingUpdate.maxSurge: "0%"
+      workloads.test-service.deployment.rollingUpdate.maxUnavailable: "0%"
+    asserts:
+      # Kubernetes resolves a percentage before comparing, so "0%" is the same
+      # zero as 0 and has to be rejected in the same pairing.
+      - failedTemplate:
+          errorPattern: rollingUpdate
+
+  - it: Probes accept a tcpSocket handler, defaulting to the container's port
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/tcp-socket-probe-configuration.yaml
+    asserts:
+      # An empty tcpSocket mapping is the common case — probe the port the
+      # container already declares. It is also the case most easily broken:
+      # an empty mapping is falsey in Go templates, so a truthiness check would
+      # fall through to httpGet and render a probe nobody asked for.
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].livenessProbe.tcpSocket.port
+          value: app
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - notExists:
+          path: spec.template.spec.containers[?(@.name=="app")].livenessProbe.httpGet
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # An explicit port reaches a listener other than the container's own,
+      # which is the reason the field exists at all.
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].readinessProbe.tcpSocket.port
+          value: 9187
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].startupProbe.tcpSocket.port
+          value: app
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      # The exec fixture in the same render must be untouched: the three
+      # handlers are branches of one conditional, so a wrong branch order shows
+      # up here before it shows up in a tenant.
+      - exists:
+          path: spec.template.spec.containers[?(@.name=="app")].livenessProbe.exec
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+
+  - it: Schema rejects tcpSocket combined with another handler
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.tcpSocket: {}
+      workloads.test-service.containers.app.healthCheck.liveness.exec.command:
+        - /bin/true
+    asserts:
+      # Kubernetes accepts exactly one handler per probe. Without the rule the
+      # template picks a branch and silently discards the other handler, so the
+      # caller runs a probe they did not configure. The rule is written so the
+      # error names the conflicting field, not just the probe.
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/exec
+
+  - it: Schema rejects tcpSocket combined with path
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.tcpSocket: {}
+      workloads.test-service.containers.app.healthCheck.liveness.path: /healthz
+    asserts:
+      # path renders an httpGet handler, so this is the same conflict as exec
+      # even though path does not look like a handler in the values.
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/path
+
+  - it: Schema rejects tcpSocket combined with httpHeaders
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.tcpSocket: {}
+      workloads.test-service.containers.app.healthCheck.liveness.httpHeaders:
+        - name: X-Probe
+          value: "1"
+    asserts:
+      # httpHeaders only mean anything to httpGet; accepting them next to
+      # tcpSocket would render a probe that quietly ignores them.
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/httpHeaders
+
+  - it: Workload renders every pod scheduling field when it is configured
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/workload-scheduling-configuration.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            tenant: test-service
+      - exists:
+          path: spec.template.spec.affinity.nodeAffinity
+      - equal:
+          path: spec.template.spec.tolerations[0].key
+          value: tenant
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].maxSkew
+          value: 1
+
+  - it: Workload scheduling fields cleared with null render as if unset
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/workload-scheduling-configuration.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-worker-exec
+    asserts:
+      # null has to validate and then be dropped. An empty map cannot do this
+      # job: Helm deep-merges maps, so affinity: {} leaves the inherited rules
+      # in place, which is the trap this guards against.
+      - notExists:
+          path: spec.template.spec.nodeSelector
+      - notExists:
+          path: spec.template.spec.affinity
+      - notExists:
+          path: spec.template.spec.tolerations
+      - notExists:
+          path: spec.template.spec.topologySpreadConstraints

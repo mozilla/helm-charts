@@ -198,3 +198,23 @@ Every test suite must open with a single `Configuration matches entire snapshot`
 **Exception:** test suites whose entire purpose is to verify a template fails (every `it:` uses `failedTemplate` or similar) are exempt — a `matchSnapshot` baseline cannot be rendered when the template fails. These suites should have a clear name indicating they test a failure case.
 
 helm-unittest re-renders the full chart for every `it:` block, so keep the total number of `it:` blocks in a suite small. Group feature-specific assertions under a single `it:` when they share a theme, and use per-assert `template` and `documentSelector` to target different documents within a group. Only split into a new `it:` when the test needs a different `set` / `values` override, or when splitting genuinely clarifies intent.
+
+### Describe scenarios with values files, not inline `set`
+Prefer a named file under `tests/values/` over inline `set:` when expressing a test scenario. Scenarios in values files are easy to find and reuse later; the same configuration buried in a `set:` block inside a test suite is not.
+
+Both the suite and each individual `it:` accept a `values:` list, so a suite can keep a shared baseline while individual cases layer on their own scenario:
+
+```yaml
+values:
+  - values/globals.yaml
+  - values/my-base-scenario.yaml
+tests:
+  - it: Variant behaves differently
+    values:
+      - values/globals.yaml
+      - values/my-variant-scenario.yaml
+```
+
+Per-test `values` files are merged over the suite-level ones rather than replacing them, so a variant file cannot remove a key the base file sets. When a variant needs to drop or contradict part of the base, make it a complete, self-contained scenario file and reduce the suite-level `values` to `globals.yaml`.
+
+`set:` remains the right tool when the point of the test is the absence or malformation of a value, such as omitting a required field to assert a schema validation failure. Writing those into a values file would obscure what is being tested.

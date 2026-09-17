@@ -1,0 +1,18 @@
+---
+# Overlay applied on top of values/basic-cronjob-configuration.yaml. Cron jobs
+# reach the shared job template through jobConfig rather than directly, so the
+# constraints are set there rather than on the cron job itself.
+#
+# test-cronjob-with-deadline and test-cronjob-zero-deadline are deliberately
+# left untouched: they are what pins the gate.
+tasks:
+  cronJobs:
+    test-cronjob:
+      jobConfig:
+        topologySpreadConstraints:
+          - maxSkew: 1
+            topologyKey: topology.kubernetes.io/zone
+            whenUnsatisfiable: ScheduleAnyway
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: test-chart

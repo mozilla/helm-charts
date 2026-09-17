@@ -10,6 +10,8 @@ spec:
   mode: deployment
   terminationGracePeriodSeconds: 600
   hostNetwork: false
+  networkPolicy:
+    enabled: false
   {{- with .Values.collectors.gateway.securityContext }}
   securityContext: {{ toYaml . | nindent 4 }}
   {{- end }}

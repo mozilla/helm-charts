@@ -11,3 +11,26 @@ tasks:
               tag: latest
             command: ["sh", "-c"]
             args: ["echo", "foo", "bar"]
+    test-cronjob-with-deadline:
+      schedule: '0 0 * * *'
+      startingDeadlineSeconds: 600
+      jobConfig:
+        containers:
+          job:
+            image:
+              repository: test-repo/test-image
+              tag: latest
+            command: ["sh", "-c"]
+            args: ["echo", "foo", "bar"]
+    # An explicit 0 is a valid, meaningful value and must still render.
+    test-cronjob-zero-deadline:
+      schedule: '*/5 * * * *'
+      startingDeadlineSeconds: 0
+      jobConfig:
+        containers:
+          job:
+            image:
+              repository: test-repo/test-image
+              tag: latest
+            command: ["sh", "-c"]
+            args: ["echo", "foo", "bar"]

@@ -91,7 +91,7 @@ Returns:
 {{- end }}
 {{- /* Compute labels for the pod template */}}
 {{- $component := dict "component_code" $config.component }}
-{{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+{{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) "labels" (default dict $config.labels) }}
 {{- $labels := include "mozcloud.labels" $params | fromYaml -}}
 template:
   metadata:
@@ -99,7 +99,7 @@ template:
     {{- $otelEnabled := dig "otel" "enabled" true $config }}
     {{- $otelContainerNames := default list ($config.otel).containers }}
     {{- $otelAutoInstrumentationEnabled := and $otelContainerNames (dig "otel" "autoInstrumentation" "enabled" false $config) (($config.otel).autoInstrumentation).language }}
-    {{- $params = dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) "otel" ($config.otel) "type" "deployment" }}
+    {{- $params = dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) "annotations" (default dict $config.annotations) "otel" ($config.otel) "type" "deployment" }}
     {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
     {{- /* Add checksum annotation for configmaps to trigger rolling updates when configmap changes */}}
     {{- $configMapChecksums := dict }}

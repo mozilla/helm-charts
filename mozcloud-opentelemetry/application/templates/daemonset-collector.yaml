@@ -10,8 +10,13 @@ spec:
   mode: daemonset
   terminationGracePeriodSeconds: 600
   hostNetwork: true
+  networkPolicy:
+    enabled: false
   {{- with .Values.collectors.daemonset.priorityClassName }}
   priorityClassName: {{ . }}
+  {{- end }}
+  {{- with .Values.collectors.daemonset.tolerations }}
+  tolerations: {{ toYaml . | nindent 4 }}
   {{- end }}
   {{- with .Values.collectors.daemonset.securityContext }}
   securityContext: {{ toYaml . | nindent 4 }}

@@ -1,0 +1,20 @@
+---
+workloads:
+  # A replica count alongside autoscaling is still rejected rather than
+  # silently ignored. Accepting null for replicas must not weaken that guard.
+  conflicting-replicas-deployment:
+    component: web
+    autoscaling:
+      enabled: true
+      replicas:
+        min: 2
+        max: 10
+      metrics:
+        - type: cpu
+          threshold: 60
+    replicas: 3
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"

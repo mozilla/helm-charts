@@ -1,6 +1,6 @@
 # mozcloud
 
-![Version: 3.9.1](https://img.shields.io/badge/Version-3.9.1-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 3.20.0](https://img.shields.io/badge/Version-3.20.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Opinionated application chart used to deploy MozCloud Kubernetes resources supporting resources
 
@@ -19,7 +19,7 @@ version: 0.1.0
 type: application
 dependencies:
   - name: mozcloud
-    version: ~3.9.1
+    version: ~3.20.0
     repository: oci://us-west1-docker.pkg.dev/moz-fx-platform-artifacts/mozcloud-charts
 ```
 
@@ -34,7 +34,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 
 | Repository | Name | Version |
 |------------|------|---------|
-| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 2.1.0 |
+| file://../../mozcloud-gateway/library | mozcloud-gateway-lib | 2.2.0 |
 | file://../../mozcloud-ingress/library | mozcloud-ingress-lib | 3.0.2 |
 | file://../../mozcloud-labels/library | mozcloud-labels-lib | 1.0.0 |
 
@@ -63,7 +63,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | preview.httpRoute.gateway.name | string | `"sandbox-high-preview-gateway"` |  |
 | preview.httpRoute.gateway.namespace | string | `"preview-shared-infrastructure"` |  |
 | preview.urlTransformKeys | list | `[]` |  |
-| serviceAccounts | object | `{"default":{"enabled":true}}` | ---------------------------------------------------------------------------- This chart CANNOT create resources in GCP. For this work, you must have already created the following in GCP using Terraform:   - GCP service account   - GCP service account permissions   - Workload Identity configuration  To learn more about creating service accounts in GCP with Workload Identity, review this link: <link>  By default, a service account using the name of your tenant will be created that corresponds to the GCP service account automatically created during the tenant provisioning process. The naming convention is as follows:    gke-<environment>@<gcp_project_id>.iam.serviceaccount.com  Any service accounts created here will be created IN ADDITION to that tenant service account. To disable the default service account, set:  serviceAccounts:   default:     enabled: false  Example and configuration options:  serviceAccounts:   # This is the name of the Kubernetes service account you would like to   # create. To use this service account with your workloads or jobs, reference   # the name you specify here in the `serviceAccounts` sections in container   # configurations.   kubernetes-service-account-name:     # If this service account should map to a service account in GCP, enter     # the details here.     gcpServiceAccount:       # The name of the GCP service account (everything before "@" in the       # email address).       name: ''        # GCP project ID. If not specified, the value automatically set in       # .Values.global.mozcloud.project_id will be used.       #projectId: ''      # A list of image pull secret names to attach to this service account.     # Any pod using this service account will automatically have access to     # these secrets for pulling container images.     #     #   imagePullSecrets:     #     - my-registry-secret     #     - another-registry-secret |
+| serviceAccounts | object | `{"default":{"annotations":{},"enabled":true}}` | ---------------------------------------------------------------------------- This chart CANNOT create resources in GCP. For this work, you must have already created the following in GCP using Terraform:   - GCP service account   - GCP service account permissions   - Workload Identity configuration  To learn more about creating service accounts in GCP with Workload Identity, review this link: <link>  By default, a service account using the name of your tenant will be created that corresponds to the GCP service account automatically created during the tenant provisioning process. The naming convention is as follows:    gke-<environment>@<gcp_project_id>.iam.serviceaccount.com  Any service accounts created here will be created IN ADDITION to that tenant service account. To disable the default service account, set:  serviceAccounts:   default:     enabled: false  Example and configuration options:  serviceAccounts:   # This is the name of the Kubernetes service account you would like to   # create. To use this service account with your workloads or jobs, reference   # the name you specify here in the `serviceAccounts` sections in container   # configurations.   kubernetes-service-account-name:     # If this service account should map to a service account in GCP, enter     # the details here.     gcpServiceAccount:       # The name of the GCP service account (everything before "@" in the       # email address).       name: ''        # GCP project ID. If not specified, the value automatically set in       # .Values.global.mozcloud.project_id will be used.       #projectId: ''      # A list of image pull secret names to attach to this service account.     # Any pod using this service account will automatically have access to     # these secrets for pulling container images.     #     #   imagePullSecrets:     #     - my-registry-secret     #     - another-registry-secret      # Additional annotations to apply to the ServiceAccount.     #     #   annotations:     #     iam.gke.io/spiffe-identity-type: agent-identity |
 | tasks.common.container.args | list | `[]` |  |
 | tasks.common.container.command | list | `[]` |  |
 | tasks.common.container.configMaps | list | `[]` |  |
@@ -75,25 +75,33 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.common.container.secrets | list | `[]` |  |
 | tasks.common.container.security | object | `{}` |  |
 | tasks.common.container.volumes | list | `[]` |  |
+| tasks.common.cronJob.annotations | object | `{}` |  |
 | tasks.common.cronJob.jobHistory | object | `{}` |  |
+| tasks.common.cronJob.labels | object | `{}` |  |
 | tasks.common.cronJob.schedule | string | `""` |  |
+| tasks.common.job.annotations | object | `{}` |  |
 | tasks.common.job.backoffLimit | int | `6` |  |
 | tasks.common.job.generateName | bool | `false` |  |
+| tasks.common.job.labels | object | `{}` |  |
 | tasks.common.job.otel.enabled | bool | `true` |  |
 | tasks.common.job.parallelism | int | `1` |  |
 | tasks.common.job.restartPolicy | string | `"Never"` |  |
 | tasks.common.job.security | object | `{}` |  |
 | tasks.common.job.serviceAccount | string | `""` |  |
 | tasks.common.job.type | string | `"preDeployment"` |  |
+| tasks.cronJobs.default.annotations | object | `{}` |  |
 | tasks.cronJobs.default.concurrencyPolicy | string | `"Allow"` |  |
 | tasks.cronJobs.default.jobConfig | object | `{}` |  |
 | tasks.cronJobs.default.jobHistory.failed | int | `1` |  |
 | tasks.cronJobs.default.jobHistory.successful | int | `1` |  |
+| tasks.cronJobs.default.labels | object | `{}` |  |
 | tasks.cronJobs.default.schedule | string | `""` |  |
 | tasks.jobs.default.affinity | object | `{}` |  |
+| tasks.jobs.default.annotations | object | `{}` |  |
 | tasks.jobs.default.argo | object | `{}` |  |
 | tasks.jobs.default.containers.default | object | `{}` |  |
 | tasks.jobs.default.generateName | bool | `false` |  |
+| tasks.jobs.default.labels | object | `{}` |  |
 | tasks.jobs.default.nodeSelector | object | `{}` |  |
 | tasks.jobs.default.otel.autoInstrumentation.enabled | bool | `false` |  |
 | tasks.jobs.default.otel.autoInstrumentation.language | string | `""` |  |
@@ -106,6 +114,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.type | string | `"preDeployment"` |  |
 | telegraf.enabled | bool | `false` |  |
 | workloads.default.affinity | object | `{}` |  |
+| workloads.default.annotations | object | `{}` |  |
 | workloads.default.autoscaling.enabled | bool | `true` |  |
 | workloads.default.autoscaling.metrics[0].threshold | int | `60` |  |
 | workloads.default.autoscaling.metrics[0].type | string | `"cpu"` |  |
@@ -115,6 +124,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.args | list | `[]` |  |
 | workloads.default.containers.default.command | list | `[]` |  |
 | workloads.default.containers.default.configMaps | list | `[]` |  |
+| workloads.default.containers.default.envFromFields | object | `{}` |  |
 | workloads.default.containers.default.envVars | object | `{}` |  |
 | workloads.default.containers.default.healthCheck.liveness.enabled | bool | `true` |  |
 | workloads.default.containers.default.healthCheck.liveness.httpHeaders | list | `[]` |  |
@@ -132,6 +142,13 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.healthCheck.readiness.probes.periodSeconds | int | `6` |  |
 | workloads.default.containers.default.healthCheck.readiness.probes.successThreshold | int | `1` |  |
 | workloads.default.containers.default.healthCheck.readiness.probes.timeoutSeconds | int | `5` |  |
+| workloads.default.containers.default.healthCheck.startup.enabled | bool | `false` |  |
+| workloads.default.containers.default.healthCheck.startup.httpHeaders | list | `[]` |  |
+| workloads.default.containers.default.healthCheck.startup.path | string | `"/__lbheartbeat__"` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.failureThreshold | int | `30` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.initialDelaySeconds | int | `0` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.periodSeconds | int | `10` |  |
+| workloads.default.containers.default.healthCheck.startup.probes.timeoutSeconds | int | `5` |  |
 | workloads.default.containers.default.image.repository | string | `""` |  |
 | workloads.default.containers.default.image.tag | string | `""` |  |
 | workloads.default.containers.default.imagePullPolicy | string | `"Always"` |  |
@@ -143,6 +160,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.containers.default.resources.memory | string | `"128Mi"` |  |
 | workloads.default.containers.default.secrets | list | `[]` |  |
 | workloads.default.containers.default.security | object | `{}` |  |
+| workloads.default.deployment.rollingUpdate | object | `{}` |  |
 | workloads.default.enabled | bool | `true` |  |
 | workloads.default.hosts.default.addresses | list | `[]` |  |
 | workloads.default.hosts.default.api | string | `"gateway"` |  |
@@ -159,6 +177,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.initContainers.default.args | list | `[]` |  |
 | workloads.default.initContainers.default.command | list | `[]` |  |
 | workloads.default.initContainers.default.configMaps | list | `[]` |  |
+| workloads.default.initContainers.default.envFromFields | object | `{}` |  |
 | workloads.default.initContainers.default.envVars | object | `{}` |  |
 | workloads.default.initContainers.default.image.repository | string | `""` |  |
 | workloads.default.initContainers.default.image.tag | string | `""` |  |

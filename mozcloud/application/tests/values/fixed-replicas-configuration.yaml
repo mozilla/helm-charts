@@ -57,6 +57,26 @@ workloads:
           repository: test-repo/test-image
           tag: "1.0.0"
 
+  # Autoscaling turned on for this environment while a lower-precedence values
+  # file had pinned a count. Helm keeps the null instead of deleting the key
+  # when it merges -f files, so null has to be accepted and treated as unset.
+  cleared-replicas-deployment:
+    component: web
+    autoscaling:
+      enabled: true
+      replicas:
+        min: 2
+        max: 10
+      metrics:
+        - type: cpu
+          threshold: 60
+    replicas: null
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+
   fixed-statefulset:
     component: db
     type: statefulset

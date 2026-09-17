@@ -1,0 +1,11 @@
+---
+# Overlay applied on top of values/basic-configuration.yaml. Attempts to use
+# workloads.<name>.labels to overwrite MozCloud-managed keys on test-service.
+# mozcloud.labels always merges the MozCloud-managed values (from
+# global.mozcloud) on top of any user-provided base, so these keys must not
+# take on the "hacked" values below.
+workloads:
+  test-service:
+    labels:
+      app_code: hacked
+      env_code: hacked

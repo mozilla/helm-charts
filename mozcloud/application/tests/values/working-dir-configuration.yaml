@@ -1,0 +1,46 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        workingDir: /app
+      sidecar:
+        image:
+          repository: test-repo/test-sidecar-image
+          tag: 1.0.0
+    initContainers:
+      setup:
+        image:
+          repository: test-repo/test-init-image
+          tag: 1.0.0
+        command: ["sh", "-c"]
+        args: ["echo setup"]
+        workingDir: /srv
+tasks:
+  jobs:
+    test-job:
+      type: preDeployment
+      containers:
+        job:
+          image:
+            repository: test-repo/test-job-image
+            tag: 2.0.0
+          command: ["sh", "-c"]
+          args: ["echo migrating"]
+          workingDir: /app
+  cronJobs:
+    test-cronjob:
+      schedule: "0 0 * * *"
+      jobConfig:
+        containers:
+          job:
+            image:
+              repository: test-repo/test-cronjob-image
+              tag: 3.0.0
+            command: ["sh", "-c"]
+            args: ["echo scheduled"]
+            workingDir: /opt/app

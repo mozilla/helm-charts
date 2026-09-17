@@ -75,6 +75,14 @@
               "description": "PriorityClass for the daemonset collectors. Defaults to gmp-critical, a non-reserved high-priority class so the scheduler can preempt lower-priority workloads.",
               "type": "string"
             },
+            "tolerations": {
+              "description": "Tolerations for the daemonset collector pods, allowing them to schedule onto nodes with matching taints. A list of Kubernetes toleration objects.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            },
             "securityContext": {
               "type": "object",
               "properties": {

@@ -15,6 +15,7 @@ workloads:
   # workload-related Kubernetes resources.
   test-service:
     component: web
+    progressDeadlineSeconds: 300
     containers:
       app:
         configMaps: ["test-configmap"]

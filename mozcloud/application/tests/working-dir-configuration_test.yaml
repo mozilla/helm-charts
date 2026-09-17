@@ -1,0 +1,65 @@
+---
+suite: "mozcloud: workingDir configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/working-dir-configuration.yaml
+templates:
+  - workload/deployment.yaml
+  - task/job.yaml
+  - task/cronjob.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Deployment container renders workingDir
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].workingDir
+          value: /app
+
+  - it: Deployment container without workingDir omits the field
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[1].workingDir
+
+  - it: Deployment initContainer renders workingDir
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].workingDir
+          value: /srv
+
+  - it: Job container renders workingDir
+    template: task/job.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].workingDir
+          value: /app
+
+  - it: CronJob container renders workingDir
+    template: task/cronjob.yaml
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.containers[0].workingDir
+          value: /opt/app

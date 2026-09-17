@@ -159,3 +159,161 @@ tests:
         documentSelector:
           path: $[?(@.kind == "CronJob")].metadata.name
           value: test-cronjob
+
+  - it: CronJob renders startingDeadlineSeconds only when it is configured
+    template: task/cronjob.yaml
+    asserts:
+      - equal:
+          path: spec.startingDeadlineSeconds
+          value: 600
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-with-deadline
+      - equal:
+          path: spec.startingDeadlineSeconds
+          value: 0
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-zero-deadline
+      - notExists:
+          path: spec.startingDeadlineSeconds
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+
+  - it: CronJob renders topologySpreadConstraints from its jobConfig
+    template: task/cronjob.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-cronjob-configuration.yaml
+      - values/cronjob-scheduling-configuration.yaml
+    asserts:
+      # Cron jobs reach the shared job template through jobConfig rather than
+      # directly, so the job-level assertion does not cover this path.
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.topologySpreadConstraints
+          value:
+            - maxSkew: 1
+              topologyKey: topology.kubernetes.io/zone
+              whenUnsatisfiable: ScheduleAnyway
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: test-chart
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - notExists:
+          path: spec.jobTemplate.spec.template.spec.topologySpreadConstraints
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-with-deadline
+
+  - it: CronJob labels and annotations stay on the CronJob, jobConfig labels the pods
+    template: task/cronjob.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-cronjob-configuration.yaml
+      - values/cronjob-labels-annotations-configuration.yaml
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: mozcloud
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - equal:
+          path: metadata.annotations["example.com/owner"]
+          value: mozcloud
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # The CronJob's own metadata is not inherited by the pods it runs.
+      - notExists:
+          path: spec.jobTemplate.spec.template.metadata.labels.team
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # jobConfig configures the pod template, so its labels land there and
+      # nowhere else.
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.labels.tier
+          value: batch
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - notExists:
+          path: metadata.labels.tier
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # A CronJob renders no Job resource of its own, so a jobConfig annotation
+      # has nothing to attach to and is dropped. Pinned here so that wiring it
+      # up later is a deliberate change rather than an accident.
+      - notExists:
+          path: spec.jobTemplate.spec.template.metadata.annotations["example.com/ignored"]
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - notExists:
+          path: metadata.annotations["example.com/ignored"]
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # The other cron jobs in the fixture stay clean.
+      - notExists:
+          path: metadata.labels.team
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-with-deadline
+
+  - it: CronJob renders timeZone only where it is set
+    template: task/cronjob.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-cronjob-configuration.yaml
+      - values/cronjob-timezone-configuration.yaml
+    asserts:
+      - equal:
+          path: spec.timeZone
+          value: America/Los_Angeles
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      # Unset must stay absent: an empty timeZone is not the same as no
+      # timeZone, and Kubernetes rejects the former.
+      - notExists:
+          path: spec.timeZone
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-with-deadline
+      - notExists:
+          path: spec.timeZone
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-zero-deadline
+
+  - it: CronJob inherits timeZone from tasks.common.cronJob and lets the job override it
+    template: task/cronjob.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-cronjob-configuration.yaml
+      - values/cronjob-timezone-common-configuration.yaml
+    asserts:
+      - equal:
+          path: spec.timeZone
+          value: America/Los_Angeles
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - equal:
+          path: spec.timeZone
+          value: UTC
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-with-deadline
+      - equal:
+          path: spec.timeZone
+          value: UTC
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob-zero-deadline

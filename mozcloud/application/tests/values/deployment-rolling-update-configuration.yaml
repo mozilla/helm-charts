@@ -1,0 +1,20 @@
+---
+# Overlay applied on top of values/basic-configuration.yaml. It only adds the
+# opt-in rollout pacing to that fixture's two existing Deployments, so every
+# other rendered field stays identical to the base suite.
+#
+# test-service covers the absolute form together with the surge-only rollout:
+# maxUnavailable: 0 is the case that a truthiness check would drop.
+# test-worker-exec covers the percentage form and, by setting maxSurge alone,
+# pins that the two keys are emitted independently.
+workloads:
+  test-service:
+    deployment:
+      rollingUpdate:
+        maxSurge: 1
+        maxUnavailable: 0
+
+  test-worker-exec:
+    deployment:
+      rollingUpdate:
+        maxSurge: "25%"

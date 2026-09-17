@@ -172,6 +172,16 @@ Returns:
   (string) YAML-encoded container security context.
 */ -}}
 {{- define "pod.container.securityContext" -}}
+{{- if .privileged }}
+{{- /*
+  A privileged container deliberately omits both allowPrivilegeEscalation and
+  the capability drop list: the API server rejects privileged=true alongside
+  allowPrivilegeEscalation=false, and a privileged container already holds the
+  full capability set, so dropping ALL would contradict it. seccompProfile
+  stays RuntimeDefault.
+*/ -}}
+privileged: true
+{{- else }}
 allowPrivilegeEscalation: false
 capabilities:
   {{- if gt (len (default list .addCapabilities)) 0 }}
@@ -182,18 +192,12 @@ capabilities:
   {{- end }}
   drop:
     - ALL
-{{- $user := default "" .user }}
-{{- $group := default "" .group }}
-{{- if and $user (not $group) }}
-  {{- $group = $user }}
-{{- else if and $group (not $user) }}
-  {{- $user = $group }}
-{{- end -}}
-{{- if $user }}
-runAsUser: {{ .user }}
 {{- end }}
-{{- if $group }}
-runAsGroup: {{ .group }}
+{{- $hasUser := hasKey . "user" }}
+{{- $hasGroup := hasKey . "group" }}
+{{- if or $hasUser $hasGroup }}
+runAsUser: {{ ternary .user .group $hasUser }}
+runAsGroup: {{ ternary .group .user $hasGroup }}
 {{- end }}
 seccompProfile:
   type: "RuntimeDefault"
@@ -210,6 +214,23 @@ Params:
                        Defaults to true.
   user (int):          (optional) UID to run the pod as. Defaults to 10001.
   group (int):         (optional) GID to run the pod as. Defaults to 10001.
+  fsGroup (int):       (optional) Supplemental group applied to mounted
+                       volumes. Omitted entirely when unset.
+  fsGroupChangePolicy (string): (optional) Either "Always" or
+                       "OnRootMismatch". Only meaningful with fsGroup.
+  sysctls (list):      (optional) List of {name, value} sysctl entries
+                       applied to the pod. Safe sysctls (e.g.
+                       net.ipv4.ip_local_port_range, and since k8s 1.29 the
+                       net.ipv4.tcp_keepalive_* family) need nothing extra.
+                       Unsafe ones (e.g. net.ipv4.tcp_max_syn_backlog,
+                       net.ipv4.tcp_max_tw_buckets, net.ipv4.tcp_retries2)
+                       are gated TWICE: the pod's namespace must permit them
+                       via the "privileged" Pod Security Standard, AND the
+                       kubelet on the target node pool must list them in
+                       --allowed-unsafe-sysctls. A privileged namespace alone
+                       only lets the pod DECLARE the sysctl; without the
+                       kubelet allowlist the pod is rejected at admission to
+                       the node with reason SysctlForbidden.
 
 Returns:
   (string) YAML-encoded pod security context.
@@ -220,12 +241,19 @@ Returns:
 seccompProfile:
   type: "RuntimeDefault"
 runAsNonRoot: {{ dig "runAsNonRoot" true . }}
-runAsUser: {{ default 10001 .user }}
-runAsGroup: {{ default 10001 .group }}
-{{- if .fsGroup }}
+runAsUser: {{ dig "user" 10001 . }}
+runAsGroup: {{ dig "group" 10001 . }}
+{{- if hasKey . "fsGroup" }}
 fsGroup: {{ .fsGroup }}
   {{- if .fsGroupChangePolicy }}
 fsGroupChangePolicy: {{ .fsGroupChangePolicy }}
+  {{- end }}
+{{- end }}
+{{- if .sysctls }}
+sysctls:
+  {{- range $entry := .sysctls }}
+  - name: {{ $entry.name }}
+    value: {{ $entry.value | quote }}
   {{- end }}
 {{- end }}
 {{- end -}}

@@ -1,0 +1,30 @@
+---
+suite: "mozcloud: StatefulSet headless Service with additionalPorts"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/statefulset-additional-ports.yaml
+templates:
+  - workload/statefulset.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Headless Service surfaces primary port and additionalPorts
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "Service")].metadata.name
+      value: additional-ports-svc-headless
+    asserts:
+      - equal:
+          path: spec.ports[?(@.name=="app")].port
+          value: 8080
+      - equal:
+          path: spec.ports[?(@.name=="metrics")].port
+          value: 9090

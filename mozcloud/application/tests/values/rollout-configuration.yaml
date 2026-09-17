@@ -3,6 +3,7 @@ workloads:
   test-service:
     component: web
     type: rollout
+    progressDeadlineSeconds: 300
     strategy:
       canary:
         steps:

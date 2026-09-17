@@ -302,9 +302,17 @@ persistentVolumes: {}
 #     #   imagePullSecrets:
 #     #     - my-registry-secret
 #     #     - another-registry-secret
+#
+#     # Additional annotations to apply to the ServiceAccount.
+#     #
+#     #   annotations:
+#     #     iam.gke.io/spiffe-identity-type: agent-identity
 serviceAccounts:
   default:
     enabled: true
+    # Additional annotations to apply to the default ServiceAccount. See the
+    # example above for other service accounts created via this dictionary.
+    annotations: {}
 
 # The consolidation of all jobs to tasks is coming soon.
 tasks:
@@ -336,11 +344,20 @@ tasks:
     # for details on how to configure each option.
     #
     # Some options are commented out as they are omitted by default.
+    #
+    # Precedence, lowest to highest: .Values.tasks.cronJobs.default, then this
+    # block, then the individual cron job. Dictionary options such as labels and
+    # annotations are deep-merged per key across all three rather than replaced,
+    # so a cron job only has to restate the keys it wants to change.
     cronJob:
+      annotations: {}
       #concurrencyPolicy:
       jobHistory: {}
+      labels: {}
       schedule: ''
+      #startingDeadlineSeconds:
       #suspend:
+      #timeZone:
 
     # Common job configurations. These can be used as defaults for all job
     # configurations.
@@ -349,12 +366,19 @@ tasks:
     # details on how to configure each option.
     #
     # Some options are commented out as they are omitted by default.
+    #
+    # Precedence, lowest to highest: .Values.tasks.jobs.default, then this
+    # block, then the individual job. Dictionary options such as labels and
+    # annotations are deep-merged per key across all three rather than replaced,
+    # so a job only has to restate the keys it wants to change.
     job:
       # While "type" is required in job definitions, it is not required here.
       type: preDeployment
       generateName: false
       #activeDeadlineSeconds:
+      annotations: {}
       backoffLimit: 6
+      labels: {}
       otel:
         enabled: true
       parallelism: 1
@@ -375,6 +399,15 @@ tasks:
       # Default: true
       #enabled: false
 
+      # Annotations to apply to the CronJob resource.
+      #
+      # Unlike labels, the chart generates no annotations of its own here, so
+      # the CronJob carries exactly what is set below and nothing else.
+      #
+      # These stay on the CronJob itself. They are not passed down to the Jobs
+      # it creates, nor to their pods.
+      annotations: {}
+
       # Controls how Kubernetes handles overlapping executions of the same cron
       # job. Valid values are:
       #
@@ -387,6 +420,13 @@ tasks:
       jobHistory:
         successful: 1
         failed: 1
+
+      # Labels to apply to the CronJob resource, in addition to the ones the
+      # chart generates.
+      #
+      # These stay on the CronJob itself. To label the pods it runs, use
+      # jobConfig.labels below.
+      labels: {}
 
       # The schedule for the cron job. The value typically follows the cron or
       # Vixie cron formats. This is a required field.
@@ -418,6 +458,15 @@ tasks:
       #            are recommended in general as a best practice.
       schedule: ''
 
+      # Deadline in seconds for starting a scheduled job if it misses its
+      # scheduled time — for example because the controller was down, or the
+      # previous run was still blocking it. If the job cannot be started within
+      # this window, the run is counted as failed instead of being started late.
+      #
+      # This is unset by default, which means Kubernetes will start a missed job
+      # whenever it can.
+      #startingDeadlineSeconds: 600
+
       # When Kubernetes creates CronJob resources, the Job controller will
       # immediately enforce the cron job in the schedule you define. If
       # "suspend" is enabled, Kubernetes will suspend future executions of the
@@ -426,12 +475,25 @@ tasks:
       # This is unset/disabled by default.
       #suspend: false
 
+      # Time zone the schedule above is interpreted in, given as a name from
+      # the IANA database — for example "America/Los_Angeles" or "UTC".
+      #
+      # This is unset by default, which means the schedule follows the time
+      # zone of the kube-controller-manager process. That is part of the
+      # managed control plane, so it is not something you control or can rely
+      # on staying put; set this explicitly if the run time matters.
+      #
+      # Kubernetes rejects a name it cannot resolve, so a typo fails the
+      # CronJob rather than silently falling back.
+      #timeZone: America/Los_Angeles
+
       # This section follows the same format as .Values.tasks.jobs.default,
       # however options are limited to the following:
       #
       #   - activeDeadlineSeconds
       #   - backoffLimit
       #   - containers
+      #   - labels
       #   - otel
       #   - parallelism
       #   - restartPolicy
@@ -439,6 +501,10 @@ tasks:
       #   - serviceAccount
       #   - suspend
       #   - ttlSecondsAfterFinished
+      #
+      # "labels" here applies to the pods only. A CronJob renders no Job
+      # resource of its own — its Jobs are created by Kubernetes at runtime from
+      # jobTemplate — so "annotations" has nothing to attach to and is ignored.
       jobConfig: {}
 
   jobs:
@@ -501,6 +567,19 @@ tasks:
       # may be configured.
       #activeDeadlineSeconds:
 
+      # Annotations to apply to the Job resource, in addition to the ones the
+      # chart generates.
+      #
+      # These are merged over the generated ArgoCD annotations, so setting a key
+      # the chart already emits — "argocd.argoproj.io/sync-wave" or
+      # "argocd.argoproj.io/hook-delete-policy", for example — replaces the
+      # generated value rather than being ignored. Prefer argo.syncWave above
+      # for the sync wave; reach for this only when there is no dedicated
+      # option.
+      #
+      # Annotations apply to the Job resource only, not to its pods.
+      annotations: {}
+
       # The number of times a failed job will be re-run before it will be
       # marked with a status of "Failed". Certain jobs (eg. smoke tests) may
       # benefit from lower values. The default value is 6.
@@ -526,6 +605,10 @@ tasks:
 
           # The command a container should run as its entrypoint.
           #command: []
+
+          # The directory inside the container to run the command in. Overrides
+          # the WORKDIR baked into the image. Omit to use the image's default.
+          #workingDir: /app
 
           # A list of config map names to mount into the container as
           # environment variables. These should be defined higher up in the
@@ -708,11 +791,28 @@ tasks:
           #   # For more details, visit the page below:
           #   # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
           #   addCapabilities: []
+          #
+          #   # Run the container in privileged mode. Defaults to false. Intended for
+          #   # init containers that must mutate kernel state the declarative path
+          #   # cannot reach -- e.g. writing UNSAFE sysctls with `sysctl -w` when the
+          #   # target node pool's kubelet does not list them in
+          #   # --allowed-unsafe-sysctls. Prefer workloads.<name>.security.sysctls
+          #   # when the sysctl is safe or the pool is allowlisted.
+          #   #
+          #   # Requires the namespace to permit privileged pods via the 'privileged'
+          #   # Pod Security Standard. When true, allowPrivilegeEscalation and the
+          #   # capability drop list are omitted, because the API server rejects
+          #   # privileged=true together with allowPrivilegeEscalation=false.
+          #   #
+          #   # To write root-owned /proc/sys entries the container also needs
+          #   # `user: 0`, which in turn requires the workload's pod-level
+          #   # security.runAsRoot: true so the kubelet admits a root container.
+          #   privileged: false
           #security: {}
 
           # Optionally mount volumes to the container. The supported volume types
-          # are "configMap" (default), "secret", "persistentVolume", and
-          # "gcsFuseCsi".
+          # are "configMap" (default), "secret", "persistentVolume", "emptyDir",
+          # "ephemeral", and "gcsFuseCsi".
           #
           # Volumes should use names that match either config map, external
           # secret, or persistent volume claim names created as part of and
@@ -798,6 +898,13 @@ tasks:
       #   cpu: "500m"
       #   memory: "512Mi"
 
+
+      # Labels to apply to the Job resource and to its pods, in addition to the
+      # ones the chart generates.
+      #
+      # Unlike annotations, labels do reach the pod template, so they can be
+      # selected on in log and metric queries.
+      labels: {}
 
       # Configure auto instrumentation for the OTEL Collector.
       #
@@ -990,6 +1097,10 @@ workloads:
     #                   - my-node-pool
     affinity: {}
 
+    # Annotations to pass down to workload resources, e.g. Deployments and
+    # Pods.
+    annotations: {}
+
     # Optionally restrict pods to specific nodes using label selectors.
     #
     # Example:
@@ -1076,6 +1187,32 @@ workloads:
     #
     #minReadySeconds: 10
 
+    # Optionally cap how long a rollout has to make progress before Kubernetes
+    # marks it as failed. Applies to deployment and rollout; statefulset has no
+    # such field.
+    #
+    # Omitted entirely unless you set it. Kubernetes defaults to 600.
+    #
+    # The clock resets whenever the rollout moves forward, so this caps how
+    # long it may sit stuck, not how long it may take. Lower it to fail fast on
+    # a bad image or a crash loop.
+    #
+    # Must be greater than minReadySeconds, otherwise the API rejects it.
+    #
+    #progressDeadlineSeconds: 300
+
+    # Optionally cap how many old revisions Kubernetes keeps around for rollback
+    # — ReplicaSets for deployment and rollout, ControllerRevisions for
+    # statefulset. Applies to all three.
+    #
+    # Omitted entirely unless you set it. Kubernetes defaults to 10.
+    #
+    # Lower it to keep the object list tidy for workloads that deploy many times
+    # a day. 0 is valid and keeps no history at all, which also means no rollback
+    # target — deliberate, but worth knowing before you set it.
+    #
+    #revisionHistoryLimit: 3
+
     # A list of optional autoscaling configurations for containerized workloads.
     autoscaling:
       # If enabled, configure autoscaling via a HorizontalPodAutoscaler
@@ -1148,6 +1285,10 @@ workloads:
         # The command a container should run as its entrypoint.
         command: []
 
+        # The directory inside the container to run the command in. Overrides
+        # the WORKDIR baked into the image. Omit to use the image's default.
+        #workingDir: /app
+
         # A list of config map names to mount into the container as environment
         # variables. These should be defined higher up in the file under the
         # "configMaps" key.
@@ -1172,6 +1313,17 @@ workloads:
         #     KEY1: VALUE1
         #     KEY2: VALUE2
         envVars: {}
+
+        # Environment variables sourced from pod/container fields via the
+        # Kubernetes downward API (valueFrom.fieldRef). Keys are the env var
+        # names and values are the field paths.
+        #
+        # Format:
+        #
+        #   envFromFields:
+        #     MY_NODE_NAME: spec.nodeName
+        #     MY_POD_IP: status.podIP
+        envFromFields: {}
 
         # A list of Kubernetes secret names to mount in this container as
         # environment variables. Each entry is the name of a Kubernetes secret
@@ -1213,6 +1365,15 @@ workloads:
             #
             #   exec:
             #     command: ["/bin/sh", "-c", "/usr/local/bin/healthcheck"]
+
+            # Configure a tcpSocket probe instead of the default httpGet, for
+            # containers that speak a protocol other than HTTP. Mutually exclusive
+            # with exec, path and httpHeaders. An empty mapping probes the
+            # container's own port; set port to reach one of the additionalPorts.
+            #
+            # Example:
+            #
+            #   tcpSocket: {}
 
             # This is typically configured to match the application container's
             # load balancer heartbeat health check endpoint.
@@ -1279,6 +1440,15 @@ workloads:
             #   exec:
             #     command: ["/bin/sh", "-c", "/usr/local/bin/healthcheck"]
 
+            # Configure a tcpSocket probe instead of the default httpGet, for
+            # containers that speak a protocol other than HTTP. Mutually exclusive
+            # with exec, path and httpHeaders. An empty mapping probes the
+            # container's own port; set port to reach one of the additionalPorts.
+            #
+            # Example:
+            #
+            #   tcpSocket: {}
+
             # This is typically configured to match the application container's
             # load balancer heartbeat health check endpoint.
             #
@@ -1300,6 +1470,63 @@ workloads:
               timeoutSeconds: 5
               successThreshold: 1
               failureThreshold: 5
+
+          # This section is used to configure the startupProbe section of a pod.
+          # Startup probes are used for containers that need a long time to come
+          # up: while the startup probe is running, the kubelet holds off the
+          # liveness and readiness probes, so a slow start no longer has to be
+          # absorbed by an inflated liveness initialDelaySeconds.
+          startup:
+            # Unlike readiness and liveness, this probe is opt-in — it is only
+            # rendered when enabled is true. Leaving the section empty or absent
+            # means no startupProbe at all.
+            enabled: false
+
+            # Configure an exec-based probe instead of the default httpGet.
+            # When set, path and httpHeaders are ignored for this probe. Useful
+            # for containers whose readiness depends on work that has no HTTP
+            # endpoint, such as loading a model into memory.
+            #
+            # Example:
+            #
+            #   exec:
+            #     command: ["python", "warmup.py"]
+
+            # Configure a tcpSocket probe instead of the default httpGet, for
+            # containers that speak a protocol other than HTTP. Mutually exclusive
+            # with exec, path and httpHeaders. An empty mapping probes the
+            # container's own port; set port to reach one of the additionalPorts.
+            #
+            # Example:
+            #
+            #   tcpSocket:
+            #     port: 5432
+
+            # The endpoint polled until the container reports itself started.
+            #
+            # Default: /__lbheartbeat__
+            path: /__lbheartbeat__
+
+            # Optionally configure HTTP headers to use in the startup probe. The
+            # format matches the readiness httpHeaders above.
+            #
+            # By default, these will match the httpHeaders used in the readiness
+            # configuration section, if defined.
+            httpHeaders: []
+
+            # Probe configurations for the startup probe. The format matches the
+            # readiness probes above, minus successThreshold, which Kubernetes
+            # requires to be 1 for startup probes.
+            #
+            # periodSeconds multiplied by failureThreshold is the startup budget:
+            # the defaults below allow 5 minutes before the container is
+            # considered failed and restarted. Unlike the liveness probe, these
+            # values are never inherited from the readiness section.
+            probes:
+              initialDelaySeconds: 0
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 30
 
         # The image repo, name, and tag to use for the container. The format is:
         #
@@ -1464,6 +1691,23 @@ workloads:
         #   # For more details, visit the page below:
         #   # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
         #   addCapabilities: []
+        #
+        #   # Run the container in privileged mode. Defaults to false. Intended for
+        #   # init containers that must mutate kernel state the declarative path
+        #   # cannot reach -- e.g. writing UNSAFE sysctls with `sysctl -w` when the
+        #   # target node pool's kubelet does not list them in
+        #   # --allowed-unsafe-sysctls. Prefer workloads.<name>.security.sysctls
+        #   # when the sysctl is safe or the pool is allowlisted.
+        #   #
+        #   # Requires the namespace to permit privileged pods via the 'privileged'
+        #   # Pod Security Standard. When true, allowPrivilegeEscalation and the
+        #   # capability drop list are omitted, because the API server rejects
+        #   # privileged=true together with allowPrivilegeEscalation=false.
+        #   #
+        #   # To write root-owned /proc/sys entries the container also needs
+        #   # `user: 0`, which in turn requires the workload's pod-level
+        #   # security.runAsRoot: true so the kubelet admits a root container.
+        #   privileged: false
         security: {}
 
         # Optionally mount volumes to the container. The supported volume types
@@ -1794,6 +2038,35 @@ workloads:
         #    path: /
         #    service:
         #      port: 3000
+        #
+        # Every backend inherits the host's "options" block and may override
+        # any field through its own "options". This is how a single path is
+        # exempted from IAP: IAP is enforced per backend service, not per URL
+        # path, so the exempt path needs its own backend.
+        #
+        # A Service carries one cloud.google.com/backend-config annotation per
+        # port, so two backends that resolve to the same Service cannot have
+        # different IAP postures. Give the exempt backend its own Service via
+        # service.name. The chart fails the render when they conflict rather
+        # than letting GKE silently apply one posture to both paths.
+        #
+        # An IAP-exempt backend is reachable without authentication and needs
+        # its own controls: restrict its callers with a Cloud Armor policy
+        # (options.securityPolicy) and validate requests in the application.
+        #
+        # Example — Ingress host behind IAP with a webhook path exempted:
+        #
+        #backends:
+        #  app:
+        #    path: /
+        #  app-webhook:
+        #    path: /webhook
+        #    pathType: Exact
+        #    service:
+        #      name: app-webhook
+        #    options:
+        #      iap:
+        #        enabled: false
         backends: {}
 
         # Configure the type of load balancer to use for your host.
@@ -1959,6 +2232,10 @@ workloads:
 
         # Optionally configure the log sample rate for the load balancer, IAP
         # details, a custom backend timeout, or a Cloud Armor security policy.
+        #
+        # These apply to every backend on the host. Individual backends can
+        # override any of them through backends.<name>.options; see the
+        # "backends" examples above.
         #options:
         #  # Configures Identity-Aware Proxy for the service.
         #  #iap:
@@ -1974,6 +2251,7 @@ workloads:
         #
         #  # The sample rate at which HTTP access should be logged. This can be
         #  # configured as a float, integer, or string. The default is 10 (10%).
+        #  # Set to 0 to disable access logging for the backend.
         #  #logSampleRate: 10
         #
         #  # Cloud Armor security policy to attach to the load balancer backend.
@@ -1984,7 +2262,8 @@ workloads:
         #  # NOT use this — use Fastly for WAF instead.
         #  #securityPolicy: my-app-policy
         #
-        #  # Backend service timeout period in seconds.
+        #  # Backend service timeout period in seconds. GCP requires at least
+        #  # 1 second.
         #  #timeoutSec: 30
         #
         #  # Custom config for the backend health check. The supported fields
@@ -2068,6 +2347,10 @@ workloads:
         # The command a container should run as its entrypoint.
         command: []
 
+        # The directory inside the container to run the command in. Overrides
+        # the WORKDIR baked into the image. Omit to use the image's default.
+        #workingDir: /app
+
         # A list of config map names to mount into the container as environment
         # variables. These should be defined higher up in the file under the
         # "configMaps" key.
@@ -2092,6 +2375,17 @@ workloads:
         #     KEY1: VALUE1
         #     KEY2: VALUE2
         envVars: {}
+
+        # Environment variables sourced from pod/container fields via the
+        # Kubernetes downward API (valueFrom.fieldRef). Keys are the env var
+        # names and values are the field paths.
+        #
+        # Format:
+        #
+        #   envFromFields:
+        #     MY_NODE_NAME: spec.nodeName
+        #     MY_POD_IP: status.podIP
+        envFromFields: {}
 
         # A list of Kubernetes secret names to mount in this init container as
         # environment variables. Each entry is the name of a Kubernetes secret
@@ -2261,6 +2555,23 @@ workloads:
         #   # For more details, visit the page below:
         #   # https://kubernetes.io/docs/tasks/configure-pod-container/security-context/
         #   addCapabilities: []
+        #
+        #   # Run the container in privileged mode. Defaults to false. Intended for
+        #   # init containers that must mutate kernel state the declarative path
+        #   # cannot reach -- e.g. writing UNSAFE sysctls with `sysctl -w` when the
+        #   # target node pool's kubelet does not list them in
+        #   # --allowed-unsafe-sysctls. Prefer workloads.<name>.security.sysctls
+        #   # when the sysctl is safe or the pool is allowlisted.
+        #   #
+        #   # Requires the namespace to permit privileged pods via the 'privileged'
+        #   # Pod Security Standard. When true, allowPrivilegeEscalation and the
+        #   # capability drop list are omitted, because the API server rejects
+        #   # privileged=true together with allowPrivilegeEscalation=false.
+        #   #
+        #   # To write root-owned /proc/sys entries the container also needs
+        #   # `user: 0`, which in turn requires the workload's pod-level
+        #   # security.runAsRoot: true so the kubelet admits a root container.
+        #   privileged: false
         security: {}
 
         # If enabled, this init container will continue running as a sidecar
@@ -2549,6 +2860,19 @@ workloads:
     #   # Controls when volume ownership is changed to match fsGroup.
     #   # "Always" (default) or "OnRootMismatch" (faster for large volumes).
     #   fsGroupChangePolicy: OnRootMismatch
+    #
+    #   # Optional list of pod-level sysctls (maps to securityContext.sysctls).
+    #   # Safe sysctls (e.g. net.ipv4.ip_local_port_range, and since k8s 1.29
+    #   # the net.ipv4.tcp_keepalive_* family) need nothing extra. Unsafe ones
+    #   # (e.g. net.ipv4.tcp_max_syn_backlog, net.ipv4.tcp_max_tw_buckets,
+    #   # net.ipv4.tcp_retries2) are gated twice: the target namespace must
+    #   # permit them via the 'privileged' Pod Security Standard, AND the
+    #   # kubelet on the target node pool must list them in
+    #   # --allowed-unsafe-sysctls, or the pod is rejected with reason
+    #   # SysctlForbidden. Values are always emitted as strings.
+    #   sysctls:
+    #     - name: net.ipv4.ip_local_port_range
+    #       value: "2000 65000"
     security: {}
 
     # Optionally use a custom service account for the container. The value
@@ -2595,6 +2919,36 @@ workloads:
     #   OnDelete:      Pods are only replaced when manually deleted.
     #
     strategy: RollingUpdate
+
+    # Configuration specific to Deployment workloads. Only used when type is
+    # deployment.
+    #
+    deployment:
+      # Rollout pacing for the RollingUpdate strategy, rendered under
+      # spec.strategy.rollingUpdate. Both fields take either an absolute pod
+      # count or a percentage string ("25%"), and both are omitted unless set —
+      # Kubernetes then applies its own default of 25% for each.
+      #
+      # maxSurge:       extra pods allowed above the desired count while
+      #                 updating. Raising it trades cluster capacity for a
+      #                 faster rollout.
+      # maxUnavailable: pods allowed to be unavailable while updating. Set it to
+      #                 0 for a surge-only rollout that never serves with less
+      #                 than the desired count.
+      #
+      # Either field may be 0 on its own, but both at once is rejected by the
+      # schema: Kubernetes could then neither add nor remove a pod, so the
+      # rollout would never progress.
+      #
+      # Only valid with strategy: RollingUpdate. Setting either field alongside
+      # Recreate is rejected by the schema instead of being silently dropped.
+      #
+      # Example:
+      #   rollingUpdate:
+      #     maxSurge: 1
+      #     maxUnavailable: 0
+      #
+      rollingUpdate: {}
 
     # Configuration specific to StatefulSet workloads. Only used when type is
     # statefulset.

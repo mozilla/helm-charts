@@ -113,3 +113,58 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "additional properties 'blueGreen' not allowed"
+  - it: Rollout bounds rollout progress when progressDeadlineSeconds is set
+    template: workload/rollout.yaml
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      # The unset case needs no case of its own: the suite snapshot renders the
+      # fixture without the field and would fail if it were ever emitted.
+      - equal:
+          path: spec.progressDeadlineSeconds
+          value: 300
+
+  - it: Rollout caps retained revisions when revisionHistoryLimit is set
+    template: workload/rollout.yaml
+    set:
+      workloads.test-service.revisionHistoryLimit: 2
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      # The unset case needs no case of its own: the suite snapshot renders the
+      # fixture without the field and would fail if it were ever emitted.
+      - equal:
+          path: spec.revisionHistoryLimit
+          value: 2
+  - it: Custom workload labels propagate to Rollout and Pod template
+    template: workload/rollout.yaml
+    set:
+      workloads.test-service.labels:
+        registry.gke.io/functional-type: AGENT
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+      - equal:
+          path: spec.template.metadata.labels["registry.gke.io/functional-type"]
+          value: AGENT
+  - it: Custom workload annotations propagate to Rollout and Pod template
+    template: workload/rollout.yaml
+    set:
+      workloads.test-service.annotations:
+        iam.gke.io/spiffe-identity-type: agent-identity
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: test-service
+    asserts:
+      - equal:
+          path: metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity
+      - equal:
+          path: spec.template.metadata.annotations["iam.gke.io/spiffe-identity-type"]
+          value: agent-identity

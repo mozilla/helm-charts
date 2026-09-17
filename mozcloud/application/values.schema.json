@@ -214,6 +214,13 @@
               "type": "boolean",
               "default": true
             },
+            "annotations": {
+              "type": "object",
+              "description": "Additional annotations to apply to the ServiceAccount.",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
             "imagePullSecrets": {
               "type": "array",
               "description": "List of image pull secret names to attach to the service account.",
@@ -476,21 +483,37 @@
             "default": true
           },
           "affinity": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "Pod affinity rules (nodeAffinity, podAffinity, podAntiAffinity)"
+          },
+          "annotations": {
+            "type": "object",
+            "description": "Annotations to pass down to workload resources, e.g. Deployments and Pods",
+            "additionalProperties": {
+              "type": "string"
+            }
           },
           "component": {
             "type": "string"
           },
           "nodeSelector": {
-            "type": "object",
+            "type": [
+              "object",
+              "null"
+            ],
             "description": "Node label selectors for pod scheduling",
             "additionalProperties": {
               "type": "string"
             }
           },
           "tolerations": {
-            "type": "array",
+            "type": [
+              "array",
+              "null"
+            ],
             "description": "Pod tolerations for tainted nodes",
             "items": {
               "type": "object",
@@ -523,7 +546,10 @@
             }
           },
           "topologySpreadConstraints": {
-            "type": "array",
+            "type": [
+              "array",
+              "null"
+            ],
             "description": "Topology spread constraints for pod distribution across nodes/zones",
             "items": {
               "type": "object"
@@ -539,14 +565,29 @@
             "default": "deployment"
           },
           "replicas": {
-            "type": "integer",
-            "description": "Fixed pod count, applied only when autoscaling.enabled is false. Leave unset when an external autoscaler such as KEDA owns the replica count, so spec.replicas is omitted",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Fixed pod count, applied only when autoscaling.enabled is false. Leave unset, or set to null to clear a value inherited from a lower-precedence values file, when an autoscaler owns the replica count, so spec.replicas is omitted",
             "minimum": 0
           },
           "minReadySeconds": {
             "type": "integer",
             "default": 0,
             "description": "Seconds a newly created pod must be ready without any container crashing before it is treated as available. Omitted unless set; the Kubernetes default is 0",
+            "minimum": 0
+          },
+          "progressDeadlineSeconds": {
+            "type": "integer",
+            "default": 600,
+            "description": "Seconds a deployment or rollout has to make progress before it is marked as failed. Applies to deployments and rollouts only; stateful sets have no such field. Omitted unless set; the Kubernetes default is 600. Must be greater than minReadySeconds",
+            "minimum": 1
+          },
+          "revisionHistoryLimit": {
+            "type": "integer",
+            "default": 10,
+            "description": "Number of old revisions to retain for rollback (ReplicaSets for deployments and rollouts, ControllerRevisions for stateful sets). Omitted unless set; the Kubernetes default is 10. Set to 0 to retain none, which disables rollback",
             "minimum": 0
           },
           "autoscaling": {
@@ -631,6 +672,9 @@
                         "exec": {
                           "$ref": "#/$defs/execProbe"
                         },
+                        "tcpSocket": {
+                          "$ref": "#/$defs/tcpSocketProbe"
+                        },
                         "path": {
                           "type": "string",
                           "default": "/__lbheartbeat__"
@@ -681,7 +725,22 @@
                             }
                           }
                         }
-                      }
+                      },
+                      "allOf": [
+                        {
+                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders (which only applies to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
+                          "if": {
+                            "required": ["tcpSocket"]
+                          },
+                          "then": {
+                            "properties": {
+                              "exec": false,
+                              "path": false,
+                              "httpHeaders": false
+                            }
+                          }
+                        }
+                      ]
                     },
                     "liveness": {
                       "type": "object",
@@ -693,6 +752,9 @@
                         },
                         "exec": {
                           "$ref": "#/$defs/execProbe"
+                        },
+                        "tcpSocket": {
+                          "$ref": "#/$defs/tcpSocketProbe"
                         },
                         "path": {
                           "type": "string",
@@ -744,7 +806,22 @@
                             }
                           }
                         }
-                      }
+                      },
+                      "allOf": [
+                        {
+                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders (which only applies to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
+                          "if": {
+                            "required": ["tcpSocket"]
+                          },
+                          "then": {
+                            "properties": {
+                              "exec": false,
+                              "path": false,
+                              "httpHeaders": false
+                            }
+                          }
+                        }
+                      ]
                     },
                     "metrics": {
                       "type": "object",
@@ -755,16 +832,114 @@
                           "default": "/metrics"
                         }
                       }
+                    },
+                    "startup": {
+                      "description": "Startup probe for slow-starting containers. Opt-in: unlike readiness and liveness, this probe is only rendered when enabled is true. While it is running, the liveness and readiness probes are held off by the kubelet, so a long startup no longer needs an inflated liveness initialDelaySeconds. successThreshold is deliberately not offered because Kubernetes requires it to be 1 for startup probes.",
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "enabled": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "exec": {
+                          "$ref": "#/$defs/execProbe"
+                        },
+                        "tcpSocket": {
+                          "$ref": "#/$defs/tcpSocketProbe"
+                        },
+                        "path": {
+                          "type": "string",
+                          "default": "/__lbheartbeat__"
+                        },
+                        "httpHeaders": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": "string"
+                              }
+                            }
+                          }
+                        },
+                        "probes": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "initialDelaySeconds": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "default": 0
+                            },
+                            "periodSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 10
+                            },
+                            "timeoutSeconds": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 5
+                            },
+                            "failureThreshold": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "default": 30
+                            }
+                          }
+                        }
+                      },
+                      "allOf": [
+                        {
+                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders (which only applies to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
+                          "if": {
+                            "required": ["tcpSocket"]
+                          },
+                          "then": {
+                            "properties": {
+                              "exec": false,
+                              "path": false,
+                              "httpHeaders": false
+                            }
+                          }
+                        }
+                      ]
                     }
                   }
                 },
                 "port": {
+                  "description": "The container's primary port. Rendered as a `containerPort` on the pod, referenced by the workload's startupProbe/livenessProbe/readinessProbe port targeting, and (for StatefulSet workloads) exposed on the headless Service. For Ingress/Gateway workloads the backing Service's `targetPort` defaults to the nginx sidecar's `http` port name (8080 → forwards to `127.0.0.1:8000`); this default assumes nginx is enabled and `port` is 8000. When nginx is disabled or the container listens on a non-8000 port, override the Service target via `hosts.<host>.targetPort` (points at any port name on the container) or `hosts.<host>.backends.<backend>.service.targetPort` for per-backend routing. The nginx sidecar upstream itself is hardcoded to `127.0.0.1:8000`; supply a custom `nginx.configMap` to change it.",
                   "type": "integer",
                   "default": 8000
                 },
                 "portName": {
                   "type": "string",
-                  "description": "Override the name used for this container's port. Defaults to the container name normalized to RFC 6335 format."
+                  "description": "Override the name used for this container's primary port. Defaults to the container name normalized to RFC 6335 format."
+                },
+                "additionalPorts": {
+                  "description": "Extra containerPort declarations exposed on the pod alongside the primary `port`. Use for internal or peer-to-peer ports (e.g. an inter-pod router listener) that should be visible in the pod spec but are NOT the default Service/backend target. Additional ports do NOT participate in Ingress or Gateway routing unless explicitly referenced by name from `hosts.<host>.targetPort` or `hosts.<host>.backends.<backend>.service.targetPort`. `name` is optional (matches the Kubernetes ContainerPort spec); when supplied it is sanitized via `mozcloud.portName` (lowercased, non-`[a-z0-9-]` replaced with `-`, truncated to 15). When a workload is a StatefulSet, its headless Service surfaces every container's primary port and additionalPorts; unnamed additionalPorts are given a synthesized name of `port-<number>` for the Service entry. Names and port numbers must be unique across ALL containers on that workload or template rendering fails.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["port"],
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Optional port name. When set it is sanitized to RFC 6335 form via `mozcloud.portName`; supply a lowercase, hyphenated string <= 15 chars to avoid surprises. Required only if you plan to reference this port by name from a probe, Service targetPort, or backend."
+                      },
+                      "port": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 65535
+                      }
+                    }
+                  }
                 }
               }
             }
@@ -942,6 +1117,10 @@
                             }
                           }
                         }
+                      },
+                      "options": {
+                        "$ref": "#/$defs/hostOptions",
+                        "description": "Per-backend overrides for the host's options block. Any field set here replaces the host-level value for this backend only; unset fields are inherited from hosts.<host>.options. Use this to exempt a single path from IAP (options.iap.enabled: false) while the rest of the host stays protected. Backends that resolve to the same Service must agree on options.iap.enabled, since a Service carries a single cloud.google.com/backend-config annotation per port."
                       },
                       "path": {
                         "type": "string",
@@ -1123,117 +1302,8 @@
                   }
                 },
                 "options": {
-                  "type": "object",
-                  "additionalProperties": false,
-                  "properties": {
-                    "createBackendPolicy": {
-                      "type": "boolean"
-                    },
-                    "iap": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "default": false
-                        },
-                        "oauth2ClientId": {
-                          "type": "string"
-                        },
-                        "oauth2ClientSecret": {
-                          "type": "string"
-                        }
-                      }
-                    },
-                    "logSampleRate": {
-                      "type": [
-                        "number",
-                        "integer",
-                        "string"
-                      ],
-                      "default": 10
-                    },
-                    "securityPolicy": {
-                      "type": "string",
-                      "description": "Cloud Armor security policy name to attach to the load balancer backend. For migration of existing applications only \u2014 new applications should use Fastly for WAF instead."
-                    },
-                    "timeoutSec": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "default": 30
-                    },
-                    "healthCheck": {
-                      "type": "object",
-                      "additionalProperties": false,
-                      "properties": {
-                        "path": {
-                          "type": "string",
-                          "description": "Health check request path on the HealthCheckPolicy (Gateway API only). For the Ingress API, use requestPath instead."
-                        },
-                        "port": {
-                          "anyOf": [
-                            {
-                              "type": "string"
-                            },
-                            {
-                              "type": "number"
-                            }
-                          ]
-                        },
-                        "host": {
-                          "type": "string",
-                          "description": "Host header sent by the GCLB health check (Gateway API only). The Ingress API's BackendConfig health check does not accept a Host header; set the Host header via container-level healthCheck.readiness.httpHeaders instead."
-                        },
-                        "requestPath": {
-                          "type": "string",
-                          "description": "Path the GCLB health check should send GET requests to (Ingress API only). Required for multi-container backends per GKE docs (https://cloud.google.com/kubernetes-engine/docs/concepts/ingress#direct_hc_instead). If unset, GKE picks a container readiness probe path arbitrarily."
-                        },
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "HTTP",
-                            "HTTPS",
-                            "HTTP2"
-                          ],
-                          "description": "Protocol used by the GCLB health check (Ingress API only). See https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#direct_health."
-                        },
-                        "checkIntervalSec": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "Interval in seconds between health check probes (Ingress API only)."
-                        },
-                        "timeoutSec": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "Timeout in seconds for an individual health check probe (Ingress API only). Must be less than or equal to checkIntervalSec."
-                        },
-                        "healthyThreshold": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "Consecutive successful probes required to mark a backend healthy (Ingress API only)."
-                        },
-                        "unhealthyThreshold": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "description": "Consecutive failed probes required to mark a backend unhealthy (Ingress API only)."
-                        }
-                      }
-                    },
-                    "customRequestHeaders": {
-                      "type": "array",
-                      "description": "Custom headers the GCLB adds to requests before forwarding to backends (Ingress API only). Each entry is a 'Name:Value' string. Values may use GCLB variable substitution like {tls_version} and {tls_cipher_suite}; see https://cloud.google.com/load-balancing/docs/https/custom-headers.",
-                      "items": {
-                        "type": "string"
-                      }
-                    },
-                    "customResponseHeaders": {
-                      "type": "array",
-                      "description": "Custom headers the GCLB adds to responses before returning to clients (Ingress API only). Each entry is a 'Name:Value' string. See https://cloud.google.com/load-balancing/docs/https/custom-headers.",
-                      "items": {
-                        "type": "string"
-                      }
-                    }
-                  }
+                  "$ref": "#/$defs/hostOptions",
+                  "description": "Load balancer settings applied to every backend on this host. Individual backends may override any of these through backends.<name>.options."
                 },
                 "gatewayClass": {
                   "type": "string",
@@ -1272,6 +1342,28 @@
                                 ]
                               }
                             ]
+                          },
+                          "properties": {
+                            "options": {
+                              "properties": {
+                                "healthCheck": {
+                                  "not": {
+                                    "anyOf": [
+                                      {
+                                        "required": [
+                                          "host"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "path"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            }
                           }
                         }
                       },
@@ -1314,6 +1406,48 @@
                                 ]
                               }
                             ]
+                          },
+                          "properties": {
+                            "options": {
+                              "properties": {
+                                "healthCheck": {
+                                  "not": {
+                                    "anyOf": [
+                                      {
+                                        "required": [
+                                          "requestPath"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "type"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "checkIntervalSec"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "timeoutSec"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "healthyThreshold"
+                                        ]
+                                      },
+                                      {
+                                        "required": [
+                                          "unhealthyThreshold"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            }
                           }
                         }
                       },
@@ -1526,6 +1660,44 @@
             "minimum": 1,
             "default": 30
           },
+          "deployment": {
+            "type": "object",
+            "description": "Configuration specific to Deployment workloads.",
+            "additionalProperties": false,
+            "properties": {
+              "rollingUpdate": {
+                "type": "object",
+                "description": "Tuning for the RollingUpdate strategy, rendered under spec.strategy.rollingUpdate. Only used when type is deployment and strategy is RollingUpdate.",
+                "additionalProperties": false,
+                "properties": {
+                  "maxSurge": {
+                    "type": ["integer", "string"],
+                    "minimum": 0,
+                    "pattern": "^(0|[1-9][0-9]*)%$",
+                    "description": "Maximum number of pods, or percentage of the desired count, that may be created above the desired count during an update. Omitted unless set; the Kubernetes default is 25%."
+                  },
+                  "maxUnavailable": {
+                    "type": ["integer", "string"],
+                    "minimum": 0,
+                    "pattern": "^(0|[1-9][0-9]*)%$",
+                    "description": "Maximum number of pods, or percentage of the desired count, that may be unavailable during an update. Omitted unless set; the Kubernetes default is 25%. Set to 0 for a surge-only rollout that never drops below the desired count."
+                  }
+                },
+                "allOf": [
+                  {
+                    "description": "Kubernetes rejects a Deployment whose maxSurge and maxUnavailable are both zero, because no pod may then be added or removed and the rollout can never make progress. Only the combination is invalid: either field may be zero on its own, since Kubernetes then defaults the other one to 25%. The percentage forms are enumerated alongside the integers because Kubernetes resolves a percentage before comparing, and the pattern above admits \"0%\" as the only zero-valued string.",
+                    "not": {
+                      "required": ["maxSurge", "maxUnavailable"],
+                      "properties": {
+                        "maxSurge": { "enum": [0, "0%"] },
+                        "maxUnavailable": { "enum": [0, "0%"] }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
           "statefulSet": {
             "type": "object",
             "description": "Configuration specific to StatefulSet workloads.",
@@ -1641,6 +1813,27 @@
             "then": {
               "properties": { "replicas": { "type": "null" } }
             }
+          },
+          {
+            "description": "Kubernetes rejects spec.strategy.rollingUpdate on a Recreate deployment, so the combination is rejected here rather than dropped from the rendered manifest. The constraint is placed on the two fields instead of on the rollingUpdate block itself so that an empty block still validates: values.yaml ships rollingUpdate: {} as the documented default under workloads.default, and requiring the block to be absent would make setting strategy: Recreate there fail on the chart's own default.",
+            "if": {
+              "properties": { "strategy": { "const": "Recreate" } },
+              "required": ["strategy"]
+            },
+            "then": {
+              "properties": {
+                "deployment": {
+                  "properties": {
+                    "rollingUpdate": {
+                      "properties": {
+                        "maxSurge": { "type": "null" },
+                        "maxUnavailable": { "type": "null" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         ]
       }
@@ -1703,6 +1896,117 @@
     }
   },
   "$defs": {
+    "hostOptions": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "iap": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "oauth2ClientId": {
+              "type": "string"
+            },
+            "oauth2ClientSecret": {
+              "type": "string"
+            }
+          }
+        },
+        "logSampleRate": {
+          "type": [
+            "number",
+            "integer",
+            "string"
+          ],
+          "default": 10
+        },
+        "securityPolicy": {
+          "type": "string",
+          "description": "Cloud Armor security policy name to attach to the load balancer backend. For migration of existing applications only \u2014 new applications should use Fastly for WAF instead."
+        },
+        "timeoutSec": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 30,
+          "description": "Backend service timeout in seconds. GCP requires at least 1; the GCPBackendPolicy CRD rejects 0."
+        },
+        "healthCheck": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "Health check request path on the HealthCheckPolicy (Gateway API only). For the Ingress API, use requestPath instead."
+            },
+            "port": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "host": {
+              "type": "string",
+              "description": "Host header sent by the GCLB health check (Gateway API only). The Ingress API's BackendConfig health check does not accept a Host header; set the Host header via container-level healthCheck.readiness.httpHeaders instead."
+            },
+            "requestPath": {
+              "type": "string",
+              "description": "Path the GCLB health check should send GET requests to (Ingress API only). Required for multi-container backends per GKE docs (https://cloud.google.com/kubernetes-engine/docs/concepts/ingress#direct_hc_instead). If unset, GKE picks a container readiness probe path arbitrarily."
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "HTTP",
+                "HTTPS",
+                "HTTP2"
+              ],
+              "description": "Protocol used by the GCLB health check (Ingress API only). See https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#direct_health."
+            },
+            "checkIntervalSec": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Interval in seconds between health check probes (Ingress API only)."
+            },
+            "timeoutSec": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Timeout in seconds for an individual health check probe (Ingress API only). Must be less than or equal to checkIntervalSec."
+            },
+            "healthyThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Consecutive successful probes required to mark a backend healthy (Ingress API only)."
+            },
+            "unhealthyThreshold": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Consecutive failed probes required to mark a backend unhealthy (Ingress API only)."
+            }
+          }
+        },
+        "customRequestHeaders": {
+          "type": "array",
+          "description": "Custom headers the GCLB adds to requests before forwarding to backends (Ingress API only). Each entry is a 'Name:Value' string. Values may use GCLB variable substitution like {tls_version} and {tls_cipher_suite}; see https://cloud.google.com/load-balancing/docs/https/custom-headers.",
+          "items": {
+            "type": "string"
+          }
+        },
+        "customResponseHeaders": {
+          "type": "array",
+          "description": "Custom headers the GCLB adds to responses before returning to clients (Ingress API only). Each entry is a 'Name:Value' string. See https://cloud.google.com/load-balancing/docs/https/custom-headers.",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
     "execProbe": {
       "type": "object",
       "additionalProperties": false,
@@ -1713,6 +2017,17 @@
           "items": {
             "type": "string"
           }
+        }
+      }
+    },
+    "tcpSocketProbe": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Probe a TCP listener instead of an HTTP endpoint, for containers that speak a non-HTTP protocol. An empty mapping probes the container's own port, which is the usual case; set port to reach one of the additionalPorts instead.",
+      "properties": {
+        "port": {
+          "type": ["integer", "string"],
+          "description": "Port number, or the name of a port declared on the container. Defaults to the container's port."
         }
       }
     },
@@ -1873,6 +2188,11 @@
             },
             "addCapabilities": {
               "type": "array"
+            },
+            "privileged": {
+              "description": "Run the container in privileged mode (maps to securityContext.privileged). Defaults to false. Intended for init containers that must mutate kernel state the declarative path cannot reach - e.g. writing unsafe sysctls via `sysctl -w` when the target node pool's kubelet does not list them in --allowed-unsafe-sysctls. Prefer workloads.<name>.security.sysctls where the sysctl is safe or the pool is allowlisted. Requires the target namespace to permit privileged pods via the 'privileged' Pod Security Standard. When true, allowPrivilegeEscalation and the capability drop list are omitted, since the API server rejects privileged=true with allowPrivilegeEscalation=false.",
+              "type": "boolean",
+              "default": false
             }
           }
         },
@@ -2034,12 +2354,23 @@
               }
             ]
           }
+        },
+        "workingDir": {
+          "type": "string",
+          "description": "Path inside the container to use as its working directory. Overrides the WORKDIR baked into the image."
         }
       }
     },
     "cronJob": {
       "type": "object",
       "properties": {
+        "annotations": {
+          "type": "object",
+          "description": "Annotations to apply to the CronJob resource. They are not passed down to the Jobs the CronJob creates, nor to their pods.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "concurrencyPolicy": {
           "type": "string",
           "enum": [
@@ -2060,11 +2391,28 @@
             }
           }
         },
+        "labels": {
+          "type": "object",
+          "description": "Labels to apply to the CronJob resource. They are not passed down to the pods it creates; use jobConfig.labels for those.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
         "schedule": {
           "type": "string"
         },
+        "startingDeadlineSeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Deadline in seconds for starting a scheduled job if it misses its scheduled time. A run that cannot start within this window is counted as failed."
+        },
         "suspend": {
           "type": "boolean"
+        },
+        "timeZone": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Time zone the schedule is interpreted in, as a name from the IANA database (for example \"America/Los_Angeles\"). Unset means the schedule follows the time zone of the kube-controller-manager process, which is not something a tenant controls. Kubernetes rejects a name it cannot resolve."
         }
       },
       "required": [
@@ -2078,8 +2426,18 @@
           "$ref": "#/$defs/gcsFuseSidecar"
         },
         "affinity": {
-          "type": "object",
+          "type": [
+            "object",
+            "null"
+          ],
           "description": "Pod affinity rules (nodeAffinity, podAffinity, podAntiAffinity)"
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Annotations to apply to the Job resource. Values set here take precedence over the ArgoCD hook and sync-wave annotations the chart generates. Under cronJobs.<name>.jobConfig they have no effect, because a CronJob renders no Job resource of its own.",
+          "additionalProperties": {
+            "type": "string"
+          }
         },
         "generateName": {
           "type": "boolean"
@@ -2091,8 +2449,18 @@
           "type": "integer",
           "default": 6
         },
-        "nodeSelector": {
+        "labels": {
           "type": "object",
+          "description": "Labels to apply to the Job resource and to its pods. Under cronJobs.<name>.jobConfig only the pods are labelled, because a CronJob renders no Job resource of its own.",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "nodeSelector": {
+          "type": [
+            "object",
+            "null"
+          ],
           "description": "Node label selectors for pod scheduling",
           "additionalProperties": {
             "type": "string"
@@ -2124,7 +2492,10 @@
           "type": "boolean"
         },
         "tolerations": {
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "description": "Pod tolerations for tainted nodes",
           "items": {
             "type": "object",
@@ -2157,7 +2528,10 @@
           }
         },
         "topologySpreadConstraints": {
-          "type": "array",
+          "type": [
+            "array",
+            "null"
+          ],
           "description": "Topology spread constraints for pod distribution across nodes/zones",
           "items": {
             "type": "object"
@@ -2280,6 +2654,26 @@
             "Always",
             "OnRootMismatch"
           ]
+        },
+        "sysctls": {
+          "description": "List of pod-level sysctl entries applied via securityContext.sysctls. Safe sysctls (e.g. net.ipv4.ip_local_port_range, and since k8s 1.29 the net.ipv4.tcp_keepalive_* family) need nothing extra. Unsafe sysctls (e.g. net.ipv4.tcp_max_syn_backlog, net.ipv4.tcp_max_tw_buckets, net.ipv4.tcp_retries2) are gated twice: the pod's namespace must permit them via the 'privileged' Pod Security Standard, AND the kubelet on the target node pool must list them in --allowed-unsafe-sysctls. A privileged namespace alone only lets the pod declare the sysctl; without the kubelet allowlist the pod is rejected with reason SysctlForbidden. Where the pool cannot be allowlisted, an init container with security.privileged can set them via `sysctl -w` instead.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "value"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     }

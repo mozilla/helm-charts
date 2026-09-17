@@ -30,6 +30,9 @@ tasks:
                 type: gcsFuseCsi
                 path: /data/bucket
                 bucketName: my-test-bucket
+              - name: scratch-disk
+                type: emptyDir
+                path: /cache
   jobs:
     test-job:
       type: postDeployment
@@ -49,6 +52,21 @@ tasks:
               path: /data/bucket
               bucketName: my-test-bucket
               loggingSeverity: warning
+            - name: scratch-disk
+              type: emptyDir
+              path: /cache
+            - name: scratch-memory
+              type: emptyDir
+              path: /dev/shm
+              medium: Memory
+              sizeLimit: 64Mi
+            # storageClassName omitted deliberately, to exercise the default.
+            - name: scratch-pvc
+              type: ephemeral
+              path: /work
+              accessModes:
+                - ReadWriteOnce
+              size: 5Gi
 workloads:
   test-service:
     component: web

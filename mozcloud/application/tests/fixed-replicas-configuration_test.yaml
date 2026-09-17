@@ -56,6 +56,23 @@ tests:
       - notExists:
           path: spec.replicas
 
+  - it: Deployment with replicas cleared to null omits replicas
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: cleared-replicas-deployment
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: A replica count alongside autoscaling is still rejected
+    values:
+      - values/globals.yaml
+      - values/fixed-replicas-rejects-count-with-autoscaling.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "got number, want null"
+
   - it: StatefulSet with autoscaling disabled sets the explicit replica count
     template: workload/statefulset.yaml
     documentSelector:

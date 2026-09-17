@@ -291,6 +291,76 @@ tests:
         documentSelector:
           path: $[?(@.kind == "CronJob")].metadata.name
           value: test-cronjob
+      # emptyDir and ephemeral volumes render a volume source on the Job pod.
+      # Regression guard: these previously rendered as a sourceless
+      # `- name: <volume>` entry, which the API server rejects with
+      # "must specify a volume type".
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scratch-disk
+            emptyDir: {}
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scratch-memory
+            emptyDir:
+              medium: Memory
+              sizeLimit: 64Mi
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      # storageClassName defaults to standard-rwo when not set in values.
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: scratch-pvc
+            ephemeral:
+              volumeClaimTemplate:
+                spec:
+                  accessModes:
+                    - ReadWriteOnce
+                  resources:
+                    requests:
+                      storage: 5Gi
+                  storageClassName: standard-rwo
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      # The bug shape itself: a volume entry carrying only a name.
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: scratch-disk
+        template: task/job.yaml
+        documentSelector:
+          path: $[?(@.kind == "Job")].metadata.name
+          value: test-job
+      # The same jobTemplate define also renders sources on the CronJob path.
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.volumes
+          content:
+            name: scratch-disk
+            emptyDir: {}
+        template: task/cronjob.yaml
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
+      - contains:
+          path: spec.jobTemplate.spec.template.spec.containers[?(@.name=="job")].volumeMounts
+          content:
+            name: scratch-disk
+            mountPath: /cache
+        template: task/cronjob.yaml
+        documentSelector:
+          path: $[?(@.kind == "CronJob")].metadata.name
+          value: test-cronjob
       # Workloads without a gcsFuseCsi volume must not get gke-gcsfuse/* annotations
       - notExists:
           path: spec.template.metadata.annotations["gke-gcsfuse/volumes"]

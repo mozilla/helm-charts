@@ -15,7 +15,7 @@ metadata:
   name: {{ $workloadName }}
   labels:
     {{- $component := dict "component_code" $workloadConfig.component }}
-    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) "labels" (default dict $workloadConfig.labels) }}
     {{- $labels := include "mozcloud.labels" $params | fromYaml }}
     {{- $labels.labels | toYaml | nindent 4 }}
   {{- $params = dict "annotations" (default dict $workloadConfig.annotations) "context" $context "type" "deployment" }}
@@ -26,7 +26,7 @@ metadata:
   {{- end }}
 spec:
   {{- /* Only pin replicas when the chart owns scaling; an external autoscaler needs the field absent. */}}
-  {{- if and (not (dig "autoscaling" "enabled" true $workloadConfig)) (hasKey $workloadConfig "replicas") }}
+  {{- if and (not (dig "autoscaling" "enabled" true $workloadConfig)) (not (kindIs "invalid" $workloadConfig.replicas)) }}
   replicas: {{ $workloadConfig.replicas }}
   {{- end }}
   {{- /* Opt-in soak period before a ready pod counts as available. Emitted only when
@@ -34,11 +34,28 @@ spec:
   {{- if hasKey $workloadConfig "minReadySeconds" }}
   minReadySeconds: {{ $workloadConfig.minReadySeconds }}
   {{- end }}
+  {{- if hasKey $workloadConfig "progressDeadlineSeconds" }}
+  progressDeadlineSeconds: {{ $workloadConfig.progressDeadlineSeconds }}
+  {{- end }}
+  {{- if hasKey $workloadConfig "revisionHistoryLimit" }}
+  revisionHistoryLimit: {{ $workloadConfig.revisionHistoryLimit }}
+  {{- end }}
   selector:
     matchLabels:
       {{- $labels.selectorLabels | toYaml | nindent 6 }}
+  {{- $strategy := default "RollingUpdate" $workloadConfig.strategy }}
   strategy:
-    type: {{ default "RollingUpdate" $workloadConfig.strategy }}
+    type: {{ $strategy }}
+    {{- $rollingUpdate := dig "deployment" "rollingUpdate" dict $workloadConfig }}
+    {{- if and (eq $strategy "RollingUpdate") $rollingUpdate }}
+    rollingUpdate:
+      {{- if hasKey $rollingUpdate "maxSurge" }}
+      maxSurge: {{ $rollingUpdate.maxSurge | toYaml }}
+      {{- end }}
+      {{- if hasKey $rollingUpdate "maxUnavailable" }}
+      maxUnavailable: {{ $rollingUpdate.maxUnavailable | toYaml }}
+      {{- end }}
+    {{- end }}
   {{- /*
   The template below can be found in templates/workload/_workloadTemplate.yaml
   */}}
