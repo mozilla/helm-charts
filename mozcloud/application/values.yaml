@@ -103,10 +103,12 @@ preview:
 #         KEY3: VALUE3
 #
 # EXPERIMENTAL: Support for embedded templates in the ConfigMap value string.
-# This can be enabled by setting "tplEnabled: true" in the configMap object.
-# When enabled you can embed simple helm templates into the value strings of 
-# ConfigMap data. Templates are restricted to direct access of `.Values` and
-# calling the `default` template function with `.Values` access 
+# Enable this for every ConfigMap with experimental.tplEnabled.configMaps, or
+# for a single ConfigMap by setting "tplEnabled: true" in the configMap object.
+# When enabled you can embed simple helm templates into the value strings of
+# ConfigMap data, with access to the usual chart context (`.Values`, `.Chart`,
+# `.Release`, `.Files`). Values without templates are emitted as-is, so a
+# config file containing literal braces does not need this disabled.
 #
 # Example:
 #
@@ -116,6 +118,36 @@ preview:
 #       data:
 #         ORIGIN: "https://{{ .Values.global.hostname }}/"
 configMaps: {}
+
+# EXPERIMENTAL: Opt-in gates for embedded Helm templates (tpl) in values.
+# The lookup, env, expandenv, and getHostByName functions are rejected.
+#
+# configMaps: Allows the values under configMaps.*.data to embed Helm template
+#             expressions, with access to the usual chart context. A single
+#             ConfigMap can opt in on its own instead, via
+#             configMaps.<name>.tplEnabled.
+#
+# hosts:      Allows the domains under workloads.*.hosts.*.domains to embed
+#             Helm template expressions, so a shared base domain can live in
+#             one value instead of being hardcoded per host. Expressions may
+#             only reference .Values, .Chart, and .Release.
+#
+# Example:
+#
+#   experimental:
+#     tplEnabled:
+#       hosts: true
+#
+#   workloads:
+#     my-app:
+#       hosts:
+#         default:
+#           domains:
+#             - 'api.{{ .Values.global.hostname }}'
+experimental:
+  tplEnabled:
+    configMaps: false
+    hosts: false
 
 # External secrets to sync from Google Secret Manager (GSM) into Kubernetes
 # secrets. Each entry here creates an ExternalSecret resource that produces a
@@ -1820,6 +1852,9 @@ workloads:
       # workload name will be used as the resource name instead.
       default:
         # A list of domains to use for each host.
+        #
+        # When .Values.experimental.tplEnabled.hosts is true, these may embed
+        # Helm template expressions (e.g. "api.{{ .Values.global.hostname }}").
         domains:
           - example.com
 
