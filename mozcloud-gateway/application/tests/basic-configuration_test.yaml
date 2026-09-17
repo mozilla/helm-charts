@@ -265,3 +265,23 @@ tests:
         documentSelector:
           path: $[?(@.kind == "HTTPRoute")].metadata.name
           value: test-httproute-http-redirect
+
+  # Helm decodes values through JSON, so every number arrives as a float64 and
+  # Go renders anything from 1000000 up in scientific notation. The CRD field is
+  # an integer, and YAML 1.1 parsers read "1e+06" as a string.
+  - it: Logging sample rate renders as an integer at the documented maximum
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/backend-policy-logging-max-sample-rate.yaml
+    asserts:
+      - isSubset:
+          path: spec.default
+          content:
+            logging:
+              enabled: true
+              sampleRate: 1000000
+        template: backendpolicy.yaml
+        documentSelector:
+          path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
+          value: test-service

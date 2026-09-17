@@ -1,0 +1,6 @@
+---
+backendPolicy:
+  logging:
+    enabled: true
+    # The documented maximum, which Helm decodes as a float64 through JSON.
+    sampleRate: 1000000
