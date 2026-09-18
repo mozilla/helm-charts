@@ -37,6 +37,7 @@ collectors:
     startupProbe:
       timeoutSeconds: 3
       failureThreshold: 12
+      periodSeconds: 10
 
   gateway:
     endpoints:
@@ -82,6 +83,7 @@ collectors:
     startupProbe:
       timeoutSeconds: 3
       failureThreshold: 12
+      periodSeconds: 10
 
 serviceAccount:
   create: true

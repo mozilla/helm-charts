@@ -53,6 +53,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | collectors.daemonset.securityContext.runAsUser | int | `10001` |  |
 | collectors.daemonset.securityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
 | collectors.daemonset.startupProbe.failureThreshold | int | `12` |  |
+| collectors.daemonset.startupProbe.periodSeconds | int | `10` |  |
 | collectors.daemonset.startupProbe.timeoutSeconds | int | `3` |  |
 | collectors.daemonset.tolerations[0].operator | string | `"Exists"` |  |
 | collectors.gateway.autoscaler.maxReplicas | int | `5` |  |
@@ -78,6 +79,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | collectors.gateway.securityContext.runAsUser | int | `10001` |  |
 | collectors.gateway.securityContext.seccompProfile.type | string | `"RuntimeDefault"` |  |
 | collectors.gateway.startupProbe.failureThreshold | int | `12` |  |
+| collectors.gateway.startupProbe.periodSeconds | int | `10` |  |
 | collectors.gateway.startupProbe.timeoutSeconds | int | `3` |  |
 | collectors.gateway.statsdService.enabled | bool | `true` |  |
 | collectors.gateway.statsdService.sessionAffinityTimeoutSeconds | int | `10800` |  |
