@@ -315,17 +315,9 @@
           "type": "integer",
           "minimum": 1
         },
-        "successThreshold": {
-          "type": "integer",
-          "minimum": 1
-        },
         "failureThreshold": {
           "type": "integer",
           "minimum": 1
-        },
-        "terminationGracePeriodSeconds": {
-          "type": "integer",
-          "minimum": 0
         }
       },
       "additionalProperties": false
