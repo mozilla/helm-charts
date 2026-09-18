@@ -34,6 +34,9 @@ collectors:
       requests:
         cpu: 250m
         memory: 512Mi
+    startupProbe:
+      timeoutSeconds: 3
+      failureThreshold: 12
 
   gateway:
     endpoints:
@@ -76,6 +79,9 @@ collectors:
       requests:
         cpu: 500m
         memory: 2Gi
+    startupProbe:
+      timeoutSeconds: 3
+      failureThreshold: 12
 
 serviceAccount:
   create: true

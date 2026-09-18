@@ -126,6 +126,10 @@
             "resources": {
               "type": "object",
               "additionalProperties": true
+            },
+            "startupProbe": {
+              "type": "object",
+              "additionalProperties": true
             }
           }
         },

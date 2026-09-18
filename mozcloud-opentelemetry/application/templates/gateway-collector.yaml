@@ -21,6 +21,9 @@ spec:
   {{- with .Values.collectors.gateway.resources }}
   resources: {{ toYaml . | nindent 4 }}
   {{- end }}
+  {{- with .Values.collectors.gateway.startupProbe }}
+  startupProbe: {{ toYaml . | nindent 4 }}
+  {{- end }}
   env:
   - name: POD_IP
     valueFrom:
