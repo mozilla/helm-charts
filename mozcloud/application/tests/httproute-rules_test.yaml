@@ -90,10 +90,72 @@ tests:
           path: $[?(@.kind == "HTTPRoute")].metadata.name
           value: headers-and-path
 
-  # Filters on a backendRef, rather than on the rule, so the header reflects
-  # whichever backend actually served the request — the shape a canary needs,
-  # where the weights are rewritten while traffic shifts.
-  - it: Per-backendRef filters render on each weighted backend
+  # Rule-level filters apply to every request the rule matches, which is the
+  # only place GKE accepts them. requestMirror in particular has no per-backend
+  # equivalent, since a mirror copies the whole rule's traffic.
+  - it: Rule-level filters render alongside matches and the default backendRef
+    asserts:
+      - equal:
+          path: spec.rules[0].filters
+          value:
+            - type: RequestMirror
+              requestMirror:
+                backendRef:
+                  kind: Service
+                  name: test-service-shadow
+                  port: 8080
+            - type: ResponseHeaderModifier
+              responseHeaderModifier:
+                set:
+                  - name: X-Shadowed
+                    value: "true"
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: rule-filters
+      - contains:
+          path: spec.rules[0].backendRefs
+          content:
+            group: ""
+            kind: Service
+            name: test-service
+            port: 8080
+            weight: 1
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: rule-filters
+
+  # A rule whose filters redirect is terminal, so the default backendRef the
+  # chart would otherwise add is dead weight and gets dropped.
+  - it: A redirect filter drops the default backendRef
+    asserts:
+      - notExists:
+          path: spec.rules[0].backendRefs
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: redirect-filter
+      - equal:
+          path: spec.rules[0].filters[0].requestRedirect.statusCode
+          value: 301
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: redirect-filter
+
+  # GKE rejects backendRef-level filters with GWCER104 and then stops
+  # programming the whole Gateway, so the chart refuses to render them. Other
+  # providers keep the Gateway API behaviour.
+  - it: Per-backendRef filters fail on GKE and render everywhere else
+    values:
+      - values/globals.yaml
+      - values/httproute-backendref-filters.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "hosts.backendref-filters: GKE rejects filters on HTTPRoute backendRefs"
+
+  - it: Per-backendRef filters render on each weighted backend off GKE
+    values:
+      - values/globals.yaml
+      - values/traefik-gateway-configuration.yaml
+      - values/httproute-backendref-filters.yaml
     asserts:
       - contains:
           path: spec.rules[0].backendRefs

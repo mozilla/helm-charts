@@ -1,0 +1,49 @@
+---
+# Replaces the single rule from basic-configuration with the rule shapes that
+# the rules renderer treats specially: a redirect (terminal, so no
+# backendRefs), a path-only rewrite (no hostname to set), a match that carries
+# neither a path nor headers, and a rule setting both shorthands, where the
+# rewrite wins and the rule therefore still needs its backendRefs.
+httpRoute:
+  httpRoutes:
+    test-httproute:
+      rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /old
+          redirect:
+            type: ReplacePrefixMatch
+            path: /new
+            statusCode: 301
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /strip
+          rewrite:
+            path:
+              type: ReplacePrefixMatch
+              name: /
+          backendRefs:
+            - name: test-service
+              port: 8080
+        - matches:
+            - {}
+          backendRefs:
+            - name: test-service
+              port: 8080
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /both
+          rewrite:
+            path:
+              type: ReplacePrefixMatch
+              name: /
+          redirect:
+            type: ReplacePrefixMatch
+            path: /elsewhere
+            statusCode: 301
+          backendRefs:
+            - name: test-service
+              port: 8080
