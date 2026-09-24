@@ -266,6 +266,77 @@ tests:
           path: $[?(@.kind == "HTTPRoute")].metadata.name
           value: test-httproute-http-redirect
 
+  # A redirect is terminal, so the rule never reaches a backend and carrying a
+  # backendRef would be dead weight. A rewrite without a hostname must not
+  # synthesise an empty one, and a match with neither a path nor headers is the
+  # catch-all, not an empty matches list. A rule that sets both shorthands
+  # renders the rewrite, so it is not terminal and keeps its backendRefs.
+  - it: Redirect, path-only rewrite, empty match, and both shorthands render the right rule shapes
+    template: httproute.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/httproute-rule-shapes.yaml
+    asserts:
+      - notExists:
+          path: spec.rules[0].backendRefs
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: test-httproute
+      - equal:
+          path: spec.rules[0].filters[0].requestRedirect.path
+          value:
+            type: ReplacePrefixMatch
+            replacePrefixMatch: /new
+            statusCode: 301
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: test-httproute
+      - notExists:
+          path: spec.rules[1].filters[0].urlRewrite.hostname
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: test-httproute
+      - equal:
+          path: spec.rules[2].matches
+          value:
+            - path:
+                type: PathPrefix
+                value: /
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: test-httproute
+      - equal:
+          path: spec.rules[3].filters[0].type
+          value: URLRewrite
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: test-httproute
+      - contains:
+          path: spec.rules[3].backendRefs
+          content:
+            group: ""
+            kind: Service
+            name: test-service
+            port: 8080
+            weight: 1
+        documentSelector:
+          path: $[?(@.kind == "HTTPRoute")].metadata.name
+          value: test-httproute
+
+  # The shorthand already emits the filter, so spelling out the same type
+  # renders it twice. The API server would reject that at apply time; failing
+  # the render names the offending rule instead.
+  - it: A filter that duplicates the rewrite shorthand fails the render
+    template: httproute.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/httproute-filter-conflict.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "a URLRewrite entry in filters conflicts with the rewrite/redirect shorthand"
+
   # Helm decodes values through JSON, so every number arrives as a float64 and
   # Go renders anything from 1000000 up in scientific notation. The CRD field is
   # an integer, and YAML 1.1 parsers read "1e+06" as a string.

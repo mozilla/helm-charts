@@ -982,7 +982,7 @@
                                   "type": "number"
                                 },
                                 "filters": {
-                                  "description": "Gateway API filters applied to this backendRef only, rendered as spec.rules[].backendRefs[].filters. The payload is typed loosely so any filter type the GatewayClass supports can be expressed; the common case is a responseHeaderModifier marking which backend served the request during a canary.",
+                                  "description": "Gateway API filters applied to this backendRef only, rendered as spec.rules[].backendRefs[].filters. Not usable on GKE: the Gateway controller rejects the route with GWCER104 and stops programming the entire Gateway, so rendering fails instead when cloud.provider is \"gke\". Use rules[].filters there.",
                                   "type": "array",
                                   "items": {
                                     "type": "object",
@@ -990,6 +990,14 @@
                                   }
                                 }
                               }
+                            }
+                          },
+                          "filters": {
+                            "description": "Gateway API filters applied to every request the rule matches, rendered as spec.rules[].filters. The payload is typed loosely so any filter type the GatewayClass supports can be expressed; on GKE that is cors, requestHeaderModifier, responseHeaderModifier, requestMirror, requestRedirect and urlRewrite.",
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "required": ["type"]
                             }
                           },
                           "matches": {

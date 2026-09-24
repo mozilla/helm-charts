@@ -14,92 +14,6 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: backendref-filters
-    spec:
-      hostnames:
-        - backendref.filters
-      parentRefs:
-        - group: gateway.networking.k8s.io
-          kind: Gateway
-          name: mozcloud-test
-          sectionName: https
-      rules:
-        - backendRefs:
-            - filters:
-                - responseHeaderModifier:
-                    set:
-                      - name: X-Canary
-                        value: stable
-                  type: ResponseHeaderModifier
-              group: ""
-              kind: Service
-              name: test-service
-              port: 8080
-              weight: 100
-            - filters:
-                - responseHeaderModifier:
-                    set:
-                      - name: X-Canary
-                        value: canary
-                  type: ResponseHeaderModifier
-              group: ""
-              kind: Service
-              name: test-service-canary
-              port: 8080
-              weight: 0
-          matches:
-            - path:
-                type: PathPrefix
-                value: /
-  2: |
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: HTTPRoute
-    metadata:
-      labels:
-        app.kubernetes.io/component: web
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: web
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
-      name: backendref-filters-http-redirect
-    spec:
-      hostnames:
-        - backendref.filters
-      parentRefs:
-        - group: gateway.networking.k8s.io
-          kind: Gateway
-          name: mozcloud-test
-          sectionName: http
-      rules:
-        - filters:
-            - requestRedirect:
-                scheme: https
-                statusCode: 302
-              type: RequestRedirect
-          matches:
-            - path:
-                type: PathPrefix
-                value: /
-  3: |
-    apiVersion: gateway.networking.k8s.io/v1
-    kind: HTTPRoute
-    metadata:
-      labels:
-        app.kubernetes.io/component: web
-        app.kubernetes.io/managed-by: argocd
-        app.kubernetes.io/name: mozcloud-test
-        app_code: mozcloud-test
-        component_code: web
-        env_code: dev
-        helm.sh/chart: test-chart
-        mozcloud_chart: mozcloud
-        mozcloud_chart_version: 1.0.0
-        realm: nonprod
       name: header-only
     spec:
       hostnames:
@@ -120,7 +34,7 @@ Configuration matches entire snapshot:
             - headers:
                 - name: foo
                   value: bar
-  4: |
+  2: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -154,7 +68,7 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /
-  5: |
+  3: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -194,7 +108,7 @@ Configuration matches entire snapshot:
               path:
                 type: PathPrefix
                 value: /foo
-  6: |
+  4: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -228,7 +142,7 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /
-  7: |
+  5: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -263,7 +177,7 @@ Configuration matches entire snapshot:
             - path:
                 type: PathPrefix
                 value: /foo
-  8: |
+  6: |
     apiVersion: gateway.networking.k8s.io/v1
     kind: HTTPRoute
     metadata:
@@ -282,6 +196,157 @@ Configuration matches entire snapshot:
     spec:
       hostnames:
         - path.only
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: mozcloud-test
+          sectionName: http
+      rules:
+        - filters:
+            - requestRedirect:
+                scheme: https
+                statusCode: 302
+              type: RequestRedirect
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
+  7: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: redirect-filter
+    spec:
+      hostnames:
+        - redirect.filter
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: mozcloud-test
+          sectionName: https
+      rules:
+        - filters:
+            - requestRedirect:
+                path:
+                  replacePrefixMatch: /new
+                  type: ReplacePrefixMatch
+                statusCode: 301
+              type: RequestRedirect
+          matches:
+            - path:
+                type: PathPrefix
+                value: /old
+  8: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: redirect-filter-http-redirect
+    spec:
+      hostnames:
+        - redirect.filter
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: mozcloud-test
+          sectionName: http
+      rules:
+        - filters:
+            - requestRedirect:
+                scheme: https
+                statusCode: 302
+              type: RequestRedirect
+          matches:
+            - path:
+                type: PathPrefix
+                value: /
+  9: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: rule-filters
+    spec:
+      hostnames:
+        - rule.filters
+      parentRefs:
+        - group: gateway.networking.k8s.io
+          kind: Gateway
+          name: mozcloud-test
+          sectionName: https
+      rules:
+        - backendRefs:
+            - group: ""
+              kind: Service
+              name: test-service
+              port: 8080
+              weight: 1
+          filters:
+            - requestMirror:
+                backendRef:
+                  kind: Service
+                  name: test-service-shadow
+                  port: 8080
+              type: RequestMirror
+            - responseHeaderModifier:
+                set:
+                  - name: X-Shadowed
+                    value: "true"
+              type: ResponseHeaderModifier
+          matches:
+            - path:
+                type: PathPrefix
+                value: /foo
+  10: |
+    apiVersion: gateway.networking.k8s.io/v1
+    kind: HTTPRoute
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: rule-filters-http-redirect
+    spec:
+      hostnames:
+        - rule.filters
       parentRefs:
         - group: gateway.networking.k8s.io
           kind: Gateway

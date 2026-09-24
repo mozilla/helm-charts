@@ -1,0 +1,29 @@
+---
+workloads:
+  test-service:
+    component: web
+    containers: {}
+    hosts:
+      backendref-filters:
+        domains: ["backendref.filters"]
+        httpRoutes:
+          rules:
+            - backendRefs:
+                - name: test-service
+                  port: 8080
+                  weight: 100
+                  filters:
+                    - type: ResponseHeaderModifier
+                      responseHeaderModifier:
+                        set:
+                          - name: X-Canary
+                            value: stable
+                - name: test-service-canary
+                  port: 8080
+                  weight: 0
+                  filters:
+                    - type: ResponseHeaderModifier
+                      responseHeaderModifier:
+                        set:
+                          - name: X-Canary
+                            value: canary

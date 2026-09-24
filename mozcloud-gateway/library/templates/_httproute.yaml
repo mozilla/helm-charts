@@ -1,3 +1,129 @@
+{{- /*
+A rule whose filters redirect never reaches a backend, so it carries no
+backendRefs and the list item starts with the filters block instead. The
+rewrite shorthand wins over redirect in rule.filters, so a rule that sets both
+still renders a rewrite and keeps its backendRefs.
+
+Params:
+  . (dict): (required) A single rules[] entry.
+
+Returns:
+  (string) "true" when the rule redirects, empty otherwise.
+*/ -}}
+{{- define "mozcloud-gateway-lib.httpRoute.rule.isTerminal" -}}
+{{- $terminal := "" -}}
+{{- if and .redirect (not .rewrite) -}}
+  {{- $terminal = "true" -}}
+{{- end -}}
+{{- range $filter := default (list) .filters -}}
+  {{- if eq (default "" $filter.type) "RequestRedirect" -}}
+    {{- $terminal = "true" -}}
+  {{- end -}}
+{{- end -}}
+{{- $terminal -}}
+{{- end -}}
+
+{{- /*
+Renders the matches block of a rule. Matches that carry neither a path nor
+headers cannot be expressed, so they fall back to the catch-all prefix rather
+than rendering an empty key.
+
+Params:
+  . (dict): (required) A single rules[] entry.
+
+Returns:
+  (string) The "matches:" block.
+*/ -}}
+{{- define "mozcloud-gateway-lib.httpRoute.rule.matches" -}}
+{{- $matches := list -}}
+{{- range $match := default (list) .matches -}}
+  {{- if or $match.path $match.headers -}}
+    {{- $matches = append $matches $match -}}
+  {{- end -}}
+{{- end -}}
+matches:
+  {{- range $match := $matches }}
+  {{- if and $match.path $match.headers }}
+  - path:
+      type: {{ $match.path.type }}
+      value: {{ $match.path.value }}
+    headers:
+      {{- range $header := $match.headers }}
+      - name: {{ $header.name }}
+        value: {{ $header.value }}
+      {{- end }}
+  {{- else if $match.path }}
+  - path:
+      type: {{ $match.path.type }}
+      value: {{ $match.path.value }}
+  {{- else }}
+  - headers:
+      {{- range $header := $match.headers }}
+      - name: {{ $header.name }}
+        value: {{ $header.value }}
+      {{- end }}
+  {{- end }}
+  {{- end }}
+  {{- if not $matches }}
+  - path:
+      type: PathPrefix
+      value: /
+  {{- end }}
+{{- end -}}
+
+{{- /*
+Renders the filters block of a rule: the verbatim filters from values first,
+then the library's own rewrite or redirect shorthand. Spelling out a filter the
+shorthand also emits would render it twice, so that combination fails here
+rather than at apply time.
+
+Params:
+  . (dict): (required) A single rules[] entry.
+
+Returns:
+  (string) The "filters:" block, or nothing when the rule has no filters.
+*/ -}}
+{{- define "mozcloud-gateway-lib.httpRoute.rule.filters" -}}
+{{- range $filter := default (list) .filters -}}
+  {{- if or (and $.rewrite (eq (default "" $filter.type) "URLRewrite")) (and $.redirect (eq (default "" $filter.type) "RequestRedirect")) -}}
+    {{- fail (printf "httpRoute rules: a %s entry in filters conflicts with the rewrite/redirect shorthand; set one or the other." $filter.type) -}}
+  {{- end -}}
+{{- end -}}
+{{- if or .filters .rewrite .redirect -}}
+filters:
+  {{- if .filters }}
+  {{- toYaml .filters | nindent 2 }}
+  {{- end }}
+  {{- if .rewrite }}
+  - type: URLRewrite
+    urlRewrite:
+      {{- if .rewrite.hostname }}
+      hostname: {{ .rewrite.hostname | quote }}
+      {{- end }}
+      {{- if .rewrite.path }}
+      path:
+        type: {{ .rewrite.path.type }}
+        {{- if eq .rewrite.path.type "ReplaceFullPath" }}
+        replaceFullPath: {{ .rewrite.path.name }}
+        {{- else if eq .rewrite.path.type "ReplacePrefixMatch" }}
+        replacePrefixMatch: {{ .rewrite.path.name }}
+        {{- end }}
+      {{- end }}
+  {{- else if .redirect }}
+  - type: RequestRedirect
+    requestRedirect:
+      path:
+        type: {{ .redirect.type }}
+        {{- if eq .redirect.type "ReplaceFullPath" }}
+        replaceFullPath: {{ .redirect.path }}
+        {{- else if eq .redirect.type "ReplacePrefixMatch" }}
+        replacePrefixMatch: {{ .redirect.path }}
+        {{- end }}
+        statusCode: {{ .redirect.statusCode }}
+  {{- end }}
+{{- end -}}
+{{- end -}}
+
 {{- define "mozcloud-gateway-lib.httpRoute" -}}
 {{- $http_routes := include "mozcloud-gateway-lib.config.httpRoutes" . | fromYaml }}
 {{- range $http_route := $http_routes.httpRoutes }}
@@ -27,6 +153,10 @@ spec:
   {{- end }}
   rules:
     {{- range $rule := $http_route.rules }}
+    {{- if include "mozcloud-gateway-lib.httpRoute.rule.isTerminal" $rule }}
+    - {{ include "mozcloud-gateway-lib.httpRoute.rule.filters" $rule | nindent 6 | trim }}
+      {{- include "mozcloud-gateway-lib.httpRoute.rule.matches" $rule | nindent 6 }}
+    {{- else }}
     - backendRefs:
       {{- range $backend_ref := $rule.backendRefs }}
         {{- if and $backend_ref.kind (eq $backend_ref.kind "ServiceImport") }}
@@ -41,67 +171,19 @@ spec:
         {{- else }}
         weight: {{ $backend_ref.weight }}
         {{- end }}
+        {{- /* Rendered as the Gateway API specifies, on every provider.
+               Support here is implementation-specific, and the spec points at
+               rules[].filters[] (Core) for broader support. GKE is one of the
+               implementations that refuse them — it reports GWCER104 and then
+               stops programming the entire Gateway, not just this route. */}}
         {{- if $backend_ref.filters }}
         filters:
           {{- toYaml $backend_ref.filters | nindent 10 }}
         {{- end }}
       {{- end }}
-      matches:
-        {{- if $rule.matches }}
-        {{- range $match := $rule.matches }}
-        {{- if and $match.path $match.headers }}
-        - path:
-            type: {{ $match.path.type }}
-            value: {{ $match.path.value }}
-          headers:
-            {{- range $header := $match.headers }}
-            - name: {{ $header.name }}
-              value: {{ $header.value }}
-            {{- end }}
-        {{- else if $match.path }}
-        - path:
-            type: {{ $match.path.type }}
-            value: {{ $match.path.value }}
-        {{- else if $match.headers }}
-        - headers:
-            {{- range $header := $match.headers }}
-            - name: {{ $header.name }}
-              value: {{ $header.value }}
-            {{- end }}
-        {{- end }}
-        {{- end }}
-        {{- else }}
-        - path:
-            type: PathPrefix
-            value: /
-        {{- end }}
-      {{- if $rule.rewrite }}
-      filters:
-        - type: URLRewrite
-          urlRewrite:
-            hostname: {{ $rule.rewrite.hostname | quote }}
-            {{- if $rule.rewrite.path }}
-            path:
-              type: {{ $rule.rewrite.path.type }}
-              {{- if eq $rule.rewrite.path.type "ReplaceFullPath" }}
-              replaceFullPath: {{ $rule.rewrite.path.name }}
-              {{- else if eq $rule.rewrite.path.type "ReplacePrefixMatch" }}
-              replacePrefixMatch: {{ $rule.rewrite.path.name }}
-              {{- end }}
-            {{- end }}
-      {{- else if $rule.redirect }}
-      filters:
-        - type: RequestRedirect
-          requestRedirect:
-            path:
-              type: {{ $rule.redirect.type }}
-              {{- if eq $rule.redirect.type "ReplaceFullPath" }}
-              replaceFullPath: {{ $rule.redirect.path }}
-              {{- else if eq $rule.redirect.type "ReplacePrefixMatch" }}
-              replacePrefixMatch: {{ $rule.redirect.path }}
-              {{- end }}
-              statusCode: {{ $rule.redirect.statusCode }}
-      {{- end }}
+      {{- include "mozcloud-gateway-lib.httpRoute.rule.matches" $rule | nindent 6 }}
+      {{- include "mozcloud-gateway-lib.httpRoute.rule.filters" $rule | nindent 6 }}
+    {{- end }}
     {{- end }}
 {{- /* Only the gateways that actually have an http listener get the redirect
        route. Cross-namespace/external gateways (e.g. a shared HTTPS-only

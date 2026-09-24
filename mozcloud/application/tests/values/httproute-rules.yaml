@@ -33,26 +33,38 @@ workloads:
                       value: bar
                     - name: baz
                       value: qux
-      backendref-filters:
-        domains: ["backendref.filters"]
+      redirect-filter:
+        domains: ["redirect.filter"]
         httpRoutes:
           rules:
-            - backendRefs:
-                - name: test-service
-                  port: 8080
-                  weight: 100
-                  filters:
-                    - type: ResponseHeaderModifier
-                      responseHeaderModifier:
-                        set:
-                          - name: X-Canary
-                            value: stable
-                - name: test-service-canary
-                  port: 8080
-                  weight: 0
-                  filters:
-                    - type: ResponseHeaderModifier
-                      responseHeaderModifier:
-                        set:
-                          - name: X-Canary
-                            value: canary
+            - matches:
+                - path:
+                    value: /old
+                    type: PathPrefix
+              filters:
+                - type: RequestRedirect
+                  requestRedirect:
+                    path:
+                      type: ReplacePrefixMatch
+                      replacePrefixMatch: /new
+                    statusCode: 301
+      rule-filters:
+        domains: ["rule.filters"]
+        httpRoutes:
+          rules:
+            - matches:
+                - path:
+                    value: /foo
+                    type: PathPrefix
+              filters:
+                - type: RequestMirror
+                  requestMirror:
+                    backendRef:
+                      kind: Service
+                      name: test-service-shadow
+                      port: 8080
+                - type: ResponseHeaderModifier
+                  responseHeaderModifier:
+                    set:
+                      - name: X-Shadowed
+                        value: "true"

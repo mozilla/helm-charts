@@ -1,0 +1,26 @@
+---
+# A rule that spells out a URLRewrite filter and also sets the rewrite
+# shorthand. Both render into the same filters list, so the rule would carry
+# the filter twice. Kept out of httproute-rule-shapes.yaml because the render
+# fails, which would take every other test sharing that file with it.
+httpRoute:
+  httpRoutes:
+    test-httproute:
+      rules:
+        - matches:
+            - path:
+                type: PathPrefix
+                value: /strip
+          rewrite:
+            path:
+              type: ReplacePrefixMatch
+              name: /
+          filters:
+            - type: URLRewrite
+              urlRewrite:
+                path:
+                  type: ReplacePrefixMatch
+                  replacePrefixMatch: /
+          backendRefs:
+            - name: test-service
+              port: 8080
