@@ -1,0 +1,171 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: ray.io/v1
+    kind: RayService
+    metadata:
+      labels:
+        app.kubernetes.io/component: test-service
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: test-service
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: test-service-ray
+    spec:
+      rayClusterConfig:
+        autoscalerOptions:
+          idleTimeoutSeconds: 60
+          imagePullPolicy: IfNotPresent
+          upscalingMode: Default
+        enableInTreeAutoscaling: true
+        gcsFaultToleranceOptions:
+          externalStorageNamespace: test-service
+          redisAddress: 172.16.21.212:6379
+          redisPassword:
+            valueFrom:
+              secretKeyRef:
+                key: password
+                name: test-service-redis
+        headGroupSpec:
+          rayStartParams:
+            dashboard-host: 0.0.0.0
+            metrics-export-port: "8080"
+            num-cpus: "0"
+          template:
+            metadata:
+              annotations:
+                resource.opentelemetry.io/app_code: mozcloud-test
+                resource.opentelemetry.io/component_code: test-service
+                resource.opentelemetry.io/env_code: dev
+                resource.opentelemetry.io/realm: nonprod
+              labels:
+                app.kubernetes.io/component: test-service
+                app.kubernetes.io/managed-by: argocd
+                app.kubernetes.io/name: mozcloud-test
+                app_code: mozcloud-test
+                component_code: test-service
+                env_code: dev
+                helm.sh/chart: test-chart
+                mozcloud_chart: mozcloud
+                mozcloud_chart_version: 1.0.0
+                realm: nonprod
+            spec:
+              containers:
+                - envFrom:
+                    - secretRef:
+                        name: test-chart-secrets
+                  image: test-repo/test-service:1.0.0
+                  imagePullPolicy: Always
+                  name: test-service-ray-head
+                  ports:
+                    - containerPort: 6379
+                      name: gcs-server
+                    - containerPort: 8265
+                      name: dashboard
+                    - containerPort: 10001
+                      name: client
+                    - containerPort: 8000
+                      name: serve
+                  resources:
+                    limits:
+                      cpu: "4"
+                      memory: 8Gi
+                    requests:
+                      cpu: "2"
+                      memory: 4Gi
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                      drop:
+                        - ALL
+                    seccompProfile:
+                      type: RuntimeDefault
+              securityContext:
+                runAsGroup: 10001
+                runAsNonRoot: true
+                runAsUser: 10001
+                seccompProfile:
+                  type: RuntimeDefault
+              serviceAccountName: mozcloud-test
+        rayVersion: 2.44.1
+        workerGroupSpecs:
+          - groupName: test-service-ray-worker
+            idleTimeoutSeconds: 60
+            maxReplicas: 4
+            minReplicas: 1
+            rayStartParams:
+              metrics-export-port: "8080"
+              num-gpus: "1"
+            replicas: 1
+            template:
+              metadata:
+                annotations:
+                  resource.opentelemetry.io/app_code: mozcloud-test
+                  resource.opentelemetry.io/component_code: test-service
+                  resource.opentelemetry.io/env_code: dev
+                  resource.opentelemetry.io/realm: nonprod
+                labels:
+                  app.kubernetes.io/component: test-service
+                  app.kubernetes.io/managed-by: argocd
+                  app.kubernetes.io/name: mozcloud-test
+                  app_code: mozcloud-test
+                  component_code: test-service
+                  env_code: dev
+                  helm.sh/chart: test-chart
+                  mozcloud_chart: mozcloud
+                  mozcloud_chart_version: 1.0.0
+                  realm: nonprod
+              spec:
+                containers:
+                  - envFrom:
+                      - secretRef:
+                          name: test-chart-secrets
+                    image: test-repo/test-service:1.0.0
+                    imagePullPolicy: Always
+                    lifecycle:
+                      preStop:
+                        exec:
+                          command:
+                            - /bin/sh
+                            - -c
+                            - ray stop
+                    name: test-service-ray-worker
+                    resources:
+                      limits:
+                        cpu: "8"
+                        memory: 32Gi
+                      requests:
+                        cpu: "4"
+                        memory: 16Gi
+                    securityContext:
+                      allowPrivilegeEscalation: false
+                      capabilities:
+                        drop:
+                          - ALL
+                      seccompProfile:
+                        type: RuntimeDefault
+                nodeSelector:
+                  cloud.google.com/gke-accelerator: nvidia-l4
+                securityContext:
+                  runAsGroup: 10001
+                  runAsNonRoot: true
+                  runAsUser: 10001
+                  seccompProfile:
+                    type: RuntimeDefault
+                serviceAccountName: mozcloud-test
+                tolerations:
+                  - effect: NoSchedule
+                    key: nvidia.com/gpu
+                    operator: Equal
+                    value: present
+      serveConfigV2: |
+        applications:
+        - import_path: test_service.main:app
+          name: app
+          route_prefix: /
+        logging_config:
+          encoding: JSON

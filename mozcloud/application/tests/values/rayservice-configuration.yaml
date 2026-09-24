@@ -1,0 +1,94 @@
+---
+# A RayService shaped like the llm-proxy tenant's charts (MZCLD-4121): GCS fault
+# tolerance against an external Redis, a head that serves on its own ports, and
+# an accelerator worker group. The head's default probes are switched off the
+# way a Ray head needs them to be — it answers on the Serve port, not on
+# /__lbheartbeat__.
+workloads:
+  test-service-ray:
+    type: rayService
+    component: test-service
+    containers:
+      test-service-ray-head:
+        image:
+          repository: test-repo/test-service
+          tag: "1.0.0"
+        healthCheck:
+          liveness:
+            enabled: false
+          readiness:
+            enabled: false
+        resources:
+          cpu: "2"
+          memory: 4Gi
+        # Every Ray port is an additionalPort. The primary `port` is only
+        # emitted for a workload with hosts or an active probe, and a head has
+        # neither, so declaring one here would render nothing.
+        additionalPorts:
+          - name: gcs-server
+            port: 6379
+          - name: dashboard
+            port: 8265
+          - name: client
+            port: 10001
+          - name: serve
+            port: 8000
+    ray:
+      rayVersion: "2.44.1"
+      enableInTreeAutoscaling: true
+      serveConfigV2:
+        logging_config:
+          encoding: JSON
+        applications:
+          - name: app
+            import_path: test_service.main:app
+            route_prefix: /
+      gcsFaultTolerance:
+        enabled: true
+        redisAddress: "172.16.21.212:6379"
+        externalStorageNamespace: test-service
+        redisPassword:
+          secretName: test-service-redis
+          secretKey: password
+      autoscalerOptions:
+        upscalingMode: Default
+        idleTimeoutSeconds: 60
+        imagePullPolicy: IfNotPresent
+      headGroupSpec:
+        rayStartParams:
+          dashboard-host: "0.0.0.0"
+          num-cpus: "0"
+          metrics-export-port: "8080"
+      workerGroups:
+        test-service-ray-worker:
+          replicas: 1
+          minReplicas: 1
+          maxReplicas: 4
+          idleTimeoutSeconds: 60
+          rayStartParams:
+            num-gpus: "1"
+            metrics-export-port: "8080"
+          nodeSelector:
+            cloud.google.com/gke-accelerator: nvidia-l4
+          tolerations:
+            - key: nvidia.com/gpu
+              operator: Equal
+              value: present
+              effect: NoSchedule
+          containers:
+            test-service-ray-worker:
+              image:
+                repository: test-repo/test-service
+                tag: "1.0.0"
+              healthCheck:
+                liveness:
+                  enabled: false
+                readiness:
+                  enabled: false
+              resources:
+                cpu: "4"
+                memory: 16Gi
+              lifecycle:
+                preStop:
+                  exec:
+                    command: ["/bin/sh", "-c", "ray stop"]
