@@ -201,6 +201,11 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.podDisruptionBudget.enabled | bool | `true` |  |
 | workloads.default.podDisruptionBudget.maxUnavailable | string | `""` |  |
 | workloads.default.podDisruptionBudget.minAvailable | string | `""` |  |
+| workloads.default.ray.autoscalerOptions | object | `{}` |  |
+| workloads.default.ray.enableInTreeAutoscaling | bool | `false` |  |
+| workloads.default.ray.gcsFaultTolerance.enabled | bool | `false` |  |
+| workloads.default.ray.headGroupSpec.rayStartParams | object | `{}` |  |
+| workloads.default.ray.rayVersion | string | `""` |  |
 | workloads.default.security | object | `{}` |  |
 | workloads.default.serviceAccount | string | `""` |  |
 | workloads.default.statefulSet.partition | int | `0` |  |
