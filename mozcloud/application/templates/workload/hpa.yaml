@@ -7,7 +7,9 @@
 {{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
 
 {{- range $workloadName, $workloadConfig := $workloads }}
-{{- if (dig "autoscaling" "enabled" true $workloadConfig) }}
+{{- /* A rayService scales through Ray's own autoscaler, and an HPA has no
+   scale subresource to target on rayservices.ray.io. */}}
+{{- if and (dig "autoscaling" "enabled" true $workloadConfig) (ne (default "deployment" $workloadConfig.type) "rayService") }}
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
