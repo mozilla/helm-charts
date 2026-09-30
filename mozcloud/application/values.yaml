@@ -1142,6 +1142,12 @@ workloads:
     #                Use this when you need stable network identities, stable
     #                persistent storage, or ordered pod management.
     #
+    #   rayService:  Creates a KubeRay RayService. The workload's containers
+    #                describe the Ray head, ray.workerGroups describe the worker
+    #                groups, and both are rendered through the same pod template
+    #                as every other workload type. Configuration lives under
+    #                "ray" below.
+    #
     type: deployment
 
     # Optionally pin the workload to a fixed pod count. Only applied when
@@ -2928,6 +2934,91 @@ workloads:
       #     maxUnavailable: 0
       #
       rollingUpdate: {}
+
+    # Configuration specific to RayService workloads. Only used when type is
+    # rayService.
+    #
+    ray:
+      # The Ray version the workload's images run. KubeRay compares it against
+      # the cluster it brings up, so it has to match the images.
+      #
+      # This is a required field.
+      rayVersion: ''
+
+      # Ray Serve configuration, handed to KubeRay verbatim as an opaque
+      # document. Ray owns this schema, so it is not modelled here: anything
+      # Ray Serve accepts goes in, including keys beside "applications".
+      #
+      # This is a required field. It is left unset here because a shared default
+      # would merge into every workload's own Serve config.
+      #
+      #serveConfigV2:
+      #  applications:
+      #    - name: my-app
+      #      import_path: my_app.main:app
+      #      route_prefix: /
+
+      # Let the Ray autoscaler own worker replica counts. The workload's own
+      # autoscaling block is rejected for this type, because scaling a Ray
+      # cluster is the autoscaler's job, not an HPA's.
+      enableInTreeAutoscaling: false
+
+      # Ray autoscaler overrides (upscalingMode, idleTimeoutSeconds, resources,
+      # ...), passed through to the RayCluster unmodified.
+      autoscalerOptions: {}
+
+      # Back the Ray GCS with an external Redis so the cluster survives a head
+      # restart.
+      gcsFaultTolerance:
+        enabled: false
+
+        # Redis endpoint as host:port. Required once enabled is true.
+        #redisAddress: ''
+
+        # Redis key namespace. Defaults to the RayCluster UID, which keeps two
+        # clusters from sharing state; only override it when the implications
+        # are understood.
+        #externalStorageNamespace: ''
+
+        # Redis password, read from an existing Secret.
+        #
+        # Example:
+        #   redisPassword:
+        #     secretName: my-redis
+        #     secretKey: password
+        #redisPassword: {}
+
+      # Configuration for the Ray head, whose containers are the workload's own.
+      headGroupSpec:
+        # Parameters passed to "ray start" on the head. Values are strings, and
+        # a head that should run no tasks sets num-cpus: "0".
+        rayStartParams: {}
+
+      # Worker groups, keyed by group name. Each group is a pod template of its
+      # own: it takes its own containers, and its placement fields replace the
+      # workload's rather than merging with them.
+      #
+      #workerGroups:
+      #  gpu-workers:
+      #    replicas: 1
+      #    minReplicas: 0
+      #    maxReplicas: 4
+      #    numOfHosts: 1
+      #    rayStartParams:
+      #      num-gpus: "1"
+      #    nodeSelector:
+      #      cloud.google.com/gke-accelerator: nvidia-l4
+      #    containers:
+      #      worker:
+      #        image:
+      #          repository: my-repo/my-image
+      #          tag: "1.0.0"
+
+      # Seconds KubeRay keeps the previous RayCluster after an upgrade, so
+      # in-flight requests can drain before it goes away.
+      #
+      # Default: 60
+      #rayClusterDeletionDelaySeconds: 60
 
     # Configuration specific to StatefulSet workloads. Only used when type is
     # statefulset.

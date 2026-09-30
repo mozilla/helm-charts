@@ -1,0 +1,185 @@
+---
+suite: "mozcloud: RayService configuration"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/rayservice-configuration.yaml
+templates:
+  - workload/rayservice.yaml
+  - workload/hpa.yaml
+  - workload/pdb.yaml
+tests:
+  - it: Ensure no failures occur
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: Configuration matches entire snapshot
+    asserts:
+      - matchSnapshot: {}
+
+  # The head is the workload's own containers, the worker group is a pod
+  # template of its own, and both go through the shared workload template. The
+  # group's placement overrides the workload's, which is how an accelerator
+  # group lands on accelerator nodes while the head does not.
+  - it: Renders a RayService with a head and a worker group
+    template: workload/rayservice.yaml
+    documentSelector:
+      path: $[?(@.kind == "RayService")].metadata.name
+      value: test-service-ray
+    asserts:
+      - equal:
+          path: apiVersion
+          value: ray.io/v1
+      - equal:
+          path: spec.rayClusterConfig.rayVersion
+          value: "2.44.1"
+      # Every Ray port has to come through additionalPorts, so assert they all
+      # land on the head: a head has no hosts and no active probe, which is what
+      # the primary port depends on.
+      - equal:
+          path: spec.rayClusterConfig.headGroupSpec.template.spec.containers[0].ports
+          value:
+            - name: gcs-server
+              containerPort: 6379
+            - name: dashboard
+              containerPort: 8265
+            - name: client
+              containerPort: 10001
+            - name: serve
+              containerPort: 8000
+      - equal:
+          path: spec.rayClusterConfig.enableInTreeAutoscaling
+          value: true
+      - equal:
+          path: spec.rayClusterConfig.headGroupSpec.rayStartParams
+          value:
+            dashboard-host: "0.0.0.0"
+            num-cpus: "0"
+            metrics-export-port: "8080"
+      - equal:
+          path: spec.rayClusterConfig.headGroupSpec.template.spec.containers[0].name
+          value: test-service-ray-head
+      - lengthEqual:
+          path: spec.rayClusterConfig.workerGroupSpecs
+          count: 1
+      - equal:
+          path: spec.rayClusterConfig.workerGroupSpecs[0].groupName
+          value: test-service-ray-worker
+      - equal:
+          path: spec.rayClusterConfig.workerGroupSpecs[0].maxReplicas
+          value: 4
+      - equal:
+          path: spec.rayClusterConfig.workerGroupSpecs[0].template.spec.containers[0].name
+          value: test-service-ray-worker
+      - equal:
+          path: spec.rayClusterConfig.workerGroupSpecs[0].template.spec.nodeSelector
+          value:
+            cloud.google.com/gke-accelerator: nvidia-l4
+      - notExists:
+          path: spec.rayClusterConfig.headGroupSpec.template.spec.nodeSelector
+
+  # Ray owns the schema of serveConfigV2, so the chart passes the document
+  # through as a string rather than modelling it. A top-level key beside
+  # applications proves nothing is being reshaped on the way.
+  - it: Passes serveConfigV2 through verbatim as a string
+    template: workload/rayservice.yaml
+    documentSelector:
+      path: $[?(@.kind == "RayService")].metadata.name
+      value: test-service-ray
+    asserts:
+      - matchRegex:
+          path: spec.serveConfigV2
+          pattern: "logging_config:"
+      - matchRegex:
+          path: spec.serveConfigV2
+          pattern: "import_path: test_service.main:app"
+
+  - it: Renders GCS fault tolerance against the external Redis
+    template: workload/rayservice.yaml
+    documentSelector:
+      path: $[?(@.kind == "RayService")].metadata.name
+      value: test-service-ray
+    asserts:
+      - equal:
+          path: spec.rayClusterConfig.gcsFaultToleranceOptions.redisAddress
+          value: "172.16.21.212:6379"
+      - equal:
+          path: spec.rayClusterConfig.gcsFaultToleranceOptions.externalStorageNamespace
+          value: test-service
+      - equal:
+          path: spec.rayClusterConfig.gcsFaultToleranceOptions.redisPassword.valueFrom.secretKeyRef
+          value:
+            name: test-service-redis
+            key: password
+
+  # Ray's own autoscaler owns the worker count, and the disruption controller
+  # cannot evaluate a PDB whose owner has no scale subresource (MZCLD-3152), so
+  # neither object may be emitted for this workload type.
+  - it: Emits neither an HPA nor a PodDisruptionBudget
+    templates:
+      - workload/hpa.yaml
+      - workload/pdb.yaml
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  # The other shape the tenant runs: no fault tolerance, no unhealthy
+  # thresholds, a worker group that scales from zero, and the chart secret
+  # picked up by every container. A scale-from-zero group is the case where an
+  # omitted replicas field would silently start a worker.
+  - it: Renders a scale-from-zero worker group without fault tolerance
+    template: workload/rayservice.yaml
+    values:
+      - values/globals.yaml
+      - values/rayservice-scale-from-zero.yaml
+    documentSelector:
+      path: $[?(@.kind == "RayService")].metadata.name
+      value: test-service-ray-zero
+    asserts:
+      - notExists:
+          path: spec.rayClusterConfig.gcsFaultToleranceOptions
+      - equal:
+          path: spec.rayClusterDeletionDelaySeconds
+          value: 60
+      - equal:
+          path: spec.rayClusterConfig.workerGroupSpecs[0].replicas
+          value: 0
+      - equal:
+          path: spec.rayClusterConfig.workerGroupSpecs[0].minReplicas
+          value: 0
+      - equal:
+          path: spec.rayClusterConfig.workerGroupSpecs[0].numOfHosts
+          value: 1
+      - notExists:
+          path: spec.rayClusterConfig.workerGroupSpecs[0].rayStartParams
+      - notExists:
+          path: spec.rayClusterConfig.headGroupSpec.rayStartParams
+      - equal:
+          path: spec.rayClusterConfig.workerGroupSpecs[0].template.spec.containers[0].envFrom[0].secretRef.name
+          value: test-chart-secrets
+      - matchRegex:
+          path: spec.serveConfigV2
+          pattern: "model_id: test-model"
+
+  # Fields that a RayService cannot act on are rejected rather than ignored, and
+  # the schema error names the offending field (MZCLD-4031).
+  - it: Rejects workload fields that a RayService cannot act on
+    template: workload/rayservice.yaml
+    set:
+      workloads.test-service-ray.replicas: 3
+    asserts:
+      - failedTemplate:
+          errorPattern: "workloads/test-service-ray/replicas"
+
+  - it: Requires a redisAddress once GCS fault tolerance is enabled
+    template: workload/rayservice.yaml
+    values:
+      - values/globals.yaml
+      - values/rayservice-gcsft-no-redis.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "redisAddress"

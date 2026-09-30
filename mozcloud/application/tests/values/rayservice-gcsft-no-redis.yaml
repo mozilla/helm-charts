@@ -1,0 +1,23 @@
+---
+# GCS fault tolerance switched on without a Redis endpoint. It declares a
+# workload of its own rather than reusing test-service-ray: helm-unittest merges
+# a test's values onto the suite's, so redisAddress cannot be taken away from
+# the shared fixture, only added to.
+workloads:
+  test-service-ray-no-redis:
+    type: rayService
+    component: test-service
+    containers:
+      test-service-ray-no-redis-head:
+        image:
+          repository: test-repo/test-service
+          tag: "1.0.0"
+    ray:
+      rayVersion: "2.44.1"
+      serveConfigV2:
+        applications:
+          - name: app
+            import_path: test_service.main:app
+            route_prefix: /
+      gcsFaultTolerance:
+        enabled: true

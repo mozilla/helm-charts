@@ -1,0 +1,69 @@
+---
+# The second shape the llm-proxy tenant runs (MZCLD-4121): a multi-application
+# Serve config, a GPU worker group that scales from zero, no GCS fault
+# tolerance, and a chart secret that every container picks up. Complements
+# rayservice-configuration.yaml, which covers the fault-tolerant single-app
+# shape — between them they span all seven of the tenant's targets. Declares a
+# workload of its own because helm-unittest merges a test's values onto the
+# suite's: gcsFaultTolerance and the thresholds cannot be taken back out.
+workloads:
+  test-service-ray-zero:
+    type: rayService
+    component: test-service
+    containers:
+      test-service-ray-zero-head:
+        image:
+          repository: test-repo/test-service
+          tag: "1.0.0"
+        healthCheck:
+          liveness:
+            enabled: false
+          readiness:
+            enabled: false
+        resources:
+          cpu: "2"
+          memory: 4Gi
+    ray:
+      rayVersion: "2.55.1"
+      enableInTreeAutoscaling: true
+      rayClusterDeletionDelaySeconds: 60
+      serveConfigV2:
+        logging_config:
+          encoding: JSON
+        applications:
+          - name: llm_app
+            import_path: ray.serve.llm:build_openai_app
+            route_prefix: /
+            args:
+              llm_configs:
+                - model_loading_config:
+                    model_id: test-model
+                  engine_kwargs:
+                    max_model_len: 32768
+      workerGroups:
+        test-service-gpu-worker:
+          # Scales from zero, so replicas and minReplicas are 0 and must still
+          # be emitted — an omitted replicas field would start a worker.
+          replicas: 0
+          minReplicas: 0
+          maxReplicas: 1
+          numOfHosts: 1
+          nodeSelector:
+            cloud.google.com/gke-accelerator: nvidia-h100-mega-80gb
+          containers:
+            test-service-ray-zero-worker:
+              image:
+                repository: test-repo/test-service
+                tag: "1.0.0"
+              healthCheck:
+                liveness:
+                  enabled: false
+                readiness:
+                  enabled: false
+              resources:
+                cpu: "16"
+                memory: 64Gi
+                limits:
+                  cpu: "16"
+                  memory: 64Gi
+                  nvidia.com/gpu: "1"

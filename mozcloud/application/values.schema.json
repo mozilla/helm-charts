@@ -540,6 +540,7 @@
             "type": "string",
             "enum": [
               "deployment",
+              "rayService",
               "rollout",
               "statefulset"
             ],
@@ -1733,6 +1734,158 @@
                 }
               }
             }
+          },
+          "ray": {
+            "type": "object",
+            "description": "KubeRay RayService configuration, used when type is rayService. The workload's own containers describe the head pod; worker groups are declared under workerGroups. rayVersion and serveConfigV2 are required on a rayService workload, enforced below, so that values.yaml can still carry the shared defaults",
+            "additionalProperties": false,
+            "properties": {
+              "rayVersion": {
+                "type": "string",
+                "description": "Ray version, which must match the Ray version in the container image"
+              },
+              "serveConfigV2": {
+                "type": "object",
+                "description": "Ray Serve multi-application config, passed through verbatim as the serveConfigV2 string. Ray owns this schema, so it is not validated field by field here",
+                "minProperties": 1
+              },
+              "enableInTreeAutoscaling": {
+                "type": "boolean",
+                "description": "Let the Ray autoscaler own worker replica counts"
+              },
+              "rayClusterDeletionDelaySeconds": {
+                "type": "integer",
+                "description": "Seconds to keep an old RayCluster after a zero-downtime upgrade before deleting it",
+                "minimum": 0
+              },
+              "autoscalerOptions": {
+                "type": "object",
+                "description": "Overrides for the Ray autoscaler sidecar, passed through verbatim. Owned by KubeRay's RayCluster schema"
+              },
+              "gcsFaultTolerance": {
+                "type": "object",
+                "description": "Back the Ray GCS with an external Redis so the cluster survives a head restart",
+                "additionalProperties": false,
+                "required": [
+                  "enabled"
+                ],
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "redisAddress": {
+                    "type": "string",
+                    "description": "Redis endpoint as host:port",
+                    "minLength": 1
+                  },
+                  "externalStorageNamespace": {
+                    "type": "string",
+                    "description": "Redis key namespace. Defaults to the RayCluster UID when unset; only override it when the implications are understood"
+                  },
+                  "redisPassword": {
+                    "type": "object",
+                    "description": "Secret holding the Redis password",
+                    "additionalProperties": false,
+                    "required": [
+                      "secretName",
+                      "secretKey"
+                    ],
+                    "properties": {
+                      "secretName": { "type": "string" },
+                      "secretKey": { "type": "string" }
+                    }
+                  }
+                },
+                "if": {
+                  "properties": { "enabled": { "const": true } },
+                  "required": ["enabled"]
+                },
+                "then": {
+                  "required": ["redisAddress"]
+                }
+              },
+              "headGroupSpec": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "rayStartParams": {
+                    "type": "object",
+                    "description": "Arguments for the head's ray start command, rendered as strings",
+                    "additionalProperties": { "type": "string" }
+                  }
+                }
+              },
+              "workerGroups": {
+                "type": "object",
+                "description": "Ray worker groups keyed by group name. Each group is a pod template of its own and inherits the workload's settings unless it overrides them",
+                "minProperties": 1,
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "containers"
+                  ],
+                  "properties": {
+                    "containers": {
+                      "type": "object",
+                      "description": "Declarative containers keyed by container name",
+                      "minProperties": 1,
+                      "additionalProperties": {
+                        "$ref": "#/$defs/container"
+                      }
+                    },
+                    "replicas": {
+                      "type": "integer",
+                      "description": "Initial worker count. The Ray autoscaler owns it afterwards when enableInTreeAutoscaling is set",
+                      "minimum": 0
+                    },
+                    "minReplicas": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "maxReplicas": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "idleTimeoutSeconds": {
+                      "type": "integer",
+                      "description": "Seconds an idle worker is kept before the autoscaler removes it",
+                      "minimum": 0
+                    },
+                    "numOfHosts": {
+                      "type": "integer",
+                      "description": "Pods per replica, greater than one only for multi-host TPU groups",
+                      "minimum": 1
+                    },
+                    "rayStartParams": {
+                      "type": "object",
+                      "description": "Arguments for this group's ray start command, rendered as strings",
+                      "additionalProperties": { "type": "string" }
+                    },
+                    "affinity": {
+                      "type": "object",
+                      "description": "Pod affinity rules for this worker group, overriding the workload's"
+                    },
+                    "nodeSelector": {
+                      "type": "object",
+                      "description": "Node selector for this worker group, overriding the workload's, e.g. to place it on accelerator nodes",
+                      "additionalProperties": { "type": "string" }
+                    },
+                    "tolerations": {
+                      "type": "array",
+                      "description": "Tolerations for this worker group, overriding the workload's",
+                      "items": { "type": "object" }
+                    },
+                    "topologySpreadConstraints": {
+                      "type": "array",
+                      "description": "Topology spread constraints for this worker group, overriding the workload's",
+                      "items": { "type": "object" }
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "required": [
@@ -1740,6 +1893,31 @@
           "containers"
         ],
         "allOf": [
+          {
+            "if": {
+              "properties": { "type": { "const": "rayService" } },
+              "required": ["type"]
+            },
+            "then": {
+              "required": ["ray"],
+              "properties": {
+                "ray": {
+                  "required": ["rayVersion", "serveConfigV2"]
+                },
+                "autoscaling": false,
+                "deployment": false,
+                "hosts": false,
+                "minReadySeconds": false,
+                "nginx": false,
+                "podDisruptionBudget": false,
+                "progressDeadlineSeconds": false,
+                "replicas": false,
+                "revisionHistoryLimit": false,
+                "statefulSet": false,
+                "strategy": false
+              }
+            }
+          },
           {
             "if": {
               "properties": { "type": { "const": "statefulset" } },
