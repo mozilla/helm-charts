@@ -219,6 +219,16 @@ externalSecrets:
 #       storageClassName: ''
 persistentVolumes: {}
 
+# Stakater Reloader (https://github.com/stakater/Reloader) support. When
+# enabled, every workload (Deployment/StatefulSet/Rollout) is annotated with
+# reloader.stakater.com/auto: "true", so Reloader restarts it on ConfigMap or
+# Secret change. A workload's own `annotations` can still override this.
+#
+# This chart only sets the annotation — the Reloader operator itself must
+# already be running in the cluster.
+reloader:
+  enabled: false
+
 # Here, you can create Kubernetes service accounts that optionally map to
 # corresponding GCP service accounts.
 #
