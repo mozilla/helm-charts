@@ -18,7 +18,7 @@ tests:
       - notFailedTemplate: {}
       - matchSnapshot: {}
 
-  - it: reloader.enabled annotates every workload type's resource, not its pod template
+  - it: reloader.enabled annotates Deployment and StatefulSet, not their pod templates
     asserts:
       - equal:
           path: metadata.annotations["reloader.stakater.com/auto"]
@@ -40,15 +40,17 @@ tests:
         documentSelector:
           path: $[?(@.kind == "StatefulSet")].metadata.name
           value: test-statefulset
-      - equal:
+
+  - it: Rollout is not annotated, since Reloader cannot act on it without isArgoRollouts
+    asserts:
+      - notExists:
           path: metadata.annotations["reloader.stakater.com/auto"]
-          value: "true"
         template: workload/rollout.yaml
         documentSelector:
           path: $[?(@.kind == "Rollout")].metadata.name
           value: test-rollout
 
-  - it: A workload's own annotation overrides the chart-wide default
+  - it: A workload can override the chart-wide default, via its own annotation or reloader.enabled
     asserts:
       - equal:
           path: metadata.annotations["reloader.stakater.com/auto"]
@@ -56,9 +58,34 @@ tests:
         template: workload/deployment.yaml
         documentSelector:
           path: $[?(@.kind == "Deployment")].metadata.name
-          value: test-opt-out
+          value: test-opt-out-annotation
+      - notExists:
+          path: metadata.annotations["reloader.stakater.com/auto"]
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-opt-out-field
 
-  - it: Disabled by default, no annotation is added to any workload type
+  - it: A workload's reloader.enabled can also opt in when the chart-wide default is off
+    set:
+      reloader.enabled: false
+      workloads.test-deployment.reloader.enabled: true
+    asserts:
+      - equal:
+          path: metadata.annotations["reloader.stakater.com/auto"]
+          value: "true"
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-deployment
+      - notExists:
+          path: metadata.annotations["reloader.stakater.com/auto"]
+        template: workload/statefulset.yaml
+        documentSelector:
+          path: $[?(@.kind == "StatefulSet")].metadata.name
+          value: test-statefulset
+
+  - it: Disabled by default, no annotation is added to Deployment or StatefulSet
     set:
       reloader.enabled: false
     asserts:
@@ -74,9 +101,3 @@ tests:
         documentSelector:
           path: $[?(@.kind == "StatefulSet")].metadata.name
           value: test-statefulset
-      - notExists:
-          path: metadata.annotations["reloader.stakater.com/auto"]
-        template: workload/rollout.yaml
-        documentSelector:
-          path: $[?(@.kind == "Rollout")].metadata.name
-          value: test-rollout

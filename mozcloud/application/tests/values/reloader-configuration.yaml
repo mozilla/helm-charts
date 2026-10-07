@@ -1,8 +1,11 @@
 ---
-# Deployment, StatefulSet, and Rollout workloads plus a per-workload override,
+# Deployment, StatefulSet, and Rollout workloads plus per-workload overrides,
 # used to verify the chart-wide reloader.enabled toggle
 # (templates/workload/_helpers.tpl: mozcloud.workload.reloaderAnnotation)
-# reaches every workload type and can still be overridden per workload.
+# reaches Deployment/StatefulSet (but not Rollout, which Reloader cannot act
+# on without its own isArgoRollouts setting), and that a workload can still
+# override the chart-wide default either via its own annotations or via
+# workloads.<name>.reloader.enabled.
 reloader:
   enabled: true
 
@@ -36,10 +39,19 @@ workloads:
         image:
           repository: test-repo/test-image
           tag: "1.0.0"
-  test-opt-out:
+  test-opt-out-annotation:
     component: web
     annotations:
       reloader.stakater.com/auto: "false"
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+  test-opt-out-field:
+    component: web
+    reloader:
+      enabled: false
     containers:
       app:
         image:

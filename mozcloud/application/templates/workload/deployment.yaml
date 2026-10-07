@@ -18,7 +18,7 @@ metadata:
     {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) "labels" (default dict $workloadConfig.labels) }}
     {{- $labels := include "mozcloud.labels" $params | fromYaml }}
     {{- $labels.labels | toYaml | nindent 4 }}
-  {{- $reloaderAnnotation := default dict (include "mozcloud.workload.reloaderAnnotation" (dict "context" $context) | fromYaml) }}
+  {{- $reloaderAnnotation := default dict (include "mozcloud.workload.reloaderAnnotation" (dict "config" $workloadConfig "context" $context) | fromYaml) }}
   {{- $workloadAnnotations := mergeOverwrite $reloaderAnnotation (default dict $workloadConfig.annotations) }}
   {{- $params = dict "annotations" $workloadAnnotations "context" $context "type" "deployment" }}
   {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}

@@ -180,7 +180,7 @@
     },
     "reloader": {
       "type": "object",
-      "description": "Stakater Reloader (https://github.com/stakater/Reloader) support. When enabled, every workload (Deployment/StatefulSet/Rollout) is annotated so Reloader restarts it on ConfigMap/Secret change.",
+      "description": "Stakater Reloader (https://github.com/stakater/Reloader) support. When enabled, every Deployment and StatefulSet is annotated so Reloader restarts it on ConfigMap/Secret change. Rollouts are not supported yet. See workloads.<name>.reloader for the per-workload override.",
       "additionalProperties": false,
       "properties": {
         "enabled": {
@@ -1618,6 +1618,16 @@
                   "integer"
                 ],
                 "description": "Maximum number or percentage of pods that can be unavailable during a disruption."
+              }
+            }
+          },
+          "reloader": {
+            "type": "object",
+            "description": "Per-workload override for the chart-wide reloader.enabled toggle. Unset inherits that value.",
+            "additionalProperties": false,
+            "properties": {
+              "enabled": {
+                "type": "boolean"
               }
             }
           },

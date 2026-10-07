@@ -98,11 +98,15 @@ Returns:
 
 {{- /*
 Returns the Reloader (https://github.com/stakater/Reloader) auto-restart
-annotation when enabled chart-wide via .Values.reloader.enabled. Applied to a
-workload's own resource annotations only (Deployment/StatefulSet/Rollout),
-never the pod template, since that is what Reloader watches.
+annotation when enabled via .Values.reloader.enabled, the chart-wide default.
+A workload's own reloader.enabled (true or false) overrides that default,
+since an explicit per-workload setting is a signal that must be honored even
+when it is false. Applied to a workload's own resource annotations only
+(Deployment/StatefulSet), never the pod template, since that is what Reloader
+watches.
 
 Params:
+  config (dict):  (required) The workload configuration for this workload.
   context (dict): (required) The Helm root context.
 
 Returns:
@@ -110,7 +114,8 @@ Returns:
            disabled.
 */ -}}
 {{- define "mozcloud.workload.reloaderAnnotation" -}}
-{{- if dig "enabled" false (default dict .context.Values.reloader) }}
+{{- $chartDefault := dig "enabled" false (default dict .context.Values.reloader) -}}
+{{- if dig "reloader" "enabled" $chartDefault (default dict .config) }}
 reloader.stakater.com/auto: "true"
 {{- end }}
 {{- end -}}

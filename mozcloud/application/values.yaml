@@ -220,9 +220,14 @@ externalSecrets:
 persistentVolumes: {}
 
 # Stakater Reloader (https://github.com/stakater/Reloader) support. When
-# enabled, every workload (Deployment/StatefulSet/Rollout) is annotated with
+# enabled, every Deployment and StatefulSet is annotated with
 # reloader.stakater.com/auto: "true", so Reloader restarts it on ConfigMap or
-# Secret change. A workload's own `annotations` can still override this.
+# Secret change. A workload's own `workloads.<name>.reloader.enabled` can
+# override this (see that field for details).
+#
+# Rollouts are not supported yet: the separately-deployed Reloader operator
+# needs reloader.isArgoRollouts: true (and the RBAC that comes with it) before
+# it can act on Argo Rollouts, and that is not enabled today.
 #
 # This chart only sets the annotation — the Reloader operator itself must
 # already be running in the cluster.
@@ -2822,6 +2827,13 @@ workloads:
       enabled: true
       minAvailable: ''
       maxUnavailable: ''
+
+    # Per-workload override for the chart-wide reloader.enabled toggle (see
+    # top-level `reloader`). Unset inherits that value; true or false forces
+    # this workload on or off regardless of the chart-wide setting.
+    #
+    # reloader:
+    #   enabled: true
 
     # Optionally override some securityContext settings for the pod.
     # section should not be configured unless the user knows what they are
