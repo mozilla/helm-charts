@@ -101,7 +101,8 @@ Returns the Reloader (https://github.com/stakater/Reloader) auto-restart
 annotation when enabled via .Values.reloader.enabled, the chart-wide default.
 A workload's own reloader.enabled (true or false) overrides that default.
 Applied to a workload's own resource annotations only (Deployment/
-StatefulSet), never the pod template, since that is what Reloader watches.
+StatefulSet/Rollout), never the pod template, since that is what Reloader
+watches.
 
 Params:
   config (dict):  (required) The workload configuration for this workload.

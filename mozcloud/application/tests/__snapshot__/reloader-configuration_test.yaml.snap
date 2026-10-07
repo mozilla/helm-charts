@@ -284,6 +284,8 @@ Configuration matches entire snapshot:
     apiVersion: argoproj.io/v1alpha1
     kind: Rollout
     metadata:
+      annotations:
+        reloader.stakater.com/auto: "true"
       labels:
         app.kubernetes.io/component: web
         app.kubernetes.io/managed-by: argocd
