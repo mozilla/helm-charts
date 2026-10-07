@@ -224,10 +224,6 @@ persistentVolumes: {}
 # reloader.stakater.com/auto: "true", so Reloader restarts it on ConfigMap or
 # Secret change. A workload's own `workloads.<name>.reloader.enabled` can
 # override this (see that field for details).
-#
-# This chart only sets the annotation — the Reloader operator itself must
-# already be running in the cluster, with reloader.isArgoRollouts: true if
-# any workload uses type: rollout.
 reloader:
   enabled: false
 
