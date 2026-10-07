@@ -225,12 +225,7 @@ persistentVolumes: {}
 # Secret change. A workload's own `workloads.<name>.reloader.enabled` can
 # override this (see that field for details).
 #
-# Rollouts are not supported yet: the separately-deployed Reloader operator
-# needs reloader.isArgoRollouts: true (and the RBAC that comes with it) before
-# it can act on Argo Rollouts, and that is not enabled today.
-#
-# This chart only sets the annotation — the Reloader operator itself must
-# already be running in the cluster.
+# Rollouts are not supported yet.
 reloader:
   enabled: false
 
