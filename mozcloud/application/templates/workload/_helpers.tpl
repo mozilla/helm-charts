@@ -97,6 +97,29 @@ Returns:
 
 
 {{- /*
+Returns the Reloader (https://github.com/stakater/Reloader) auto-restart
+annotation when enabled via .Values.reloader.enabled, the chart-wide default.
+A workload's own reloader.enabled (true or false) overrides that default.
+Applied to a workload's own resource annotations only (Deployment/
+StatefulSet), never the pod template, since that is what Reloader watches.
+
+Params:
+  config (dict):  (required) The workload configuration for this workload.
+  context (dict): (required) The Helm root context.
+
+Returns:
+  (string) YAML-encoded annotation key-value pair, or an empty string when
+           disabled.
+*/ -}}
+{{- define "mozcloud.workload.reloaderAnnotation" -}}
+{{- $chartDefault := dig "enabled" false (default dict .context.Values.reloader) -}}
+{{- if dig "reloader" "enabled" $chartDefault (default dict .config) }}
+reloader.stakater.com/auto: "true"
+{{- end }}
+{{- end -}}
+
+
+{{- /*
 Renders a list of containers for a workload pod template. Supports both
 spec.containers and spec.initContainers via the type param.
 

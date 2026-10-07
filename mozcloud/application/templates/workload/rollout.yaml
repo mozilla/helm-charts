@@ -18,6 +18,13 @@ metadata:
     {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) "labels" (default dict $workloadConfig.labels) }}
     {{- $labels := include "mozcloud.labels" $params | fromYaml }}
     {{- $labels.labels | toYaml | nindent 4 }}
+  {{- /*
+  TODO: Reloader's own ClusterRole only grants RBAC on argoproj.io/rollouts
+  when the separately-deployed Reloader chart sets reloader.isArgoRollouts:
+  true, which it does not today. Annotating a Rollout would be a silent
+  no-op, so Rollout is excluded from reloader.enabled until that is
+  coordinated, at which point it should be added here.
+  */}}
   {{- $params = dict "annotations" (default dict $workloadConfig.annotations) "context" $context "type" "deployment" }}
   {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
   {{- if $annotations }}
