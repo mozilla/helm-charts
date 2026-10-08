@@ -220,12 +220,10 @@ externalSecrets:
 persistentVolumes: {}
 
 # Stakater Reloader (https://github.com/stakater/Reloader) support. When
-# enabled, every Deployment and StatefulSet is annotated with
+# enabled, every Deployment, StatefulSet, and Rollout is annotated with
 # reloader.stakater.com/auto: "true", so Reloader restarts it on ConfigMap or
 # Secret change. A workload's own `workloads.<name>.reloader.enabled` can
 # override this (see that field for details).
-#
-# Rollouts are not supported yet.
 reloader:
   enabled: false
 

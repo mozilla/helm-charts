@@ -180,7 +180,7 @@
     },
     "reloader": {
       "type": "object",
-      "description": "Stakater Reloader (https://github.com/stakater/Reloader) support. When enabled, every Deployment and StatefulSet is annotated so Reloader restarts it on ConfigMap/Secret change. Rollouts are not supported yet. See workloads.<name>.reloader for the per-workload override.",
+      "description": "Stakater Reloader (https://github.com/stakater/Reloader) support. When enabled, every Deployment, StatefulSet, and Rollout is annotated so Reloader restarts it on ConfigMap/Secret change. See workloads.<name>.reloader for the per-workload override.",
       "additionalProperties": false,
       "properties": {
         "enabled": {

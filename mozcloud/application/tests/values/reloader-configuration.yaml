@@ -2,9 +2,8 @@
 # Deployment, StatefulSet, and Rollout workloads plus per-workload overrides,
 # used to verify the chart-wide reloader.enabled toggle
 # (templates/workload/_helpers.tpl: mozcloud.workload.reloaderAnnotation)
-# reaches Deployment/StatefulSet (but not Rollout, which Reloader cannot act
-# on without its own isArgoRollouts setting), and that a workload can still
-# override the chart-wide default either via its own annotations or via
+# reaches every workload type, and that a workload can still override the
+# chart-wide default either via its own annotations or via
 # workloads.<name>.reloader.enabled.
 reloader:
   enabled: true

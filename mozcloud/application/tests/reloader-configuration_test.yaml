@@ -18,7 +18,7 @@ tests:
       - notFailedTemplate: {}
       - matchSnapshot: {}
 
-  - it: reloader.enabled annotates Deployment and StatefulSet, not their pod templates
+  - it: reloader.enabled annotates Deployment, StatefulSet, and Rollout, not their pod templates
     asserts:
       - equal:
           path: metadata.annotations["reloader.stakater.com/auto"]
@@ -40,11 +40,9 @@ tests:
         documentSelector:
           path: $[?(@.kind == "StatefulSet")].metadata.name
           value: test-statefulset
-
-  - it: Rollout is not annotated, since Reloader cannot act on it without isArgoRollouts
-    asserts:
-      - notExists:
+      - equal:
           path: metadata.annotations["reloader.stakater.com/auto"]
+          value: "true"
         template: workload/rollout.yaml
         documentSelector:
           path: $[?(@.kind == "Rollout")].metadata.name
@@ -85,7 +83,7 @@ tests:
           path: $[?(@.kind == "StatefulSet")].metadata.name
           value: test-statefulset
 
-  - it: Disabled by default, no annotation is added to Deployment or StatefulSet
+  - it: Disabled by default, no annotation is added to Deployment, StatefulSet, or Rollout
     set:
       reloader.enabled: false
     asserts:
@@ -101,3 +99,9 @@ tests:
         documentSelector:
           path: $[?(@.kind == "StatefulSet")].metadata.name
           value: test-statefulset
+      - notExists:
+          path: metadata.annotations["reloader.stakater.com/auto"]
+        template: workload/rollout.yaml
+        documentSelector:
+          path: $[?(@.kind == "Rollout")].metadata.name
+          value: test-rollout
