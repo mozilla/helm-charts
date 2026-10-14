@@ -23,3 +23,5 @@
 .vscode/
 # Claude Code
 .claude/
+# Unit tests
+tests/
