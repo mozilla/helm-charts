@@ -30,13 +30,21 @@ tests:
         documentSelector:
           path: $[?(@.kind == "BackendConfig")].metadata.name
           value: app
-      # An exempt backend omits the iap block entirely, which is how a
-      # BackendConfig represents an unprotected backend.
+      # An exempt backend renders an explicit disable. GKE treats a missing
+      # iap block as "leave unchanged", so omitting it would keep IAP on.
+      - equal:
+          path: spec.iap.enabled
+          value: false
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: app-webhook
+      # With iap unset at host and backend level the block stays omitted, so
+      # tenants that never touch IAP see no change.
       - notExists:
           path: spec.iap
         documentSelector:
           path: $[?(@.kind == "BackendConfig")].metadata.name
-          value: app-webhook
+          value: logged
       # Overriding one option leaves the rest inherited.
       - equal:
           path: spec.timeoutSec
@@ -61,8 +69,9 @@ tests:
   - it: A backend can opt into IAP when the host leaves it off
     template: gke/ingress.yaml
     asserts:
-      - notExists:
-          path: spec.iap
+      - equal:
+          path: spec.iap.enabled
+          value: false
         documentSelector:
           path: $[?(@.kind == "BackendConfig")].metadata.name
           value: optin-open

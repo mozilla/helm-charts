@@ -2226,7 +2226,8 @@ workloads:
         #options:
         #  # Configures Identity-Aware Proxy for the service.
         #  #iap:
-        #  #  # You must explicitly enable this feature.
+        #  #  # You must explicitly enable this feature. To turn IAP off once
+        #  #  # enabled, set this to false; removing the block leaves IAP on.
         #  #  enabled: false
         #  #
         #  #  # The OAuth2 client ID. Only used for Gateway API.

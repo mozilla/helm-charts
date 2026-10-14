@@ -86,6 +86,23 @@ workloads:
             service:
               port: 8080
 
+      # Host without explicit backends that turns IAP off. The disable must be
+      # rendered explicitly, and the OAuth client fields dropped, since a
+      # missing iap block does not turn IAP off on an existing backend.
+      iap-off-host:
+        domains:
+          - iap-off-host.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: gateway
+        tls:
+          type: ManagedCertificate
+          create: true
+        options:
+          iap:
+            enabled: false
+            oauth2ClientId: my-client-id
+
       # Backends opting out of the policies they would otherwise inherit from
       # the host options.
       opt-out-host:
