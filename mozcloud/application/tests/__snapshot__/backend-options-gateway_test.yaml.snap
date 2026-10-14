@@ -95,7 +95,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: opt-out-full
+      name: my-app
     spec:
       ports:
         - name: http
@@ -122,7 +122,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: opt-out-no-healthcheck
+      name: opt-out-full
     spec:
       ports:
         - name: http
@@ -149,7 +149,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: opt-out-no-policy
+      name: opt-out-no-healthcheck
     spec:
       ports:
         - name: http
@@ -176,7 +176,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: optin-open
+      name: opt-out-no-policy
     spec:
       ports:
         - name: http
@@ -203,7 +203,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: optin-protected
+      name: optin-open
     spec:
       ports:
         - name: http
@@ -230,7 +230,7 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
-      name: silenced-gateway
+      name: optin-protected
     spec:
       ports:
         - name: http
@@ -243,6 +243,33 @@ Configuration matches entire snapshot:
         env_code: dev
       type: ClusterIP
   10: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: silenced-gateway
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  11: |
     apiVersion: networking.gke.io/v1
     kind: GCPBackendPolicy
     metadata:
@@ -274,7 +301,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: app
-  11: |
+  12: |
     apiVersion: networking.gke.io/v1
     kind: HealthCheckPolicy
     metadata:
@@ -300,7 +327,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: app
-  12: |
+  13: |
     apiVersion: networking.gke.io/v1
     kind: GCPBackendPolicy
     metadata:
@@ -318,6 +345,8 @@ Configuration matches entire snapshot:
       name: app-webhook
     spec:
       default:
+        iap:
+          enabled: false
         logging:
           enabled: true
           sampleRate: 500000
@@ -327,7 +356,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: app-webhook
-  13: |
+  14: |
     apiVersion: networking.gke.io/v1
     kind: HealthCheckPolicy
     metadata:
@@ -353,7 +382,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: app-webhook
-  14: |
+  15: |
     apiVersion: networking.gke.io/v1
     kind: GCPBackendPolicy
     metadata:
@@ -380,7 +409,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: google-oauth
-  15: |
+  16: |
     apiVersion: networking.gke.io/v1
     kind: HealthCheckPolicy
     metadata:
@@ -406,7 +435,60 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: google-oauth
-  16: |
+  17: |
+    apiVersion: networking.gke.io/v1
+    kind: GCPBackendPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: my-app
+    spec:
+      default:
+        iap:
+          enabled: false
+        logging:
+          enabled: true
+          sampleRate: 100000
+      targetRef:
+        group: ""
+        kind: Service
+        name: my-app
+  18: |
+    apiVersion: networking.gke.io/v1
+    kind: HealthCheckPolicy
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: my-app
+    spec:
+      default:
+        config:
+          httpHealthCheck:
+            requestPath: /__lbheartbeat__
+          type: HTTP
+      targetRef:
+        group: ""
+        kind: Service
+        name: my-app
+  19: |
     apiVersion: networking.gke.io/v1
     kind: GCPBackendPolicy
     metadata:
@@ -431,7 +513,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: opt-out-full
-  17: |
+  20: |
     apiVersion: networking.gke.io/v1
     kind: HealthCheckPolicy
     metadata:
@@ -457,7 +539,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: opt-out-full
-  18: |
+  21: |
     apiVersion: networking.gke.io/v1
     kind: GCPBackendPolicy
     metadata:
@@ -482,7 +564,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: opt-out-no-healthcheck
-  19: |
+  22: |
     apiVersion: networking.gke.io/v1
     kind: HealthCheckPolicy
     metadata:
@@ -508,7 +590,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: opt-out-no-policy
-  20: |
+  23: |
     apiVersion: networking.gke.io/v1
     kind: GCPBackendPolicy
     metadata:
@@ -526,6 +608,8 @@ Configuration matches entire snapshot:
       name: optin-open
     spec:
       default:
+        iap:
+          enabled: false
         logging:
           enabled: true
           sampleRate: 100000
@@ -533,7 +617,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: optin-open
-  21: |
+  24: |
     apiVersion: networking.gke.io/v1
     kind: HealthCheckPolicy
     metadata:
@@ -559,7 +643,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: optin-open
-  22: |
+  25: |
     apiVersion: networking.gke.io/v1
     kind: GCPBackendPolicy
     metadata:
@@ -586,7 +670,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: optin-protected
-  23: |
+  26: |
     apiVersion: networking.gke.io/v1
     kind: HealthCheckPolicy
     metadata:
@@ -612,7 +696,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: optin-protected
-  24: |
+  27: |
     apiVersion: networking.gke.io/v1
     kind: GCPBackendPolicy
     metadata:
@@ -637,7 +721,7 @@ Configuration matches entire snapshot:
         group: ""
         kind: Service
         name: silenced-gateway
-  25: |
+  28: |
     apiVersion: networking.gke.io/v1
     kind: HealthCheckPolicy
     metadata:

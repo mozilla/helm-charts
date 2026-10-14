@@ -41,6 +41,8 @@ Configuration matches entire snapshot:
         realm: nonprod
       name: app-webhook
     spec:
+      iap:
+        enabled: false
       logging:
         enable: true
         sampleRate: 0.1
@@ -142,6 +144,8 @@ Configuration matches entire snapshot:
         realm: nonprod
       name: optin-open
     spec:
+      iap:
+        enabled: false
       logging:
         enable: true
         sampleRate: 0.1

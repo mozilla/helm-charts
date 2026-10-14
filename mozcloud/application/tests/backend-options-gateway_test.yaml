@@ -59,10 +59,12 @@ tests:
         documentSelector:
           path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
           value: app
-      # An exempt backend omits the iap block entirely but keeps everything
-      # else it inherited from the host.
-      - notExists:
+      # An exempt backend renders an explicit disable, without the host's
+      # OAuth client, and keeps everything else it inherited from the host.
+      - equal:
           path: spec.default.iap
+          value:
+            enabled: false
         documentSelector:
           path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
           value: app-webhook
@@ -82,8 +84,9 @@ tests:
   - it: A backend can opt into IAP when the host leaves it off
     template: gke/backend.yaml
     asserts:
-      - notExists:
-          path: spec.default.iap
+      - equal:
+          path: spec.default.iap.enabled
+          value: false
         documentSelector:
           path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
           value: optin-open
@@ -93,6 +96,24 @@ tests:
         documentSelector:
           path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
           value: optin-protected
+
+  - it: IAP disable is explicit at host level and omitted when unset
+    template: gke/backend.yaml
+    asserts:
+      # Host without explicit backends: the old block could emit an iap map
+      # with no enabled key, and dropped an explicit false entirely.
+      - equal:
+          path: spec.default.iap
+          value:
+            enabled: false
+        documentSelector:
+          path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
+          value: my-app
+      - notExists:
+          path: spec.default.iap
+        documentSelector:
+          path: $[?(@.kind == "GCPBackendPolicy")].metadata.name
+          value: opt-out-full
 
   - it: IAP without a custom OAuth client omits the client fields
     template: gke/backend.yaml

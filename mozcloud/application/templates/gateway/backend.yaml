@@ -71,17 +71,18 @@ backends:
         {{- $sampleRate := $options.logSampleRate | float64 }}
         sampleRate: {{ mulf $sampleRate 10000 | int }}
       {{- end }}
-      {{- /* Emitted only when IAP resolves to enabled. A backend that overrides
-         the host default with `iap.enabled: false` drops the block entirely,
-         which is how GCP represents an unprotected backend. */}}
-      {{- if ($options.iap).enabled }}
+      {{- /* An explicit false is rendered so disabling IAP in values actually
+         turns it off, matching the ingress path where GKE treats a missing
+         block as "leave unchanged". Omitted only when enabled is unset. */}}
+      {{- $iap := default dict $options.iap }}
+      {{- if hasKey $iap "enabled" }}
       iap:
-        enabled: true
-        {{- if $options.iap.oauth2ClientId }}
-        oauth2ClientId: {{ $options.iap.oauth2ClientId }}
+        enabled: {{ $iap.enabled }}
+        {{- if and $iap.enabled $iap.oauth2ClientId }}
+        oauth2ClientId: {{ $iap.oauth2ClientId }}
         {{- end }}
-        {{- if $options.iap.oauth2ClientSecret }}
-        oauth2ClientSecret: {{ $options.iap.oauth2ClientSecret }}
+        {{- if and $iap.enabled $iap.oauth2ClientSecret }}
+        oauth2ClientSecret: {{ $iap.oauth2ClientSecret }}
         {{- end }}
       {{- end }}
       {{- if $options.timeoutSec }}
@@ -149,16 +150,15 @@ backends:
         {{- $sampleRate := $hostConfig.options.logSampleRate | float64 }}
         sampleRate: {{ mulf $sampleRate 10000 | int }}
       {{- end }}
-      {{- if ($hostConfig.options).iap }}
+      {{- $iap := default dict ($hostConfig.options).iap }}
+      {{- if hasKey $iap "enabled" }}
       iap:
-        {{- if $hostConfig.options.iap.enabled }}
-        enabled: {{ $hostConfig.options.iap.enabled }}
+        enabled: {{ $iap.enabled }}
+        {{- if and $iap.enabled $iap.oauth2ClientId }}
+        oauth2ClientId: {{ $iap.oauth2ClientId }}
         {{- end }}
-        {{- if $hostConfig.options.iap.oauth2ClientId }}
-        oauth2ClientId: {{ $hostConfig.options.iap.oauth2ClientId }}
-        {{- end }}
-        {{- if $hostConfig.options.iap.oauth2ClientSecret }}
-        oauth2ClientSecret: {{ $hostConfig.options.iap.oauth2ClientSecret }}
+        {{- if and $iap.enabled $iap.oauth2ClientSecret }}
+        oauth2ClientSecret: {{ $iap.oauth2ClientSecret }}
         {{- end }}
       {{- end }}
       {{- if ($hostConfig.options).timeoutSec }}

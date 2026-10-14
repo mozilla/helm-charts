@@ -103,13 +103,13 @@ ingresses:
             backend:
               config:
                 name: {{ $backendName }}
-                {{- /* Emitted only when IAP resolves to enabled. A backend that
-                   overrides the host default with `iap.enabled: false` drops the
-                   block entirely, which is how a BackendConfig represents an
-                   unprotected backend. */}}
-                {{- if ($options.iap).enabled }}
+                {{- /* GKE treats a missing iap block as "leave unchanged", not
+                   "off", so an explicit false must be rendered to disable IAP.
+                   Omitted only when enabled is unset at host and backend level. */}}
+                {{- $iap := default dict $options.iap }}
+                {{- if hasKey $iap "enabled" }}
                 iap:
-                  enabled: {{ $options.iap.enabled }}
+                  enabled: {{ $iap.enabled }}
                 {{- end }}
                 {{- /* Presence check so logSampleRate 0 is honored, not omitted. */}}
                 {{- if hasKey $options "logSampleRate" }}
