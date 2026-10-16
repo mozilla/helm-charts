@@ -10,7 +10,11 @@
 {{- $pdbEnabled := dig "podDisruptionBudget" "enabled" true $workloadConfig }}
 {{- $minAvailable := ($workloadConfig.podDisruptionBudget).minAvailable }}
 {{- $maxUnavailable := ($workloadConfig.podDisruptionBudget).maxUnavailable }}
-{{- if and $pdbEnabled (or $minAvailable $maxUnavailable) }}
+{{- /* No PDB for a rayService: the disruption controller resolves the owner's
+   scale subresource for every form except an integer minAvailable, and
+   rayclusters.ray.io does not implement one, so no value both protects the
+   pods and lets a node drain finish (MZCLD-3152). */}}
+{{- if and $pdbEnabled (or $minAvailable $maxUnavailable) (ne (default "deployment" $workloadConfig.type) "rayService") }}
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget

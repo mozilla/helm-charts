@@ -1,0 +1,109 @@
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $context := deepCopy . }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- /* Format workloads, removing default container and merging user-defined values with defaults */}}
+{{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- $formatterParams := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+
+{{- range $workloadName, $workloadConfig := $workloads }}
+{{- if eq (default "deployment" $workloadConfig.type) "rayService" }}
+{{- $ray := default dict $workloadConfig.ray }}
+---
+apiVersion: ray.io/v1
+kind: RayService
+metadata:
+  name: {{ $workloadName }}
+  labels:
+    {{- $component := dict "component_code" $workloadConfig.component }}
+    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) "labels" (default dict $workloadConfig.labels) }}
+    {{- $labels := include "mozcloud.labels" $params | fromYaml }}
+    {{- $labels.labels | toYaml | nindent 4 }}
+  {{- $params = dict "annotations" (default dict $workloadConfig.annotations) "context" $context "type" "deployment" }}
+  {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if hasKey $ray "rayClusterDeletionDelaySeconds" }}
+  rayClusterDeletionDelaySeconds: {{ $ray.rayClusterDeletionDelaySeconds }}
+  {{- end }}
+  {{- /* Ray owns the schema of this document, so it is passed through verbatim
+     rather than modelled field by field. KubeRay takes it as an opaque string. */}}
+  serveConfigV2: |
+    {{- toYaml $ray.serveConfigV2 | nindent 4 }}
+  rayClusterConfig:
+    rayVersion: {{ $ray.rayVersion | quote }}
+    {{- if hasKey $ray "enableInTreeAutoscaling" }}
+    enableInTreeAutoscaling: {{ $ray.enableInTreeAutoscaling }}
+    {{- end }}
+    {{- $gcsFt := default dict $ray.gcsFaultTolerance }}
+    {{- if $gcsFt.enabled }}
+    gcsFaultToleranceOptions:
+      redisAddress: {{ $gcsFt.redisAddress | quote }}
+      {{- if $gcsFt.externalStorageNamespace }}
+      externalStorageNamespace: {{ $gcsFt.externalStorageNamespace | quote }}
+      {{- end }}
+      {{- if $gcsFt.redisPassword }}
+      redisPassword:
+        valueFrom:
+          secretKeyRef:
+            name: {{ $gcsFt.redisPassword.secretName }}
+            key: {{ $gcsFt.redisPassword.secretKey }}
+      {{- end }}
+    {{- end }}
+    {{- with $ray.autoscalerOptions }}
+    autoscalerOptions:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- /* The head pod is described by the workload's own containers. The nginx
+       config is replaced rather than merged: a rayService reaches its backends
+       through KubeRay's <name>-ray-serve-svc, so the sidecar would never be
+       routed to, and keeping sibling keys would propagate nginx.lifecycle onto
+       the Ray containers. */}}
+    {{- $headConfig := deepCopy $workloadConfig }}
+    {{- $_ := set $headConfig "nginx" (dict "enabled" false) }}
+    headGroupSpec:
+      {{- with ($ray.headGroupSpec).rayStartParams }}
+      rayStartParams:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- $params = dict "config" $headConfig "context" $context "name" $workloadName }}
+      {{- include "mozcloud.workload.workloadTemplate" $params | nindent 6 }}
+    {{- if $ray.workerGroups }}
+    workerGroupSpecs:
+      {{- range $groupName, $groupConfig := $ray.workerGroups }}
+      - groupName: {{ $groupName }}
+        {{- range $field := list "replicas" "minReplicas" "maxReplicas" "idleTimeoutSeconds" "numOfHosts" }}
+        {{- if hasKey $groupConfig $field }}
+        {{ $field }}: {{ index $groupConfig $field }}
+        {{- end }}
+        {{- end }}
+        {{- with $groupConfig.rayStartParams }}
+        rayStartParams:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- /* A worker group is a pod template like any other, so it reuses the
+           workload's config with the group's own containers and placement. */}}
+        {{- $workerConfig := deepCopy $workloadConfig }}
+        {{- $_ := set $workerConfig "nginx" (dict "enabled" false) }}
+        {{- /* Carry the default container over so a worker inherits the same
+           container defaults the head gets; the formatter merges and drops it. */}}
+        {{- $workerContainers := deepCopy $groupConfig.containers }}
+        {{- $defaultContainer := dig "containers" "default" dict $workloadConfig }}
+        {{- if $defaultContainer }}
+        {{- $_ := set $workerContainers "default" $defaultContainer }}
+        {{- end }}
+        {{- $_ := set $workerConfig "containers" $workerContainers }}
+        {{- range $field := list "affinity" "nodeSelector" "tolerations" "topologySpreadConstraints" }}
+        {{- if hasKey $groupConfig $field }}
+        {{- $_ := set $workerConfig $field (index $groupConfig $field) }}
+        {{- end }}
+        {{- end }}
+        {{- $params = dict "config" $workerConfig "context" $context "name" $workloadName }}
+        {{- include "mozcloud.workload.workloadTemplate" $params | nindent 8 }}
+      {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}
