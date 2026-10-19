@@ -22,7 +22,7 @@ Configuration matches entire snapshot:
         realm: nonprod
       name: pr789-app-config
   2: |
-    apiVersion: external-secrets.io/v1beta1
+    apiVersion: external-secrets.io/v1
     kind: ExternalSecret
     metadata:
       annotations:
@@ -56,7 +56,7 @@ Configuration matches entire snapshot:
         creationPolicy: Owner
         name: pr789-app-external-secret
   3: |
-    apiVersion: external-secrets.io/v1beta1
+    apiVersion: external-secrets.io/v1
     kind: ExternalSecret
     metadata:
       annotations:

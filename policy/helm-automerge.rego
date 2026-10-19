@@ -4,6 +4,7 @@ import rego.v1
 
 deny contains msg if {
   not is_replace_mozcloud_chart_version
+  not is_external_secrets_v1_api
   msg := sprintf("'%s' is not safe to automerge", [input])
 }
 
@@ -26,4 +27,11 @@ deny contains msg if {
 is_replace_mozcloud_chart_version if {
   input.op == "replace"
   endswith(input.path, "/metadata/labels/mozcloud_chart_version")
+}
+
+# Allow upgrading to the External Secrets v1 API
+is_external_secrets_v1_api if {
+  input.op == "replace"
+  input.path == "/apiVersion"
+  input.value == "external-secrets.io/v1"
 }
