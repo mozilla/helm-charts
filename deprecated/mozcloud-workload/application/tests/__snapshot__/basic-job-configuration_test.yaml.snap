@@ -581,7 +581,7 @@ Configuration matches entire snapshot:
         realm: nonprod
       name: test-service-nginx
   12: |
-    apiVersion: external-secrets.io/v1beta1
+    apiVersion: external-secrets.io/v1
     kind: ExternalSecret
     metadata:
       annotations:
