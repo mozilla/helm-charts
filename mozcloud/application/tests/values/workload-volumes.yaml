@@ -140,3 +140,61 @@ workloads:
             type: gcsFuseCsi
             path: /data/bucket
             bucketName: my-test-bucket
+  # nginx.volumes: a proxy cache directory only the sidecar mounts, a volume shared
+  # with the app container, and a ConfigMap file mounted as a subPath.
+  test-service-nginx-volumes:
+    component: web
+    nginx:
+      volumes:
+        - name: nginx-proxy-cache
+          type: emptyDir
+          path: /media/nginx-proxy-cache
+        - name: shared-scratch
+          type: emptyDir
+          path: /shared
+        - name: nginx-extra-config
+          type: configMap
+          path: /etc/nginx/conf.d/extra.conf
+          key: extra.conf
+          readOnly: true
+    hosts:
+      test-service-nginx-volumes:
+        domains:
+          - test-service-nginx-volumes.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        tls:
+          certs:
+            - test-service-nonprod-dev
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        volumes:
+          - name: shared-scratch
+            type: emptyDir
+            path: /data/shared
+  # nginx.volumes is ignored when the sidecar is disabled.
+  test-service-nginx-disabled:
+    component: web
+    nginx:
+      enabled: false
+      volumes:
+        - name: nginx-proxy-cache
+          type: emptyDir
+          path: /media/nginx-proxy-cache
+    hosts:
+      test-service-nginx-disabled:
+        domains:
+          - test-service-nginx-disabled.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        tls:
+          certs:
+            - test-service-nonprod-dev
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0

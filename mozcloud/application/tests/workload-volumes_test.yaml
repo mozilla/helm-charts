@@ -433,3 +433,71 @@ tests:
         documentSelector:
           path: $[?(@.kind == "Deployment")].metadata.name
           value: test-service-partial
+      # nginx.volumes are mounted into the nginx container only; a volume the app
+      # container declares under the same name is shared rather than redefined.
+      - contains:
+          path: spec.template.spec.containers[?(@.name=="nginx")].volumeMounts
+          content:
+            name: nginx-proxy-cache
+            mountPath: /media/nginx-proxy-cache
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-nginx-volumes
+      - contains:
+          path: spec.template.spec.containers[?(@.name=="nginx")].volumeMounts
+          content:
+            name: shared-scratch
+            mountPath: /shared
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-nginx-volumes
+      - contains:
+          path: spec.template.spec.containers[?(@.name=="app")].volumeMounts
+          content:
+            name: shared-scratch
+            mountPath: /data/shared
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-nginx-volumes
+      - notContains:
+          path: spec.template.spec.containers[?(@.name=="app")].volumeMounts
+          content:
+            name: nginx-proxy-cache
+            mountPath: /media/nginx-proxy-cache
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-nginx-volumes
+      - contains:
+          path: spec.template.spec.containers[?(@.name=="nginx")].volumeMounts
+          content:
+            name: nginx-extra-config
+            mountPath: /etc/nginx/conf.d/extra.conf
+            subPath: extra.conf
+            readOnly: true
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-nginx-volumes
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: nginx-proxy-cache
+            emptyDir: {}
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-nginx-volumes
+      # nginx.volumes is ignored when the sidecar is disabled.
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: nginx-proxy-cache
+            emptyDir: {}
+        template: workload/deployment.yaml
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service-nginx-disabled

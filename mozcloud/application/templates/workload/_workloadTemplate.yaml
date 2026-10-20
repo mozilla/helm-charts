@@ -74,6 +74,13 @@ Returns:
 {{- if $nginxEnabled }}
   {{- $nginxVolume := dict "type" "configMap" }}
   {{- $_ := set $volumes $nginxConfigMapName $nginxVolume }}
+  {{- /* Additional NGINX volumes (e.g. a proxy cache directory). A volume that an
+       app container already declares under the same name is shared, not redefined. */}}
+  {{- range $volume := $config.nginx.volumes }}
+    {{- if not (hasKey $volumes $volume.name) }}
+      {{- $_ := set $volumes $volume.name $volume }}
+    {{- end }}
+  {{- end }}
 {{- end }}
 {{- /* Volumes whose name matches one of this workload's volumeClaimTemplates are
      provisioned per-pod by the StatefulSet controller. Emitting a pod-level volume
@@ -195,6 +202,9 @@ template:
             mountPath: /etc/nginx/nginx.conf
             subPath: nginx.conf
             readOnly: true
+          {{- with $config.nginx.volumes }}
+          {{- include "mozcloud.workload.volumeMounts" . | nindent 10 }}
+          {{- end }}
       {{- end -}}
 
       {{- /*

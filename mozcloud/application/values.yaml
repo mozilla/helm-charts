@@ -2739,6 +2739,20 @@ workloads:
     #     resources:
     #       cpu: 50m
     #       memory: 128Mi
+    #
+    #     # To mount additional volumes into the NGINX container (and only
+    #     # there), e.g. a writable directory for `proxy_cache_path` in a custom
+    #     # nginx.conf, use "volumes". It takes the same format as a container's
+    #     # "volumes". Supported types are configMap, secret, persistentVolume
+    #     # and emptyDir. A volume with the same name as one of the app
+    #     # containers' volumes is shared with that container.
+    #     #
+    #     # Example:
+    #     #
+    #     #   volumes:
+    #     #     - name: nginx-proxy-cache
+    #     #       type: emptyDir
+    #     #       path: /media/nginx-proxy-cache
     nginx:
       enabled: true
       image:
@@ -2760,6 +2774,10 @@ workloads:
       #         command: ["/bin/sh", "-c", "sleep 30"]
       #
       lifecycle: {}
+
+      # Additional volumes mounted into the NGINX container. See the "volumes"
+      # example in the NGINX documentation above.
+      volumes: []
 
     # Configure auto instrumentation for the OTEL Collector.
     #
