@@ -110,6 +110,17 @@ ingresses:
                 {{- if hasKey $iap "enabled" }}
                 iap:
                   enabled: {{ $iap.enabled }}
+                  {{- /* Without credentials GKE uses the Google-managed client,
+                     which only admits identities from the project's org. */}}
+                  {{- if and $iap.enabled $iap.oauth2ClientSecret }}
+                  oauthclientCredentials:
+                    secretName: {{ $iap.oauth2ClientSecret }}
+                    {{- with $iap.oauth2ClientId }}
+                    clientID: {{ . }}
+                    {{- end }}
+                  {{- else if and $iap.enabled $iap.oauth2ClientId }}
+                  {{- fail (printf "hosts.%s: options.iap.oauth2ClientId requires options.iap.oauth2ClientSecret on Ingress; the BackendConfig reads the client from that Secret." $hostName) }}
+                  {{- end }}
                 {{- end }}
                 {{- /* Presence check so logSampleRate 0 is honored, not omitted. */}}
                 {{- if hasKey $options "logSampleRate" }}

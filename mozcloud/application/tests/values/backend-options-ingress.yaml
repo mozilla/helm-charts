@@ -116,3 +116,31 @@ workloads:
               name: silenced
             options:
               logSampleRate: 0
+
+      # A custom OAuth client, for users outside the project's org. The exempt
+      # backend must not inherit the credentials once IAP is off.
+      custom-client-host:
+        domains:
+          - custom-client-host.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: ingress
+        tls:
+          type: ManagedCertificate
+          create: true
+        options:
+          iap:
+            enabled: true
+            oauth2ClientId: my-client-id
+            oauth2ClientSecret: my-iap-secret
+        backends:
+          custom-app:
+            path: /
+          custom-webhook:
+            path: /webhook
+            pathType: Exact
+            service:
+              name: custom-webhook
+            options:
+              iap:
+                enabled: false
