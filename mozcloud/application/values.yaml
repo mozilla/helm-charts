@@ -2234,7 +2234,12 @@ workloads:
         #  #  # only admits identities from the project's organization. Set
         #  #  # them to use a custom client instead.
         #  #  #
-        #  #  # The OAuth2 client ID.
+        #  #  # On Ingress, once a backend uses a custom client, GKE refuses to
+        #  #  # disable IAP or switch back to the Google-managed client through
+        #  #  # the BackendConfig; the sync fails until that's done in GCP.
+        #  #  #
+        #  #  # The OAuth2 client ID. On Ingress the controller takes the ID
+        #  #  # from the secret instead, so this only labels the client there.
         #  #  #oauth2ClientId:
         #  #
         #  #  # Name of the Kubernetes secret holding the OAuth2 client. On
