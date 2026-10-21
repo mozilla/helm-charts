@@ -22,6 +22,33 @@ data:
 
 
 {{- /*
+Renders the volumeMounts list items for a list of volumes, used for app
+containers and the NGINX sidecar so both mount volumes the same way.
+
+Params:
+  . (list): (required) Volumes, each with name, type and path, and optionally
+            key (mounted as subPath) and readOnly.
+
+Returns:
+  (string) YAML list items for a container's volumeMounts.
+*/ -}}
+{{- define "mozcloud.workload.volumeMounts" -}}
+{{- range $volume := . }}
+- name: {{ $volume.name }}
+  mountPath: {{ $volume.path }}
+  {{- if $volume.key }}
+  subPath: {{ $volume.key }}
+  {{- end }}
+  {{- if eq $volume.type "secret" }}
+  readOnly: true
+  {{- else if $volume.readOnly }}
+  readOnly: {{ $volume.readOnly }}
+  {{- end }}
+{{- end }}
+{{- end -}}
+
+
+{{- /*
 Renders all volume definitions for a pod template, including the NGINX
 configmap volume (when enabled) and all user-defined volumes.
 
@@ -364,18 +391,7 @@ Returns:
   {{- end }}
   {{- if $containerConfig.volumes }}
   volumeMounts:
-    {{- range $volume := $containerConfig.volumes }}
-    - name: {{ $volume.name }}
-      mountPath: {{ $volume.path }}
-      {{- if $volume.key }}
-      subPath: {{ $volume.key }}
-      {{- end }}
-      {{- if eq $volume.type "secret" }}
-      readOnly: true
-      {{- else if $volume.readOnly }}
-      readOnly: {{ $volume.readOnly }}
-      {{- end }}
-    {{- end }}
+    {{- include "mozcloud.workload.volumeMounts" $containerConfig.volumes | nindent 4 }}
   {{- end }}
 {{- end }}
 {{- end -}}

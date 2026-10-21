@@ -194,6 +194,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | workloads.default.nginx.image.repository | string | `"us-west1-docker.pkg.dev/moz-fx-platform-artifacts/platform-shared-images/nginx-unprivileged"` |  |
 | workloads.default.nginx.image.tag | string | `"1.31"` |  |
 | workloads.default.nginx.lifecycle | object | `{}` |  |
+| workloads.default.nginx.volumes | list | `[]` |  |
 | workloads.default.nodeSelector | object | `{}` |  |
 | workloads.default.otel.autoInstrumentation.enabled | bool | `false` |  |
 | workloads.default.otel.autoInstrumentation.language | string | `""` |  |

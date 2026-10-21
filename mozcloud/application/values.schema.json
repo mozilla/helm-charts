@@ -1591,6 +1591,72 @@
                     }
                   }
                 }
+              },
+              "volumes": {
+                "type": "array",
+                "default": [],
+                "description": "Additional volumes mounted into the NGINX sidecar container only, e.g. an emptyDir for a proxy cache directory. Same format as a container's `volumes`, limited to the types listed. A volume with the same name as one of the app containers' volumes is shared with them.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "configMap",
+                        "secret",
+                        "persistentVolume",
+                        "emptyDir"
+                      ]
+                    },
+                    "path": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "readOnly": {
+                      "type": "boolean"
+                    },
+                    "medium": {
+                      "type": "string",
+                      "enum": [
+                        "Memory"
+                      ]
+                    },
+                    "sizeLimit": {
+                      "type": "string",
+                      "pattern": "^\\d+(K|Ki|M|Mi|G|Gi)$"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "type",
+                    "path"
+                  ],
+                  "allOf": [
+                    {
+                      "if": {
+                        "properties": {
+                          "medium": {
+                            "const": "Memory"
+                          }
+                        },
+                        "required": [
+                          "medium"
+                        ]
+                      },
+                      "then": {
+                        "required": [
+                          "sizeLimit"
+                        ]
+                      }
+                    }
+                  ]
+                }
               }
             }
           },
