@@ -74,7 +74,7 @@ ingresses:
     {{- $backendOptions := mergeOverwrite (deepCopy (default dict $hostConfig.options)) (deepCopy (default dict $config.options)) }}
     {{- $iap := "disabled" }}
     {{- if dig "iap" "enabled" false $backendOptions }}
-      {{- $iap = printf "enabled with %s" (dig "iap" "oauth2ClientSecret" "the Google-managed client" $backendOptions) }}
+      {{- $iap = printf "enabled with %s" (dig "iap" "oauth2ClientSecret" "" $backendOptions | default "the Google-managed client") }}
     {{- end }}
     {{- if hasKey $iapByService $service }}
       {{- if ne (index $iapByService $service) $iap }}
