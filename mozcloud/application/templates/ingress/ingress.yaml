@@ -65,15 +65,20 @@ ingresses:
      per port, so backends that resolve to the same Service cannot have
      different IAP postures. GKE would silently bind them all to whichever
      BackendConfig the first backend produced, leaving a path the tenant
-     believes is exempt (or protected) doing the opposite. */}}
+     believes is exempt (or protected) doing the opposite, or on the wrong
+     OAuth client. The client is keyed by its Secret, since that's where the
+     controller reads it from. */}}
   {{- $iapByService := dict }}
   {{- range $name, $config := $backends }}
     {{- $service := default $name ($config.service).name }}
     {{- $backendOptions := mergeOverwrite (deepCopy (default dict $hostConfig.options)) (deepCopy (default dict $config.options)) }}
-    {{- $iap := ternary "enabled" "disabled" (dig "iap" "enabled" false $backendOptions) }}
+    {{- $iap := "disabled" }}
+    {{- if dig "iap" "enabled" false $backendOptions }}
+      {{- $iap = printf "enabled with %s" (dig "iap" "oauth2ClientSecret" "the Google-managed client" $backendOptions) }}
+    {{- end }}
     {{- if hasKey $iapByService $service }}
       {{- if ne (index $iapByService $service) $iap }}
-        {{- fail (printf "hosts.%s.backends: backends sharing Service %q declare conflicting IAP postures. A Service carries a single cloud.google.com/backend-config annotation per port, so give the IAP-exempt backend its own Service via backends.<name>.service.name, or align their options.iap.enabled values." $hostName $service) }}
+        {{- fail (printf "hosts.%s.backends: backends sharing Service %q declare conflicting IAP postures. A Service carries a single cloud.google.com/backend-config annotation per port, so give the IAP-exempt backend its own Service via backends.<name>.service.name, or align their options.iap settings." $hostName $service) }}
       {{- end }}
     {{- else }}
       {{- $_ := set $iapByService $service $iap }}
@@ -114,12 +119,12 @@ ingresses:
                      which only admits identities from the project's org. */}}
                   {{- if and $iap.enabled $iap.oauth2ClientSecret }}
                   oauthclientCredentials:
-                    secretName: {{ $iap.oauth2ClientSecret }}
+                    secretName: {{ $iap.oauth2ClientSecret | quote }}
                     {{- with $iap.oauth2ClientId }}
-                    clientID: {{ . }}
+                    clientID: {{ . | quote }}
                     {{- end }}
                   {{- else if and $iap.enabled $iap.oauth2ClientId }}
-                  {{- fail (printf "hosts.%s: options.iap.oauth2ClientId requires options.iap.oauth2ClientSecret on Ingress; the BackendConfig reads the client from that Secret." $hostName) }}
+                  {{- fail (printf "hosts.%s.backends.%s: options.iap.oauth2ClientId requires options.iap.oauth2ClientSecret on Ingress; the BackendConfig reads the client from that Secret." $hostName $backendName) }}
                   {{- end }}
                 {{- end }}
                 {{- /* Presence check so logSampleRate 0 is honored, not omitted. */}}

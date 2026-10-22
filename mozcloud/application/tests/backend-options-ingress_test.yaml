@@ -173,4 +173,14 @@ tests:
     template: ingress/ingress.yaml
     asserts:
       - failedTemplate:
-          errorPattern: "oauth2ClientId requires options.iap.oauth2ClientSecret"
+          errorPattern: "hosts.iap-host.backends.app: options.iap.oauth2ClientId requires options.iap.oauth2ClientSecret"
+
+  - it: Template rejects backends that share a Service but use different OAuth clients
+    values:
+      - values/globals.yaml
+      - values/backend-options-ingress.yaml
+      - values/backend-options-ingress-iap-client-conflict.yaml
+    template: ingress/ingress.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "conflicting IAP postures"
