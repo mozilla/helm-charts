@@ -2230,11 +2230,22 @@ workloads:
         #  #  # enabled, set this to false; removing the block leaves IAP on.
         #  #  enabled: false
         #  #
-        #  #  # The OAuth2 client ID. Only used for Gateway API.
+        #  #  # Leave both unset to use the Google-managed OAuth client, which
+        #  #  # only admits identities from the project's organization. Set
+        #  #  # them to use a custom client instead.
+        #  #  #
+        #  #  # On Ingress, once a backend uses a custom client, GKE refuses to
+        #  #  # disable IAP or switch back to the Google-managed client through
+        #  #  # the BackendConfig; the sync fails until that's done in GCP.
+        #  #  #
+        #  #  # The OAuth2 client ID. On Ingress the controller takes the ID
+        #  #  # from the secret instead, so this only labels the client there.
         #  #  #oauth2ClientId:
         #  #
-        #  #  # Name of the Kubernetes secret containing the OAuth2 client
-        #  #  # secret. Only used for Gateway API.
+        #  #  # Name of the Kubernetes secret holding the OAuth2 client. On
+        #  #  # Gateway API it holds the client secret under the key "key". On
+        #  #  # Ingress it holds "client_id" and "client_secret", and this
+        #  #  # setting is required whenever oauth2ClientId is set.
         #  #  #oauth2ClientSecret:
         #
         #  # The sample rate at which HTTP access should be logged. This can be

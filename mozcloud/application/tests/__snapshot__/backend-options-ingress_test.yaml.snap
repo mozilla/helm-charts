@@ -14,6 +14,136 @@ Configuration matches entire snapshot:
         mozcloud_chart: mozcloud
         mozcloud_chart_version: 1.0.0
         realm: nonprod
+      name: custom-app
+    spec:
+      iap:
+        enabled: true
+        oauthclientCredentials:
+          clientID: my-client-id
+          secretName: my-iap-secret
+      logging:
+        enable: true
+        sampleRate: 0.1
+  2: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: custom-webhook
+    spec:
+      iap:
+        enabled: false
+      logging:
+        enable: true
+        sampleRate: 0.1
+  3: |
+    apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: custom-client-host-dev-test-domain-com
+    spec:
+      domains:
+        - custom-client-host.dev.test-domain.com
+  4: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: host-client-optin
+    spec:
+      iap:
+        enabled: true
+        oauthclientCredentials:
+          clientID: my-client-id
+          secretName: my-iap-secret
+      logging:
+        enable: true
+        sampleRate: 0.1
+  5: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: host-client-unset
+    spec:
+      logging:
+        enable: true
+        sampleRate: 0.1
+  6: |
+    apiVersion: networking.gke.io/v1
+    kind: ManagedCertificate
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: host-client-host-dev-test-domain-com
+    spec:
+      domains:
+        - host-client-host.dev.test-domain.com
+  7: |
+    apiVersion: cloud.google.com/v1
+    kind: BackendConfig
+    metadata:
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
       name: app
     spec:
       iap:
@@ -24,7 +154,7 @@ Configuration matches entire snapshot:
       securityPolicy:
         name: host-policy
       timeoutSec: 120
-  2: |
+  8: |
     apiVersion: cloud.google.com/v1
     kind: BackendConfig
     metadata:
@@ -49,7 +179,7 @@ Configuration matches entire snapshot:
       securityPolicy:
         name: host-policy
       timeoutSec: 300
-  3: |
+  9: |
     apiVersion: networking.gke.io/v1
     kind: ManagedCertificate
     metadata:
@@ -68,7 +198,7 @@ Configuration matches entire snapshot:
     spec:
       domains:
         - iap-host.dev.test-domain.com
-  4: |
+  10: |
     apiVersion: cloud.google.com/v1
     kind: BackendConfig
     metadata:
@@ -88,7 +218,7 @@ Configuration matches entire snapshot:
       logging:
         enable: true
         sampleRate: 0.5
-  5: |
+  11: |
     apiVersion: cloud.google.com/v1
     kind: BackendConfig
     metadata:
@@ -108,7 +238,7 @@ Configuration matches entire snapshot:
       logging:
         enable: true
         sampleRate: 0
-  6: |
+  12: |
     apiVersion: networking.gke.io/v1
     kind: ManagedCertificate
     metadata:
@@ -127,7 +257,7 @@ Configuration matches entire snapshot:
     spec:
       domains:
         - log-sample-host.dev.test-domain.com
-  7: |
+  13: |
     apiVersion: cloud.google.com/v1
     kind: BackendConfig
     metadata:
@@ -149,7 +279,7 @@ Configuration matches entire snapshot:
       logging:
         enable: true
         sampleRate: 0.1
-  8: |
+  14: |
     apiVersion: cloud.google.com/v1
     kind: BackendConfig
     metadata:
@@ -171,7 +301,7 @@ Configuration matches entire snapshot:
       logging:
         enable: true
         sampleRate: 0.1
-  9: |
+  15: |
     apiVersion: networking.gke.io/v1
     kind: ManagedCertificate
     metadata:
@@ -190,7 +320,7 @@ Configuration matches entire snapshot:
     spec:
       domains:
         - optin-host.dev.test-domain.com
-  10: |
+  16: |
     apiVersion: cloud.google.com/v1
     kind: BackendConfig
     metadata:
@@ -212,7 +342,7 @@ Configuration matches entire snapshot:
       logging:
         enable: true
         sampleRate: 0.1
-  11: |
+  17: |
     apiVersion: cloud.google.com/v1
     kind: BackendConfig
     metadata:
@@ -234,7 +364,7 @@ Configuration matches entire snapshot:
       logging:
         enable: true
         sampleRate: 0.1
-  12: |
+  18: |
     apiVersion: networking.gke.io/v1
     kind: ManagedCertificate
     metadata:
@@ -253,7 +383,207 @@ Configuration matches entire snapshot:
     spec:
       domains:
         - shared-service-host.dev.test-domain.com
-  13: |
+  19: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: gce
+        kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
+        networking.gke.io/managed-certificates: custom-client-host-dev-test-domain-com
+        networking.gke.io/v1beta1.FrontendConfig: custom-client-host
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: custom-client-host
+    spec:
+      rules:
+        - host: custom-client-host.dev.test-domain.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: custom-app
+                    port:
+                      number: 8080
+                path: /
+                pathType: Prefix
+              - backend:
+                  service:
+                    name: custom-webhook
+                    port:
+                      number: 8080
+                path: /webhook
+                pathType: Exact
+  20: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "custom-app"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: custom-app
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  21: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "custom-webhook"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: custom-webhook
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  22: |
+    apiVersion: networking.k8s.io/v1
+    kind: Ingress
+    metadata:
+      annotations:
+        kubernetes.io/ingress.class: gce
+        kubernetes.io/ingress.global-static-ip-name: mozcloud-dev-ip-v4
+        networking.gke.io/managed-certificates: host-client-host-dev-test-domain-com
+        networking.gke.io/v1beta1.FrontendConfig: host-client-host
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: host-client-host
+    spec:
+      rules:
+        - host: host-client-host.dev.test-domain.com
+          http:
+            paths:
+              - backend:
+                  service:
+                    name: host-client-optin
+                    port:
+                      number: 8080
+                path: /admin
+                pathType: Exact
+              - backend:
+                  service:
+                    name: host-client-unset
+                    port:
+                      number: 8080
+                path: /
+                pathType: Prefix
+  23: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "host-client-optin"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: host-client-optin
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  24: |
+    apiVersion: v1
+    kind: Service
+    metadata:
+      annotations:
+        cloud.google.com/backend-config: '{"default": "host-client-unset"}'
+        cloud.google.com/neg: '{"ingress": true}'
+      labels:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: app
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: host-client-unset
+    spec:
+      ports:
+        - name: http
+          port: 8080
+          protocol: TCP
+          targetPort: http
+      selector:
+        app.kubernetes.io/component: app
+        app.kubernetes.io/name: mozcloud-test
+        env_code: dev
+      type: ClusterIP
+  25: |
     apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
@@ -293,7 +623,7 @@ Configuration matches entire snapshot:
                       number: 8080
                 path: /bugzilla_webhook
                 pathType: Exact
-  14: |
+  26: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -323,7 +653,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/name: mozcloud-test
         env_code: dev
       type: ClusterIP
-  15: |
+  27: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -353,7 +683,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/name: mozcloud-test
         env_code: dev
       type: ClusterIP
-  16: |
+  28: |
     apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
@@ -393,7 +723,7 @@ Configuration matches entire snapshot:
                       number: 8080
                 path: /quiet
                 pathType: Exact
-  17: |
+  29: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -423,7 +753,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/name: mozcloud-test
         env_code: dev
       type: ClusterIP
-  18: |
+  30: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -453,7 +783,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/name: mozcloud-test
         env_code: dev
       type: ClusterIP
-  19: |
+  31: |
     apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
@@ -493,7 +823,7 @@ Configuration matches entire snapshot:
                       number: 8080
                 path: /admin
                 pathType: Exact
-  20: |
+  32: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -523,7 +853,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/name: mozcloud-test
         env_code: dev
       type: ClusterIP
-  21: |
+  33: |
     apiVersion: v1
     kind: Service
     metadata:
@@ -553,7 +883,7 @@ Configuration matches entire snapshot:
         app.kubernetes.io/name: mozcloud-test
         env_code: dev
       type: ClusterIP
-  22: |
+  34: |
     apiVersion: networking.k8s.io/v1
     kind: Ingress
     metadata:
@@ -593,7 +923,7 @@ Configuration matches entire snapshot:
                       number: 8080
                 path: /
                 pathType: Prefix
-  23: |
+  35: |
     apiVersion: v1
     kind: Service
     metadata:

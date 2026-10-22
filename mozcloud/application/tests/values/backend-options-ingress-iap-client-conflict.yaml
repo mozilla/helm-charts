@@ -1,0 +1,15 @@
+---
+# Overlay on backend-options-ingress.yaml. Both backends on the shared Service
+# keep IAP on, but one switches to a custom OAuth client. The Service's single
+# backend-config annotation would put one of them on the other's client, so
+# the chart must fail the render.
+workloads:
+  my-app:
+    hosts:
+      shared-service-host:
+        backends:
+          shared-api:
+            options:
+              iap:
+                enabled: true
+                oauth2ClientSecret: other-iap-secret

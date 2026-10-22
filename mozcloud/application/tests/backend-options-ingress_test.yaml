@@ -82,6 +82,53 @@ tests:
           path: $[?(@.kind == "BackendConfig")].metadata.name
           value: optin-protected
 
+  - it: A custom OAuth client renders oauthclientCredentials
+    template: gke/ingress.yaml
+    asserts:
+      - equal:
+          path: spec.iap
+          value:
+            enabled: true
+            oauthclientCredentials:
+              secretName: my-iap-secret
+              clientID: my-client-id
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: custom-app
+      # Credentials are only rendered while IAP is on.
+      - equal:
+          path: spec.iap
+          value:
+            enabled: false
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: custom-webhook
+      # No credentials keeps the Google-managed client.
+      - notExists:
+          path: spec.iap.oauthclientCredentials
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: app
+
+  - it: OAuth client options without enabled render no iap block
+    template: gke/ingress.yaml
+    asserts:
+      - notExists:
+          path: spec.iap
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: host-client-unset
+      - equal:
+          path: spec.iap
+          value:
+            enabled: true
+            oauthclientCredentials:
+              secretName: my-iap-secret
+              clientID: my-client-id
+        documentSelector:
+          path: $[?(@.kind == "BackendConfig")].metadata.name
+          value: host-client-optin
+
   - it: A logSampleRate of zero disables access logging instead of being dropped
     template: gke/ingress.yaml
     asserts:
@@ -132,6 +179,26 @@ tests:
       - values/globals.yaml
       - values/backend-options-ingress.yaml
       - values/backend-options-ingress-iap-conflict.yaml
+    template: ingress/ingress.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "conflicting IAP postures"
+
+  - it: Template rejects an OAuth client ID without its Secret
+    values:
+      - values/globals.yaml
+      - values/backend-options-ingress.yaml
+      - values/backend-options-ingress-iap-missing-secret.yaml
+    template: ingress/ingress.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "hosts.iap-host.backends.app: options.iap.oauth2ClientId requires options.iap.oauth2ClientSecret"
+
+  - it: Template rejects backends that share a Service but use different OAuth clients
+    values:
+      - values/globals.yaml
+      - values/backend-options-ingress.yaml
+      - values/backend-options-ingress-iap-client-conflict.yaml
     template: ingress/ingress.yaml
     asserts:
       - failedTemplate:
