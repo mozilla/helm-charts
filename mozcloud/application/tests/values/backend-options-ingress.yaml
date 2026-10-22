@@ -144,3 +144,31 @@ workloads:
             options:
               iap:
                 enabled: false
+
+      # The client is set once on the host and individual backends opt in.
+      # Without enabled set, a backend renders no iap block at all, which GKE
+      # treats as "leave IAP unchanged".
+      host-client-host:
+        domains:
+          - host-client-host.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: ingress
+        tls:
+          type: ManagedCertificate
+          create: true
+        options:
+          iap:
+            oauth2ClientId: my-client-id
+            oauth2ClientSecret: my-iap-secret
+        backends:
+          host-client-unset:
+            path: /
+          host-client-optin:
+            path: /admin
+            pathType: Exact
+            service:
+              name: host-client-optin
+            options:
+              iap:
+                enabled: true
