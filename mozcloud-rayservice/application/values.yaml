@@ -1,0 +1,162 @@
+# Default values for mozcloud-rayservice.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Global values, shared with every other chart in the same release (eg. the
+# mozcloud dependency a tenant chart also declares). Argo CD populates these
+# automatically; they are spelled out in per-env values files otherwise.
+global:
+  mozcloud:
+    # Tenant's application code. Automatically populated by Argo CD.
+    app_code: ""
+    # 8 character short revision of the Helm chart deployed by Argo CD.
+    # Automatically populated by Argo CD.
+    artifact_id: ""
+    # Name of the chart. Automatically populated by Argo CD.
+    chart: ""
+    # Environment (eg. dev, stage, prod). Automatically populated by Argo CD.
+    env_code: ""
+    # GCP project ID. Automatically populated by Argo CD.
+    project_id: ""
+
+# RayService workloads, keyed by the name of the rendered RayService object.
+# Unlike mozcloud's own "workloads", there is no implicit "default" key or
+# merge behavior here: every key under "workloads" is rendered as its own
+# RayService, verbatim.
+#
+# Example:
+#
+# workloads:
+#   my-service-ray:
+#     component: my-service
+#     serviceAccountName: my-service
+#     containers:
+#       my-service-ray-head:
+#         image:
+#           repository: my-repo/my-service
+#           tag: "1.0.0"
+#         resources:
+#           cpu: "2"
+#           memory: 4Gi
+#         ports:
+#           - name: gcs-server
+#             containerPort: 6379
+#           - name: dashboard
+#             containerPort: 8265
+#           - name: client
+#             containerPort: 10001
+#           - name: serve
+#             containerPort: 8000
+#     ray:
+#       rayVersion: "2.50.1"
+#       serveConfigV2:
+#         applications:
+#           - name: app
+#             import_path: my_service.main:app
+#             route_prefix: /
+#       workerGroups:
+#         my-service-ray-worker:
+#           replicas: 1
+#           minReplicas: 1
+#           maxReplicas: 4
+#           containers:
+#             my-service-ray-worker:
+#               image:
+#                 repository: my-repo/my-service
+#                 tag: "1.0.0"
+#               resources:
+#                 cpu: "4"
+#                 memory: 16Gi
+#               lifecycle:
+#                 preStop:
+#                   exec:
+#                     command: ["/bin/sh", "-c", "ray stop"]
+workloads: {}
+
+# Per-workload fields, documented here rather than repeated in the schema:
+#
+# workloads.<name>.type (string): Documentation/forward-compat hint only. Not
+#   read by this chart -- every workload here is a RayService. Kept so that a
+#   future migration of this values block into mozcloud's own
+#   "workloads.<name>.type: rayService" needs the fewest possible changes.
+#
+# workloads.<name>.component (string, required): Component code, used for the
+#   "component_code" and "app.kubernetes.io/component" labels.
+#
+# workloads.<name>.serviceAccountName (string, required): Name of an existing
+#   Kubernetes ServiceAccount for the Ray pods to run as. This chart does not
+#   create ServiceAccounts -- that is still the mozcloud dependency's job.
+#
+# workloads.<name>.labels / annotations (object): Merged onto the RayService
+#   object and every pod template (head and worker groups alike).
+#
+# workloads.<name>.podSecurityContext (object): Overrides for the pod-level
+#   securityContext. Defaults to MozCloud's PSS-restricted baseline:
+#   runAsNonRoot: true, runAsUser/runAsGroup: 10001, seccompProfile:
+#   RuntimeDefault.
+#
+# workloads.<name>.affinity / nodeSelector / tolerations /
+#   topologySpreadConstraints (object/array): Pod placement for the head,
+#   and the default for every worker group unless a group sets its own
+#   (a group's own value replaces the workload's, it does not merge with it).
+#
+# workloads.<name>.containers.<name> (object, required, at least one): The
+#   Ray head's containers.
+#
+#   .image.repository / .image.tag (string, required)
+#   .image.pullPolicy (string, default "Always")
+#   .command / .args (array of string)
+#   .env (array): Plain Kubernetes EnvVar entries.
+#   .envFrom (array): Plain Kubernetes EnvFromSource entries, eg. a
+#     secretRef to the chart secret an ExternalSecret-rendering dependency
+#     (mozcloud) creates elsewhere in the same release.
+#   .resources.cpu / .resources.memory (string): Requests. Limits default to
+#     the same values unless .resources.limits overrides them.
+#   .resources.limits (object): Full Kubernetes limits map, eg. to add
+#     nvidia.com/gpu or raise limits above requests.
+#   .securityContext (object): Merged over MozCloud's container-level
+#     baseline (allowPrivilegeEscalation: false, capabilities.drop: [ALL],
+#     seccompProfile: RuntimeDefault).
+#   .ports (array): Plain Kubernetes ContainerPort entries, eg. the Ray
+#     ports (gcs-server, dashboard, client, serve) and a metrics port.
+#   .lifecycle (object): Plain Kubernetes Lifecycle, eg. a worker's
+#     "ray stop" preStop hook.
+#   .healthCheck.liveness / .readiness.enabled (bool, default false),
+#     .path, .port, .initialDelaySeconds, .periodSeconds, .timeoutSeconds,
+#     .successThreshold, .failureThreshold: an httpGet probe.
+#
+# workloads.<name>.ray (object, required): RayService-specific configuration.
+#
+#   .rayVersion (string, required): Must match the Ray version baked into the
+#     container images.
+#   .serveConfigV2 (object, required): Ray Serve multi-application config,
+#     passed through verbatim as the serveConfigV2 string. Ray owns this
+#     schema, so it is not modelled field by field here.
+#   .enableInTreeAutoscaling (bool): Let the Ray autoscaler own worker
+#     replica counts.
+#   .rayClusterDeletionDelaySeconds (int): Seconds KubeRay keeps the previous
+#     RayCluster after a zero-downtime upgrade before deleting it.
+#   .serviceUnhealthySecondThreshold / .deploymentUnhealthySecondThreshold
+#     (int): RayService health thresholds.
+#   .autoscalerOptions (object): Overrides for the Ray autoscaler sidecar,
+#     passed through verbatim.
+#   .gcsFaultTolerance.enabled (bool, default false): Back the Ray GCS with
+#     an external Redis so the cluster survives a head restart.
+#   .gcsFaultTolerance.redisAddress (string): host:port. Required once
+#     enabled is true.
+#   .gcsFaultTolerance.externalStorageNamespace (string): Redis key
+#     namespace. Defaults to the RayCluster UID when unset.
+#   .gcsFaultTolerance.redisPassword.secretName / .secretKey (string):
+#     Existing Secret holding the Redis password.
+#   .headGroupSpec.rayStartParams (object): Arguments for the head's
+#     "ray start" command, rendered as strings.
+#   .workerGroups.<name> (object): Ray worker groups keyed by group name.
+#     Each group is a pod template of its own.
+#     .containers (object, required, at least one): Same shape as the head's
+#       containers, above.
+#     .replicas / .minReplicas / .maxReplicas / .idleTimeoutSeconds /
+#       .numOfHosts (int)
+#     .rayStartParams (object): Arguments for this group's "ray start"
+#       command, rendered as strings.
+#     .affinity / .nodeSelector / .tolerations / .topologySpreadConstraints:
+#       Overrides the workload's, rather than merging with it.

@@ -1,0 +1,21 @@
+---
+# GCS fault tolerance switched on without a Redis endpoint -- the schema must
+# reject this (redisAddress is required once gcsFaultTolerance.enabled).
+workloads:
+  test-service-ray-no-redis:
+    component: test-service
+    serviceAccountName: test-service
+    containers:
+      test-service-ray-no-redis-head:
+        image:
+          repository: test-repo/test-service
+          tag: "1.0.0"
+    ray:
+      rayVersion: "2.44.1"
+      serveConfigV2:
+        applications:
+          - name: app
+            import_path: test_service.main:app
+            route_prefix: /
+      gcsFaultTolerance:
+        enabled: true

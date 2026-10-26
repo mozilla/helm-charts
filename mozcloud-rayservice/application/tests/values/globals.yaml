@@ -1,0 +1,6 @@
+---
+global:
+  mozcloud:
+    app_code: mozcloud-test
+    env_code: dev
+    project_id: test-project

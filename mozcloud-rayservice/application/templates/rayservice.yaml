@@ -1,0 +1,105 @@
+{{- range $workloadName, $workload := .Values.workloads }}
+{{- $ray := $workload.ray }}
+{{- $chartMeta := dict "Chart" $.Chart "Release" $.Release }}
+{{- $labelParams := mergeOverwrite $chartMeta (include "mozcloud-rayservice.labelParams" $ | fromYaml) }}
+{{- $labelCtx := mergeOverwrite (deepCopy $labelParams) (dict "component_code" $workload.component) }}
+{{- $labelOut := include "mozcloud-rayservice.labels" (dict "context" $labelCtx "labels" (default dict $workload.labels)) | fromYaml }}
+{{- $labels := $labelOut.labels }}
+---
+apiVersion: ray.io/v1
+kind: RayService
+metadata:
+  name: {{ $workloadName }}
+  labels:
+    {{- $labels | toYaml | nindent 4 }}
+  {{- with $workload.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if hasKey $ray "serviceUnhealthySecondThreshold" }}
+  serviceUnhealthySecondThreshold: {{ $ray.serviceUnhealthySecondThreshold }}
+  {{- end }}
+  {{- if hasKey $ray "deploymentUnhealthySecondThreshold" }}
+  deploymentUnhealthySecondThreshold: {{ $ray.deploymentUnhealthySecondThreshold }}
+  {{- end }}
+  {{- if hasKey $ray "rayClusterDeletionDelaySeconds" }}
+  rayClusterDeletionDelaySeconds: {{ $ray.rayClusterDeletionDelaySeconds }}
+  {{- end }}
+  {{- /* Ray owns the schema of this document, so it is passed through
+     verbatim rather than modelled field by field. KubeRay takes it as an
+     opaque string. */}}
+  serveConfigV2: |
+    {{- toYaml $ray.serveConfigV2 | nindent 4 }}
+  rayClusterConfig:
+    rayVersion: {{ $ray.rayVersion | quote }}
+    {{- if hasKey $ray "enableInTreeAutoscaling" }}
+    enableInTreeAutoscaling: {{ $ray.enableInTreeAutoscaling }}
+    {{- end }}
+    {{- $gcsFt := default dict $ray.gcsFaultTolerance }}
+    {{- if $gcsFt.enabled }}
+    gcsFaultToleranceOptions:
+      redisAddress: {{ $gcsFt.redisAddress | quote }}
+      {{- if $gcsFt.externalStorageNamespace }}
+      externalStorageNamespace: {{ $gcsFt.externalStorageNamespace | quote }}
+      {{- end }}
+      {{- if $gcsFt.redisPassword }}
+      redisPassword:
+        valueFrom:
+          secretKeyRef:
+            name: {{ $gcsFt.redisPassword.secretName }}
+            key: {{ $gcsFt.redisPassword.secretKey }}
+      {{- end }}
+    {{- end }}
+    {{- with $ray.autoscalerOptions }}
+    autoscalerOptions:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- $headPlacement := dict
+          "affinity" $workload.affinity
+          "nodeSelector" $workload.nodeSelector
+          "tolerations" $workload.tolerations
+          "topologySpreadConstraints" $workload.topologySpreadConstraints
+    }}
+    headGroupSpec:
+      {{- with ($ray.headGroupSpec).rayStartParams }}
+      rayStartParams:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- include "mozcloud-rayservice.podTemplate" (dict
+            "workload" $workload
+            "containers" $workload.containers
+            "placement" $headPlacement
+            "labels" $labels
+          ) | nindent 6 }}
+    {{- if $ray.workerGroups }}
+    workerGroupSpecs:
+      {{- range $groupName, $group := $ray.workerGroups }}
+      - groupName: {{ $groupName }}
+        {{- range $field := list "replicas" "minReplicas" "maxReplicas" "idleTimeoutSeconds" "numOfHosts" }}
+        {{- if hasKey $group $field }}
+        {{ $field }}: {{ index $group $field }}
+        {{- end }}
+        {{- end }}
+        {{- with $group.rayStartParams }}
+        rayStartParams:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- /* A worker group's own placement replaces the workload's rather
+           than merging with it -- that is how an accelerator group lands on
+           accelerator nodes while the head and other groups do not. */}}
+        {{- $groupPlacement := dict
+              "affinity" (default $workload.affinity $group.affinity)
+              "nodeSelector" (default $workload.nodeSelector $group.nodeSelector)
+              "tolerations" (default $workload.tolerations $group.tolerations)
+              "topologySpreadConstraints" (default $workload.topologySpreadConstraints $group.topologySpreadConstraints)
+        }}
+        {{- include "mozcloud-rayservice.podTemplate" (dict
+              "workload" $workload
+              "containers" $group.containers
+              "placement" $groupPlacement
+              "labels" $labels
+            ) | nindent 8 }}
+      {{- end }}
+    {{- end }}
+{{- end }}

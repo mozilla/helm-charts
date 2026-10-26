@@ -1,0 +1,95 @@
+---
+# A RayService shaped like the llm-proxy tenant's charts (MZCLD-4121): GCS
+# fault tolerance against an external Redis, a head that serves on its own
+# ports, and an accelerator worker group.
+workloads:
+  test-service-ray:
+    component: test-service
+    serviceAccountName: test-service
+    containers:
+      test-service-ray-head:
+        image:
+          repository: test-repo/test-service
+          tag: "1.0.0"
+        resources:
+          cpu: "2"
+          memory: 4Gi
+        ports:
+          - name: gcs-server
+            containerPort: 6379
+          - name: dashboard
+            containerPort: 8265
+          - name: client
+            containerPort: 10001
+          - name: serve
+            containerPort: 8000
+          - name: metrics
+            containerPort: 8080
+            protocol: TCP
+    ray:
+      rayVersion: "2.44.1"
+      enableInTreeAutoscaling: true
+      serveConfigV2:
+        logging_config:
+          encoding: JSON
+        applications:
+          - name: app
+            import_path: test_service.main:app
+            route_prefix: /
+      gcsFaultTolerance:
+        enabled: true
+        redisAddress: "172.16.21.212:6379"
+        externalStorageNamespace: test-service
+        redisPassword:
+          secretName: test-service-redis
+          secretKey: password
+      autoscalerOptions:
+        upscalingMode: Default
+        idleTimeoutSeconds: 60
+        imagePullPolicy: IfNotPresent
+      headGroupSpec:
+        rayStartParams:
+          dashboard-host: "0.0.0.0"
+          num-cpus: "0"
+          metrics-export-port: "8080"
+      workerGroups:
+        test-service-ray-worker:
+          replicas: 1
+          minReplicas: 1
+          maxReplicas: 4
+          idleTimeoutSeconds: 60
+          rayStartParams:
+            num-gpus: "1"
+            metrics-export-port: "8080"
+          nodeSelector:
+            cloud.google.com/gke-accelerator: nvidia-l4
+          tolerations:
+            - key: nvidia.com/gpu
+              operator: Equal
+              value: present
+              effect: NoSchedule
+          containers:
+            test-service-ray-worker:
+              image:
+                repository: test-repo/test-service
+                tag: "1.0.0"
+              resources:
+                cpu: "4"
+                memory: 16Gi
+              ports:
+                - name: metrics
+                  containerPort: 8080
+                  protocol: TCP
+              lifecycle:
+                preStop:
+                  exec:
+                    command: ["/bin/sh", "-c", "ray stop"]
+              healthCheck:
+                readiness:
+                  enabled: true
+                  path: /-/healthz
+                  port: 8000
+                  initialDelaySeconds: 60
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 30
