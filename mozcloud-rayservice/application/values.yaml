@@ -110,8 +110,10 @@ workloads: {}
 #   .envFrom (array): Plain Kubernetes EnvFromSource entries, eg. a
 #     secretRef to the chart secret an ExternalSecret-rendering dependency
 #     (mozcloud) creates elsewhere in the same release.
-#   .resources.cpu / .resources.memory (string): Requests. Limits default to
-#     the same values unless .resources.limits overrides them.
+#   .resources.cpu / .resources.memory (string, required): Requests. CPU
+#     accepts integer, float, or millicpu notation (eg. "250m"); memory
+#     requires a K, Ki, M, Mi, G, or Gi unit suffix. Limits default to 2x the
+#     request values unless .resources.limits overrides them.
 #   .resources.limits (object): Full Kubernetes limits map, eg. to add
 #     nvidia.com/gpu or raise limits above requests.
 #   .securityContext (object): Merged over MozCloud's container-level

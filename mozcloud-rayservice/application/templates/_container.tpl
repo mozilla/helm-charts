@@ -1,24 +1,85 @@
 {{- /*
 Builds the resources block for a single container. cpu/memory are requests;
-limits default to the same values unless resources.limits overrides them.
+limits default to 2x the request value unless resources.limits overrides
+them. Mirrors mozcloud's pod.container.resources validation.
+
+CPU validation: accepts integer, float (whole CPUs), or millicpu notation
+(e.g. "250m"). Decimal millicpu limits are rounded up using ceil to produce a
+valid integer millicpu string (e.g. "1.5m" -> "2m").
+
+Memory validation: requires a positive number with one of the following unit
+suffixes: K, Ki, M, Mi, G, Gi.
 
 Params:
-  . (dict): the container's "resources" config (cpu, memory, limits).
+  . (dict): the container's "resources" config (cpu, memory, limits). limits
+            may also carry any other Kubernetes resource name (eg. to add
+            nvidia.com/gpu); only cpu/memory get a computed default.
 
 Returns:
   (string) YAML for a Kubernetes ResourceRequirements object.
 */ -}}
 {{- define "mozcloud-rayservice.container.resources" -}}
 {{- $resources := default dict . -}}
-{{- $requests := dict -}}
-{{- if $resources.cpu }}{{- $_ := set $requests "cpu" $resources.cpu -}}{{- end -}}
-{{- if $resources.memory }}{{- $_ := set $requests "memory" $resources.memory -}}{{- end -}}
-{{- $out := dict -}}
-{{- if $requests }}{{- $_ := set $out "requests" $requests -}}{{- end -}}
-{{- if $resources.limits -}}
-  {{- $_ := set $out "limits" $resources.limits -}}
-{{- else if $requests -}}
-  {{- $_ := set $out "limits" $requests -}}
+{{- $limits := default dict $resources.limits -}}
+{{- $out := dict "requests" (dict "cpu" $resources.cpu "memory" $resources.memory) "limits" $limits -}}
+{{- /* Validate CPU requests and limits */ -}}
+{{- $requestSuffix := "" -}}
+{{- $request := $resources.cpu | toString -}}
+{{- if hasSuffix "m" $request -}}
+  {{- $requestSuffix = "m" }}
+  {{- $request = trimSuffix "m" $request -}}
+{{- end -}}
+{{- if and (not $requestSuffix) (or (regexFind "[a-zA-Z]$" $request) (le (float64 $request) 0.0)) -}}
+  {{- fail "CPU requests must be positive and use one of the following formats: int, float, or millicpu notation (eg. 100m)" -}}
+{{- end -}}
+{{- if $limits.cpu -}}
+  {{- $limitSuffix := "" -}}
+  {{- $limit := $limits.cpu | toString -}}
+  {{- if hasSuffix "m" $limit -}}
+    {{- $limitSuffix = "m" }}
+    {{- $limit = trimSuffix "m" $limit -}}
+  {{- end -}}
+  {{- if and (not $limitSuffix) (or (regexFind "[a-zA-Z]$" $limit) (le (float64 $limit) 0.0)) -}}
+    {{- fail "CPU limits must be positive and use one of the following formats: int, float, or millicpu notation (eg. 100m)" -}}
+  {{- end -}}
+  {{- if or $limitSuffix (eq (float64 $limit) (floor (float64 $limit))) -}}
+    {{- $limit = ceil (float64 $limit) -}}
+    {{- $_ := set $out.limits "cpu" (printf "%d%s" (int $limit) $limitSuffix) -}}
+  {{- end -}}
+{{- else -}}
+  {{- $limit := "" -}}
+  {{- if or $requestSuffix (eq (float64 $request) (floor (float64 $request))) -}}
+    {{- $request = ceil (float64 $request) -}}
+    {{- $_ := set $out.requests "cpu" (printf "%d%s" (int $request) $requestSuffix) -}}
+    {{- $limit = printf "%d%s" (mul 2 (int $request)) $requestSuffix -}}
+  {{- else -}}
+    {{- $limit = printf "%.3f" (mulf 2 (float64 $request)) -}}
+  {{- end -}}
+  {{- $_ := set $out.limits "cpu" $limit -}}
+{{- end -}}
+{{- /* Validate memory requests and limits */ -}}
+{{- $unitPattern := "(K|Ki|M|Mi|G|Gi)$" -}}
+{{- $request = $resources.memory | toString -}}
+{{- $requestSuffix = regexFind $unitPattern $request -}}
+{{- $request = trimSuffix $requestSuffix $request -}}
+{{- if or (not $requestSuffix) (le (float64 $request) 0.0) -}}
+  {{- fail "Memory requests must be positive and use one of the following unit types: K, Ki, M, Mi, G, Gi" -}}
+{{- end -}}
+{{- if $limits.memory -}}
+  {{- $limit := $limits.memory | toString -}}
+  {{- $limitSuffix := regexFind $unitPattern $limit -}}
+  {{- $limit = trimSuffix $limitSuffix $limit -}}
+  {{- if or (not $limitSuffix) (le (float64 $limit) 0.0) -}}
+    {{- fail "Memory limits must be positive and use one of the following unit types: K, Ki, M, Mi, G, Gi" -}}
+  {{- end -}}
+{{- else -}}
+  {{- $limit := "" -}}
+  {{- if eq (float64 $request) (floor (float64 $request)) -}}
+    {{- $limit = printf "%d%s" (mul 2 (int $request)) $requestSuffix -}}
+  {{- else -}}
+    {{- $limit = printf "%.3f%s" (mulf 2 (float64 $request)) $requestSuffix -}}
+  {{- end -}}
+  {{- $_ := set $out.limits "memory" $limit -}}
 {{- end -}}
 {{- $out | toYaml -}}
 {{- end -}}

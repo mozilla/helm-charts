@@ -185,14 +185,18 @@
         "resources": {
           "type": "object",
           "additionalProperties": false,
+          "required": [
+            "cpu",
+            "memory"
+          ],
           "properties": {
             "cpu": {
               "type": "string",
-              "description": "CPU request. Limits default to the same value unless limits overrides it"
+              "description": "CPU request: integer cores (eg. \"2\"), float cores, or millicpu notation (eg. \"250m\"). Limits default to 2x the request unless limits overrides it"
             },
             "memory": {
               "type": "string",
-              "description": "Memory request. Limits default to the same value unless limits overrides it"
+              "description": "Memory request, with a K, Ki, M, Mi, G, or Gi unit suffix. Limits default to 2x the request unless limits overrides it"
             },
             "limits": {
               "type": "object",

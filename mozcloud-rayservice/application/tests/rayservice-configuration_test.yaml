@@ -121,7 +121,7 @@ tests:
             name: test-service-redis
             key: password
 
-  - it: Resources default limits to requests unless overridden
+  - it: Resources default limits to 2x requests unless overridden
     documentSelector:
       path: $[?(@.kind == "RayService")].metadata.name
       value: test-service-ray
@@ -133,8 +133,8 @@ tests:
               cpu: "2"
               memory: 4Gi
             limits:
-              cpu: "2"
-              memory: 4Gi
+              cpu: "4"
+              memory: 8Gi
 
   # The other shape the tenant runs: no fault tolerance, no unhealthy
   # thresholds, a worker group that scales from zero, and a secret picked up
