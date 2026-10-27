@@ -8,7 +8,9 @@ Expand the name of the chart.
 {{- /*
 Builds the label parameter dict to pass to the mozcloud-labels-lib library
 chart. Mirrors mozcloud.labelParams in the mozcloud chart, so that the labels
-this chart renders are indistinguishable from mozcloud's own.
+this chart renders are indistinguishable from mozcloud's own -- except for
+preview.pr, which mozcloud-rayservice does not support (no RayService tenant
+runs preview environments yet).
 
 Params:
   . (dict): (required) The Helm root context.
