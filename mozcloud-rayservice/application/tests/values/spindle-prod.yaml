@@ -1,0 +1,120 @@
+---
+# Modeled on llm-proxy/k8s/spindle's actual prod values in dataservices-infra
+# (values.yaml + values-prod.yaml), translated into this chart's shape. Covers
+# GCS fault tolerance against the real Redis and a GPU worker group -- proves
+# the design before MZCLD-4121's tenant wiring.
+workloads:
+  spindle-ray:
+    component: spindle
+    serviceAccountName: spindle
+    containers:
+      spindle-ray-head:
+        image:
+          repository: us-docker.pkg.dev/moz-fx-mozsoc-ml-prod/rayserve-dockers/spindle
+          tag: latest
+        resources:
+          cpu: "1"
+          memory: 3Gi
+        env:
+          - name: RAY_LOGGING_CONFIG_ENCODING
+            value: "JSON"
+          - name: RAY_BACKEND_LOG_JSON
+            value: "1"
+          - name: ENVIRONMENT_NAME
+            value: prod
+        ports:
+          - name: gcs-server
+            containerPort: 6379
+          - name: dashboard
+            containerPort: 8265
+          - name: client
+            containerPort: 10001
+          - name: serve
+            containerPort: 8000
+          - name: metrics
+            containerPort: 8080
+            protocol: TCP
+    ray:
+      rayVersion: "2.50.1"
+      enableInTreeAutoscaling: true
+      serviceUnhealthySecondThreshold: 1200
+      deploymentUnhealthySecondThreshold: 1200
+      gcsFaultTolerance:
+        enabled: true
+        redisAddress: "172.16.21.212:6379"
+      autoscalerOptions:
+        upscalingMode: Default
+        idleTimeoutSeconds: 300
+        imagePullPolicy: IfNotPresent
+      headGroupSpec:
+        rayStartParams:
+          dashboard-host: "0.0.0.0"
+          num-cpus: "0"
+          metrics-export-port: "8080"
+      serveConfigV2:
+        applications:
+          - name: spindle
+            import_path: spindle.service:deployment
+            route_prefix: /
+            deployments:
+              - name: SimilarStoriesService
+                autoscaling_config:
+                  min_replicas: 2
+                  max_replicas: 4
+                  target_ongoing_requests: 5
+                  downscale_delay_s: 2400
+                ray_actor_options:
+                  num_gpus: 1
+                  num_cpus: 2
+      workerGroups:
+        spindle-ray-worker:
+          replicas: 2
+          minReplicas: 2
+          maxReplicas: 4
+          idleTimeoutSeconds: 300
+          rayStartParams:
+            num-gpus: "1"
+            metrics-export-port: "8080"
+          nodeSelector:
+            cloud.google.com/gke-accelerator: nvidia-l4
+          tolerations:
+            - key: nvidia.com/gpu
+              operator: Equal
+              value: present
+              effect: NoSchedule
+          containers:
+            spindle-ray-worker:
+              image:
+                repository: us-docker.pkg.dev/moz-fx-mozsoc-ml-prod/rayserve-dockers/spindle
+                tag: latest
+              resources:
+                cpu: "2"
+                memory: 8Gi
+                limits:
+                  cpu: "4"
+                  memory: 8Gi
+                  nvidia.com/gpu: "1"
+              env:
+                - name: RAY_LOGGING_CONFIG_ENCODING
+                  value: "JSON"
+                - name: RAY_BACKEND_LOG_JSON
+                  value: "1"
+                - name: ENVIRONMENT_NAME
+                  value: prod
+              ports:
+                - name: metrics
+                  containerPort: 8080
+                  protocol: TCP
+              lifecycle:
+                preStop:
+                  exec:
+                    command: ["/bin/sh", "-c", "ray stop"]
+              healthCheck:
+                readiness:
+                  enabled: true
+                  path: /-/healthz
+                  port: 8000
+                  initialDelaySeconds: 60
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 30

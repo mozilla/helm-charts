@@ -1,0 +1,24 @@
+global:
+  mozcloud:
+    app_code: mock-app
+    chart: mock-chart
+    env_code: dev
+    project_id: moz-fx-mock-nonprod
+    realm: nonprod
+
+workloads:
+  mock-service-ray:
+    component: mock-service
+    serviceAccountName: mock-service
+    containers:
+      mock-service-ray-head:
+        image:
+          repository: mock-repo/mock-service
+          tag: "1.0.0"
+    ray:
+      rayVersion: "2.50.1"
+      serveConfigV2:
+        applications:
+          - name: app
+            import_path: mock_service.main:app
+            route_prefix: /

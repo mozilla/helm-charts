@@ -1,0 +1,484 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "mozcloud-rayservice",
+  "description": "mozcloud-rayservice values",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "mozcloud-labels-lib": {
+      "type": "object"
+    },
+    "global": {
+      "description": "Global values dictionary",
+      "type": "object",
+      "properties": {
+        "mozcloud": {
+          "type": "object",
+          "properties": {
+            "app_code": {
+              "description": "Tenant's application code (eg. sumo, ads, remote-settings). This is automatically populated by Argo CD.",
+              "type": "string"
+            },
+            "artifact_id": {
+              "description": "The 8 character short revision of the Helm chart deployed by Argo CD. This is automatically populated by Argo CD.",
+              "type": "string"
+            },
+            "chart": {
+              "description": "The name of the chart. This is automatically populated by Argo CD.",
+              "type": "string"
+            },
+            "env_code": {
+              "description": "Environment (ie. dev, stage, prod). This is automatically populated by Argo CD.",
+              "type": "string"
+            },
+            "project_id": {
+              "description": "GCP project ID. This is automatically populated by Argo CD.",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "workloads": {
+      "description": "RayService workloads, keyed by the name of the rendered RayService object. There is no implicit \"default\" key merging, unlike mozcloud's own workloads.",
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "$ref": "#/$defs/workload"
+      }
+    }
+  },
+  "required": [
+    "workloads"
+  ],
+  "$defs": {
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "component",
+        "serviceAccountName",
+        "containers",
+        "ray"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "rayService",
+          "description": "Documentation/forward-compat hint only; not read by this chart. Every workload here is a RayService."
+        },
+        "component": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Component code, used for the component_code and app.kubernetes.io/component labels"
+        },
+        "serviceAccountName": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Name of an existing Kubernetes ServiceAccount for the Ray pods. This chart does not create ServiceAccounts"
+        },
+        "labels": {
+          "type": "object",
+          "description": "Merged onto the RayService object and every pod template"
+        },
+        "annotations": {
+          "type": "object",
+          "description": "Merged onto the RayService object and every pod template"
+        },
+        "podSecurityContext": {
+          "type": "object",
+          "description": "Overrides for the pod-level securityContext, merged over MozCloud's PSS-restricted baseline"
+        },
+        "affinity": {
+          "type": "object",
+          "description": "Pod affinity for the head, and the default for every worker group unless a group sets its own"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Node selector for the head, and the default for every worker group unless a group sets its own"
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Tolerations for the head, and the default for every worker group unless a group sets its own"
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          },
+          "description": "Topology spread constraints for the head, and the default for every worker group unless a group sets its own"
+        },
+        "containers": {
+          "type": "object",
+          "description": "The Ray head's containers, keyed by container name",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/container"
+          }
+        },
+        "ray": {
+          "$ref": "#/$defs/ray"
+        }
+      }
+    },
+    "container": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "image"
+      ],
+      "properties": {
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "repository",
+            "tag"
+          ],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "minLength": 1
+            },
+            "tag": {
+              "type": "string",
+              "minLength": 1
+            },
+            "pullPolicy": {
+              "type": "string",
+              "default": "Always"
+            }
+          }
+        },
+        "command": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "env": {
+          "type": "array",
+          "description": "Plain Kubernetes EnvVar entries",
+          "items": {
+            "type": "object"
+          }
+        },
+        "envFrom": {
+          "type": "array",
+          "description": "Plain Kubernetes EnvFromSource entries",
+          "items": {
+            "type": "object"
+          }
+        },
+        "resources": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "cpu",
+            "memory"
+          ],
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "CPU request: integer cores (eg. \"2\"), float cores, or millicpu notation (eg. \"250m\"). Limits default to 2x the request unless limits overrides it"
+            },
+            "memory": {
+              "type": "string",
+              "description": "Memory request, with a K, Ki, M, Mi, G, or Gi unit suffix. Limits default to 2x the request unless limits overrides it"
+            },
+            "limits": {
+              "type": "object",
+              "description": "Full Kubernetes limits map, eg. to add nvidia.com/gpu or raise limits above requests"
+            }
+          }
+        },
+        "securityContext": {
+          "type": "object",
+          "description": "Merged over MozCloud's container-level baseline (allowPrivilegeEscalation: false, capabilities.drop: [ALL], seccompProfile: RuntimeDefault)"
+        },
+        "ports": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "name",
+              "containerPort"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "containerPort": {
+                "type": "integer"
+              },
+              "protocol": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "lifecycle": {
+          "type": "object",
+          "description": "Plain Kubernetes Lifecycle, eg. a worker's \"ray stop\" preStop hook"
+        },
+        "healthCheck": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "liveness": {
+              "$ref": "#/$defs/probe"
+            },
+            "readiness": {
+              "$ref": "#/$defs/probe"
+            }
+          }
+        }
+      }
+    },
+    "probe": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "path": {
+          "type": "string"
+        },
+        "port": {
+          "type": [
+            "integer",
+            "string"
+          ]
+        },
+        "initialDelaySeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "periodSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "timeoutSeconds": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "successThreshold": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "if": {
+        "properties": {
+          "enabled": {
+            "const": true
+          }
+        },
+        "required": [
+          "enabled"
+        ]
+      },
+      "then": {
+        "required": [
+          "path",
+          "port"
+        ]
+      }
+    },
+    "ray": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "KubeRay RayService configuration. rayVersion and serveConfigV2 are required",
+      "required": [
+        "rayVersion",
+        "serveConfigV2"
+      ],
+      "properties": {
+        "rayVersion": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Ray version, which must match the Ray version in the container image"
+        },
+        "serveConfigV2": {
+          "type": "object",
+          "description": "Ray Serve multi-application config, passed through verbatim. Ray owns this schema, so it is not validated field by field here",
+          "minProperties": 1
+        },
+        "enableInTreeAutoscaling": {
+          "type": "boolean",
+          "description": "Let the Ray autoscaler own worker replica counts"
+        },
+        "rayClusterDeletionDelaySeconds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Seconds to keep an old RayCluster after a zero-downtime upgrade before deleting it"
+        },
+        "serviceUnhealthySecondThreshold": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "deploymentUnhealthySecondThreshold": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "autoscalerOptions": {
+          "type": "object",
+          "description": "Overrides for the Ray autoscaler sidecar, passed through verbatim"
+        },
+        "gcsFaultTolerance": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "enabled"
+          ],
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "redisAddress": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Redis endpoint as host:port"
+            },
+            "externalStorageNamespace": {
+              "type": "string",
+              "description": "Redis key namespace. Defaults to the RayCluster UID when unset"
+            },
+            "redisPassword": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "secretName",
+                "secretKey"
+              ],
+              "properties": {
+                "secretName": {
+                  "type": "string"
+                },
+                "secretKey": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "if": {
+            "properties": {
+              "enabled": {
+                "const": true
+              }
+            },
+            "required": [
+              "enabled"
+            ]
+          },
+          "then": {
+            "required": [
+              "redisAddress"
+            ]
+          }
+        },
+        "headGroupSpec": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "rayStartParams": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "workerGroups": {
+          "type": "object",
+          "description": "Ray worker groups keyed by group name. Each group is a pod template of its own",
+          "additionalProperties": {
+            "$ref": "#/$defs/workerGroup"
+          }
+        }
+      }
+    },
+    "workerGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "containers"
+      ],
+      "properties": {
+        "containers": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "$ref": "#/$defs/container"
+          }
+        },
+        "replicas": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "minReplicas": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "maxReplicas": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "idleTimeoutSeconds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "numOfHosts": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "rayStartParams": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "affinity": {
+          "type": "object"
+        },
+        "nodeSelector": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "tolerations": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "topologySpreadConstraints": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  }
+}

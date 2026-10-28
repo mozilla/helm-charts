@@ -1,0 +1,130 @@
+---
+# Modeled on llm-proxy/k8s/privacy-filter's actual dev values in
+# dataservices-infra (values.yaml + values-dev.yaml), translated into this
+# chart's shape. Covers a CPU-only worker group with no GCS fault tolerance
+# and the model-cache env vars -- the other real shape the tenant runs, next
+# to spindle-prod.yaml.
+workloads:
+  privacy-filter-ray:
+    component: privacy-filter
+    serviceAccountName: privacy-filter
+    containers:
+      privacy-filter-ray-head:
+        image:
+          repository: us-docker.pkg.dev/moz-fx-llm-proxy-prod-b0b8/llm-proxy-prod/privacy-filter
+          tag: latest
+        resources:
+          cpu: "2"
+          memory: 4Gi
+        env:
+          - name: RAY_LOGGING_CONFIG_ENCODING
+            value: "JSON"
+          - name: RAY_BACKEND_LOG_JSON
+            value: "1"
+          - name: TMPDIR
+            value: /tmp
+          - name: HOME
+            value: /tmp
+          - name: XDG_CACHE_HOME
+            value: /tmp/.cache
+          - name: HF_HOME
+            value: /tmp/.cache/huggingface
+          - name: TRANSFORMERS_CACHE
+            value: /tmp/.cache/huggingface/transformers
+          - name: ENVIRONMENT_NAME
+            value: dev
+        ports:
+          - name: gcs-server
+            containerPort: 6379
+          - name: dashboard
+            containerPort: 8265
+          - name: client
+            containerPort: 10001
+          - name: serve
+            containerPort: 8000
+          - name: metrics
+            containerPort: 8080
+            protocol: TCP
+    ray:
+      rayVersion: "2.50.1"
+      enableInTreeAutoscaling: true
+      serviceUnhealthySecondThreshold: 1200
+      deploymentUnhealthySecondThreshold: 1200
+      autoscalerOptions:
+        upscalingMode: Default
+        idleTimeoutSeconds: 120
+        imagePullPolicy: IfNotPresent
+      headGroupSpec:
+        rayStartParams:
+          dashboard-host: "0.0.0.0"
+          num-cpus: "0"
+          metrics-export-port: "8080"
+      serveConfigV2:
+        applications:
+          - name: privacy_filter
+            import_path: privacy_filter.core.service:deployment
+            route_prefix: /
+            deployments:
+              - name: PrivacyFilterService
+                ray_actor_options:
+                  num_gpus: 0
+                  num_cpus: 2
+      workerGroups:
+        privacy-filter-ray-worker:
+          replicas: 1
+          minReplicas: 1
+          maxReplicas: 2
+          idleTimeoutSeconds: 120
+          rayStartParams:
+            metrics-export-port: "8080"
+          containers:
+            privacy-filter-ray-worker:
+              image:
+                repository: us-docker.pkg.dev/moz-fx-llm-proxy-prod-b0b8/llm-proxy-prod/privacy-filter
+                tag: latest
+              resources:
+                cpu: "2"
+                memory: 8Gi
+                limits:
+                  cpu: "4"
+                  memory: 8Gi
+              env:
+                - name: RAY_LOGGING_CONFIG_ENCODING
+                  value: "JSON"
+                - name: RAY_BACKEND_LOG_JSON
+                  value: "1"
+                - name: TMPDIR
+                  value: /tmp
+                - name: HOME
+                  value: /tmp
+                - name: XDG_CACHE_HOME
+                  value: /tmp/.cache
+                - name: HF_HOME
+                  value: /tmp/.cache/huggingface
+                - name: TRANSFORMERS_CACHE
+                  value: /tmp/.cache/huggingface/transformers
+                - name: ENVIRONMENT_NAME
+                  value: dev
+                - name: PORT
+                  value: "8000"
+                - name: LOG_JSON
+                  value: "true"
+                - name: LOGURU_LEVEL
+                  value: "INFO"
+              ports:
+                - name: metrics
+                  containerPort: 8080
+                  protocol: TCP
+              lifecycle:
+                preStop:
+                  exec:
+                    command: ["/bin/sh", "-c", "ray stop"]
+              healthCheck:
+                readiness:
+                  enabled: true
+                  path: /-/healthz
+                  port: 8000
+                  initialDelaySeconds: 60
+                  periodSeconds: 10
+                  timeoutSeconds: 5
+                  failureThreshold: 30
