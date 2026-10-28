@@ -1,7 +1,7 @@
 apiVersion: v2
 name: mozcloud-rayservice
-description: A Helm chart that creates a KubeRay RayService and its Ray head/worker
-  pods
+description: A Helm chart that creates a KubeRay RayService and its Ray 
+  head/worker pods
 
 # A chart can be either an 'application' or a 'library' chart.
 #
@@ -22,7 +22,7 @@ type: application
 # on merge, treating it as the last-released version regardless of whether
 # the chart is brand new. 0.0.0 + minor = 0.1.0, which is the version we
 # actually want to be first published as.
-version: 0.0.2
+version: 0.1.0
 
 dependencies:
   - name: mozcloud-labels-lib
