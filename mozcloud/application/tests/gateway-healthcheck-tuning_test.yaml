@@ -95,3 +95,33 @@ tests:
         documentSelector:
           path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
           value: explicit-plain
+
+  - it: Backend-level tuning applies when the host sets none
+    template: gke/backend.yaml
+    documentSelector:
+      path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+      value: backend-only
+    asserts:
+      - equal:
+          path: spec.default
+          value:
+            unhealthyThreshold: 3
+            config:
+              type: HTTP
+              httpHealthCheck:
+                requestPath: /__lbheartbeat__
+
+  - it: healthCheck.enabled false suppresses the policy despite host tuning
+    template: gke/backend.yaml
+    asserts:
+      - containsDocument:
+          kind: HealthCheckPolicy
+          apiVersion: networking.gke.io/v1
+          name: disabled-off
+        not: true
+      - equal:
+          path: spec.default.checkIntervalSec
+          value: 6
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+          value: disabled-on
