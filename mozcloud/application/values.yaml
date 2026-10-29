@@ -2295,18 +2295,18 @@ workloads:
         #  #  # One of HTTP, HTTPS, HTTP2.
         #  #  #type: HTTP
         #  #
-        #  #  # Ingress API only. Interval in seconds between probes.
+        #  #  # Both APIs. Interval in seconds between probes.
         #  #  #checkIntervalSec: 10
         #  #
-        #  #  # Ingress API only. Per-probe timeout in seconds. Must be <=
+        #  #  # Both APIs. Per-probe timeout in seconds. Must be <=
         #  #  # checkIntervalSec.
         #  #  #timeoutSec: 5
         #  #
-        #  #  # Ingress API only. Consecutive successful probes required to
+        #  #  # Both APIs. Consecutive successful probes required to
         #  #  # mark a backend healthy.
         #  #  #healthyThreshold: 1
         #  #
-        #  #  # Ingress API only. Consecutive failed probes required to mark
+        #  #  # Both APIs. Consecutive failed probes required to mark
         #  #  # a backend unhealthy.
         #  #  #unhealthyThreshold: 2
         #

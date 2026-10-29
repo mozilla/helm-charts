@@ -1,0 +1,97 @@
+---
+suite: "mozcloud: Gateway HealthCheckPolicy honors options.healthCheck tuning fields"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+# By overriding the chart version, we are preventing the labels chart from
+# updating the mozcloud_chart_version label for every snapshot every time we
+# bump chart versions.
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/gateway-healthcheck-tuning.yaml
+templates:
+  - gke/backend.yaml
+  - gateway/backend.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: Host-level tuning reaches the HealthCheckPolicy of a default backend
+    template: gke/backend.yaml
+    documentSelector:
+      path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+      value: tuned
+    asserts:
+      - equal:
+          path: spec.default
+          value:
+            checkIntervalSec: 6
+            timeoutSec: 5
+            healthyThreshold: 1
+            unhealthyThreshold: 2
+            config:
+              type: HTTP
+              httpHealthCheck:
+                requestPath: /__lbheartbeat__
+
+  - it: Explicit backends inherit host tuning and override it field by field
+    template: gke/backend.yaml
+    asserts:
+      - equal:
+          path: spec.default
+          value:
+            checkIntervalSec: 6
+            timeoutSec: 5
+            healthyThreshold: 1
+            unhealthyThreshold: 2
+            config:
+              type: HTTP
+              httpHealthCheck:
+                requestPath: /__lbheartbeat__
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+          value: explicit-inherit
+      # Only timeoutSec and unhealthyThreshold are overridden; the other two
+      # keep the host's values.
+      - equal:
+          path: spec.default
+          value:
+            checkIntervalSec: 6
+            timeoutSec: 3
+            healthyThreshold: 1
+            unhealthyThreshold: 4
+            config:
+              type: HTTP
+              httpHealthCheck:
+                requestPath: /__lbheartbeat__
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+          value: explicit-override
+
+  - it: Unset tuning fields render no tuning keys
+    template: gke/backend.yaml
+    asserts:
+      - equal:
+          path: spec.default
+          value:
+            config:
+              type: HTTP
+              httpHealthCheck:
+                requestPath: /__lbheartbeat__
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+          value: plain
+      - equal:
+          path: spec.default
+          value:
+            config:
+              type: HTTP
+              httpHealthCheck:
+                requestPath: /__lbheartbeat__
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+          value: explicit-plain

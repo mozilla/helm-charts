@@ -121,6 +121,11 @@ backends:
       {{- if $healthCheckHost }}
       host: {{ $healthCheckHost }}
       {{- end }}
+      {{- range $field := list "checkIntervalSec" "timeoutSec" "healthyThreshold" "unhealthyThreshold" }}
+        {{- with index $hostHealthCheck $field }}
+      {{ $field }}: {{ int . }}
+        {{- end }}
+      {{- end }}
       {{- /* targetRef is optional. When omitted, the library auto-populates a
          targetRef referencing the resolved Service name. */}}
       {{- if $healthCheck.targetRef }}
@@ -180,6 +185,11 @@ backends:
       path: {{ default $defaultHealthCheckPath (($hostConfig).healthCheckEndpoints).loadBalancer }}
       {{- else if kindIs "map" (($hostConfig).healthCheckEndpoints).loadBalancer }}
       path: {{ default $defaultHealthCheckPath ($hostConfig.healthCheckEndpoints.loadBalancer).path }}
+      {{- end }}
+      {{- range $field := list "checkIntervalSec" "timeoutSec" "healthyThreshold" "unhealthyThreshold" }}
+        {{- with index (default dict (($hostConfig.options).healthCheck)) $field }}
+      {{ $field }}: {{ int . }}
+        {{- end }}
       {{- end }}
       protocol: HTTP
     {{- end }}

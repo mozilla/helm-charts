@@ -1,0 +1,114 @@
+---
+workloads:
+  # Host-level tuning on a host without explicit backends.
+  tuned:
+    component: app
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      tuned:
+        domains:
+          - tuned.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: gateway
+        tls:
+          type: ManagedCertificate
+          create: true
+        options:
+          healthCheck:
+            path: /__lbheartbeat__
+            checkIntervalSec: 6
+            timeoutSec: 5
+            healthyThreshold: 1
+            unhealthyThreshold: 2
+
+  # No tuning fields set: output must match what the chart rendered before.
+  plain:
+    component: app
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      plain:
+        domains:
+          - plain.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: gateway
+        tls:
+          type: ManagedCertificate
+          create: true
+        options:
+          healthCheck:
+            path: /__lbheartbeat__
+
+  # Explicit backends inherit the host's tuning and may override it field by
+  # field through their own options block.
+  explicit:
+    component: app
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      explicit:
+        domains:
+          - explicit.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: gateway
+        tls:
+          type: ManagedCertificate
+          create: true
+        options:
+          healthCheck:
+            path: /__lbheartbeat__
+            checkIntervalSec: 6
+            timeoutSec: 5
+            healthyThreshold: 1
+            unhealthyThreshold: 2
+        backends:
+          explicit-inherit:
+            service:
+              port: 8080
+          explicit-override:
+            service:
+              name: explicit-override
+              port: 8080
+            options:
+              healthCheck:
+                timeoutSec: 3
+                unhealthyThreshold: 4
+
+  # Explicit backend with no tuning fields anywhere.
+  explicit-plain:
+    component: app
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+    hosts:
+      explicit-plain:
+        domains:
+          - explicit-plain.dev.test-domain.com
+        addresses:
+          - mozcloud-dev-ip-v4
+        api: gateway
+        tls:
+          type: ManagedCertificate
+          create: true
+        options:
+          healthCheck:
+            path: /__lbheartbeat__
+        backends:
+          explicit-plain:
+            service:
+              port: 8080

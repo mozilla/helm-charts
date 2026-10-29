@@ -1430,26 +1430,6 @@
                                         "required": [
                                           "type"
                                         ]
-                                      },
-                                      {
-                                        "required": [
-                                          "checkIntervalSec"
-                                        ]
-                                      },
-                                      {
-                                        "required": [
-                                          "timeoutSec"
-                                        ]
-                                      },
-                                      {
-                                        "required": [
-                                          "healthyThreshold"
-                                        ]
-                                      },
-                                      {
-                                        "required": [
-                                          "unhealthyThreshold"
-                                        ]
                                       }
                                     ]
                                   }
@@ -1472,26 +1452,6 @@
                                 {
                                   "required": [
                                     "type"
-                                  ]
-                                },
-                                {
-                                  "required": [
-                                    "checkIntervalSec"
-                                  ]
-                                },
-                                {
-                                  "required": [
-                                    "timeoutSec"
-                                  ]
-                                },
-                                {
-                                  "required": [
-                                    "healthyThreshold"
-                                  ]
-                                },
-                                {
-                                  "required": [
-                                    "unhealthyThreshold"
                                   ]
                                 }
                               ]
@@ -2056,22 +2016,22 @@
             "checkIntervalSec": {
               "type": "integer",
               "minimum": 1,
-              "description": "Interval in seconds between health check probes (Ingress API only)."
+              "description": "Interval in seconds between health check probes (both APIs)."
             },
             "timeoutSec": {
               "type": "integer",
               "minimum": 1,
-              "description": "Timeout in seconds for an individual health check probe (Ingress API only). Must be less than or equal to checkIntervalSec."
+              "description": "Timeout in seconds for an individual health check probe (both APIs). Must be less than or equal to checkIntervalSec."
             },
             "healthyThreshold": {
               "type": "integer",
               "minimum": 1,
-              "description": "Consecutive successful probes required to mark a backend healthy (Ingress API only)."
+              "description": "Consecutive successful probes required to mark a backend healthy (both APIs)."
             },
             "unhealthyThreshold": {
               "type": "integer",
               "minimum": 1,
-              "description": "Consecutive failed probes required to mark a backend unhealthy (Ingress API only)."
+              "description": "Consecutive failed probes required to mark a backend unhealthy (both APIs)."
             }
           }
         },
