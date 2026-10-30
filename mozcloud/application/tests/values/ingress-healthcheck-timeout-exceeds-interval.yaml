@@ -17,7 +17,6 @@ workloads:
         tls:
           type: ManagedCertificate
           create: true
-        # Not enforced on the Ingress API; only Gateway hosts are validated.
         options:
           healthCheck:
             requestPath: /__lbheartbeat__

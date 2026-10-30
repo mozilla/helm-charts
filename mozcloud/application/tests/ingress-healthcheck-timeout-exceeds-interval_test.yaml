@@ -1,39 +1,25 @@
 ---
-suite: "mozcloud: Ingress host is not validated for timeoutSec above checkIntervalSec"
+suite: "mozcloud: Ingress health check rejects timeoutSec above checkIntervalSec"
 release:
   name: mozcloud-test
   namespace: mozcloud-test-dev
-# By overriding the chart version, we are preventing the labels chart from
-# updating the mozcloud_chart_version label for every snapshot every time we
-# bump chart versions.
 chart:
   version: 1.0.0
 values:
   - values/globals.yaml
-  - values/ingress-healthcheck-timeout-exceeds-interval.yaml
-# The backend templates are listed so a failure raised while building the
-# shared backends config (which also walks Ingress hosts) is caught.
 templates:
-  - gke/backend.yaml
-  - gateway/backend.yaml
-  - gke/ingress.yaml
   - ingress/ingress.yaml
 tests:
-  - it: Configuration matches snapshot and forwards both values unchanged
+  - it: Fails when a default backend's host sets timeoutSec above checkIntervalSec
+    values:
+      - values/ingress-healthcheck-timeout-exceeds-interval.yaml
     asserts:
-      - notFailedTemplate: {}
-      - matchSnapshot: {}
-      - equal:
-          path: spec.healthCheck.checkIntervalSec
-          value: 6
-        template: gke/ingress.yaml
-        documentSelector:
-          path: $[?(@.kind == "BackendConfig")].metadata.name
-          value: test-service
-      - equal:
-          path: spec.healthCheck.timeoutSec
-          value: 10
-        template: gke/ingress.yaml
-        documentSelector:
-          path: $[?(@.kind == "BackendConfig")].metadata.name
-          value: test-service
+      - failedTemplate:
+          errorPattern: "hosts.test-service backend \"test-service\": options.healthCheck.timeoutSec \\(10\\) must be less than or equal to checkIntervalSec \\(6\\)"
+
+  - it: Fails when the host interval and the backend timeout only conflict once merged
+    values:
+      - values/ingress-healthcheck-timeout-exceeds-interval-cross-level.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "hosts.test-service backend \"test-backend\": options.healthCheck.timeoutSec \\(10\\)"
