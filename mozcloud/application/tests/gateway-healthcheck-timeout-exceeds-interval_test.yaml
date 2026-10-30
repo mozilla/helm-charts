@@ -12,7 +12,6 @@ templates:
 tests:
   - it: Fails when a default backend's host sets timeoutSec above checkIntervalSec
     values:
-      - values/globals.yaml
       - values/gateway-healthcheck-timeout-exceeds-interval-default-backend.yaml
     asserts:
       - failedTemplate:
@@ -20,7 +19,6 @@ tests:
 
   - it: Fails when the host interval and the backend timeout only conflict once merged
     values:
-      - values/globals.yaml
       - values/gateway-healthcheck-timeout-exceeds-interval-cross-level.yaml
     asserts:
       - failedTemplate:

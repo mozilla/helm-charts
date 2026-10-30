@@ -126,7 +126,11 @@ backends:
       {{ $field }}: {{ int . }}
         {{- end }}
       {{- end }}
-      {{- include "mozcloud.gateway.validateHealthCheck" (dict "config" $hostHealthCheck "hostName" $hostName "backendName" $backendName) }}
+      {{- /* This builder also walks api: ingress hosts, which are filtered out
+         later and must keep rendering as before. */}}
+      {{- if ne (default "gateway" $hostConfig.api) "ingress" }}
+        {{- include "mozcloud.gateway.validateHealthCheck" (dict "config" $hostHealthCheck "hostName" $hostName "backendName" $backendName) }}
+      {{- end }}
       {{- /* targetRef is optional. When omitted, the library auto-populates a
          targetRef referencing the resolved Service name. */}}
       {{- if $healthCheck.targetRef }}
@@ -192,7 +196,9 @@ backends:
       {{ $field }}: {{ int . }}
         {{- end }}
       {{- end }}
-      {{- include "mozcloud.gateway.validateHealthCheck" (dict "config" (($hostConfig.options).healthCheck) "hostName" $hostName) }}
+      {{- if ne (default "gateway" $hostConfig.api) "ingress" }}
+        {{- include "mozcloud.gateway.validateHealthCheck" (dict "config" (($hostConfig.options).healthCheck) "hostName" $hostName) }}
+      {{- end }}
       protocol: HTTP
     {{- end }}
   {{- end }}
