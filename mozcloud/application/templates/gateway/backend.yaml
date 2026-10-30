@@ -126,6 +126,7 @@ backends:
       {{ $field }}: {{ int . }}
         {{- end }}
       {{- end }}
+      {{- include "mozcloud.gateway.validateHealthCheck" (dict "config" $hostHealthCheck "hostName" $hostName "backendName" $backendName) }}
       {{- /* targetRef is optional. When omitted, the library auto-populates a
          targetRef referencing the resolved Service name. */}}
       {{- if $healthCheck.targetRef }}
@@ -191,6 +192,7 @@ backends:
       {{ $field }}: {{ int . }}
         {{- end }}
       {{- end }}
+      {{- include "mozcloud.gateway.validateHealthCheck" (dict "config" (($hostConfig.options).healthCheck) "hostName" $hostName) }}
       protocol: HTTP
     {{- end }}
   {{- end }}

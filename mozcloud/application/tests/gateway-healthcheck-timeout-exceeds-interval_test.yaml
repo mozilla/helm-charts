@@ -1,0 +1,27 @@
+---
+suite: "mozcloud: Gateway health check rejects timeoutSec above checkIntervalSec"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+templates:
+  - gateway/backend.yaml
+tests:
+  - it: Fails when a default backend's host sets timeoutSec above checkIntervalSec
+    values:
+      - values/globals.yaml
+      - values/gateway-healthcheck-timeout-exceeds-interval-default-backend.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "hosts.test-service: options.healthCheck.timeoutSec \\(10\\) must be less than or equal to checkIntervalSec \\(6\\)"
+
+  - it: Fails when the host interval and the backend timeout only conflict once merged
+    values:
+      - values/globals.yaml
+      - values/gateway-healthcheck-timeout-exceeds-interval-cross-level.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "hosts.test-service backend \"test-backend\": options.healthCheck.timeoutSec \\(10\\)"
