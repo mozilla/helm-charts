@@ -137,7 +137,8 @@ Returns:
 Fails the render when a health check's timeoutSec exceeds its checkIntervalSec.
 JSON schema cannot compare the two, and they may be set at different levels
 (host and backend), so this runs on the resolved values. Does nothing unless
-both are set, since the GKE default for a missing one is not known here.
+timeoutSec is set. A missing checkIntervalSec counts as 5, the GKE default
+when a health check omits it.
 
 Params:
   config (dict):        (required) The resolved options.healthCheck values.
@@ -149,9 +150,11 @@ Returns:
 */ -}}
 {{- define "mozcloud.validateHealthCheck" -}}
 {{- $config := default dict .config -}}
-{{- if and $config.checkIntervalSec $config.timeoutSec (gt (int $config.timeoutSec) (int $config.checkIntervalSec)) -}}
+{{- $interval := default 5 $config.checkIntervalSec -}}
+{{- if and $config.timeoutSec (gt (int $config.timeoutSec) (int $interval)) -}}
   {{- $backend := ternary (printf " backend %q" .backendName) "" (not (empty .backendName)) -}}
-  {{- fail (printf "hosts.%s%s: options.healthCheck.timeoutSec (%v) must be less than or equal to checkIntervalSec (%v)." .hostName $backend $config.timeoutSec $config.checkIntervalSec) -}}
+  {{- $unset := ternary "" ", the GKE default when unset" (not (empty $config.checkIntervalSec)) -}}
+  {{- fail (printf "hosts.%s%s: options.healthCheck.timeoutSec (%v) must be less than or equal to checkIntervalSec (%v%s)." .hostName $backend $config.timeoutSec $interval $unset) -}}
 {{- end -}}
 {{- end -}}
 

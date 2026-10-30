@@ -2021,7 +2021,7 @@
             "timeoutSec": {
               "type": "integer",
               "minimum": 1,
-              "description": "Timeout in seconds for an individual health check probe (both APIs). Must be less than or equal to checkIntervalSec."
+              "description": "Timeout in seconds for an individual health check probe (both APIs). Must be less than or equal to checkIntervalSec, which is 5 when unset."
             },
             "healthyThreshold": {
               "type": "integer",

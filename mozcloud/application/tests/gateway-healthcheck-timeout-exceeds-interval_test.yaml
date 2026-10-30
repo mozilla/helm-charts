@@ -23,3 +23,10 @@ tests:
     asserts:
       - failedTemplate:
           errorPattern: "hosts.test-service backend \"test-backend\": options.healthCheck.timeoutSec \\(10\\)"
+
+  - it: Fails when timeoutSec is set without checkIntervalSec and exceeds the GKE default
+    values:
+      - values/gateway-healthcheck-timeout-exceeds-interval-timeout-only.yaml
+    asserts:
+      - failedTemplate:
+          errorPattern: "hosts.test-service: options.healthCheck.timeoutSec \\(10\\) must be less than or equal to checkIntervalSec \\(5, the GKE default when unset\\)"

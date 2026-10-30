@@ -2299,7 +2299,7 @@ workloads:
         #  #  #checkIntervalSec: 10
         #  #
         #  #  # Both APIs. Per-probe timeout in seconds. Must be <=
-        #  #  # checkIntervalSec.
+        #  #  # checkIntervalSec (5 when that is unset).
         #  #  #timeoutSec: 5
         #  #
         #  #  # Both APIs. Consecutive successful probes required to

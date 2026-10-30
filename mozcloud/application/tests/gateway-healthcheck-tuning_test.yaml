@@ -126,15 +126,29 @@ tests:
           path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
           value: disabled-on
 
-  - it: timeoutSec equal to checkIntervalSec is accepted
+  - it: timeoutSec equal to checkIntervalSec, or to the default when unset, is accepted
     template: gke/backend.yaml
-    documentSelector:
-      path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
-      value: equal-bounds
     asserts:
       - equal:
           path: spec.default.checkIntervalSec
           value: 5
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+          value: equal-bounds
       - equal:
           path: spec.default.timeoutSec
           value: 5
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+          value: equal-bounds
+      - equal:
+          path: spec.default.timeoutSec
+          value: 5
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+          value: timeout-only
+      - notExists:
+          path: spec.default.checkIntervalSec
+        documentSelector:
+          path: $[?(@.kind == "HealthCheckPolicy")].metadata.name
+          value: timeout-only
