@@ -121,6 +121,16 @@ backends:
       {{- if $healthCheckHost }}
       host: {{ $healthCheckHost }}
       {{- end }}
+      {{- range $field := list "checkIntervalSec" "timeoutSec" "healthyThreshold" "unhealthyThreshold" }}
+        {{- with index $hostHealthCheck $field }}
+      {{ $field }}: {{ int . }}
+        {{- end }}
+      {{- end }}
+      {{- /* This builder also walks api: ingress hosts; those are validated
+         where their BackendConfig is built (templates/ingress/ingress.yaml). */}}
+      {{- if ne (default "gateway" $hostConfig.api) "ingress" }}
+        {{- include "mozcloud.validateHealthCheck" (dict "config" $hostHealthCheck "hostName" $hostName "backendName" $backendName) }}
+      {{- end }}
       {{- /* targetRef is optional. When omitted, the library auto-populates a
          targetRef referencing the resolved Service name. */}}
       {{- if $healthCheck.targetRef }}
@@ -180,6 +190,14 @@ backends:
       path: {{ default $defaultHealthCheckPath (($hostConfig).healthCheckEndpoints).loadBalancer }}
       {{- else if kindIs "map" (($hostConfig).healthCheckEndpoints).loadBalancer }}
       path: {{ default $defaultHealthCheckPath ($hostConfig.healthCheckEndpoints.loadBalancer).path }}
+      {{- end }}
+      {{- range $field := list "checkIntervalSec" "timeoutSec" "healthyThreshold" "unhealthyThreshold" }}
+        {{- with index (default dict (($hostConfig.options).healthCheck)) $field }}
+      {{ $field }}: {{ int . }}
+        {{- end }}
+      {{- end }}
+      {{- if ne (default "gateway" $hostConfig.api) "ingress" }}
+        {{- include "mozcloud.validateHealthCheck" (dict "config" (($hostConfig.options).healthCheck) "hostName" $hostName) }}
       {{- end }}
       protocol: HTTP
     {{- end }}

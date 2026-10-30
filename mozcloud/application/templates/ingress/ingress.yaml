@@ -154,6 +154,7 @@ ingresses:
                     {{- end }}
                 {{- end }}
                 {{- $healthCheck := default dict $options.healthCheck }}
+                {{- include "mozcloud.validateHealthCheck" (dict "config" $healthCheck "hostName" $hostName "backendName" $backendName) }}
                 {{- /* Gate on the BackendConfig-supported fields only so a values
                    override that sets only gateway-only keys (host/path) does
                    not emit an empty healthCheck block on the ingress path. */}}

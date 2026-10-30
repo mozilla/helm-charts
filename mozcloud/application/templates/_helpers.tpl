@@ -134,6 +134,32 @@ Returns:
 
 
 {{- /*
+Fails the render when a health check's timeoutSec exceeds its checkIntervalSec.
+JSON schema cannot compare the two, and they may be set at different levels
+(host and backend), so this runs on the resolved values. Does nothing unless
+timeoutSec is set. A missing checkIntervalSec counts as 5, the GKE default
+when a health check omits it.
+
+Params:
+  config (dict):        (required) The resolved options.healthCheck values.
+  hostName (string):    (required) Host name, used in the error message.
+  backendName (string): (optional) Backend name, used in the error message.
+
+Returns:
+  (string) Empty. Fails the render when timeoutSec > checkIntervalSec.
+*/ -}}
+{{- define "mozcloud.validateHealthCheck" -}}
+{{- $config := default dict .config -}}
+{{- $interval := default 5 $config.checkIntervalSec -}}
+{{- if and $config.timeoutSec (gt (int $config.timeoutSec) (int $interval)) -}}
+  {{- $backend := ternary (printf " backend %q" .backendName) "" (not (empty .backendName)) -}}
+  {{- $unset := ternary "" ", the GKE default when unset" (not (empty $config.checkIntervalSec)) -}}
+  {{- fail (printf "hosts.%s%s: options.healthCheck.timeoutSec (%v) must be less than or equal to checkIntervalSec (%v%s)." .hostName $backend $config.timeoutSec $interval $unset) -}}
+{{- end -}}
+{{- end -}}
+
+
+{{- /*
 A debug utility that serializes the piped-in value as pretty-printed JSON and
 immediately fails the template render with that output as the error message.
 Use this to inspect any Helm variable or context dict during template

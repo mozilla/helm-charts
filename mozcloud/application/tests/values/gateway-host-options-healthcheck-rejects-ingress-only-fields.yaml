@@ -20,7 +20,3 @@ workloads:
           healthCheck:
             requestPath: /__lbheartbeat__
             type: HTTP
-            checkIntervalSec: 10
-            timeoutSec: 5
-            healthyThreshold: 1
-            unhealthyThreshold: 3
