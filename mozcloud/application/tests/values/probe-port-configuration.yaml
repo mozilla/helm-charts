@@ -1,0 +1,42 @@
+---
+# Overlay applied on top of values/basic-configuration.yaml.
+#
+# test-service is the loopback-only app behind the nginx sidecar: liveness and
+# readiness probe the sidecar's 8080 by number, startup uses a named port.
+#
+# test-probe-port sets readiness.port and leaves liveness.port unset, pinning
+# that liveness does not inherit it.
+#
+# test-worker-exec is left untouched to show exec probes are unaffected.
+workloads:
+  test-service:
+    containers:
+      app:
+        additionalPorts:
+          - name: admin
+            port: 9000
+        healthCheck:
+          liveness:
+            port: 8080
+          readiness:
+            port: 8080
+          startup:
+            enabled: true
+            port: admin
+
+  test-probe-port:
+    component: worker
+    containers:
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+        additionalPorts:
+          - name: admin
+            port: 9000
+        healthCheck:
+          readiness:
+            port: admin
+          startup:
+            enabled: true
+            port: 9000

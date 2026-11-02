@@ -665,6 +665,64 @@ tests:
           path: $[?(@.kind == "Deployment")].metadata.name
           value: test-worker-exec
 
+  - it: httpGet probes target an overridden port, by number or name
+    template: workload/deployment.yaml
+    values:
+      - values/globals.yaml
+      - values/basic-configuration.yaml
+      - values/probe-port-configuration.yaml
+    asserts:
+      # A number reaches the nginx sidecar's port, which a name cannot: names
+      # only resolve against the probed container's own ports.
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].livenessProbe.httpGet.port
+          value: 8080
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].readinessProbe.httpGet.port
+          value: 8080
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].startupProbe.httpGet.port
+          value: admin
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-service
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].readinessProbe.httpGet.port
+          value: admin
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-probe-port
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].startupProbe.httpGet.port
+          value: 9000
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-probe-port
+      # Liveness does not inherit readiness.port, so it keeps the container's
+      # own port.
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="app")].livenessProbe.httpGet.port
+          value: app
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-probe-port
+      - exists:
+          path: spec.template.spec.containers[?(@.name=="app")].livenessProbe.exec
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+      - notExists:
+          path: spec.template.spec.containers[?(@.name=="app")].livenessProbe.httpGet
+        documentSelector:
+          path: $[?(@.kind == "Deployment")].metadata.name
+          value: test-worker-exec
+
   - it: Schema rejects tcpSocket combined with another handler
     template: workload/deployment.yaml
     set:
@@ -702,6 +760,24 @@ tests:
       # tcpSocket would render a probe that quietly ignores them.
       - failedTemplate:
           errorPattern: healthCheck/liveness/httpHeaders
+
+  - it: Schema rejects tcpSocket combined with port
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.readiness.tcpSocket: {}
+      workloads.test-service.containers.app.healthCheck.readiness.port: 8080
+    asserts:
+      # port only targets httpGet; tcpSocket.port is the override for tcpSocket.
+      - failedTemplate:
+          errorPattern: healthCheck/readiness/port
+
+  - it: Schema rejects an out-of-range probe port
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.port: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/port
 
   - it: Workload renders every pod scheduling field when it is configured
     template: workload/deployment.yaml
