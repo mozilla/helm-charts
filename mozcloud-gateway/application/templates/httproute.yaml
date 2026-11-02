@@ -5,10 +5,12 @@
   (and (eq (keys .Values.httpRoute.httpRoutes | len) 1) (ne (keys .Values.httpRoute.httpRoutes | first) "default"))
   (gt (keys .Values.httpRoute.httpRoutes | len) 1)
 }}
-  {{- $_ := set $http_route_config "httpRoutes" (omit .Values.httpRoute.httpRoutes "default") }}
-  {{- range $name, $config := $http_route_config.httpRoutes }}
-    {{- $_ = set $http_route_config.httpRoutes $name (mergeOverwrite (index $.Values.httpRoute.httpRoutes "default") $config) }}
+  {{- $default := default (dict) (index .Values.httpRoute.httpRoutes "default") }}
+  {{- $httpRoutes := dict }}
+  {{- range $name, $config := omit .Values.httpRoute.httpRoutes "default" }}
+    {{- $_ := set $httpRoutes $name (mergeOverwrite (deepCopy $default) $config) }}
   {{- end }}
+  {{- $http_route_config = set (omit .Values.httpRoute "httpRoutes") "httpRoutes" $httpRoutes }}
 {{- end }}
 {{- $params := dict "httpRouteConfig" $http_route_config "Chart" .Chart "Release" .Release }}
 {{- if .Values.nameOverride }}
