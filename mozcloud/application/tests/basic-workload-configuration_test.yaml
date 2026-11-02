@@ -779,6 +779,48 @@ tests:
       - failedTemplate:
           errorPattern: healthCheck/liveness/port
 
+  # Port names mirror Kubernetes IsValidPortName, one case per rule, so a bad
+  # name fails at render time instead of at apply time.
+  - it: Schema rejects a probe port name longer than 15 characters
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.port: abcdefghijklmnop
+    asserts:
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/port
+
+  - it: Schema rejects a probe port name with invalid characters
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.port: Admin
+    asserts:
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/port
+
+  - it: Schema rejects a probe port name without a letter
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.port: 80-80
+    asserts:
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/port
+
+  - it: Schema rejects a probe port name with consecutive hyphens
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.port: ad--min
+    asserts:
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/port
+
+  - it: Schema rejects a probe port name with a leading hyphen
+    template: workload/deployment.yaml
+    set:
+      workloads.test-service.containers.app.healthCheck.liveness.port: -admin
+    asserts:
+      - failedTemplate:
+          errorPattern: healthCheck/liveness/port
+
   - it: Workload renders every pod scheduling field when it is configured
     template: workload/deployment.yaml
     values:

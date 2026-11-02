@@ -2091,7 +2091,16 @@
       "type": ["integer", "string"],
       "minimum": 1,
       "maximum": 65535,
-      "minLength": 1,
+      "maxLength": 15,
+      "allOf": [
+        {
+          "description": "Mirrors Kubernetes IsValidPortName (IANA_SVC_NAME). Split in two because RE2 has no lookahead to require a letter in the same pattern.",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        {
+          "pattern": "[a-z]"
+        }
+      ],
       "description": "Target port for the httpGet probe: a port number, or the name of a port declared on this container. Defaults to the container's primary port. A number is needed to reach a port owned by another container in the pod (such as the nginx sidecar's 8080), because a port name only resolves against the probed container's own ports. Not inherited from readiness by liveness or startup, and ignored when exec is set."
     },
     "gcsFuseSidecar": {
