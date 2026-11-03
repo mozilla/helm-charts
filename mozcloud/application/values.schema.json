@@ -686,6 +686,9 @@
                             }
                           }
                         },
+                        "port": {
+                          "$ref": "#/$defs/probePort"
+                        },
                         "probes": {
                           "type": "object",
                           "additionalProperties": false,
@@ -720,7 +723,7 @@
                       },
                       "allOf": [
                         {
-                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders (which only applies to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
+                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders or port (which only apply to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
                           "if": {
                             "required": ["tcpSocket"]
                           },
@@ -728,7 +731,19 @@
                             "properties": {
                               "exec": false,
                               "path": false,
-                              "httpHeaders": false
+                              "httpHeaders": false,
+                              "port": false
+                            }
+                          }
+                        },
+                        {
+                          "description": "port only targets httpGet and nothing else reads it, so exec would silently drop it. path and httpHeaders stay allowed with exec: the nginx sidecar's readiness probe reads them from the first container even when that container uses exec.",
+                          "if": {
+                            "required": ["exec"]
+                          },
+                          "then": {
+                            "properties": {
+                              "port": false
                             }
                           }
                         }
@@ -767,6 +782,9 @@
                             }
                           }
                         },
+                        "port": {
+                          "$ref": "#/$defs/probePort"
+                        },
                         "probes": {
                           "type": "object",
                           "additionalProperties": false,
@@ -801,7 +819,7 @@
                       },
                       "allOf": [
                         {
-                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders (which only applies to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
+                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders or port (which only apply to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
                           "if": {
                             "required": ["tcpSocket"]
                           },
@@ -809,7 +827,19 @@
                             "properties": {
                               "exec": false,
                               "path": false,
-                              "httpHeaders": false
+                              "httpHeaders": false,
+                              "port": false
+                            }
+                          }
+                        },
+                        {
+                          "description": "port only targets httpGet and nothing else reads it, so exec would silently drop it. path and httpHeaders stay allowed with exec: the nginx sidecar's readiness probe reads them from the first container even when that container uses exec.",
+                          "if": {
+                            "required": ["exec"]
+                          },
+                          "then": {
+                            "properties": {
+                              "port": false
                             }
                           }
                         }
@@ -859,6 +889,9 @@
                             }
                           }
                         },
+                        "port": {
+                          "$ref": "#/$defs/probePort"
+                        },
                         "probes": {
                           "type": "object",
                           "additionalProperties": false,
@@ -888,7 +921,7 @@
                       },
                       "allOf": [
                         {
-                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders (which only applies to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
+                          "description": "Kubernetes accepts exactly one handler per probe, so tcpSocket cannot be combined with exec, with path (which renders an httpGet handler) or with httpHeaders or port (which only apply to httpGet). Without this the template would silently pick one handler and drop the rest. Written as if/then rather than a negated pair list so the validation error names the conflicting field instead of only the probe.",
                           "if": {
                             "required": ["tcpSocket"]
                           },
@@ -896,7 +929,19 @@
                             "properties": {
                               "exec": false,
                               "path": false,
-                              "httpHeaders": false
+                              "httpHeaders": false,
+                              "port": false
+                            }
+                          }
+                        },
+                        {
+                          "description": "port only targets httpGet and nothing else reads it, so exec would silently drop it. path and httpHeaders stay allowed with exec: the nginx sidecar's readiness probe reads them from the first container even when that container uses exec.",
+                          "if": {
+                            "required": ["exec"]
+                          },
+                          "then": {
+                            "properties": {
+                              "port": false
                             }
                           }
                         }
@@ -2074,6 +2119,22 @@
           "description": "Port number, or the name of a port declared on the container. Defaults to the container's port."
         }
       }
+    },
+    "probePort": {
+      "type": ["integer", "string"],
+      "minimum": 1,
+      "maximum": 65535,
+      "maxLength": 15,
+      "allOf": [
+        {
+          "description": "Mirrors Kubernetes IsValidPortName (IANA_SVC_NAME). Split in two because RE2 has no lookahead to require a letter in the same pattern.",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        {
+          "pattern": "[a-z]"
+        }
+      ],
+      "description": "Target port for the httpGet probe: a port number, or the name of a port declared on this container. Defaults to the container's primary port. A number is needed to reach a port owned by another container in the pod (such as the nginx sidecar's 8080), because a port name only resolves against the probed container's own ports. Not inherited from readiness by liveness or startup, and cannot be combined with exec or tcpSocket."
     },
     "gcsFuseSidecar": {
       "type": "object",

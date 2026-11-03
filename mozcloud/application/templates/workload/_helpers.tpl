@@ -294,7 +294,7 @@ Returns:
         {{- end }}
       {{- end }}
       path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.startup.path }}
-      port: {{ $portName }}
+      port: {{ default $portName $containerConfig.healthCheck.startup.port }}
     {{- end }}
     {{- /*
     Unlike the liveness probe below, the startup probe does not fall back to the
@@ -332,7 +332,8 @@ Returns:
         {{- end }}
       {{- end }}
       path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.liveness.path }}
-      port: {{ $portName }}
+      {{- /* Not inherited from readiness: like path, port picks the probe target. */}}
+      port: {{ default $portName $containerConfig.healthCheck.liveness.port }}
     {{- end }}
     {{- if (($containerConfig.healthCheck).liveness).probes }}
     {{- range $k, $v := $containerConfig.healthCheck.liveness.probes }}
@@ -363,7 +364,7 @@ Returns:
         {{- end }}
       {{- end }}
       path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.readiness.path }}
-      port: {{ $portName }}
+      port: {{ default $portName $containerConfig.healthCheck.readiness.port }}
     {{- end }}
     {{- if (($containerConfig.healthCheck).readiness).probes }}
     {{- range $k, $v := $containerConfig.healthCheck.readiness.probes }}

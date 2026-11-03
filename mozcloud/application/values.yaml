@@ -1349,7 +1349,8 @@ workloads:
             enabled: true
 
             # Configure an exec-based probe instead of the default httpGet.
-            # When set, path and httpHeaders are ignored for this probe.
+            # When set, path and httpHeaders are ignored for this probe, and
+            # port cannot be set.
             #
             # Example:
             #
@@ -1358,7 +1359,7 @@ workloads:
 
             # Configure a tcpSocket probe instead of the default httpGet, for
             # containers that speak a protocol other than HTTP. Mutually exclusive
-            # with exec, path and httpHeaders. An empty mapping probes the
+            # with exec, path, httpHeaders and port. An empty mapping probes the
             # container's own port; set port to reach one of the additionalPorts.
             #
             # Example:
@@ -1379,6 +1380,17 @@ workloads:
             #     - name: Host
             #       value: dev.my-tenant.nonprod.webservices.mozgcp.net
             httpHeaders: []
+
+            # Optionally override the port targeted by the httpGet probe, as a
+            # number or a port name declared on this container. Use a number to
+            # probe through the nginx sidecar (8080) when the app only listens
+            # on loopback, since port names only resolve against this container.
+            #
+            # Default: the container's primary port
+            #
+            # Example:
+            #
+            #   port: 8080
 
             # Probe configurations for health checks. Here, you can fine tune
             # your health checks based on the needs of your application.
@@ -1422,7 +1434,8 @@ workloads:
             enabled: true
 
             # Configure an exec-based probe instead of the default httpGet.
-            # When set, path and httpHeaders are ignored for this probe.
+            # When set, path and httpHeaders are ignored for this probe, and
+            # port cannot be set.
             # If not set, falls back to the readiness httpHeaders if defined.
             #
             # Example:
@@ -1432,7 +1445,7 @@ workloads:
 
             # Configure a tcpSocket probe instead of the default httpGet, for
             # containers that speak a protocol other than HTTP. Mutually exclusive
-            # with exec, path and httpHeaders. An empty mapping probes the
+            # with exec, path, httpHeaders and port. An empty mapping probes the
             # container's own port; set port to reach one of the additionalPorts.
             #
             # Example:
@@ -1451,6 +1464,16 @@ workloads:
             # By default, these will match the httpHeaders used in the readiness
             # configuration section, if defined.
             httpHeaders: []
+
+            # Optionally override the port targeted by the httpGet probe. The
+            # format matches the readiness port above. Unlike httpHeaders, it is
+            # not inherited from readiness, so set both when both must move.
+            #
+            # Default: the container's primary port
+            #
+            # Example:
+            #
+            #   port: 8080
 
             # Probe configurations for health checks. The format matches the
             # readiness probes above, although the values differ slightly.
@@ -1473,7 +1496,8 @@ workloads:
             enabled: false
 
             # Configure an exec-based probe instead of the default httpGet.
-            # When set, path and httpHeaders are ignored for this probe. Useful
+            # When set, path and httpHeaders are ignored for this probe, and
+            # port cannot be set. Useful
             # for containers whose readiness depends on work that has no HTTP
             # endpoint, such as loading a model into memory.
             #
@@ -1484,7 +1508,7 @@ workloads:
 
             # Configure a tcpSocket probe instead of the default httpGet, for
             # containers that speak a protocol other than HTTP. Mutually exclusive
-            # with exec, path and httpHeaders. An empty mapping probes the
+            # with exec, path, httpHeaders and port. An empty mapping probes the
             # container's own port; set port to reach one of the additionalPorts.
             #
             # Example:
@@ -1503,6 +1527,16 @@ workloads:
             # By default, these will match the httpHeaders used in the readiness
             # configuration section, if defined.
             httpHeaders: []
+
+            # Optionally override the port targeted by the httpGet probe. The
+            # format matches the readiness port above, and it is not inherited
+            # from readiness.
+            #
+            # Default: the container's primary port
+            #
+            # Example:
+            #
+            #   port: 8080
 
             # Probe configurations for the startup probe. The format matches the
             # readiness probes above, minus successThreshold, which Kubernetes
