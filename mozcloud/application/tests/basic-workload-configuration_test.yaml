@@ -771,6 +771,16 @@ tests:
       - failedTemplate:
           errorPattern: healthCheck/readiness/port
 
+  - it: Schema rejects exec combined with port
+    template: workload/deployment.yaml
+    set:
+      workloads.test-worker-exec.containers.app.healthCheck.readiness.port: 8080
+    asserts:
+      # Unlike path and httpHeaders, which the nginx sidecar's readiness probe
+      # still reads, nothing would use port next to exec.
+      - failedTemplate:
+          errorPattern: healthCheck/readiness/port
+
   - it: Schema rejects an out-of-range probe port
     template: workload/deployment.yaml
     set:

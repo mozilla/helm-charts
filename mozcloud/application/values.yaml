@@ -1349,7 +1349,8 @@ workloads:
             enabled: true
 
             # Configure an exec-based probe instead of the default httpGet.
-            # When set, path and httpHeaders are ignored for this probe.
+            # When set, path and httpHeaders are ignored for this probe, and
+            # port cannot be set.
             #
             # Example:
             #
@@ -1433,7 +1434,8 @@ workloads:
             enabled: true
 
             # Configure an exec-based probe instead of the default httpGet.
-            # When set, path and httpHeaders are ignored for this probe.
+            # When set, path and httpHeaders are ignored for this probe, and
+            # port cannot be set.
             # If not set, falls back to the readiness httpHeaders if defined.
             #
             # Example:
@@ -1494,7 +1496,8 @@ workloads:
             enabled: false
 
             # Configure an exec-based probe instead of the default httpGet.
-            # When set, path and httpHeaders are ignored for this probe. Useful
+            # When set, path and httpHeaders are ignored for this probe, and
+            # port cannot be set. Useful
             # for containers whose readiness depends on work that has no HTTP
             # endpoint, such as loading a model into memory.
             #
