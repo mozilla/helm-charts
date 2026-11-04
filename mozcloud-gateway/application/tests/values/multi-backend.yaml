@@ -1,0 +1,57 @@
+# Three backends and two gateways that each override different fields of the
+# "default" entry. Used to verify one entry's overrides never leak into another.
+backends:
+  a:
+    service:
+      port: 8080
+      targetPort: http
+      selectorLabels:
+        app.kubernetes.io/component: a
+    healthCheck:
+      path: /a-health
+  b:
+    service:
+      port: 8080
+      targetPort: http
+      selectorLabels:
+        app.kubernetes.io/component: b
+  c:
+    service:
+      port: 9090
+      targetPort: http
+
+gateway:
+  gateways:
+    gw1:
+      addresses:
+        - addr-1
+      tls:
+        type: certmap
+        certs:
+          - certmap-1
+    gw2:
+      addresses:
+        - addr-2
+      tls:
+        type: certmap
+        certs:
+          - certmap-2
+
+httpRoute:
+  httpRoutes:
+    r1:
+      gatewayRefs:
+        - name: gw1
+          section: https
+      rules:
+        - backendRefs:
+            - name: a
+              port: 8080
+    r2:
+      gatewayRefs:
+        - name: gw2
+          section: https
+      rules:
+        - backendRefs:
+            - name: b
+              port: 8080

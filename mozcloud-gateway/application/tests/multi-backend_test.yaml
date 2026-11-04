@@ -1,0 +1,90 @@
+---
+# Verifies that entries in backends and gateway.gateways are rendered
+# independently. Each entry is merged over a copy of the "default" entry, so one
+# entry's overrides (port, selector labels, health check path, certmap) must not
+# leak into its siblings.
+suite: "mozcloud-gateway: Multiple backends and gateways"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/multi-backend.yaml
+templates:
+  - templates/service.yaml
+  - templates/healthcheckpolicy.yaml
+  - templates/gateway.yaml
+tests:
+  - it: renders each service with its own selector and port
+    template: templates/service.yaml
+    asserts:
+      - equal:
+          path: spec.selector["app.kubernetes.io/component"]
+          value: a
+        documentSelector:
+          path: metadata.name
+          value: a
+      - equal:
+          path: spec.selector["app.kubernetes.io/component"]
+          value: b
+        documentSelector:
+          path: metadata.name
+          value: b
+      - equal:
+          path: spec.selector["app.kubernetes.io/component"]
+          value: gateway
+        documentSelector:
+          path: metadata.name
+          value: c
+      - equal:
+          path: spec.ports[0].port
+          value: 8080
+        documentSelector:
+          path: metadata.name
+          value: a
+      - equal:
+          path: spec.ports[0].port
+          value: 9090
+        documentSelector:
+          path: metadata.name
+          value: c
+
+  - it: only applies the health check path to the backend that sets it
+    template: templates/healthcheckpolicy.yaml
+    asserts:
+      - equal:
+          path: spec.default.config.httpHealthCheck.requestPath
+          value: /a-health
+        documentSelector:
+          path: metadata.name
+          value: a
+      - equal:
+          path: spec.default.config.httpHealthCheck.requestPath
+          value: /__lbheartbeat__
+        documentSelector:
+          path: metadata.name
+          value: b
+      - equal:
+          path: spec.default.config.httpHealthCheck.requestPath
+          value: /__lbheartbeat__
+        documentSelector:
+          path: metadata.name
+          value: c
+
+  - it: renders each gateway with its own certmap
+    template: templates/gateway.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["networking.gke.io/certmap"]
+          value: certmap-1
+        documentSelector:
+          path: metadata.name
+          value: gw1
+      - equal:
+          path: metadata.annotations["networking.gke.io/certmap"]
+          value: certmap-2
+        documentSelector:
+          path: metadata.name
+          value: gw2
