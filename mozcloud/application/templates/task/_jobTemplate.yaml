@@ -11,8 +11,7 @@ Renders the complete Job spec including:
   - Optional top-level fields: activeDeadlineSeconds, backoffLimit,
     parallelism, suspend, ttlSecondsAfterFinished.
   - Pod template with OTEL annotations if applicable.
-  - Container definitions (image, command, args, env, envFrom, resources,
-    security context, and volume mounts).
+  - Application and init container definitions.
   - Pod-level security context.
   - Optional service account reference.
   - Optional pod scheduling fields: affinity, nodeSelector, tolerations,
@@ -26,6 +25,7 @@ Params:
                   (e.g. from .Values.tasks.jobs.<job_name> or a CronJob's
                   jobConfig block).
   context (dict): (required) The Helm root context from the calling template.
+  name (string):  (required) The Job or CronJob name.
 
 Returns:
   (string) YAML-encoded Kubernetes Job spec body, from top-level fields
@@ -69,11 +69,20 @@ template:
   {{- $annotations := include "mozcloud.annotations" $params | fromYaml }}
   {{- $params = dict "containers" $jobConfig.containers "type" "containers" }}
   {{- $containers := include "mozcloud.formatter.containers" $params | fromYaml }}
+  {{- $initContainerValues := mergeOverwrite (deepCopy (default dict $common.initContainers)) (default dict $jobConfig.initContainers) }}
+  {{- $params = dict "containers" $initContainerValues "type" "init-containers" }}
+  {{- $initContainers := include "mozcloud.formatter.containers" $params | fromYaml }}
+  {{- range $name, $config := $initContainers }}
+    {{- $defaults := dict "imagePullPolicy" "Always" "resources" (dict "cpu" "100m" "memory" "128Mi") }}
+    {{- $_ := set $initContainers $name (mergeOverwrite $defaults $config) }}
+  {{- end }}
   {{- $gcsFuseEnabled := false }}
-  {{- range $containerName, $containerConfig := $containers }}
-    {{- range $volume := $containerConfig.volumes }}
-      {{- if eq $volume.type "gcsFuseCsi" }}
-        {{- $gcsFuseEnabled = true }}
+  {{- range list $containers $initContainers }}
+    {{- range $containerConfig := . }}
+      {{- range $volume := $containerConfig.volumes }}
+        {{- if eq $volume.type "gcsFuseCsi" }}
+          {{- $gcsFuseEnabled = true }}
+        {{- end }}
       {{- end }}
     {{- end }}
   {{- end }}
@@ -189,6 +198,23 @@ template:
           {{- end }}
         {{- end }}
       {{- end }}
+    {{- if $initContainers }}
+    initContainers:
+      {{- include "mozcloud.workload.containers" (dict
+        "containers" $initContainers
+        "globals" $globals
+        "name" .name
+        "prefix" $prefix
+        "type" "initContainer"
+      ) | trim | nindent 6 }}
+      {{- range $containerConfig := $initContainers }}
+        {{- range $volume := $containerConfig.volumes }}
+          {{- if not (hasKey $volumes $volume.name) }}
+            {{- $_ := set $volumes $volume.name $volume }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- end }}
     {{- if $jobConfig.restartPolicy }}
     restartPolicy: {{ $jobConfig.restartPolicy }}
     {{- end }}

@@ -148,21 +148,20 @@ reloader.stakater.com/auto: "true"
 
 
 {{- /*
-Renders a list of containers for a workload pod template. Supports both
-spec.containers and spec.initContainers via the type param.
+Renders containers for workload pods and init containers for task pods.
 
 When type is "container", startup, liveness and readiness probes are rendered
-and OTEL environment variables are injected if enabled. When type is
-"initContainer", probes are omitted and a restartPolicy of Always is set for
-sidecar containers.
+and OTEL environment variables are injected if enabled. Native sidecars get
+restartPolicy: Always and render only explicitly enabled probes. Regular init
+containers cannot have probes.
 
 Params:
-  config (dict):                         (required) The workload configuration.
+  config (dict):                         (optional) The workload configuration.
   containers (dict):                     (required) Formatted containers map.
-  defaultSecretEnabled (bool):           (required) Whether the default secret is enabled.
-  defaultSecretName (string):            (required) Name of the default ExternalSecret.
+  defaultSecretEnabled (bool):           (optional) Whether the default secret is enabled.
+  defaultSecretName (string):            (optional) Name of the default ExternalSecret.
   globals (dict):                        (required) .Values.global.mozcloud.
-  name (string):                         (required) The workload name.
+  name (string):                         (required) The workload or task name.
   otelAutoInstrumentationEnabled (bool): (optional) Whether OTEL auto-instrumentation is enabled.
   otelContainerNames (list):             (optional) Container names with OTEL enabled.
   otelEnabled (bool):                    (optional) Whether OTEL is enabled for the workload.
@@ -185,6 +184,8 @@ Returns:
 {{- $otelContainerNames := default list .otelContainerNames -}}
 {{- $otelAutoInstrumentationEnabled := default false .otelAutoInstrumentationEnabled -}}
 {{- range $containerName, $containerConfig := $containers }}
+{{- $isAppContainer := eq $type "container" }}
+{{- $isInitSidecar := and (eq $type "initContainer") (dig "sidecar" false $containerConfig) }}
 {{- $portName := include "mozcloud.portName" (dict "name" $containerName "containerConfig" $containerConfig) }}
 - name: {{ $containerName }}
   {{- $imageParams := dict "containerImage" $containerConfig.image "globalImage" $globals.image "workloadName" $name "containerName" $containerName }}
@@ -192,13 +193,13 @@ Returns:
   imagePullPolicy: {{ $containerConfig.imagePullPolicy }}
   {{- if $containerConfig.command }}
   command:
-    {{- range $line := $containerConfig.command }}
+    {{- range $line := ternary (list $containerConfig.command) $containerConfig.command (kindIs "string" $containerConfig.command) }}
     - {{ $line | quote }}
     {{- end }}
   {{- end }}
   {{- if $containerConfig.args }}
   args:
-    {{- range $line := $containerConfig.args }}
+    {{- range $line := ternary (list $containerConfig.args) $containerConfig.args (kindIs "string" $containerConfig.args) }}
     - {{ $line | quote }}
     {{- end }}
   {{- end }}
@@ -248,12 +249,18 @@ Returns:
     {{- end }}
     {{- end }}
   {{- end }}
-  {{- $emitPrimaryPort := and (eq $type "container") (or
+  {{- $startupProbe := and (or $isAppContainer $isInitSidecar) (dig "healthCheck" "startup" "enabled" false $containerConfig) }}
+  {{- $livenessProbe := and (or $isAppContainer $isInitSidecar) (dig "healthCheck" "liveness" "enabled" $isAppContainer $containerConfig) }}
+  {{- $readinessProbe := and (or $isAppContainer $isInitSidecar) (dig "healthCheck" "readiness" "enabled" $isAppContainer $containerConfig) }}
+  {{- $emitAppPort := and $isAppContainer (or
       $config.hosts
       (($containerConfig.healthCheck).readiness).enabled
       (($containerConfig.healthCheck).liveness).enabled
       (($containerConfig.healthCheck).startup).enabled
   ) }}
+  {{- $emitSidecarPort := and $isInitSidecar (not (empty $containerConfig.port)) (or $startupProbe $livenessProbe $readinessProbe) }}
+  {{- $emitPrimaryPort := or $emitAppPort $emitSidecarPort }}
+  {{- $probePort := ternary $portName 8000 (or $isAppContainer $emitSidecarPort) }}
   {{- $additionalPorts := default list $containerConfig.additionalPorts }}
   {{- if or $emitPrimaryPort $additionalPorts }}
   ports:
@@ -268,8 +275,7 @@ Returns:
       {{- end }}
     {{- end }}
   {{- end }}
-  {{- if eq $type "container" }}
-  {{- if (dig "healthCheck" "startup" "enabled" false $containerConfig) }}
+  {{- if $startupProbe }}
   startupProbe:
     {{- if (($containerConfig.healthCheck).startup).exec }}
     exec:
@@ -277,7 +283,7 @@ Returns:
         {{- toYaml $containerConfig.healthCheck.startup.exec.command | nindent 8 }}
     {{- else if hasKey (dig "healthCheck" "startup" dict $containerConfig) "tcpSocket" }}
     tcpSocket:
-      port: {{ dig "healthCheck" "startup" "tcpSocket" "port" $portName $containerConfig }}
+      port: {{ dig "healthCheck" "startup" "tcpSocket" "port" $probePort $containerConfig }}
     {{- else }}
     httpGet:
       {{- if (($containerConfig.healthCheck).startup).httpHeaders }}
@@ -294,7 +300,7 @@ Returns:
         {{- end }}
       {{- end }}
       path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.startup.path }}
-      port: {{ default $portName $containerConfig.healthCheck.startup.port }}
+      port: {{ default $probePort $containerConfig.healthCheck.startup.port }}
     {{- end }}
     {{- /*
     Unlike the liveness probe below, the startup probe does not fall back to the
@@ -307,7 +313,7 @@ Returns:
     {{- end }}
     {{- end }}
   {{- end }}
-  {{- if (dig "healthCheck" "liveness" "enabled" true $containerConfig) }}
+  {{- if $livenessProbe }}
   livenessProbe:
     {{- if (($containerConfig.healthCheck).liveness).exec }}
     exec:
@@ -315,7 +321,7 @@ Returns:
         {{- toYaml $containerConfig.healthCheck.liveness.exec.command | nindent 8 }}
     {{- else if hasKey (dig "healthCheck" "liveness" dict $containerConfig) "tcpSocket" }}
     tcpSocket:
-      port: {{ dig "healthCheck" "liveness" "tcpSocket" "port" $portName $containerConfig }}
+      port: {{ dig "healthCheck" "liveness" "tcpSocket" "port" $probePort $containerConfig }}
     {{- else }}
     httpGet:
       {{- if (($containerConfig.healthCheck).liveness).httpHeaders }}
@@ -333,7 +339,7 @@ Returns:
       {{- end }}
       path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.liveness.path }}
       {{- /* Not inherited from readiness: like path, port picks the probe target. */}}
-      port: {{ default $portName $containerConfig.healthCheck.liveness.port }}
+      port: {{ default $probePort $containerConfig.healthCheck.liveness.port }}
     {{- end }}
     {{- if (($containerConfig.healthCheck).liveness).probes }}
     {{- range $k, $v := $containerConfig.healthCheck.liveness.probes }}
@@ -345,7 +351,7 @@ Returns:
     {{- end }}
     {{- end }}
   {{- end }}
-  {{- if (dig "healthCheck" "readiness" "enabled" true $containerConfig) }}
+  {{- if $readinessProbe }}
   readinessProbe:
     {{- if (($containerConfig.healthCheck).readiness).exec }}
     exec:
@@ -353,7 +359,7 @@ Returns:
         {{- toYaml $containerConfig.healthCheck.readiness.exec.command | nindent 8 }}
     {{- else if hasKey (dig "healthCheck" "readiness" dict $containerConfig) "tcpSocket" }}
     tcpSocket:
-      port: {{ dig "healthCheck" "readiness" "tcpSocket" "port" $portName $containerConfig }}
+      port: {{ dig "healthCheck" "readiness" "tcpSocket" "port" $probePort $containerConfig }}
     {{- else }}
     httpGet:
       {{- if (($containerConfig.healthCheck).readiness).httpHeaders }}
@@ -364,14 +370,13 @@ Returns:
         {{- end }}
       {{- end }}
       path: {{ default "/__lbheartbeat__" $containerConfig.healthCheck.readiness.path }}
-      port: {{ default $portName $containerConfig.healthCheck.readiness.port }}
+      port: {{ default $probePort $containerConfig.healthCheck.readiness.port }}
     {{- end }}
     {{- if (($containerConfig.healthCheck).readiness).probes }}
     {{- range $k, $v := $containerConfig.healthCheck.readiness.probes }}
     {{ $k }}: {{ $v }}
     {{- end }}
     {{- end }}
-  {{- end }}
   {{- end }}
   resources:
     {{- $resourceParams := dict "requests" (omit $containerConfig.resources "limits") -}}
@@ -380,13 +385,12 @@ Returns:
     {{- end -}}
     {{- include "pod.container.resources" $resourceParams | nindent 4 }}
   {{- /* Sidecars run as init containers need restartPolicy: Always configured */ -}}
-  {{- if and (eq $type "initContainer") (dig "sidecar" false $containerConfig) }}
+  {{- if $isInitSidecar }}
   restartPolicy: Always
   {{- end }}
   securityContext:
     {{- include "pod.container.securityContext" (default dict $containerConfig.security) | nindent 4 }}
-  {{- $isInitSidecar := and (eq $type "initContainer") (dig "sidecar" false $containerConfig) }}
-  {{- if and $containerConfig.lifecycle (or (eq $type "container") $isInitSidecar) }}
+  {{- if and $containerConfig.lifecycle (or $isAppContainer $isInitSidecar) }}
   lifecycle:
     {{- $containerConfig.lifecycle | toYaml | nindent 4 }}
   {{- end }}

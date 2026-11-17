@@ -1,0 +1,102 @@
+tasks:
+  common:
+    initContainers:
+      default:
+        resources:
+          cpu: 50m
+      cloud-sql-proxy:
+        sidecar: true
+        image:
+          repository: gcr.io/cloud-sql-connectors/cloud-sql-proxy
+          tag: "2.17.1"
+        args: ["--health-check", "--http-address=0.0.0.0", "project:region:instance"]
+        envVars:
+          CSQL_PROXY_EXIT_ZERO_ON_SIGTERM: "true"
+        healthCheck:
+          startup:
+            enabled: true
+            path: /readiness
+            port: 9090
+            probes:
+              periodSeconds: 2
+  jobs:
+    migrate:
+      type: preDeployment
+      initContainers:
+        cloud-sql-proxy:
+          resources:
+            cpu: 75m
+        setup:
+          image:
+            repository: busybox
+            tag: "1.37"
+          command: /bin/true
+          healthCheck:
+            startup:
+              enabled: true
+          security:
+            user: 2000
+          volumes:
+            - name: scratch
+              type: emptyDir
+              path: /scratch
+      containers:
+        app:
+          image:
+            repository: app
+            tag: "1.0"
+    no-init:
+      type: preDeployment
+      initContainers:
+        cloud-sql-proxy:
+          enabled: false
+      containers:
+        app:
+          image:
+            repository: app
+            tag: "1.0"
+  cronJobs:
+    maintenance:
+      schedule: "@daily"
+      jobConfig:
+        initContainers:
+          cloud-sql-proxy:
+            imagePullPolicy: IfNotPresent
+            volumes:
+              - name: data
+                type: gcsFuseCsi
+                path: /data
+                bucketName: task-data
+        containers:
+          app:
+            image:
+              repository: app
+              tag: "1.0"
+
+workloads:
+  web:
+    component: web
+    containers:
+      app:
+        image:
+          repository: app
+          tag: "1.0"
+    initContainers:
+      proxy:
+        sidecar: true
+        image:
+          repository: proxy
+          tag: "1.0"
+        port: 5432
+        healthCheck:
+          startup:
+            enabled: true
+            tcpSocket: {}
+          liveness:
+            enabled: true
+            exec:
+              command: ["/bin/check"]
+          readiness:
+            enabled: true
+            path: /ready
+            port: 9090

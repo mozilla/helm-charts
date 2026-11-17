@@ -315,6 +315,10 @@ tasks:
       security: {}
       volumes: []
 
+    # Named init containers shared by Jobs and CronJobs. Each task can override
+    # a shared container by name or disable it with enabled: false.
+    initContainers: {}
+
     # Common cron job configurations. These can be used as defaults for all cron
     # job configurations.
     #
@@ -471,6 +475,7 @@ tasks:
       #   - activeDeadlineSeconds
       #   - backoffLimit
       #   - containers
+      #   - initContainers
       #   - labels
       #   - otel
       #   - parallelism
@@ -564,6 +569,9 @@ tasks:
       #
       # Defaults are set in .Values.tasks.common.job
       #backoffLimit: 6
+
+      # Named init containers. Use the same options as workloads.default.initContainers.
+      initContainers: {}
 
       containers:
         # This is the name of your container. Use any name other than "default",
@@ -2613,6 +2621,10 @@ workloads:
         # container before all other containers begin running (eg.
         # cloud-sql-proxy).
         sidecar: false
+
+        # Native sidecars can use healthCheck.startup, healthCheck.liveness, and
+        # healthCheck.readiness with the same options as application containers.
+        # Set enabled: true on each probe you want to use.
 
         # Optionally mount volumes to the container. The supported volume types
         # are "configMap" (default), "secret", "persistentVolume", "emptyDir",

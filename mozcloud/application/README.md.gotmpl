@@ -88,6 +88,47 @@ When adding a new collection type, you must:
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for the general explanation of why this pattern exists.
 
+### Task init containers
+
+Use `tasks.jobs.<name>.initContainers` for a Job and `tasks.cronJobs.<name>.jobConfig.initContainers` for a CronJob. `tasks.common.initContainers` adds named init containers to both. Each task can override a shared container by name or disable it with `enabled: false`. The `default` entry supplies settings to named init containers. Init containers use the same options as workload init containers and have their own defaults, independent of `tasks.common.container`.
+
+Set `sidecar: true` to keep an init container running alongside the application containers. Kubernetes stops the sidecar after the application containers finish. On workloads and tasks, each sidecar probe is opt-in. A startup probe must succeed before Kubernetes starts the next container. [Kubernetes sidecar documentation](https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/)
+
+This example uses the Cloud SQL Auth Proxy's readiness endpoint as a startup probe to check database connectivity before the migration starts. The migration container uses the application's global image. [Cloud SQL Auth Proxy health checks](https://github.com/GoogleCloudPlatform/cloud-sql-proxy/blob/v2.17.1/docs/cmd/cloud-sql-proxy.md#health-checks)
+
+```yaml
+tasks:
+  jobs:
+    db-migrate:
+      type: preDeployment
+      initContainers:
+        cloud-sql-proxy:
+          sidecar: true
+          image:
+            repository: gcr.io/cloud-sql-connectors/cloud-sql-proxy
+            tag: "2.17.1"
+          args:
+            - --psc
+            - --port=5432
+            - --auto-iam-authn
+            - --health-check
+            - --http-address=0.0.0.0
+            - "<project>:<region>:<instance>"
+          envVars:
+            CSQL_PROXY_EXIT_ZERO_ON_SIGTERM: "true"
+          healthCheck:
+            startup:
+              enabled: true
+              path: /readiness
+              port: 9090
+              probes:
+                periodSeconds: 2
+                failureThreshold: 30
+      containers:
+        db-migrate:
+          command: ["npm", "run", "db:migrate"]
+```
+
 {{ template "json-schema-validation" . }}
 
 {{ template "helm-docs.versionFooter" . }}

@@ -1,0 +1,124 @@
+---
+suite: "mozcloud: task init containers and native sidecar probes"
+values:
+  - values/globals.yaml
+  - values/task-init-containers.yaml
+templates:
+  - task/job.yaml
+  - task/cronjob.yaml
+  - workload/deployment.yaml
+tests:
+  - it: A Job inherits a shared native sidecar and can override its resources
+    template: task/job.yaml
+    documentSelector:
+      path: metadata.name
+      value: migrate
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: cloud-sql-proxy
+      - equal:
+          path: spec.template.spec.initContainers[0].restartPolicy
+          value: Always
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+      - equal:
+          path: spec.template.spec.initContainers[0].startupProbe
+          value:
+            httpGet:
+              path: /readiness
+              port: 9090
+            periodSeconds: 2
+      - notExists:
+          path: spec.template.spec.initContainers[0].livenessProbe
+      - notExists:
+          path: spec.template.spec.initContainers[0].readinessProbe
+      - equal:
+          path: spec.template.spec.initContainers[0].env[0]
+          value:
+            name: CSQL_PROXY_EXIT_ZERO_ON_SIGTERM
+            value: "true"
+      - equal:
+          path: spec.template.spec.initContainers[0].resources.requests
+          value:
+            cpu: 75m
+            memory: 128Mi
+
+  - it: A regular init container runs to completion and contributes its volume
+    template: task/job.yaml
+    documentSelector:
+      path: metadata.name
+      value: migrate
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[1].command
+          value: ["/bin/true"]
+      - equal:
+          path: spec.template.spec.initContainers[1].securityContext.runAsUser
+          value: 2000
+      - notExists:
+          path: spec.template.spec.initContainers[1].restartPolicy
+      - notExists:
+          path: spec.template.spec.initContainers[1].startupProbe
+      - equal:
+          path: spec.template.spec.initContainers[1].volumeMounts[0]
+          value:
+            name: scratch
+            mountPath: /scratch
+      - equal:
+          path: spec.template.spec.volumes[0]
+          value:
+            name: scratch
+            emptyDir: {}
+
+  - it: Disabling the only shared init container omits the pod field
+    template: task/job.yaml
+    documentSelector:
+      path: metadata.name
+      value: no-init
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+
+  - it: CronJob jobConfig merges sidecar overrides and injects GCS FUSE for its volume
+    template: task/cronjob.yaml
+    asserts:
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.initContainers[0].imagePullPolicy
+          value: IfNotPresent
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.initContainers[0].restartPolicy
+          value: Always
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.initContainers[0].resources.requests.cpu
+          value: 50m
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.initContainers[0].startupProbe.httpGet.port
+          value: 9090
+      - equal:
+          path: spec.jobTemplate.spec.template.metadata.annotations["gke-gcsfuse/volumes"]
+          value: "true"
+      - equal:
+          path: spec.jobTemplate.spec.template.spec.volumes[0].csi.volumeAttributes.bucketName
+          value: task-data
+
+  - it: A workload sidecar renders opt-in TCP, exec, and HTTP probes
+    template: workload/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].ports[0]
+          value:
+            name: proxy
+            containerPort: 5432
+      - equal:
+          path: spec.template.spec.initContainers[0].startupProbe.tcpSocket.port
+          value: proxy
+      - equal:
+          path: spec.template.spec.initContainers[0].livenessProbe.exec.command
+          value: ["/bin/check"]
+      - equal:
+          path: spec.template.spec.initContainers[0].readinessProbe.httpGet
+          value:
+            path: /ready
+            port: 9090
