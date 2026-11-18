@@ -72,10 +72,6 @@ template:
   {{- $initContainerValues := mergeOverwrite (deepCopy (default dict $common.initContainers)) (default dict $jobConfig.initContainers) }}
   {{- $params = dict "containers" $initContainerValues "type" "init-containers" }}
   {{- $initContainers := include "mozcloud.formatter.containers" $params | fromYaml }}
-  {{- range $name, $config := $initContainers }}
-    {{- $defaults := dict "imagePullPolicy" "Always" "resources" (dict "cpu" "100m" "memory" "128Mi") }}
-    {{- $_ := set $initContainers $name (mergeOverwrite $defaults $config) }}
-  {{- end }}
   {{- $gcsFuseEnabled := false }}
   {{- range list $containers $initContainers }}
     {{- range $containerConfig := . }}
@@ -200,7 +196,7 @@ template:
       {{- end }}
     {{- if $initContainers }}
     initContainers:
-      {{- include "mozcloud.workload.containers" (dict
+      {{- include "mozcloud.containers" (dict
         "containers" $initContainers
         "globals" $globals
         "name" .name

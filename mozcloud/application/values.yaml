@@ -315,10 +315,6 @@ tasks:
       security: {}
       volumes: []
 
-    # Named init containers shared by Jobs and CronJobs. Each task can override
-    # a shared container by name or disable it with enabled: false.
-    initContainers: {}
-
     # Common cron job configurations. These can be used as defaults for all cron
     # job configurations.
     #
@@ -340,6 +336,16 @@ tasks:
       #startingDeadlineSeconds:
       #suspend:
       #timeZone:
+
+    # Named init containers shared by Jobs and CronJobs. Each task can override
+    # a shared container by name or disable it with enabled: false.
+    initContainers:
+      # Settings inherited by all named task init containers.
+      default:
+        imagePullPolicy: Always
+        resources:
+          cpu: 100m
+          memory: 128Mi
 
     # Common job configurations. These can be used as defaults for all job
     # configurations.

@@ -1,5 +1,7 @@
 ---
 suite: "mozcloud: task init containers and native sidecar probes"
+chart:
+  version: 1.0.0
 values:
   - values/globals.yaml
   - values/task-init-containers.yaml
@@ -8,6 +10,11 @@ templates:
   - task/cronjob.yaml
   - workload/deployment.yaml
 tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
   - it: A Job inherits a shared native sidecar and can override its resources
     template: task/job.yaml
     documentSelector:
@@ -19,6 +26,9 @@ tests:
           value: cloud-sql-proxy
       - equal:
           path: spec.template.spec.initContainers[0].restartPolicy
+          value: Always
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
           value: Always
       - equal:
           path: spec.template.spec.restartPolicy

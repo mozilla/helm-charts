@@ -203,14 +203,14 @@ template:
             subPath: nginx.conf
             readOnly: true
           {{- with $config.nginx.volumes }}
-          {{- include "mozcloud.workload.volumeMounts" . | nindent 10 }}
+          {{- include "mozcloud.volumes.mounts" . | nindent 10 }}
           {{- end }}
       {{- end -}}
 
       {{- /*
       App containers
       */}}
-      {{- include "mozcloud.workload.containers" (dict
+      {{- include "mozcloud.containers" (dict
         "config" $config
         "containers" $containers
         "globals" $globals
@@ -226,7 +226,7 @@ template:
 
     {{- if $initContainers }}
     initContainers:
-      {{- include "mozcloud.workload.containers" (dict
+      {{- include "mozcloud.containers" (dict
         "config" $config
         "containers" $initContainers
         "globals" $globals
