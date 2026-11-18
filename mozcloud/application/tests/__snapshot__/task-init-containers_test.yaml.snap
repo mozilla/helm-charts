@@ -1,0 +1,448 @@
+Configuration matches entire snapshot:
+  1: |
+    apiVersion: batch/v1
+    kind: CronJob
+    metadata:
+      labels:
+        app.kubernetes.io/component: cronjob
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: cronjob
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: maintenance
+    spec:
+      concurrencyPolicy: Allow
+      failedJobsHistoryLimit: 1
+      jobTemplate:
+        spec:
+          backoffLimit: 6
+          parallelism: 1
+          template:
+            metadata:
+              annotations:
+                gke-gcsfuse/cpu-limit: 1000m
+                gke-gcsfuse/cpu-request: 500m
+                gke-gcsfuse/memory-limit: 1024Mi
+                gke-gcsfuse/memory-request: 512Mi
+                gke-gcsfuse/volumes: "true"
+                resource.opentelemetry.io/app_code: mozcloud-test
+                resource.opentelemetry.io/component_code: cronjob
+                resource.opentelemetry.io/env_code: dev
+                resource.opentelemetry.io/realm: nonprod
+              labels:
+                app.kubernetes.io/component: cronjob
+                app.kubernetes.io/managed-by: argocd
+                app.kubernetes.io/name: mozcloud-test
+                app_code: mozcloud-test
+                component_code: cronjob
+                env_code: dev
+                helm.sh/chart: test-chart
+                mozcloud_chart: mozcloud
+                mozcloud_chart_version: 1.0.0
+                realm: nonprod
+            spec:
+              containers:
+                - image: app:1.0
+                  imagePullPolicy: Always
+                  name: app
+                  resources:
+                    limits:
+                      cpu: 200m
+                      memory: 256Mi
+                    requests:
+                      cpu: 100m
+                      memory: 128Mi
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                      drop:
+                        - ALL
+                    seccompProfile:
+                      type: RuntimeDefault
+              initContainers:
+                - args:
+                    - --health-check
+                    - --http-address=0.0.0.0
+                    - project:region:instance
+                  env:
+                    - name: CSQL_PROXY_EXIT_ZERO_ON_SIGTERM
+                      value: "true"
+                  image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.17.1
+                  imagePullPolicy: IfNotPresent
+                  name: cloud-sql-proxy
+                  ports:
+                    - containerPort: 9090
+                      name: proxy-health
+                    - containerPort: 5432
+                      name: postgres
+                  resources:
+                    limits:
+                      cpu: 100m
+                      memory: 256Mi
+                    requests:
+                      cpu: 50m
+                      memory: 128Mi
+                  restartPolicy: Always
+                  securityContext:
+                    allowPrivilegeEscalation: false
+                    capabilities:
+                      drop:
+                        - ALL
+                    seccompProfile:
+                      type: RuntimeDefault
+                  startupProbe:
+                    httpGet:
+                      path: /readiness
+                      port: 9090
+                    periodSeconds: 2
+                  volumeMounts:
+                    - mountPath: /data
+                      name: data
+              restartPolicy: Never
+              securityContext:
+                runAsGroup: 10001
+                runAsNonRoot: true
+                runAsUser: 10001
+                seccompProfile:
+                  type: RuntimeDefault
+              serviceAccountName: mozcloud-test
+              volumes:
+                - csi:
+                    driver: gcsfuse.csi.storage.gke.io
+                    volumeAttributes:
+                      bucketName: task-data
+                  name: data
+      schedule: '@daily'
+      successfulJobsHistoryLimit: 1
+  2: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        argocd.argoproj.io/hook: Sync
+        argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+        argocd.argoproj.io/sync-wave: "-1"
+      labels:
+        app.kubernetes.io/component: job
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: job
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: migrate
+    spec:
+      backoffLimit: 6
+      parallelism: 1
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: job
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: job
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: job
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            realm: nonprod
+        spec:
+          containers:
+            - image: app:1.0
+              imagePullPolicy: Always
+              name: app
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          initContainers:
+            - args:
+                - --health-check
+                - --http-address=0.0.0.0
+                - project:region:instance
+              env:
+                - name: CSQL_PROXY_EXIT_ZERO_ON_SIGTERM
+                  value: "true"
+              image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.17.1
+              imagePullPolicy: Always
+              name: cloud-sql-proxy
+              ports:
+                - containerPort: 9090
+                  name: proxy-health
+                - containerPort: 5432
+                  name: postgres
+              resources:
+                limits:
+                  cpu: 150m
+                  memory: 256Mi
+                requests:
+                  cpu: 75m
+                  memory: 128Mi
+              restartPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              startupProbe:
+                httpGet:
+                  path: /readiness
+                  port: 9090
+                periodSeconds: 2
+            - command:
+                - /bin/true
+              image: busybox:1.37
+              imagePullPolicy: Always
+              name: setup
+              resources:
+                limits:
+                  cpu: 100m
+                  memory: 256Mi
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                runAsGroup: 2000
+                runAsUser: 2000
+                seccompProfile:
+                  type: RuntimeDefault
+              volumeMounts:
+                - mountPath: /scratch
+                  name: scratch
+          restartPolicy: Never
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+          volumes:
+            - emptyDir: {}
+              name: scratch
+  3: |
+    apiVersion: batch/v1
+    kind: Job
+    metadata:
+      annotations:
+        argocd.argoproj.io/hook: Sync
+        argocd.argoproj.io/hook-delete-policy: BeforeHookCreation,HookSucceeded
+        argocd.argoproj.io/sync-wave: "-1"
+      labels:
+        app.kubernetes.io/component: job
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: job
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: no-init
+    spec:
+      backoffLimit: 6
+      parallelism: 1
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: job
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: job
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: job
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            realm: nonprod
+        spec:
+          containers:
+            - image: app:1.0
+              imagePullPolicy: Always
+              name: app
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          restartPolicy: Never
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test
+  4: |
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      labels:
+        app.kubernetes.io/component: web
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: web
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: web
+    spec:
+      selector:
+        matchLabels:
+          app.kubernetes.io/component: web
+          app.kubernetes.io/name: mozcloud-test
+          env_code: dev
+      strategy:
+        type: RollingUpdate
+      template:
+        metadata:
+          annotations:
+            resource.opentelemetry.io/app_code: mozcloud-test
+            resource.opentelemetry.io/component_code: web
+            resource.opentelemetry.io/env_code: dev
+            resource.opentelemetry.io/realm: nonprod
+          labels:
+            app.kubernetes.io/component: web
+            app.kubernetes.io/managed-by: argocd
+            app.kubernetes.io/name: mozcloud-test
+            app_code: mozcloud-test
+            component_code: web
+            env_code: dev
+            helm.sh/chart: test-chart
+            mozcloud_chart: mozcloud
+            mozcloud_chart_version: 1.0.0
+            realm: nonprod
+        spec:
+          containers:
+            - envFrom:
+                - secretRef:
+                    name: test-chart-secrets
+              image: app:1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                failureThreshold: 5
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              name: app
+              ports:
+                - containerPort: 8000
+                  name: app
+              readinessProbe:
+                failureThreshold: 3
+                httpGet:
+                  path: /__lbheartbeat__
+                  port: app
+                initialDelaySeconds: 10
+                periodSeconds: 6
+                successThreshold: 1
+                timeoutSeconds: 5
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+          initContainers:
+            - envFrom:
+                - secretRef:
+                    name: test-chart-secrets
+              image: proxy:1.0
+              imagePullPolicy: Always
+              livenessProbe:
+                exec:
+                  command:
+                    - /bin/check
+              name: proxy
+              ports:
+                - containerPort: 5432
+                  name: proxy
+              readinessProbe:
+                httpGet:
+                  path: /ready
+                  port: 9090
+              resources:
+                limits:
+                  cpu: 200m
+                  memory: 256Mi
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+              restartPolicy: Always
+              securityContext:
+                allowPrivilegeEscalation: false
+                capabilities:
+                  drop:
+                    - ALL
+                seccompProfile:
+                  type: RuntimeDefault
+              startupProbe:
+                tcpSocket:
+                  port: proxy
+          securityContext:
+            runAsGroup: 10001
+            runAsNonRoot: true
+            runAsUser: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          serviceAccountName: mozcloud-test

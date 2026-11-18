@@ -30,3 +30,30 @@ csi:
     gcsfuseLoggingSeverity: {{ $config.loggingSeverity | quote }}
     {{- end }}
 {{- end -}}
+
+
+{{- /*
+Renders volumeMounts for workload containers, task init containers, and the
+NGINX sidecar.
+
+Params:
+  . (list): (required) Volumes, each with name, type and path, and optionally
+            key (mounted as subPath) and readOnly.
+
+Returns:
+  (string) YAML list items for a container's volumeMounts.
+*/ -}}
+{{- define "mozcloud.volumes.mounts" -}}
+{{- range $volume := . }}
+- name: {{ $volume.name }}
+  mountPath: {{ $volume.path }}
+  {{- if $volume.key }}
+  subPath: {{ $volume.key }}
+  {{- end }}
+  {{- if eq $volume.type "secret" }}
+  readOnly: true
+  {{- else if $volume.readOnly }}
+  readOnly: {{ $volume.readOnly }}
+  {{- end }}
+{{- end }}
+{{- end -}}

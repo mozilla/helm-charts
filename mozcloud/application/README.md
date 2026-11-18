@@ -78,6 +78,9 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.common.cronJob.jobHistory | object | `{}` |  |
 | tasks.common.cronJob.labels | object | `{}` |  |
 | tasks.common.cronJob.schedule | string | `""` |  |
+| tasks.common.initContainers.default.imagePullPolicy | string | `"Always"` |  |
+| tasks.common.initContainers.default.resources.cpu | string | `"100m"` |  |
+| tasks.common.initContainers.default.resources.memory | string | `"128Mi"` |  |
 | tasks.common.job.annotations | object | `{}` |  |
 | tasks.common.job.backoffLimit | int | `6` |  |
 | tasks.common.job.generateName | bool | `false` |  |
@@ -100,6 +103,7 @@ Next, update your tenant's values. Shared charts are meant to be self-documented
 | tasks.jobs.default.argo | object | `{}` |  |
 | tasks.jobs.default.containers.default | object | `{}` |  |
 | tasks.jobs.default.generateName | bool | `false` |  |
+| tasks.jobs.default.initContainers | object | `{}` |  |
 | tasks.jobs.default.labels | object | `{}` |  |
 | tasks.jobs.default.nodeSelector | object | `{}` |  |
 | tasks.jobs.default.otel.autoInstrumentation.enabled | bool | `false` |  |

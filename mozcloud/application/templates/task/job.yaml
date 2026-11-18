@@ -42,7 +42,7 @@ spec:
   {{- /*
   The template below can be found in templates/task/_jobTemplate.yaml
   */}}
-  {{- $params = dict "common" $common "config" $config "context" $context }}
+  {{- $params = dict "common" $common "config" $config "context" $context "name" $name }}
   {{- include "mozcloud.job.jobTemplate" $params | trim | nindent 2 }}
 {{- end }}
 {{- end }}

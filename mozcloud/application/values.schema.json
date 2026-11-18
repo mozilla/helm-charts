@@ -266,6 +266,9 @@
             "cronJob": {
               "$ref": "#/$defs/cronJob"
             },
+            "initContainers": {
+              "$ref": "#/$defs/initContainers"
+            },
             "job": {
               "allOf": [
                 {
@@ -1511,24 +1514,7 @@
             }
           },
           "initContainers": {
-            "type": "object",
-            "description": "Declarative init containers keyed by container name",
-            "additionalProperties": {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/container"
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "sidecar": {
-                      "type": "boolean",
-                      "default": false
-                    }
-                  }
-                }
-              ]
-            }
+            "$ref": "#/$defs/initContainers"
           },
           "labels": {
             "type": "object",
@@ -2151,6 +2137,43 @@
         }
       }
     },
+    "initContainers": {
+      "type": "object",
+      "description": "Declarative init containers keyed by container name",
+      "additionalProperties": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/container"
+          }
+        ],
+        "properties": {
+          "sidecar": {
+            "type": "boolean",
+            "default": false
+          },
+          "additionalPorts": {
+            "$ref": "#/properties/workloads/additionalProperties/properties/containers/additionalProperties/properties/additionalPorts"
+          },
+          "healthCheck": {
+            "description": "Probes for native sidecars. Set enabled: true on each probe to render it.",
+            "$ref": "#/properties/workloads/additionalProperties/properties/containers/additionalProperties/properties/healthCheck"
+          },
+          "port": {
+            "allOf": [
+              {
+                "$ref": "#/properties/workloads/additionalProperties/properties/containers/additionalProperties/properties/port"
+              }
+            ],
+            "description": "Primary port number declared on a native sidecar when a probe is enabled.",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "portName": {
+            "$ref": "#/properties/workloads/additionalProperties/properties/containers/additionalProperties/properties/portName"
+          }
+        }
+      }
+    },
     "container": {
       "type": "object",
       "properties": {
@@ -2550,6 +2573,9 @@
     "job": {
       "type": "object",
       "properties": {
+        "initContainers": {
+          "$ref": "#/$defs/initContainers"
+        },
         "gcsFuseSidecar": {
           "$ref": "#/$defs/gcsFuseSidecar"
         },
