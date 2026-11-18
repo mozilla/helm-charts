@@ -75,6 +75,11 @@ Configuration matches entire snapshot:
                   image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.17.1
                   imagePullPolicy: IfNotPresent
                   name: cloud-sql-proxy
+                  ports:
+                    - containerPort: 9090
+                      name: proxy-health
+                    - containerPort: 5432
+                      name: postgres
                   resources:
                     limits:
                       cpu: 100m
@@ -185,6 +190,11 @@ Configuration matches entire snapshot:
               image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.17.1
               imagePullPolicy: Always
               name: cloud-sql-proxy
+              ports:
+                - containerPort: 9090
+                  name: proxy-health
+                - containerPort: 5432
+                  name: postgres
               resources:
                 limits:
                   cpu: 150m

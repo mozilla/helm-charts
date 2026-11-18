@@ -34,6 +34,13 @@ tests:
           path: spec.template.spec.restartPolicy
           value: Never
       - equal:
+          path: spec.template.spec.initContainers[0].ports
+          value:
+            - name: proxy-health
+              containerPort: 9090
+            - name: postgres
+              containerPort: 5432
+      - equal:
           path: spec.template.spec.initContainers[0].startupProbe
           value:
             httpGet:
@@ -132,3 +139,27 @@ tests:
           value:
             path: /ready
             port: 9090
+
+  - it: Rejects a non-numeric primary port on a Job sidecar
+    template: task/job.yaml
+    set:
+      tasks.jobs.migrate.initContainers.cloud-sql-proxy.port: http
+    asserts:
+      - failedTemplate:
+          errorPattern: "cloud-sql-proxy[./]port.*(want integer|Expected: integer)"
+
+  - it: Rejects a non-string port name on a CronJob sidecar
+    template: task/cronjob.yaml
+    set:
+      tasks.cronJobs.maintenance.jobConfig.initContainers.cloud-sql-proxy.portName: 9090
+    asserts:
+      - failedTemplate:
+          errorPattern: "cloud-sql-proxy[./]portName.*(want string|Expected: string)"
+
+  - it: Rejects an out-of-range additional port on a shared sidecar
+    template: task/job.yaml
+    set:
+      tasks.common.initContainers.cloud-sql-proxy.additionalPorts[0].port: 65536
+    asserts:
+      - failedTemplate:
+          errorPattern: "cloud-sql-proxy[./]additionalPorts.*port.*65,?535"

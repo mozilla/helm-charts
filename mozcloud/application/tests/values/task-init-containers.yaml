@@ -6,6 +6,11 @@ tasks:
           cpu: 50m
       cloud-sql-proxy:
         sidecar: true
+        port: 9090
+        portName: proxy-health
+        additionalPorts:
+          - name: postgres
+            port: 5432
         image:
           repository: gcr.io/cloud-sql-connectors/cloud-sql-proxy
           tag: "2.17.1"

@@ -2151,9 +2151,25 @@
             "type": "boolean",
             "default": false
           },
+          "additionalPorts": {
+            "$ref": "#/properties/workloads/additionalProperties/properties/containers/additionalProperties/properties/additionalPorts"
+          },
           "healthCheck": {
             "description": "Probes for native sidecars. Set enabled: true on each probe to render it.",
             "$ref": "#/properties/workloads/additionalProperties/properties/containers/additionalProperties/properties/healthCheck"
+          },
+          "port": {
+            "allOf": [
+              {
+                "$ref": "#/properties/workloads/additionalProperties/properties/containers/additionalProperties/properties/port"
+              }
+            ],
+            "description": "Primary port number declared on a native sidecar when a probe is enabled.",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "portName": {
+            "$ref": "#/properties/workloads/additionalProperties/properties/containers/additionalProperties/properties/portName"
           }
         }
       }
