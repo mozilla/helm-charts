@@ -7,7 +7,7 @@
 }}
   {{- $backends = omit .Values.backends "default" }}
   {{- range $name, $config := $backends }}
-    {{- $_ := set $backends $name (mergeOverwrite (index $.Values.backends "default") $config) }}
+    {{- $_ := set $backends $name (mergeOverwrite (deepCopy (index $.Values.backends "default")) $config) }}
   {{- end }}
 {{- end }}
 {{- $params := dict "backendConfig" (dict "backends" $backends) "Chart" .Chart "Release" .Release }}

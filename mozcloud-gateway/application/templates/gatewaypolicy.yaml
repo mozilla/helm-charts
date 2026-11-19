@@ -5,10 +5,12 @@
   (and (eq (keys .Values.gateway.gateways | len) 1) (ne (keys .Values.gateway.gateways | first) "default"))
   (gt (keys .Values.gateway.gateways | len) 1)
 }}
-  {{- $_ := set $gateway_config "gateways" (omit .Values.gateway.gateways "default") }}
-  {{- range $name, $config := $gateway_config.gateways }}
-    {{- $_ = set $gateway_config.gateways $name (mergeOverwrite (index $.Values.gateway.gateways "default") $config) }}
+  {{- $default := default (dict) (index .Values.gateway.gateways "default") }}
+  {{- $gateways := dict }}
+  {{- range $name, $config := omit .Values.gateway.gateways "default" }}
+    {{- $_ := set $gateways $name (mergeOverwrite (deepCopy $default) $config) }}
   {{- end }}
+  {{- $gateway_config = set (omit .Values.gateway "gateways") "gateways" $gateways }}
 {{- end }}
 {{- $params := dict "gatewayConfig" $gateway_config "gatewayPolicyConfig" .Values.gatewayPolicy "Chart" .Chart "Release" .Release }}
 {{- if .Values.nameOverride }}
