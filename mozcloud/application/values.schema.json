@@ -591,10 +591,57 @@
             "properties": {
               "enabled": {
                 "type": "boolean",
-                "default": true
+                "default": true,
+                "description": "Enables the selected autoscaler"
+              },
+              "scaler": {
+                "type": "string",
+                "enum": ["hpa", "keda"],
+                "default": "hpa",
+                "description": "Selects the built-in HorizontalPodAutoscaler or a KEDA ScaledObject"
+              },
+              "keda": {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "triggers": {
+                    "type": "array",
+                    "description": "Native KEDA triggers. Scaler-specific metadata values must be strings",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "metadata": {
+                          "type": "object",
+                          "additionalProperties": { "type": "string" }
+                        },
+                        "authenticationRef": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "properties": {
+                            "kind": {
+                              "type": "string",
+                              "enum": ["TriggerAuthentication", "ClusterTriggerAuthentication"]
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": ["name"]
+                        }
+                      },
+                      "required": ["type", "metadata"]
+                    }
+                  }
+                }
               },
               "metrics": {
                 "type": "array",
+                "description": "Metrics used by the hpa scaler",
                 "items": {
                   "type": "object",
                   "additionalProperties": false,
@@ -630,12 +677,15 @@
                 "properties": {
                   "min": {
                     "type": "integer",
-                    "minimum": 1,
+                    "minimum": 0,
+                    "maximum": 2147483647,
+                    "description": "Minimum replica count. Zero is supported by the keda scaler",
                     "default": 1
                   },
                   "max": {
                     "type": "integer",
                     "minimum": 1,
+                    "maximum": 2147483647,
                     "default": 30
                   }
                 }

@@ -1,0 +1,103 @@
+Renders a ScaledObject for each enabled KEDA workload:
+  1: |
+    apiVersion: keda.sh/v1alpha1
+    kind: ScaledObject
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+      labels:
+        app.kubernetes.io/component: worker
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: worker
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: canary
+    spec:
+      maxReplicaCount: 10
+      minReplicaCount: 0
+      scaleTargetRef:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Rollout
+        name: canary
+      triggers:
+        - authenticationRef:
+            kind: ClusterTriggerAuthentication
+            name: keda-operator
+          metadata:
+            query: sum(rate(my_requests_total[2m]))
+            serverAddress: https://monitoring.googleapis.com/v1/projects/test-project/location/global/prometheus
+            threshold: "10"
+          type: prometheus
+  2: |
+    apiVersion: keda.sh/v1alpha1
+    kind: ScaledObject
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+      labels:
+        app.kubernetes.io/component: worker
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: worker
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: mlpa
+    spec:
+      maxReplicaCount: 10
+      minReplicaCount: 0
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: Deployment
+        name: mlpa
+      triggers:
+        - authenticationRef:
+            kind: ClusterTriggerAuthentication
+            name: keda-operator
+          metadata:
+            query: sum(rate(my_requests_total[2m]))
+            serverAddress: https://monitoring.googleapis.com/v1/projects/test-project/location/global/prometheus
+            threshold: "10"
+          type: prometheus
+  3: |
+    apiVersion: keda.sh/v1alpha1
+    kind: ScaledObject
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "1"
+      labels:
+        app.kubernetes.io/component: worker
+        app.kubernetes.io/managed-by: argocd
+        app.kubernetes.io/name: mozcloud-test
+        app_code: mozcloud-test
+        component_code: worker
+        env_code: dev
+        helm.sh/chart: test-chart
+        mozcloud_chart: mozcloud
+        mozcloud_chart_version: 1.0.0
+        realm: nonprod
+      name: stream
+    spec:
+      maxReplicaCount: 10
+      minReplicaCount: 0
+      scaleTargetRef:
+        apiVersion: apps/v1
+        kind: StatefulSet
+        name: stream
+      triggers:
+        - authenticationRef:
+            kind: ClusterTriggerAuthentication
+            name: keda-operator
+          metadata:
+            query: sum(rate(my_requests_total[2m]))
+            serverAddress: https://monitoring.googleapis.com/v1/projects/test-project/location/global/prometheus
+            threshold: "10"
+          type: prometheus

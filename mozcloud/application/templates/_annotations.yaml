@@ -74,7 +74,7 @@ Params:
                      defaults and hook annotations. Accepted values:
                      "configMap", "deployment", "externalSecret", "hpa",
                      "jobPostDeployment", "jobPreDeployment", "pvc",
-                     "serviceAccount".
+                     "scaledObject", "serviceAccount".
 
 Returns:
   (string) YAML-encoded key-value pairs of ArgoCD annotations.
@@ -113,6 +113,7 @@ hpa: 1
 jobPostDeployment: 1
 jobPreDeployment: -1
 pvc: -11
+scaledObject: 1
 serviceAccount: -11
 {{- end -}}
 

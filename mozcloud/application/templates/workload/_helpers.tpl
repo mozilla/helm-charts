@@ -118,3 +118,28 @@ Returns:
 reloader.stakater.com/auto: "true"
 {{- end }}
 {{- end -}}
+
+
+{{- /*
+Returns the scale target for a workload using its rendered name and type.
+
+Params:
+  name (string): (required) Rendered workload name.
+  type (string): (optional) Workload type. Defaults to deployment.
+
+Returns:
+  (string) YAML-encoded Kubernetes scaleTargetRef.
+*/ -}}
+{{- define "mozcloud.workload.scaleTargetRef" -}}
+{{- if eq .type "rollout" }}
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+{{- else if eq .type "statefulset" }}
+apiVersion: apps/v1
+kind: StatefulSet
+{{- else }}
+apiVersion: apps/v1
+kind: Deployment
+{{- end }}
+name: {{ .name }}
+{{- end -}}

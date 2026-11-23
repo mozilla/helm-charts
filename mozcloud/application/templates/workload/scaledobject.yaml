@@ -1,0 +1,43 @@
+{{- $chartMetadata := dict "Chart" .Chart "Release" .Release }}
+{{- $context := deepCopy . }}
+{{- $labelParams := mergeOverwrite $chartMetadata (include "mozcloud.labelParams" . | fromYaml) }}
+{{- $previewConfig := mergeOverwrite (default dict .Values.global.preview) (default dict .Values.preview) }}
+{{- $formatterParams := dict "workloads" (.Values.workloads | deepCopy) "preview" $previewConfig }}
+{{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
+
+{{- range $workloadName, $workloadConfig := $workloads }}
+{{- if and (dig "autoscaling" "enabled" true $workloadConfig) (eq (dig "autoscaling" "scaler" "hpa" $workloadConfig) "keda") }}
+{{- $triggers := dig "autoscaling" "keda" "triggers" list $workloadConfig }}
+{{- /* Validate the effective configuration after merging workload defaults. */}}
+{{- if not (kindIs "invalid" $workloadConfig.replicas) }}
+  {{- fail (printf "workload %q: leave replicas unset when the keda scaler is enabled" $workloadName) }}
+{{- end }}
+{{- if not $triggers }}
+  {{- fail (printf "workload %q: autoscaling.keda.triggers must contain at least one trigger" $workloadName) }}
+{{- end }}
+{{- $min := dig "autoscaling" "replicas" "min" 1 $workloadConfig }}
+{{- $max := dig "autoscaling" "replicas" "max" 30 $workloadConfig }}
+{{- if gt (int $min) (int $max) }}
+  {{- fail (printf "workload %q: autoscaling.replicas.min must be less than or equal to autoscaling.replicas.max" $workloadName) }}
+{{- end }}
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ $workloadName }}
+  labels:
+    {{- $component := dict "component_code" $workloadConfig.component }}
+    {{- $params := dict "context" (mergeOverwrite (deepCopy $context) (mergeOverwrite (deepCopy $labelParams) $component)) }}
+    {{- $labels := include "mozcloud.labels" $params | fromYaml }}
+    {{- $labels.labels | toYaml | nindent 4 }}
+  annotations:
+    {{- include "mozcloud.annotations.argo" (dict "type" "scaledObject") | trim | nindent 4 }}
+spec:
+  scaleTargetRef:
+    {{- include "mozcloud.workload.scaleTargetRef" (dict "name" $workloadName "type" $workloadConfig.type) | trim | nindent 4 }}
+  minReplicaCount: {{ $min }}
+  maxReplicaCount: {{ $max }}
+  triggers:
+    {{- $triggers | toYaml | nindent 4 }}
+{{- end }}
+{{- end }}
