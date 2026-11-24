@@ -1,0 +1,38 @@
+---
+workloads:
+  web:
+    component: web
+    nginx:
+      configMap: web-nginx
+    containers:
+      default:
+        image:
+          repository: test-repo/test-image
+          tag: 1.0.0
+      metrics: {}
+      nimbus:
+        healthCheck:
+          readiness:
+            path: /nimbus-ready
+            httpHeaders:
+              - name: X-Forwarded-Proto
+                value: https
+            probes:
+              failureThreshold: 8
+          liveness:
+            probes:
+              initialDelaySeconds: 60
+      web:
+        healthCheck:
+          readiness:
+            path: /web-ready
+            probes:
+              failureThreshold: 3
+          liveness:
+            probes:
+              initialDelaySeconds: 15
+    hosts:
+      web:
+        api: gateway
+        domains:
+          - web.dev.test-domain.com

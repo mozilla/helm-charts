@@ -65,7 +65,8 @@ workloads:
           certs:
             - test-cert
     containers:
-      app:
+      # FIXME MZCLD-4868
+      test-service-nginx:
         image:
           repository: test-repo/test-image
           tag: 1.0.0
