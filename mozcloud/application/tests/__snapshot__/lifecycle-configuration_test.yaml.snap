@@ -455,20 +455,20 @@ Configuration matches entire snapshot:
                 failureThreshold: 5
                 httpGet:
                   path: /__lbheartbeat__
-                  port: app
+                  port: test-service-ng
                 initialDelaySeconds: 10
                 periodSeconds: 6
                 successThreshold: 1
                 timeoutSeconds: 5
-              name: app
+              name: test-service-nginx
               ports:
                 - containerPort: 8000
-                  name: app
+                  name: test-service-ng
               readinessProbe:
                 failureThreshold: 3
                 httpGet:
                   path: /__lbheartbeat__
-                  port: app
+                  port: test-service-ng
                 initialDelaySeconds: 10
                 periodSeconds: 6
                 successThreshold: 1

@@ -93,9 +93,10 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].lifecycle.preStop.exec.command
           value: ["/bin/sh", "-c", "sleep 30"]
-      # app container has no explicit lifecycle and inherits from nginx
+      # FIXME MZCLD-4868
+      # The container named after the workload inherits the lifecycle from nginx.
       - equal:
-          path: spec.template.spec.containers[1].lifecycle.preStop.exec.command
+          path: spec.template.spec.containers[?(@.name=="test-service-nginx")].lifecycle.preStop.exec.command
           value: ["/bin/sh", "-c", "sleep 30"]
       # worker container has its own lifecycle and is not overridden
       - equal:

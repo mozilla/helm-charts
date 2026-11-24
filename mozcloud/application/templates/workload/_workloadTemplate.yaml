@@ -168,11 +168,17 @@ template:
           {{- end }}
           {{- include "pod.container.resources" $resources | nindent 10 }}
         readinessProbe:
-          {{- /* Use first container in workload for NGINX readiness and liveness probe default values */}}
+          {{- /* Use the sole container in workload for NGINX readiness and liveness probe default values. */}}
+          {{- /* If there are multiple containers, use the container matching the workload name for NGINX probe defaults. */}}
           {{- $container := dict }}
-          {{- if ge (len $containers) 1 }}
-            {{- $key := first (keys $containers) }}
-            {{- $container = index $containers $key }}
+          {{- $workloadName := trimPrefix $prefix $name }}
+          {{- if eq (len $containers) 0 }}
+          {{- else if eq (len $containers) 1 }}
+            {{- $container = index $containers (first (keys $containers)) }}
+          {{- else if hasKey $containers $workloadName }}
+            {{- $container = index $containers $workloadName }}
+          {{- else }}
+            {{- fail (printf "Cannot find container %s for NGINX probe defaults." $workloadName) }}
           {{- end }}
           httpGet:
             {{- if (($container.healthCheck).readiness).httpHeaders }}

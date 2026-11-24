@@ -1,0 +1,52 @@
+---
+suite: "mozcloud: NGINX probe source"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/nginx-probe-source.yaml
+templates:
+  - workload/deployment.yaml
+tests:
+  - it: Configuration matches entire snapshot
+    asserts:
+      - notFailedTemplate: {}
+      - matchSnapshot: {}
+
+  - it: NGINX inherits probe settings from the container named after the workload
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="nginx")].readinessProbe.httpGet.path
+          value: /web-ready
+      - notExists:
+          path: spec.template.spec.containers[?(@.name=="nginx")].readinessProbe.httpGet.httpHeaders
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="nginx")].readinessProbe.failureThreshold
+          value: 3
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="nginx")].livenessProbe.initialDelaySeconds
+          value: 15
+
+  # FIXME MZCLD-4868
+  - it: NGINX requires a matching container when multiple containers are enabled
+    set:
+      workloads.web.containers.web.enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: Cannot find container web for NGINX probe defaults.
+
+  - it: NGINX still finds the matching container when the workload gets a preview prefix
+    set:
+      preview.enabled: true
+      global.preview.pr: "456"
+      global.preview.host: pr456-test.preview.mozilla.cloud
+    asserts:
+      - equal:
+          path: metadata.name
+          value: pr456-web
+      - equal:
+          path: spec.template.spec.containers[?(@.name=="nginx")].readinessProbe.httpGet.path
+          value: /web-ready
