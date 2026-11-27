@@ -7,7 +7,11 @@
 {{- $workloads := include "mozcloud.formatter.workloads" $formatterParams | fromYaml -}}
 
 {{- range $workloadName, $workloadConfig := $workloads }}
-{{- if (dig "autoscaling" "enabled" true $workloadConfig) }}
+{{- if and (dig "autoscaling" "enabled" true $workloadConfig) (eq (dig "autoscaling" "scaler" "hpa" $workloadConfig) "hpa") }}
+{{- $min := dig "autoscaling" "replicas" "min" 1 $workloadConfig }}
+{{- if lt (int $min) 1 }}
+  {{- fail (printf "workload %q: autoscaling.replicas.min must be at least 1 for the hpa scaler" $workloadName) }}
+{{- end }}
 ---
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
@@ -25,18 +29,8 @@ metadata:
   {{- end }}
 spec:
   scaleTargetRef:
-    {{- if eq (default "deployment" $workloadConfig.type) "rollout" }}
-    apiVersion: argoproj.io/v1alpha1
-    kind: Rollout
-    {{- else if eq (default "deployment" $workloadConfig.type) "statefulset" }}
-    apiVersion: apps/v1
-    kind: StatefulSet
-    {{- else }}
-    apiVersion: apps/v1
-    kind: Deployment
-    {{- end }}
-    name: {{ $workloadName }}
-  minReplicas: {{ default 1 (($workloadConfig.autoscaling).replicas).min }}
+    {{- include "mozcloud.workload.scaleTargetRef" (dict "name" $workloadName "type" $workloadConfig.type) | trim | nindent 4 }}
+  minReplicas: {{ $min }}
   maxReplicas: {{ default 30 (($workloadConfig.autoscaling).replicas).max }}
   metrics:
     {{- range $metric := (default list ($workloadConfig.autoscaling).metrics) }}

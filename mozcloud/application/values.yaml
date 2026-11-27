@@ -1217,14 +1217,16 @@ workloads:
     #
     #revisionHistoryLimit: 3
 
-    # A list of optional autoscaling configurations for containerized workloads.
+    # Configure autoscaling for this workload.
     autoscaling:
-      # If enabled, configure autoscaling via a HorizontalPodAutoscaler
-      # (HPA). If disabled, no HPA is created and the pod count is left to the
-      # "replicas" field above, or to whatever scales the workload externally.
+      # Set to false to use fixed replicas or an external autoscaler.
       enabled: true
 
-      # By default, we will scale pods at 60% CPU utilization, but users can
+      # Select the built-in HorizontalPodAutoscaler (hpa) or a KEDA ScaledObject
+      # (keda). The keda scaler requires KEDA to be installed on the cluster.
+      scaler: hpa
+
+      # By default, the HPA scales pods at 60% CPU utilization, but users can
       # also configure memory and network metrics, as well thresholds for
       # each.
       #
@@ -1257,7 +1259,8 @@ workloads:
         - type: cpu
           threshold: 60 # percent
 
-      # Configure the minimum and maximum replica counts while autoscaling.
+      # Configure the replica bounds for the selected scaler. KEDA supports a
+      # minimum of 0 with a compatible trigger. The HPA requires at least 1.
       #
       # Default values:
       #
@@ -1266,6 +1269,11 @@ workloads:
       replicas:
         min: 1
         max: 30
+
+      # With scaler: keda, supply at least one native KEDA trigger here.
+      # See the chart README for a Prometheus trigger example.
+      # keda:
+      #   triggers: []
 
     # All of the (non-init) containers you need to deploy for your work. Init
     # containers can be specified in the initContainers section below.

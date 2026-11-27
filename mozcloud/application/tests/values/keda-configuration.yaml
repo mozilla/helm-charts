@@ -1,0 +1,47 @@
+---
+workloads:
+  mlpa:
+    component: worker
+    containers: &containers
+      app:
+        image:
+          repository: test-repo/test-image
+          tag: "1.0.0"
+    autoscaling: &kedaAutoscaling
+      enabled: true
+      scaler: keda
+      replicas:
+        min: 0
+        max: 10
+      keda:
+        triggers:
+          - type: prometheus
+            authenticationRef:
+              kind: ClusterTriggerAuthentication
+              name: keda-operator
+            metadata:
+              serverAddress: https://monitoring.googleapis.com/v1/projects/test-project/location/global/prometheus
+              query: sum(rate(my_requests_total[2m]))
+              threshold: "10"
+  stream:
+    component: worker
+    containers: *containers
+    type: statefulset
+    autoscaling: *kedaAutoscaling
+  canary:
+    component: worker
+    containers: *containers
+    type: rollout
+    autoscaling: *kedaAutoscaling
+    strategy:
+      canary:
+        steps:
+          - setWeight: 20
+  web:
+    component: web
+    containers: *containers
+  disabled:
+    enabled: false
+    component: worker
+    containers: *containers
+    autoscaling: *kedaAutoscaling

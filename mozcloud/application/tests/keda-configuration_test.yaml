@@ -1,0 +1,134 @@
+---
+suite: "mozcloud: KEDA autoscaling"
+release:
+  name: mozcloud-test
+  namespace: mozcloud-test-dev
+chart:
+  version: 1.0.0
+values:
+  - values/globals.yaml
+  - values/keda-configuration.yaml
+templates:
+  - workload/scaledobject.yaml
+  - workload/hpa.yaml
+  - workload/deployment.yaml
+  - workload/statefulset.yaml
+  - workload/rollout.yaml
+tests:
+  - it: Renders a ScaledObject for each enabled KEDA workload
+    template: workload/scaledobject.yaml
+    asserts:
+      - hasDocuments:
+          count: 3
+      - matchSnapshot: {}
+
+  - it: Renders the chart HPA only for the workload using built-in autoscaling
+    template: workload/hpa.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: web
+
+  - it: Omits replicas from the KEDA Deployment
+    template: workload/deployment.yaml
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: mlpa
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: Omits replicas from the KEDA StatefulSet
+    template: workload/statefulset.yaml
+    documentSelector:
+      path: $[?(@.kind == "StatefulSet")].metadata.name
+      value: stream
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: Omits replicas from the KEDA Rollout
+    template: workload/rollout.yaml
+    documentSelector:
+      path: $[?(@.kind == "Rollout")].metadata.name
+      value: canary
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: Targets the preview workload name
+    template: workload/scaledobject.yaml
+    set:
+      preview.enabled: true
+      preview.pr: "123"
+    documentSelector:
+      path: metadata.name
+      value: pr123-mlpa
+    asserts:
+      - equal:
+          path: spec.scaleTargetRef.name
+          value: pr123-mlpa
+
+  - it: Disables autoscaling even when the selected scaler is KEDA
+    templates:
+      - workload/scaledobject.yaml
+      - workload/hpa.yaml
+    set:
+      workloads.mlpa.autoscaling.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 2
+        template: workload/scaledobject.yaml
+      - hasDocuments:
+          count: 1
+        template: workload/hpa.yaml
+
+  - it: Rejects a minimum of zero with the default HPA scaler
+    template: workload/hpa.yaml
+    set:
+      workloads.web.autoscaling.replicas.min: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: 'workload "web": autoscaling.replicas.min must be at least 1 for the hpa scaler'
+
+  - it: Rejects a fixed replica count inherited from workload defaults
+    template: workload/scaledobject.yaml
+    set:
+      workloads.default.autoscaling.enabled: false
+      workloads.default.replicas: 0
+    asserts:
+      - failedTemplate:
+          errorPattern: 'leave replicas unset when the keda scaler is enabled'
+
+  - it: Allows a KEDA workload to clear an inherited fixed replica count
+    template: workload/deployment.yaml
+    set:
+      workloads.default.autoscaling.enabled: false
+      workloads.default.replicas: 3
+      workloads.mlpa.replicas: null
+      workloads.stream.replicas: null
+      workloads.canary.replicas: null
+    documentSelector:
+      path: $[?(@.kind == "Deployment")].metadata.name
+      value: mlpa
+    asserts:
+      - notExists:
+          path: spec.replicas
+
+  - it: Rejects KEDA without a trigger
+    template: workload/scaledobject.yaml
+    set:
+      workloads.web.autoscaling.scaler: keda
+    asserts:
+      - failedTemplate:
+          errorPattern: 'autoscaling.keda.triggers must contain at least one trigger'
+
+  - it: Rejects inverted replica bounds
+    template: workload/scaledobject.yaml
+    set:
+      workloads.mlpa.autoscaling.replicas.min: 11
+    asserts:
+      - failedTemplate:
+          errorPattern: 'autoscaling.replicas.min must be less than or equal to autoscaling.replicas.max'
